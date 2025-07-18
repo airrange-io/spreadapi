@@ -299,7 +299,8 @@ async function getResults(requestInfo) {
       }
     } catch (spreadError) {
       console.error("Error creating spreadsheet:", spreadError);
-      return getError("error initializing calculation engine");
+      console.error("Stack trace:", spreadError.stack);
+      return getError("error initializing calculation engine: " + spreadError.message);
     }
 
     let actualSheet = spread.getActiveSheet();
