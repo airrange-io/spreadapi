@@ -4,7 +4,7 @@ const { initializeSpreadJS, createWorkbook } = require('../../../lib/spreadjs-se
 
 // Pre-warm popular APIs
 const POPULAR_APIS = [
-  'ab3202cb-d0af-41af-88ce-7e51f5f6b6d3'
+  { id: 'ab3202cb-d0af-41af-88ce-7e51f5f6b6d3', token: 'hiqelc-b-o' }
 ];
 
 export async function GET(request) {
@@ -15,9 +15,9 @@ export async function GET(request) {
     initializeSpreadJS();
     
     // Pre-fetch popular API definitions
-    const promises = POPULAR_APIS.map(apiId => 
-      getApiDefinition(apiId, null).catch(err => ({
-        apiId,
+    const promises = POPULAR_APIS.map(api => 
+      getApiDefinition(api.id, api.token).catch(err => ({
+        apiId: api.id,
         error: err.message
       }))
     );
@@ -30,7 +30,7 @@ export async function GET(request) {
     // IMPORTANT: Also warm the actual getResults endpoint
     // This ensures the main calculation function stays warm
     try {
-      const warmUrl = `${request.url.replace('/warm', '/getresults')}?service=${POPULAR_APIS[0]}&token=hiqelc-b-o&interest=5&monthly=100&months=12&starting=1000`;
+      const warmUrl = `${request.url.replace('/warm', '/getresults')}?service=${POPULAR_APIS[0].id}&token=${POPULAR_APIS[0].token}&interest=5&monthly=100&months=12&starting=1000`;
       await fetch(warmUrl);
     } catch (e) {
       // Ignore errors, just warming
@@ -42,8 +42,8 @@ export async function GET(request) {
       status: 'warm',
       timeMs: endTime - startTime,
       timestamp: new Date().toISOString(),
-      preloaded: results.map(r => ({
-        apiId: r.apiId || POPULAR_APIS[0],
+      preloaded: results.map((r, idx) => ({
+        apiId: r.apiId || POPULAR_APIS[idx].id,
         cached: !r.error
       })),
       spreadJsInitialized: true
