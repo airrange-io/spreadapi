@@ -1,0 +1,61 @@
+/* Critical CSS for lists page - prevents layout shifts */
+
+/* Hide elements by default to prevent flashing */
+.desktop-only {
+  display: flex;
+  align-items: center;
+}
+
+.desktop-text {
+  display: inline;
+}
+
+.mobile-text {
+  display: none;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .desktop-text {
+    display: none !important;
+  }
+  .mobile-text {
+    display: inline !important;
+  }
+}
+
+/* Ensure header has consistent height */
+.lists-page-header {
+  padding: 12px 16px;
+  height: 56px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ensure button styles are applied immediately */
+.new-list-button {
+  background-color: #4F2D7F !important;
+  border-color: #4F2D7F !important;
+  box-shadow: none !important;
+}
+
+/* Search input responsive width */
+.search-input {
+  max-width: 300px;
+}
+
+@media (max-width: 768px) {
+  .search-input {
+    max-width: 100% !important;
+  }
+}

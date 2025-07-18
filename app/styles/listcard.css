@@ -1,0 +1,12 @@
+/* Hide edit icons by default */
+.list-description-editable .ant-typography-edit,
+.list-name-editable .ant-typography-edit {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Show edit icons only when hovering over the specific text element */
+.list-description-editable:hover .ant-typography-edit,
+.list-name-editable:hover .ant-typography-edit {
+  opacity: 1;
+}

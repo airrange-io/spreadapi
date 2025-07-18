@@ -16,6 +16,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["app/*"],
+      "@/components/*": ["app/components/*"],
+      "@/styles/*": ["app/styles/*"],
+      "@/shared/*": ["app/shared/*"],
+      "@/constants/*": ["app/constants/*"],
+      "@/lib/*": ["lib/*"],
+      "@/utils/*": ["utils/*"]
+    },
     "plugins": [
       {
         "name": "next"

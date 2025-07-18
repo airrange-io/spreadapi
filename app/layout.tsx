@@ -30,13 +30,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "SpreadAPI",
-    description: "High-performance spreadsheet API service powered by SpreadJS",
+    description: "High-performance spreadsheet API service",
     type: "website",
   },
   twitter: {
     card: "summary",
     title: "SpreadAPI",
-    description: "High-performance spreadsheet API service powered by SpreadJS",
+    description: "High-performance spreadsheet API service",
   },
 };
 
