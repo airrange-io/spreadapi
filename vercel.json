@@ -1,5 +1,13 @@
 {
   "buildCommand": "npm run build",
+  "functions": {
+    "app/api/getresults/route.js": {
+      "maxDuration": 30
+    },
+    "app/api/warm/route.js": {
+      "maxDuration": 10
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",
