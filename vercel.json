@@ -13,7 +13,7 @@
       "maxDuration": 10
     }
   },
-  "regions": ["iad1"],
+  "regions": ["fra1", "iad1"],
   "crons": [{
     "path": "/api/warm",
     "schedule": "*/4 * * * *"
