@@ -1,6 +1,5 @@
 {
-  "buildCommand": "pnpm turbo build",
-  "ignoreCommand": "pnpm dlx turbo-ignore",
+  "buildCommand": "npm run build",
   "headers": [
     {
       "source": "/api/(.*)",
