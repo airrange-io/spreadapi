@@ -118,7 +118,7 @@ export async function getApiDefinition(apiId, apiToken) {
         if (useCaching && responseJson) {
           try {
             await redis.json.set("cache:blob:" + apiId, "$", responseJson);
-            await redis.expire("cache:blob:" + apiId, 60 * 5); // cache for 5 minutes
+            await redis.expire("cache:blob:" + apiId, 60 * 30); // cache for 30 minutes
           } catch (setCacheError) {
             console.error(
               `Failed to set cache for service:${apiId}:`,
