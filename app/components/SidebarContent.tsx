@@ -429,8 +429,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           <div>
             <Space direction="vertical" style={{ width: '100%', padding: 10, marginTop: 100 }}>
               <Link href="/api-tester">API Service Tester</Link>
-              <Link href="/api/cache-stats">Cache Statistics</Link>
-              <Link href="/api/diagnose-cache">Cache Diagnostics</Link>
+              <Link href="/cache-stats">Cache Statistics</Link>
+              <Link href="/cache-diagnostics">Cache Diagnostics</Link>
             </Space>
           </div>
         )}
