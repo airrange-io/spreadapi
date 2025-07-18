@@ -66,9 +66,6 @@ export async function getApiDefinition(apiId, apiToken) {
     let needsToken = serviceInfo[2] === "true";
     let useCaching = serviceInfo[3] === "true";
     let tokens = serviceInfo[4] ? serviceInfo[4]?.split(",") : [];
-    
-    // Debug logging
-    console.log(`[DEBUG] Service ${apiId} - useCaching from Redis: ${serviceInfo[3]}, evaluated as: ${useCaching}`);
 
     // check the tokens and flags
     if (!apiUrl) {
@@ -91,10 +88,8 @@ export async function getApiDefinition(apiId, apiToken) {
     console.time("fetchData");
     // try to get data from redis first
     if (useCaching) {
-      console.log(`[DEBUG] Checking Redis cache for: cache:blob:${apiId}`);
       try {
         const cacheExists = await redis.exists("cache:blob:" + apiId);
-        console.log(`[DEBUG] Redis cache exists: ${cacheExists}`);
         if (cacheExists) {
           result = await redis.json.get("cache:blob:" + apiId);
           if (result) {
