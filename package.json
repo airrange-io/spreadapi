@@ -1,0 +1,38 @@
+{
+  "name": "spreadapi",
+  "version": "1.0.3",
+  "license": "https://airrange.io/",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@mescius/spread-excelio": "^18.0.7",
+    "@mescius/spread-sheets": "^18.0.7",
+    "@mescius/spread-sheets-react": "^18.0.7",
+    "@mescius/spread-sheets-tablesheet": "^18.0.7",
+    "@vercel/blob": "^0.27.1",
+    "@vercel/edge-config": "^1.4.0",
+    "@vercel/kv": "^3.0.0",
+    "canvas": "^3.1.0",
+    "formidable": "^3.5.3",
+    "is": "^3.3.0",
+    "lz-string": "^1.5.0",
+    "mock-browser": "^0.92.14",
+    "nanoid": "^5.1.5",
+    "next": "^13.5.6",
+    "pnpm": "^9.15.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "redis": "^4.7.0",
+    "swr": "^2.3.3",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "null-loader": "^4.0.1",
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "pnpm@9.10.0"
+}
