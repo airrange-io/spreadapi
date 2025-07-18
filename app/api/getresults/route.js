@@ -148,6 +148,7 @@ async function getResults(requestInfo) {
   let options = requestInfo.options ?? [];
   const useCaching = true && options.includes("nocache") === false;
   const timeAll = Date.now();
+  let timeEnd;
 
   // =====================================
   // log the call
@@ -363,7 +364,7 @@ async function getResults(requestInfo) {
         return getError("error processing table data");
       }
     }
-    timeEnd = Date.now();
+    let timeEnd = Date.now();
     timeTableData = timeEnd - timeStart;
 
     // =====================================
