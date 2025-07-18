@@ -345,7 +345,7 @@ async function getResults(requestInfo) {
         return getError("error processing table data");
       }
     }
-    let timeEnd = Date.now();
+    timeEnd = Date.now();
     timeTableData = timeEnd - timeStart;
 
     // =====================================
