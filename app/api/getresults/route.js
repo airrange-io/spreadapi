@@ -478,33 +478,35 @@ async function getResults(requestInfo) {
       outputs: answerOutputs,
     };
 
-    // write to cache
+    // write to cache (non-blocking for better performance)
     if (useCaching && cacheKey) {
-      try {
-        const cacheResult = {
-          apiId: requestInfo.apiId,
-          info: { timeApiData: -1, timeCalculation: -1 },
-          inputs: answerInputs,
-          outputs: answerOutputs,
-        };
-        await redis.json.set(cacheKey, "$", cacheResult);
-        await redis.expire(cacheKey, 60 * 5); // cache for 5 minutes
-      } catch (cacheError) {
-        console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
-        // Continue even if caching fails
-      }
+      const cacheResult = {
+        apiId: requestInfo.apiId,
+        info: { timeApiData: -1, timeCalculation: -1 },
+        inputs: answerInputs,
+        outputs: answerOutputs,
+      };
+      
+      // Fire and forget - don't wait for cache write
+      Promise.resolve().then(async () => {
+        try {
+          // Use multi for atomic operation
+          const multi = redis.multi();
+          multi.json.set(cacheKey, "$", cacheResult);
+          multi.expire(cacheKey, 60 * 5); // cache for 5 minutes
+          await multi.exec();
+        } catch (cacheError) {
+          console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
+        }
+      });
     }
   } catch (error) {
     console.error("ERROR getResults", error);
-    // add the count to redis
-    try {
-      const errorUrl = "error:" + sanitizeRedisKey(requestInfo.apiId);
-      await redis.incr(errorUrl).catch((err) => {
-        console.error(`Failed to increment error count for ${errorUrl}:`, err);
-      });
-    } catch (statsError) {
-      console.error("Failed to record error statistics:", statsError);
-    }
+    // add the count to redis (non-blocking)
+    const errorUrl = "error:" + sanitizeRedisKey(requestInfo.apiId);
+    redis.incr(errorUrl).catch((err) => {
+      console.error(`Failed to increment error count for ${errorUrl}:`, err);
+    });
 
     return getError(
       "calculation failed: " + (error.message || "unknown error")
