@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { ConfigProvider, App } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import '@ant-design/v5-patch-for-react-19';
@@ -10,6 +10,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SpreadAPI | Spreadsheet calculations as a service",
   description: "High-performance spreadsheet API service",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  themeColor: "#502D80",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -38,13 +40,6 @@ export const metadata: Metadata = {
     title: "SpreadAPI",
     description: "High-performance spreadsheet API service",
   },
-};
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  themeColor: "#502D80",
 };
 
 export default function RootLayout({
