@@ -2,12 +2,25 @@
   "buildCommand": "npm run build",
   "functions": {
     "app/api/getresults/route.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 1024
     },
     "app/api/warm/route.js": {
+      "maxDuration": 10,
+      "memory": 512
+    },
+    "app/api/*/route.js": {
       "maxDuration": 10
     }
   },
+  "regions": ["iad1"],
+  "crons": [{
+    "path": "/api/warm",
+    "schedule": "*/4 * * * *"
+  }, {
+    "path": "/api/getresults?service=ab3202cb-d0af-41af-88ce-7e51f5f6b6d3&interest=5&monthly=100&months=12&starting=1000",
+    "schedule": "*/4 * * * *"
+  }],
   "headers": [
     {
       "source": "/api/(.*)",

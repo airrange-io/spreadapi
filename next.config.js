@@ -2,6 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  poweredByHeader: false,
+  compress: true,
+  
+  // Optimize production builds
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  
   experimental: {
     serverComponentsExternalPackages: [
       'canvas',
@@ -9,6 +19,11 @@ const nextConfig = {
       '@mescius/spread-sheets',
       '@mescius/spread-sheets-tablesheet',
     ],
+    // Optimize package imports
+    optimizePackageImports: ['@mescius/spread-sheets'],
+    // Better memory usage
+    workerThreads: false,
+    cpus: 1,
   },
   webpack: (config, { isServer, nextRuntime }) => {
     // Avoid bundling native modules on the server
