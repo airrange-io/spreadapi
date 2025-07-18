@@ -61,9 +61,16 @@ export default function ServicePage({ params }: ServicePageProps) {
   const [panelSizes, setPanelSizes] = useState<number[]>(getInitialPanelSizes);
 
   // Save panel sizes to localStorage when they change
-  const handlePanelResize = (sizes: number[]) => {
-    setPanelSizes(sizes);
-    localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(sizes));
+  const handlePanelResize = (sizes: (string | number)[]) => {
+    // Convert sizes to numbers (they come as percentages)
+    const numericSizes = sizes.map(size => {
+      if (typeof size === 'string' && size.endsWith('%')) {
+        return parseFloat(size);
+      }
+      return typeof size === 'number' ? size : 50;
+    });
+    setPanelSizes(numericSizes);
+    localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(numericSizes));
   };
 
   // Check if mobile on mount and window resize
@@ -387,14 +394,13 @@ export default function ServicePage({ params }: ServicePageProps) {
         <Splitter
           style={{ height: 'calc(100vh - 64px)' }}
           onResize={handlePanelResize}
-          sizes={panelSizes}
         >
-          <Splitter.Panel>
+          <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
             <div style={{ padding: 24, height: '100%', overflow: 'auto' }}>
               {renderSpreadsheet()}
             </div>
           </Splitter.Panel>
-          <Splitter.Panel min="20%" max="50%">
+          <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
             <div style={{
               height: '100%',
               background: 'white',
