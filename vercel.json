@@ -18,7 +18,7 @@
     "path": "/api/warm",
     "schedule": "*/4 * * * *"
   }, {
-    "path": "/api/getresults?service=ab3202cb-d0af-41af-88ce-7e51f5f6b6d3&interest=5&monthly=100&months=12&starting=1000",
+    "path": "/api/getresults?service=ab3202cb-d0af-41af-88ce-7e51f5f6b6d3&token=hiqelc-b-o&interest=5&monthly=100&months=12&starting=1000",
     "schedule": "*/4 * * * *"
   }],
   "headers": [

@@ -30,7 +30,7 @@ export async function GET(request) {
     // IMPORTANT: Also warm the actual getResults endpoint
     // This ensures the main calculation function stays warm
     try {
-      const warmUrl = `${request.url.replace('/warm', '/getresults')}?service=${POPULAR_APIS[0]}&interest=5&monthly=100&months=12&starting=1000`;
+      const warmUrl = `${request.url.replace('/warm', '/getresults')}?service=${POPULAR_APIS[0]}&token=hiqelc-b-o&interest=5&monthly=100&months=12&starting=1000`;
       await fetch(warmUrl);
     } catch (e) {
       // Ignore errors, just warming
