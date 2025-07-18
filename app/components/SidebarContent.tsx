@@ -58,41 +58,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         try {
           console.log('🔄 Starting logout process...');
 
-          // Use the Hanko logout approach from documentation
-          const hankoApi = process.env.NEXT_PUBLIC_HANKO_API_URL;
-
-          if (hankoApi) {
-            // Import Hanko
-            // const { Hanko } = await import('@teamhanko/hanko-elements');
-            // const hanko = new Hanko(hankoApi);
-
-            // console.log('📤 Calling hanko.user.logout()...');
-            // // Trigger logout
-            // await hanko.user.logout();
-            // console.log('✅ Hanko logout completed');
-
-            // // Clear any stored data thoroughly
-            // if (typeof window !== 'undefined') {
-            //   // Clear Hanko-specific storage
-            //   const storageKeys = Object.keys(localStorage);
-            //   storageKeys.forEach(key => {
-            //     if (key.includes('hanko') || key.includes('auth') || key.includes('token')) {
-            //       localStorage.removeItem(key);
-            //     }
-            //   });
-
-            //   // Clear session storage
-            //   sessionStorage.clear();
-
-            //   // Clear any cookies that might contain session data
-            //   document.cookie.split(";").forEach(function (c) {
-            //     document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-            //   });
-            // }
-
-          } else {
-            console.error('❌ Hanko API URL not found');
-          }
+          // TODO: Implement authentication logout when auth is configured
+          console.log('Logout functionality not yet implemented');
 
           // Update app state after Hanko logout
           console.log('🔄 Updating app state...');

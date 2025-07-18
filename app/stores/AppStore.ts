@@ -74,10 +74,6 @@ class StoreRoot {
     return this._rootStore.user.checkRegistrationStatus();
   };
 
-  // Check if user has active Hanko session
-  async checkHankoSession() {
-    // return this._rootStore.user.checkHankoSession();
-  };
 
 
   toggleSidebar = () => {
@@ -92,24 +88,15 @@ class StoreRoot {
     this._rootStore.ui.setSwitchingView(switching);
   };
 
-  // Create new list via API
-  async createNewList() {
-    // return this._rootStore.lists.createNewList();
-  }
+  // TODO: Implement when API management functionality is ready
+  // async createNewAPI() {
+  //   return this._rootStore.apis.createNewAPI();
+  // }
+  
+  // async deleteAPI(apiId: string) {
+  //   return this._rootStore.apis.deleteAPI(apiId);
+  // }
 
-  // Create new list without updating UI (for direct navigation)
-  async createNewListQuietly() {
-    // return this._rootStore.lists.createNewListQuietly();
-  }
-
-  // Delete list
-  async deleteList(listId: string) {
-    // return this._rootStore.lists.deleteList(listId);
-  }
-
-  getActiveListData = () => {
-    // return this._rootStore.lists.activeListData;
-  };
 
   // Navigation guard methods
   setNavigationGuard = (guard: ((callback: () => void) => boolean) | null) => {

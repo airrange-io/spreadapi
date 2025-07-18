@@ -3,18 +3,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Empty, Typography } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, LockOutlined, UnlockOutlined, ShareAltOutlined, DeleteOutlined, InboxOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography } from 'antd';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import Sidebar from '@/components/Sidebar';
-// Lazy load modals
-// const RegisterModal = React.lazy(() => import('@/components/RegisterModal').then(m => ({ default: m.RegisterModal })));
-// const ProfileModal = React.lazy(() => import('@/components/ProfileModal').then(m => ({ default: m.ProfileModal })));
-// import { RouteTracker } from '@/components/RouteTracker';
-// import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import type { MenuProps } from 'antd';
 
 const { Content } = Layout;
@@ -143,15 +138,7 @@ const ListsPage: React.FC = observer(() => {
 
   return (
     <Layout style={{ height: '100vh' }}>
-      {/* <RouteTracker /> */}
       <Sidebar />
-      {/* <React.Suspense fallback={null}>
-        <RegisterModal />
-        <ProfileModal
-          visible={appStore.showProfileModal}
-          onClose={() => appStore.setShowProfileModal(false)}
-        />
-      </React.Suspense> */}
 
       <Layout
         style={{
@@ -290,7 +277,7 @@ const ListsPage: React.FC = observer(() => {
                     }}
                   >
                     <span style={{ fontSize: '12px' }}>💡</span>
-                    <span>Neu hier? So funktioniert List+</span>
+                    <span>Neu hier? So funktioniert SpreadAPI</span>
                   </a>
                 </div>
               )}
@@ -300,7 +287,6 @@ const ListsPage: React.FC = observer(() => {
           </div>
         </Content>
       </Layout>
-      {/* <PWAInstallPrompt /> */}
     </Layout>
   );
 });
