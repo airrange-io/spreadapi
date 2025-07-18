@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'),
   title: "SpreadAPI | Spreadsheet calculations as a service",
   description: "High-performance spreadsheet API service",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",

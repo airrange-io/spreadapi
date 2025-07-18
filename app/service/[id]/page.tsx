@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout, Button, Drawer, Typography, Space, Upload, Card, message, Spin } from 'antd';
+import { Layout, Button, Drawer, Typography, Space, Upload, Card, message, Spin, Splitter } from 'antd';
 import { InboxOutlined, ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
@@ -40,51 +40,81 @@ export default function ServicePage({ params }: ServicePageProps) {
   });
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Initialize panel sizes from localStorage to prevent flickering
+  const getInitialPanelSizes = (): number[] => {
+    if (typeof window === 'undefined') return [70, 30];
+
+    const savedSizes = localStorage.getItem('spreadapi-panel-sizes');
+    if (savedSizes) {
+      try {
+        const sizes = JSON.parse(savedSizes);
+        if (Array.isArray(sizes) && sizes.length === 2) {
+          return sizes;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved panel sizes');
+      }
+    }
+    return [70, 30]; // Default 70% content, 30% panel
+  };
+
+  const [panelSizes, setPanelSizes] = useState<number[]>(getInitialPanelSizes);
+
+  // Save panel sizes to localStorage when they change
+  const handlePanelResize = (sizes: number[]) => {
+    setPanelSizes(sizes);
+    localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(sizes));
+  };
+
   // Check if mobile on mount and window resize
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
+      const wasMobile = isMobile;
       setIsMobile(mobile);
-      
+
       // Auto-manage drawer visibility based on screen size
       if (!mobile) {
         // Desktop: close drawer (use sider instead)
         setDrawerVisible(false);
+      } else if (mobile && !wasMobile) {
+        // Just became mobile: show drawer
+        setDrawerVisible(true);
       }
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isMobile]);
 
   // Detect changes by comparing current config with saved config
   useEffect(() => {
-    const configChanged = 
+    const configChanged =
       apiConfig.name !== savedConfig.name ||
       apiConfig.description !== savedConfig.description ||
       JSON.stringify(apiConfig.inputs) !== JSON.stringify(savedConfig.inputs) ||
       JSON.stringify(apiConfig.outputs) !== JSON.stringify(savedConfig.outputs);
-    
+
     setHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
 
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
     let mounted = true;
-    
+
     const loadWorkbook = async () => {
       // Skip if component unmounted (prevents double fetch in StrictMode)
       if (!mounted) return;
-      
+
       // Check if this is an existing workbook
       try {
         const response = await fetch(`/api/services/${serviceId}`);
         if (!mounted) return;
-        
+
         if (response.ok) {
           const data = await response.json();
-          
+
           // Load the configuration data
           const loadedConfig = {
             name: data.name || '',
@@ -94,7 +124,7 @@ export default function ServicePage({ params }: ServicePageProps) {
           };
           setApiConfig(loadedConfig);
           setSavedConfig(loadedConfig); // Track the saved state
-          
+
           // Load spreadsheet if exists
           if (data.file) {
             setSpreadsheetData(data.file);
@@ -113,20 +143,28 @@ export default function ServicePage({ params }: ServicePageProps) {
         setSpreadsheetData(file);
         delete (window as any).__draggedFile;
       }
-      
-      setInitialLoading(false); // Mark initial load as complete
+
+      // Add a small delay to ensure smooth loading
+      setTimeout(() => {
+        setInitialLoading(false); // Mark initial load as complete
+
+        // Show drawer on mobile after initial load
+        if (isMobile) {
+          setDrawerVisible(true);
+        }
+      }, 300); // 300ms delay for smoother transition
     };
 
     loadWorkbook();
-    
+
     return () => {
       mounted = false;
     };
-  }, [serviceId]);
+  }, [serviceId, isMobile]);
 
   const handleFileUpload = (info: any) => {
     const { status } = info.file;
-    
+
     if (status === 'done') {
       message.success(`${info.file.name} file uploaded successfully.`);
       // TODO: Process the Excel file and initialize SpreadJS
@@ -160,7 +198,7 @@ export default function ServicePage({ params }: ServicePageProps) {
   const handleSave = async () => {
     try {
       setLoading(true);
-      
+
       // Create the service if it doesn't exist
       const createResponse = await fetch('/api/services', {
         method: 'POST',
@@ -197,7 +235,7 @@ export default function ServicePage({ params }: ServicePageProps) {
       }
 
       message.success('API saved successfully!');
-      
+
       // Update saved state to match current state
       setSavedConfig(apiConfig);
       setHasChanges(false);
@@ -212,10 +250,10 @@ export default function ServicePage({ params }: ServicePageProps) {
   const renderSpreadsheet = () => {
     if (!spreadsheetData) {
       return (
-        <div style={{ 
-          height: '100%', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           background: '#fafafa',
           border: '1px dashed #d9d9d9',
@@ -237,27 +275,27 @@ export default function ServicePage({ params }: ServicePageProps) {
     return (
       <div style={{ height: '100%', position: 'relative' }}>
         {loading && (
-          <div style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: 'rgba(255,255,255,0.9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
           }}>
-            <Spin size="large" />
+            <Spin size="default" />
           </div>
         )}
         <div id="spreadsheet-container" style={{ width: '100%', height: '100%' }}>
           {/* SpreadJS will be mounted here */}
-          <div style={{ 
-            height: '100%', 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             background: '#f0f0f0',
           }}>
@@ -272,17 +310,29 @@ export default function ServicePage({ params }: ServicePageProps) {
     setApiConfig(config);
   }, []);
 
-  const configPanel = initialLoading ? (
-    <div style={{ padding: 24, textAlign: 'center' }}>
-      <Spin />
-    </div>
-  ) : (
-    <ConfigPanel 
-      spreadInstance={spreadInstance} 
+  const configPanel = (
+    <ConfigPanel
+      spreadInstance={spreadInstance}
       onConfigChange={handleConfigChange}
       initialConfig={apiConfig}
     />
   );
+
+  // Show loading spinner until everything is ready
+  if (initialLoading) {
+    return (
+      <Layout style={{ height: '100vh', background: '#f0f2f5' }}>
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Spin size="default" tip="Loading service..." />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout style={{ height: '100vh', background: '#f0f2f5' }}>
@@ -310,7 +360,7 @@ export default function ServicePage({ params }: ServicePageProps) {
             {apiConfig.name || 'Create New API'}
           </Title>
         </Space>
-        
+
         <Space>
           {isMobile && (
             <Button
@@ -333,43 +383,53 @@ export default function ServicePage({ params }: ServicePageProps) {
       </div>
 
       {/* Main Layout */}
-      <Layout>
-        <Content style={{ padding: 24, overflow: 'auto' }}>
-          {renderSpreadsheet()}
-        </Content>
-
-        {/* Desktop Sider */}
-        {!isMobile && (
-          <Sider
-            width={400}
-            style={{
+      {!isMobile ? (
+        <Splitter
+          style={{ height: 'calc(100vh - 64px)' }}
+          onResize={handlePanelResize}
+          sizes={panelSizes}
+        >
+          <Splitter.Panel>
+            <div style={{ padding: 24, height: '100%', overflow: 'auto' }}>
+              {renderSpreadsheet()}
+            </div>
+          </Splitter.Panel>
+          <Splitter.Panel min="20%" max="50%">
+            <div style={{
+              height: '100%',
               background: 'white',
               borderLeft: `1px solid ${COLORS.border}`,
               overflow: 'auto',
-            }}
-          >
-            {configPanel}
-          </Sider>
-        )}
+            }}>
+              {configPanel}
+            </div>
+          </Splitter.Panel>
+        </Splitter>
+      ) : (
+        <Layout>
+          <Content style={{ padding: 24, overflow: 'auto' }}>
+            {renderSpreadsheet()}
+          </Content>
+        </Layout>
+      )}
 
-        {/* Mobile Drawer */}
-        <Drawer
-          title="Configure API"
-          placement="right"
-          onClose={() => setDrawerVisible(false)}
-          open={drawerVisible}
-          width="100%"
-          styles={{
-            body: { padding: 0 },
-            wrapper: {
-              width: '90%',
-              maxWidth: '400px'
-            }
-          }}
-        >
-          {configPanel}
-        </Drawer>
-      </Layout>
+      {/* Mobile Drawer */}
+      <Drawer
+        title="Configure API"
+        placement="right"
+        onClose={() => setDrawerVisible(false)}
+        open={drawerVisible}
+        width="100%"
+        styles={{
+          body: { padding: 0 },
+          wrapper: {
+            width: '90%',
+            maxWidth: '400px'
+          }
+        }}
+      >
+        {configPanel}
+      </Drawer>
     </Layout>
   );
 }

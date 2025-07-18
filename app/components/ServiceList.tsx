@@ -113,8 +113,13 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
+      <div style={{ 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '400px'
+      }}>
+        <Spin size="default" />
       </div>
     );
   }
