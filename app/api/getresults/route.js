@@ -521,8 +521,20 @@ async function getResults(requestInfo) {
 //===============================================
 
 export async function GET(request) {
+  const requestStart = Date.now();
+  const timingSteps = [];
+  
+  const logTiming = (step) => {
+    timingSteps.push({
+      step,
+      elapsed: Date.now() - requestStart
+    });
+  };
+  
   try {
+    logTiming('start');
     const { searchParams } = new URL(request.url);
+    logTiming('url_parsed');
     
     let apiId = searchParams.get('api');
     if (!apiId) apiId = searchParams.get('service');
@@ -590,13 +602,17 @@ export async function GET(request) {
       inputs: inputs,
       options: options,
     };
+    
+    logTiming('request_prepared');
 
     if (outputParameters.length > 0) {
       requestInfo.outputParameters = outputParameters;
     }
 
     try {
+      logTiming('before_getResults');
       let result = await getResults(requestInfo);
+      logTiming('after_getResults');
 
       // Handle errors
       if (!result) {
@@ -607,8 +623,18 @@ export async function GET(request) {
         return NextResponse.json(result, { status: 400 });
       }
 
+      // Add request timing to result
+      if (result && !result.error) {
+        result.requestTimings = {
+          totalRequestTime: Date.now() - requestStart,
+          steps: timingSteps
+        };
+      }
+      
+      logTiming('before_response_creation');
       // Create response with security headers
       const response = NextResponse.json(result);
+      logTiming('after_response_creation');
       response.headers.set('Content-Type', 'application/json');
       response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
       response.headers.set('Pragma', 'no-cache');
