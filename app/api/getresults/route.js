@@ -189,44 +189,23 @@ async function getResults(requestInfo) {
   let inputList = requestInfo.inputs || [];
 
   try {
+    // =====================================
+    // get the api definition
+    // =====================================
     let timeStart = Date.now();
-    let apiDefinition;
-    let spread;
-    let fromProcessCache = false;
-    
-    // =====================================
-    // Try to get from cache first
-    // =====================================
-    if (useCaching) {
-      const cached = await getCachedWorkbook(requestInfo.apiId, null, async () => {});
-      if (cached.fromCache) {
-        // Got everything from cache!
-        apiDefinition = cached.apiDefinition;
-        spread = cached.workbook;
-        fromProcessCache = true;
-        timeApiData = 0; // No API fetch needed
-        console.log(`Cache hit for ${requestInfo.apiId} - skipping API fetch`);
-      }
-    }
-    
-    // =====================================
-    // If not cached, get the api definition
-    // =====================================
+    const apiDefinition = await getApiDefinition(
+      requestInfo.apiId,
+      requestInfo.apiToken
+    );
+    let timeEnd = Date.now();
+    timeApiData = timeEnd - timeStart;
+
     if (!apiDefinition) {
-      const apiStartTime = Date.now();
-      apiDefinition = await getApiDefinition(
-        requestInfo.apiId,
-        requestInfo.apiToken
-      );
-      timeApiData = Date.now() - apiStartTime;
+      return getError("no service found");
+    }
 
-      if (!apiDefinition) {
-        return getError("no service found");
-      }
-
-      if (apiDefinition.error) {
-        return getError(apiDefinition.error);
-      }
+    if (apiDefinition.error) {
+      return getError(apiDefinition.error);
     }
 
     // =====================================
@@ -272,55 +251,57 @@ async function getResults(requestInfo) {
     // =====================================
     // get calculation results
     // =====================================
-    // If we didn't get the workbook from cache, create it now
-    if (!spread) {
-      try {
-        timeStart = Date.now();
-        
-        if (useCaching) {
-          const cacheResult = await getCachedWorkbook(
-            requestInfo.apiId,
-            apiDefinition, // Pass the entire API definition
-            async (workbook) => {
-              // This function only runs if workbook is not cached
-              workbook.fromJSON(fileJson, {
-                calcOnDemand: false,
-                doNotRecalculateAfterLoad: false,
-              });
-              
-              // If there are tables, fetch them during cache initialization
-              if (withTables) {
-                const dataManager = workbook.dataManager();
-                if (dataManager && dataManager.tables) {
-                  const tablePromises = [];
-                  for (const [rowKey, rowObject] of Object.entries(dataManager.tables)) {
-                    const table = rowObject;
-                    const tablePromise = table.fetch(true).catch((err) => {
-                      console.error(`Error fetching table ${rowKey} during cache init:`, err);
-                      return null;
-                    });
-                    tablePromises.push(tablePromise);
-                  }
-                  await Promise.all(tablePromises);
+    let spread;
+    let fromProcessCache = false;
+    let processCacheKey = generateProcessCacheKey(requestInfo.apiId, inputList);
+    
+    try {
+      timeStart = Date.now();
+      
+      // Try to get cached workbook first
+      if (useCaching) {
+        const cacheResult = await getCachedWorkbook(
+          requestInfo.apiId,
+          processCacheKey,
+          async (workbook) => {
+            // This function only runs if workbook is not cached
+            workbook.fromJSON(fileJson, {
+              calcOnDemand: false,
+              doNotRecalculateAfterLoad: false,
+            });
+            
+            // If there are tables, fetch them during cache initialization
+            if (withTables) {
+              const dataManager = workbook.dataManager();
+              if (dataManager && dataManager.tables) {
+                const tablePromises = [];
+                for (const [rowKey, rowObject] of Object.entries(dataManager.tables)) {
+                  const table = rowObject;
+                  const tablePromise = table.fetch(true).catch((err) => {
+                    console.error(`Error fetching table ${rowKey} during cache init:`, err);
+                    return null;
+                  });
+                  tablePromises.push(tablePromise);
                 }
+                await Promise.all(tablePromises);
               }
             }
-          );
-          spread = cacheResult.workbook;
-          // Don't update fromProcessCache here, it's already set correctly above
-        } else {
-          // If caching is disabled, create fresh workbook
-          spread = createWorkbook();
-          spread.fromJSON(fileJson, {
-            calcOnDemand: false,
-            doNotRecalculateAfterLoad: false,
-          });
-        }
-      } catch (spreadError) {
-        console.error("Error creating spreadsheet:", spreadError);
-        console.error("Stack trace:", spreadError.stack);
-        return getError("error initializing calculation engine: " + spreadError.message);
+          }
+        );
+        spread = cacheResult.workbook;
+        fromProcessCache = cacheResult.fromCache;
+      } else {
+        // If caching is disabled, create fresh workbook
+        spread = createWorkbook();
+        spread.fromJSON(fileJson, {
+          calcOnDemand: false,
+          doNotRecalculateAfterLoad: false,
+        });
       }
+    } catch (spreadError) {
+      console.error("Error creating spreadsheet:", spreadError);
+      console.error("Stack trace:", spreadError.stack);
+      return getError("error initializing calculation engine: " + spreadError.message);
     }
 
     let actualSheet = spread.getActiveSheet();
