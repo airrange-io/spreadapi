@@ -24,9 +24,10 @@ export class RootStore {
     
     // Use unified home init endpoint for better performance
     // This endpoint handles both authenticated and unauthenticated users
-    this.initializeHomeData().catch(error => {
-      console.error('[RootStore] Initialization error:', error);
-    });
+    // TODO: Implement when home/init endpoint is available
+    // this.initializeHomeData().catch(error => {
+    //   console.error('[RootStore] Initialization error:', error);
+    // });
   }
 
   // New optimized initialization using unified endpoint

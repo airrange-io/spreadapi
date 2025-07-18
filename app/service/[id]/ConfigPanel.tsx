@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Space, Select, InputNumber, Typography, Empty, Divider, Tag, Collapse } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
@@ -29,13 +29,46 @@ interface OutputDefinition {
 
 interface ConfigPanelProps {
   spreadInstance: any;
+  onConfigChange?: (config: any) => void;
+  initialConfig?: {
+    name: string;
+    description: string;
+    inputs: InputDefinition[];
+    outputs: OutputDefinition[];
+  };
 }
 
-export default function ConfigPanel({ spreadInstance }: ConfigPanelProps) {
-  const [inputs, setInputs] = useState<InputDefinition[]>([]);
-  const [outputs, setOutputs] = useState<OutputDefinition[]>([]);
-  const [apiName, setApiName] = useState('');
-  const [apiDescription, setApiDescription] = useState('');
+export default function ConfigPanel({ spreadInstance, onConfigChange, initialConfig }: ConfigPanelProps) {
+  const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
+  const [outputs, setOutputs] = useState<OutputDefinition[]>(initialConfig?.outputs || []);
+  const [apiName, setApiName] = useState(initialConfig?.name || '');
+  const [apiDescription, setApiDescription] = useState(initialConfig?.description || '');
+
+  // Update state when initialConfig changes (e.g., when loading saved data)
+  useEffect(() => {
+    if (initialConfig) {
+      setApiName(initialConfig.name || '');
+      setApiDescription(initialConfig.description || '');
+      setInputs(initialConfig.inputs || []);
+      setOutputs(initialConfig.outputs || []);
+    }
+  }, [initialConfig?.name, initialConfig?.description]); // Only watch name/description to avoid issues with array references
+
+  // Notify parent of changes - using a timeout to debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (onConfigChange) {
+        onConfigChange({
+          name: apiName,
+          description: apiDescription,
+          inputs,
+          outputs
+        });
+      }
+    }, 300); // Debounce by 300ms
+
+    return () => clearTimeout(timer);
+  }, [apiName, apiDescription, inputs, outputs]); // Removed onConfigChange from dependencies
 
   const addInput = () => {
     const newInput: InputDefinition = {

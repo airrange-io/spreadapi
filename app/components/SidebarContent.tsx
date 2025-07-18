@@ -316,13 +316,16 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               type="primary"
               shape="circle"
               icon={<PlusOutlined />}
-              onClick={() => {
-                if (!appStore.user.isRegistered) {
-                  appStore.setShowRegisterModal(true);
-                  return;
-                }
-                // Navigate to new list creation page
-                router.push('/new-list');
+              onClick={(e) => {
+                e.stopPropagation();
+                // Registration check disabled for development
+                // if (!appStore.user.isRegistered) {
+                //   appStore.setShowRegisterModal(true);
+                //   return;
+                // }
+                // Generate a new service ID and navigate
+                const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                router.push(`/service/${newId}`);
               }}
               size="small"
               style={{
@@ -339,13 +342,16 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => {
-              if (!appStore.user.isRegistered) {
-                appStore.setShowRegisterModal(true);
-                return;
-              }
-              // Navigate to new list creation page
-              router.push('/new-list');
+            onClick={(e) => {
+              e.stopPropagation();
+              // Registration check disabled for development
+              // if (!appStore.user.isRegistered) {
+              //   appStore.setShowRegisterModal(true);
+              //   return;
+              // }
+              // Generate a new service ID and navigate
+              const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+              router.push(`/service/${newId}`);
             }}
             style={{
               width: '100%',

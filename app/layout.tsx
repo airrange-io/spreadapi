@@ -12,10 +12,14 @@ export const metadata: Metadata = {
   description: "High-performance spreadsheet API service",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   themeColor: "#502D80",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "SpreadAPI",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
   formatDetection: {
     telephone: false,

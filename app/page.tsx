@@ -4,12 +4,13 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import Sidebar from '@/components/Sidebar';
+import ServiceList from '@/components/ServiceList';
 import type { MenuProps } from 'antd';
 
 const { Content } = Layout;
@@ -125,8 +126,9 @@ const ListsPage: React.FC = observer(() => {
         // We'll use a global variable temporarily
         (window as any).__draggedFile = file;
 
-        // Navigate to the import wizard with a flag indicating we have a pre-selected file
-        router.push('/new-list?fileDropped=true');
+        // Generate a new service ID and navigate with file flag
+        const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        router.push(`/service/${newId}?fileDropped=true`);
       } catch (error) {
         console.error('Error processing dropped file:', error);
         messageApi.error('Fehler beim Verarbeiten der Datei');
@@ -205,13 +207,19 @@ const ListsPage: React.FC = observer(() => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => {
-                  if (!appStore.user.isRegistered) {
-                    appStore.setShowRegisterModal(true);
-                    return;
-                  }
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  // Registration check disabled for development
+                  // if (!appStore.user.isRegistered) {
+                  //   appStore.setShowRegisterModal(true);
+                  //   return;
+                  // }
 
-                  // setShowNewListPanel(!showNewListPanel);
+                  // Generate a new service ID and navigate
+                  const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                  router.push(`/service/${newId}`);
                 }}
                 className="new-list-button"
               >
@@ -243,9 +251,10 @@ const ListsPage: React.FC = observer(() => {
                 }}
                 className="search-input"
               />
-              <Space direction="vertical" style={{ width: '100%', padding: 10, marginTop: 100 }}>
-                {/* <h2>Tools</h2> */}
-              </Space>
+              {/* Service List */}
+              <div style={{ marginTop: 20 }}>
+                <ServiceList searchQuery={searchQuery} />
+              </div>
               {/* New here? Link - show for users with less than 5 lists */}
               {!searchQuery && appStore.list.length < 5 && (
                 <div style={{
