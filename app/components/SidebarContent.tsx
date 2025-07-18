@@ -36,7 +36,7 @@ interface ListWithSharing {
 export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobile }) => {
   const { message: messageApi } = App.useApp();
   const router = useRouter();
-  const { activeList, sidebarCollapsed, loading } = appStore;
+  const { sidebarCollapsed, loading } = appStore;
   const isClient = useIsClient();
   const isCollapsed = sidebarCollapsed && !isMobile;
 
@@ -130,7 +130,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
 
     // Request navigation with guard check
     appStore.requestNavigation(() => {
-      appStore.setActiveList(listId);
+      // appStore.setActiveList(listId);
       router.push(`/list/${listId}`);
       if (isMobile) {
         appStore.toggleSidebar();
@@ -181,9 +181,9 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
 
   const handleDeleteList = async (listId: string, listName: string) => {
     try {
-      await appStore.deleteList(listId);
-      messageApi.success(`Liste "${listName}" wurde gelöscht`);
-
+      // await appStore.deleteList(listId);
+      messageApi.error('Delete functionality not yet implemented');
+      
       // If we were viewing this list, navigate away
       // if (appStore.activeList === listId) {
       //   router.push('/');
