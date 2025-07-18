@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   poweredByHeader: false,
   compress: true,
   
@@ -12,15 +11,17 @@ const nextConfig = {
     } : false,
   },
   
+  // Server external packages (moved from experimental in Next.js 15)
+  serverExternalPackages: [
+    'canvas',
+    'mock-browser',
+    '@mescius/spread-sheets',
+    '@mescius/spread-sheets-tablesheet',
+  ],
+  
   experimental: {
-    serverComponentsExternalPackages: [
-      'canvas',
-      'mock-browser',
-      '@mescius/spread-sheets',
-      '@mescius/spread-sheets-tablesheet',
-    ],
-    // Optimize package imports
-    optimizePackageImports: ['@mescius/spread-sheets'],
+    // Optimize package imports (removed @mescius packages as they're in serverExternalPackages)
+    optimizePackageImports: ['antd'],
     // Better memory usage
     workerThreads: false,
     cpus: 1,

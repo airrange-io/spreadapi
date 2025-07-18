@@ -6,7 +6,6 @@ import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { Panel } = Collapse;
 
 interface InputDefinition {
   id: string;
@@ -305,16 +304,21 @@ export default function ConfigPanel({ spreadInstance, onConfigChange, initialCon
         </div>
 
         {/* Tips */}
-        <Collapse ghost>
-          <Panel header="Tips" key="1">
-            <Space direction="vertical" size="small">
-              <Text type="secondary">• Click on a cell in the spreadsheet to get its reference</Text>
-              <Text type="secondary">• Use meaningful parameter names (no spaces)</Text>
-              <Text type="secondary">• Set default values for optional inputs</Text>
-              <Text type="secondary">• You can define ranges like A1:A10 for array inputs</Text>
-            </Space>
-          </Panel>
-        </Collapse>
+        <Collapse 
+          ghost
+          items={[{
+            key: '1',
+            label: 'Tips',
+            children: (
+              <Space direction="vertical" size="small">
+                <Text type="secondary">• Click on a cell in the spreadsheet to get its reference</Text>
+                <Text type="secondary">• Use meaningful parameter names (no spaces)</Text>
+                <Text type="secondary">• Set default values for optional inputs</Text>
+                <Text type="secondary">• You can define ranges like A1:A10 for array inputs</Text>
+              </Space>
+            )
+          }]}
+        />
       </Space>
     </div>
   );

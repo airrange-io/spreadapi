@@ -6,7 +6,7 @@ const TEST_USER_ID = 'test1234';
 // GET /api/services/[id] - Get full service data
 export async function GET(request, { params }) {
   try {
-    const serviceId = params.id;
+    const { id: serviceId } = await params;
     
     // Check if user has access to this service
     const summary = await redis.hGet(`user:${TEST_USER_ID}:services`, serviceId);
@@ -46,7 +46,7 @@ export async function GET(request, { params }) {
 // PUT /api/services/[id] - Update service
 export async function PUT(request, { params }) {
   try {
-    const serviceId = params.id;
+    const { id: serviceId } = await params;
     const body = await request.json();
     
     // Check if user has access to this service
