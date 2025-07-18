@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '../../../lib/redis';
 const { getCacheStats } = require('../../../lib/spreadjs-server');
+import { getApiDefinitionCacheStats } from '../../../utils/helperApi';
 
 export async function GET(request) {
   try {
@@ -49,12 +50,25 @@ export async function GET(request) {
       redisCacheInfo.error = redisError.message;
     }
     
+    // Get API definition cache stats if available
+    let apiCacheStats = { error: 'Not implemented' };
+    try {
+      if (typeof getApiDefinitionCacheStats === 'function') {
+        apiCacheStats = getApiDefinitionCacheStats();
+      }
+    } catch (e) {
+      apiCacheStats = { error: e.message };
+    }
+    
     const result = {
       timestamp: new Date().toISOString(),
       processCache: {
-        ...processCacheStats,
-        hitRate: processCacheStats.size > 0 ? 'Not tracked yet' : '0%',
-        estimatedMemoryUsage: Math.round(processCacheStats.size * 0.3) + 'MB' // Assuming ~300KB per workbook
+        workbookCache: {
+          ...processCacheStats,
+          hitRate: processCacheStats.size > 0 ? 'Not tracked yet' : '0%',
+          estimatedMemoryUsage: Math.round(processCacheStats.size * 0.3) + 'MB' // Assuming ~300KB per workbook
+        },
+        apiDefinitionCache: apiCacheStats
       },
       redisCache: redisCacheInfo,
       memory: memoryStats,

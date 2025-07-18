@@ -5,16 +5,29 @@ import { getError } from "../utils/helper";
 const apiDefinitionCache = new Map();
 const API_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
+// Export cache stats for monitoring
+export function getApiDefinitionCacheStats() {
+  return {
+    size: apiDefinitionCache.size,
+    maxSize: 'unlimited',
+    ttlMs: API_CACHE_TTL,
+    ttlMinutes: API_CACHE_TTL / 60 / 1000
+  };
+}
+
 export async function getApiDefinition(apiId, apiToken) {
+  const perfStart = Date.now();
   try {
     // Check process-level cache first
     const cacheKey = `${apiId}:${apiToken || 'no-token'}`;
     const cached = apiDefinitionCache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < API_CACHE_TTL) {
-      console.log(`API definition cache hit for ${apiId}`);
+      const perfEnd = Date.now();
+      console.log(`[CACHE HIT] Process cache for ${apiId} - ${perfEnd - perfStart}ms`);
       return cached.data;
     }
+    console.log(`[CACHE MISS] Process cache for ${apiId}`);
     
     let result;
     const blobBasicUrl = process.env.NEXT_VERCEL_BLOB_URL;
@@ -53,6 +66,9 @@ export async function getApiDefinition(apiId, apiToken) {
     let needsToken = serviceInfo[2] === "true";
     let useCaching = serviceInfo[3] === "true";
     let tokens = serviceInfo[4] ? serviceInfo[4]?.split(",") : [];
+    
+    // Debug logging
+    console.log(`[DEBUG] Service ${apiId} - useCaching from Redis: ${serviceInfo[3]}, evaluated as: ${useCaching}`);
 
     // check the tokens and flags
     if (!apiUrl) {
@@ -75,12 +91,21 @@ export async function getApiDefinition(apiId, apiToken) {
     console.time("fetchData");
     // try to get data from redis first
     if (useCaching) {
+      console.log(`[DEBUG] Checking Redis cache for: cache:blob:${apiId}`);
       try {
         const cacheExists = await redis.exists("cache:blob:" + apiId);
+        console.log(`[DEBUG] Redis cache exists: ${cacheExists}`);
         if (cacheExists) {
           result = await redis.json.get("cache:blob:" + apiId);
           if (result) {
             console.timeEnd("fetchData");
+            // Store in process-level cache before returning
+            apiDefinitionCache.set(cacheKey, {
+              data: result,
+              timestamp: Date.now()
+            });
+            const perfEnd = Date.now();
+            console.log(`[CACHE HIT] Redis cache for ${apiId} - ${perfEnd - perfStart}ms (stored in process cache, size: ${apiDefinitionCache.size})`);
             return result;
           }
         }
@@ -146,7 +171,8 @@ export async function getApiDefinition(apiId, apiToken) {
         data: result,
         timestamp: Date.now()
       });
-      console.log(`Cached API definition for ${apiId} (size: ${apiDefinitionCache.size})`);
+      const perfEnd = Date.now();
+      console.log(`[CACHE MISS] Fetched from blob for ${apiId} - ${perfEnd - perfStart}ms (cached in process & Redis, size: ${apiDefinitionCache.size})`);
     }
 
     return result;
