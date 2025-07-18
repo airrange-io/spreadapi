@@ -1,21 +1,8 @@
 import redis from "../lib/redis";
 import { getError } from "../utils/helper";
 
-// Process-level cache for API definitions
-const apiDefinitionCache = new Map();
-const API_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
 export async function getApiDefinition(apiId, apiToken) {
   try {
-    // Check process-level cache first
-    const cacheKey = `${apiId}:${apiToken || 'no-token'}`;
-    const cached = apiDefinitionCache.get(cacheKey);
-    
-    if (cached && Date.now() - cached.timestamp < API_CACHE_TTL) {
-      console.log(`API definition cache hit for ${apiId}`);
-      return cached.data;
-    }
-    
     let result;
     const blobBasicUrl = process.env.NEXT_VERCEL_BLOB_URL;
     if (!blobBasicUrl) {
@@ -139,15 +126,6 @@ export async function getApiDefinition(apiId, apiToken) {
       }
     }
     console.timeEnd("fetchData");
-
-    // Store in process-level cache
-    if (result && !result.error) {
-      apiDefinitionCache.set(cacheKey, {
-        data: result,
-        timestamp: Date.now()
-      });
-      console.log(`Cached API definition for ${apiId} (size: ${apiDefinitionCache.size})`);
-    }
 
     return result;
   } catch (error) {
