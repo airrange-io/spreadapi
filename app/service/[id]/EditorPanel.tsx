@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, message, Modal, Form, Select, Checkbox } from 'antd';
+import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App } from 'antd';
 import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 
@@ -63,12 +63,17 @@ interface EditorPanelProps {
     description: string;
     inputs: InputDefinition[];
     outputs: OutputDefinition[];
+    enableCaching?: boolean;
+    requireToken?: boolean;
   };
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
   spreadInstance, serviceId, onConfigChange, onImportExcel, initialConfig
 }) => {
+  const { message } = App.useApp();
+  const buttonAreaRef = useRef<HTMLDivElement>(null);
+  const [buttonAreaHeight, setButtonAreaHeight] = useState(0);
   const [activeCard, setActiveCard] = useState<ActiveCard>('detail');
   const [apiName, setApiName] = useState(initialConfig?.name || '');
   const [apiDescription, setApiDescription] = useState(initialConfig?.description || '');
@@ -79,6 +84,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [parameterType, setParameterType] = useState<'input' | 'output'>('input');
   const [selectedCellInfo, setSelectedCellInfo] = useState<any>(null);
   const [currentSelection, setCurrentSelection] = useState<any>(null);
+  const [suggestedParamName, setSuggestedParamName] = useState<string>('');
+  const [enableCaching, setEnableCaching] = useState<boolean>(initialConfig?.enableCaching !== false);
+  const [requireToken, setRequireToken] = useState<boolean>(initialConfig?.requireToken === true);
 
   // Handle card activation
   const handleCardClick = (cardType: ActiveCard) => {
@@ -98,18 +106,43 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           name: apiName,
           description: apiDescription,
           inputs,
-          outputs
+          outputs,
+          enableCaching,
+          requireToken
         });
       }
       setSaveStatus('saved');
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [apiName, apiDescription, inputs, outputs]);
+  }, [apiName, apiDescription, inputs, outputs, enableCaching, requireToken]);
 
-  // Monitor selection changes
+  // Measure button area height
   useEffect(() => {
-    if (spreadInstance && activeCard === 'parameters') {
+    const measureButtonArea = () => {
+      if (buttonAreaRef.current) {
+        setButtonAreaHeight(buttonAreaRef.current.offsetHeight);
+      }
+    };
+
+    measureButtonArea();
+    window.addEventListener('resize', measureButtonArea);
+    
+    // Observe for content changes
+    const observer = new ResizeObserver(measureButtonArea);
+    if (buttonAreaRef.current) {
+      observer.observe(buttonAreaRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', measureButtonArea);
+      observer.disconnect();
+    };
+  }, [spreadInstance, currentSelection]);
+
+  // Monitor selection changes (always active since button is always visible)
+  useEffect(() => {
+    if (spreadInstance) {
       const handleSelectionChanged = () => {
         try {
           const sheet = spreadInstance.getActiveSheet();
@@ -125,6 +158,63 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 hasFormula = sheet.hasFormula(selection.row, selection.col);
               }
               
+              // Try to guess parameter name from adjacent cells
+              let suggestedName = '';
+              try {
+                if (isSingleCell) {
+                  // Check cell to the left (same row, col-1)
+                  if (selection.col > 0) {
+                    const leftCell = sheet.getCell(selection.row, selection.col - 1);
+                    const leftValue = leftCell.value();
+                    if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
+                      suggestedName = leftValue.trim();
+                    }
+                  }
+                  
+                  // If no name found on left, check cell above (row-1, same col)
+                  if (!suggestedName && selection.row > 0) {
+                    const aboveCell = sheet.getCell(selection.row - 1, selection.col);
+                    const aboveValue = aboveCell.value();
+                    if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
+                      suggestedName = aboveValue.trim();
+                    }
+                  }
+                } else {
+                  // For ranges, check the cell to the left of the first cell in the range
+                  if (selection.col > 0) {
+                    const leftCell = sheet.getCell(selection.row, selection.col - 1);
+                    const leftValue = leftCell.value();
+                    if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
+                      suggestedName = leftValue.trim();
+                    }
+                  }
+                  
+                  // If no name found, check above the first cell
+                  if (!suggestedName && selection.row > 0) {
+                    const aboveCell = sheet.getCell(selection.row - 1, selection.col);
+                    const aboveValue = aboveCell.value();
+                    if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
+                      suggestedName = aboveValue.trim();
+                    }
+                  }
+                }
+                
+                // Clean the suggested name to be URL parameter safe
+                if (suggestedName) {
+                  suggestedName = suggestedName.toLowerCase()
+                    .replace(/[\s-]+/g, '_')
+                    .replace(/[^a-z0-9_]/g, '')
+                    .replace(/^_+|_+$/g, '')
+                    .replace(/^(\d)/, '_$1');
+                  
+                  if (!suggestedName || suggestedName.match(/^_*$/)) {
+                    suggestedName = '';
+                  }
+                }
+              } catch (e) {
+                console.error('Error getting adjacent cell values:', e);
+              }
+              
               setCurrentSelection({
                 row: selection.row,
                 col: selection.col,
@@ -134,6 +224,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 hasFormula,
                 isRange: !isSingleCell
               });
+              setSuggestedParamName(suggestedName);
             }
           }
         } catch (e) {
@@ -179,7 +270,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         clearInterval(checkInterval);
       };
     }
-  }, [spreadInstance, activeCard]);
+  }, [spreadInstance]);
 
   // Helper function to get cell address from row/col
   const getCellAddress = (row: number, col: number) => {
@@ -233,6 +324,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     if (!spreadInstance) {
       message.warning('Spreadsheet not initialized');
       return;
+    }
+
+    // Switch to parameters section if not already there
+    if (activeCard !== 'parameters') {
+      setActiveCard('parameters');
     }
 
     // SpreadJS Workbook should have getActiveSheet method even if minified
@@ -303,48 +399,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       }
     }
     
-    // Try to guess parameter name from adjacent cells
-    let suggestedName = '';
-    try {
-      // Check cell to the left (same row, col-1)
-      if (selection.col > 0) {
-        const leftCell = sheet.getCell(selection.row, selection.col - 1);
-        const leftValue = leftCell.value();
-        if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
-          suggestedName = leftValue.trim();
-        }
-      }
-      
-      // If no name found on left, check cell above (row-1, same col)
-      if (!suggestedName && selection.row > 0) {
-        const aboveCell = sheet.getCell(selection.row - 1, selection.col);
-        const aboveValue = aboveCell.value();
-        if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
-          suggestedName = aboveValue.trim();
-        }
-      }
-      
-      // Clean the suggested name to be URL parameter safe
-      if (suggestedName) {
-        // Convert to lowercase, replace spaces with underscores
-        suggestedName = suggestedName.toLowerCase()
-          // Replace spaces and dashes with underscores
-          .replace(/[\s-]+/g, '_')
-          // Remove all non-alphanumeric characters except underscores
-          .replace(/[^a-z0-9_]/g, '')
-          // Remove leading/trailing underscores
-          .replace(/^_+|_+$/g, '')
-          // Ensure it doesn't start with a number
-          .replace(/^(\d)/, '_$1');
-        
-        // If the name is now empty or just underscores, clear it
-        if (!suggestedName || suggestedName.match(/^_*$/)) {
-          suggestedName = '';
-        }
-      }
-    } catch (e) {
-      console.error('Error getting adjacent cell values:', e);
-    }
+    // Use the pre-calculated suggested name from the selection monitoring
+    const suggestedName = suggestedParamName;
     
     setSelectedCellInfo({
       address: cellAddress,
@@ -411,7 +467,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         value: selectedCellInfo.value,
         direction: 'input',
         mandatory: values.mandatory !== false,
-        ...(values.description && { description: values.description })
+        ...(values.description && { description: values.description }),
+        ...(values.min !== undefined && values.min !== '' && { min: parseFloat(values.min) }),
+        ...(values.max !== undefined && values.max !== '' && { max: parseFloat(values.max) })
       };
       setInputs([...inputs, newParam]);
     } else {
@@ -483,14 +541,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   return (
     <div style={{
-      padding: '12px',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      paddingBottom: '16px'
+      overflow: 'hidden'
     }}>
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {/* First Row: Records, Analytics, Workflows, Columns */}
+      {/* Fixed header with cards */}
+      <div style={{ 
+        padding: '12px',
+        flex: '0 0 auto'
+      }}>
         <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
 
           <Card
@@ -525,9 +585,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           >
             <Statistic
               title="Parameters"
-              value={"---"}
+              value={inputs.length + outputs.length}
               prefix={<NodeIndexOutlined />}
               valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
+              suffix={
+                <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+                  {inputs.length > 0 || outputs.length > 0 ? `(${inputs.length}/${outputs.length})` : ''}
+                </span>
+              }
             />
           </Card>
 
@@ -549,18 +614,22 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               valueStyle={getStatisticValueStyle('endpoint', '#4F2D7F')}
             />
           </Card>
-
         </div>
+      </div>
 
+      {/* Scrollable content area */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: '0 12px',
+        paddingBottom: buttonAreaHeight + 12,
+        minHeight: 0
+      }}>
         {/* Active Card Detail Areas or Default AI Area */}
         {activeCard ? (
           <div style={{
-            marginTop: '12px',
-            padding: '0px',
-            flex: 1,
             display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0
+            flexDirection: 'column'
           }}>
             {/* Header with close button and optional actions */}
             {/* <div style={{
@@ -606,6 +675,31 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 </div>
 
                 <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>API Configuration</strong></div>
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Checkbox 
+                      checked={enableCaching}
+                      onChange={(e) => setEnableCaching(e.target.checked)}
+                    >
+                      Enable response caching
+                    </Checkbox>
+                    <div style={{ marginLeft: '24px', fontSize: '12px', color: '#666', marginTop: '-8px' }}>
+                      Cache API responses for improved performance
+                    </div>
+                    
+                    <Checkbox 
+                      checked={requireToken}
+                      onChange={(e) => setRequireToken(e.target.checked)}
+                    >
+                      Require authentication token
+                    </Checkbox>
+                    <div style={{ marginLeft: '24px', fontSize: '12px', color: '#666', marginTop: '-8px' }}>
+                      API calls must include a valid token parameter
+                    </div>
+                  </Space>
+                </div>
+
+                <div style={{ marginTop: '16px' }}>
                   <div style={{ marginBottom: '8px' }}><strong>Import Data</strong></div>
                   <Upload
                     accept=".xlsx,.xls"
@@ -633,32 +727,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
               <Space direction="vertical" style={{ width: '100%' }}>
-                {(() => {
-                  const buttonInfo = getAddButtonInfo();
-                  return (
-                    <div style={{ marginBottom: '16px' }}>
-                      <Button 
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        style={{ width: '100%' }}
-                        onClick={handleAddFromSelection}
-                        disabled={buttonInfo.disabled || !spreadInstance}
-                      >
-                        {buttonInfo.text}
-                      </Button>
-                      {!spreadInstance && (
-                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
-                          Waiting for spreadsheet to load...
-                        </div>
-                      )}
-                      {spreadInstance && !currentSelection && (
-                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
-                          Select a cell or range in the spreadsheet
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
 
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Input Parameters</strong></div>
@@ -683,6 +751,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               <div>
                                 <strong>{input.name}</strong> ({input.type})
                                 {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
+                                {(input.min !== undefined || input.max !== undefined) && (
+                                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                    {input.min !== undefined && `Min: ${input.min}`}
+                                    {input.min !== undefined && input.max !== undefined && ' • '}
+                                    {input.max !== undefined && `Max: ${input.max}`}
+                                  </div>
+                                )}
                               </div>
                               <Button 
                                 size="small" 
@@ -822,7 +897,44 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             /> */}
           </div>
         )}
+      </div>
 
+      {/* Fixed button at bottom */}
+      <div 
+        ref={buttonAreaRef}
+        style={{
+          padding: '12px',
+          background: 'white',
+          borderTop: '1px solid #f0f0f0',
+          boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
+          flex: '0 0 auto'
+        }}>
+        {(() => {
+          const buttonInfo = getAddButtonInfo();
+          return (
+            <>
+              <Button 
+                type="primary"
+                icon={<PlusOutlined />}
+                style={{ width: '100%' }}
+                onClick={handleAddFromSelection}
+                disabled={buttonInfo.disabled || !spreadInstance}
+              >
+                {buttonInfo.text}
+              </Button>
+              {!spreadInstance && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                  Waiting for spreadsheet to load...
+                </div>
+              )}
+              {spreadInstance && !currentSelection && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                  Select a cell or range in the spreadsheet
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Add Parameter Modal */}
@@ -833,10 +945,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         footer={null}
       >
         <Form
+          key={`${selectedCellInfo?.address}-${Date.now()}`} // Force form to reinitialize
           layout="vertical"
           onFinish={handleAddParameter}
           initialValues={{
-            name: selectedCellInfo?.suggestedName || '',
+            name: suggestedParamName || '',
             dataType: selectedCellInfo?.detectedDataType || 'string'
           }}
         >
@@ -867,13 +980,41 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           </Form.Item>
 
           {parameterType === 'input' && (
-            <Form.Item
-              name="mandatory"
-              valuePropName="checked"
-              initialValue={true}
-            >
-              <Checkbox>Mandatory parameter</Checkbox>
-            </Form.Item>
+            <>
+              <Form.Item
+                name="mandatory"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Checkbox>Mandatory parameter</Checkbox>
+              </Form.Item>
+
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
+              >
+                {({ getFieldValue }) =>
+                  getFieldValue('dataType') === 'number' ? (
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <Form.Item
+                        label="Min Value"
+                        name="min"
+                        style={{ flex: 1 }}
+                      >
+                        <Input type="number" placeholder="Optional" />
+                      </Form.Item>
+                      <Form.Item
+                        label="Max Value"
+                        name="max"
+                        style={{ flex: 1 }}
+                      >
+                        <Input type="number" placeholder="Optional" />
+                      </Form.Item>
+                    </div>
+                  ) : null
+                }
+              </Form.Item>
+            </>
           )}
 
           <Form.Item style={{ marginBottom: 8 }}>

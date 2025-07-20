@@ -8,6 +8,7 @@ import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
+import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
 const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
@@ -45,13 +46,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     name: '',
     description: '',
     inputs: [],
-    outputs: []
+    outputs: [],
+    enableCaching: true,
+    requireToken: false
   });
   const [savedConfig, setSavedConfig] = useState({
     name: '',
     description: '',
     inputs: [],
-    outputs: []
+    outputs: [],
+    enableCaching: true,
+    requireToken: false
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -166,7 +171,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       apiConfig.name !== savedConfig.name ||
       apiConfig.description !== savedConfig.description ||
       JSON.stringify(apiConfig.inputs) !== JSON.stringify(savedConfig.inputs) ||
-      JSON.stringify(apiConfig.outputs) !== JSON.stringify(savedConfig.outputs);
+      JSON.stringify(apiConfig.outputs) !== JSON.stringify(savedConfig.outputs) ||
+      apiConfig.enableCaching !== savedConfig.enableCaching ||
+      apiConfig.requireToken !== savedConfig.requireToken;
 
     setHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
@@ -193,7 +200,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             name: data.name || '',
             description: data.description || '',
             inputs: data.inputs || [],
-            outputs: data.outputs || []
+            outputs: data.outputs || [],
+            enableCaching: data.enableCaching !== false,
+            requireToken: data.requireToken === true
           };
           setApiConfig(loadedConfig);
           setSavedConfig(loadedConfig); // Track the saved state
@@ -278,10 +287,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             name: automaticName,
             description: '',
             inputs: [],
-            outputs: []
+            outputs: [],
+            enableCaching: true,
+            requireToken: false
           };
           setApiConfig(newConfig);
-          setSavedConfig({ name: '', description: '', inputs: [], outputs: [] }); // Track as unsaved
+          setSavedConfig({ name: '', description: '', inputs: [], outputs: [], enableCaching: true, requireToken: false }); // Track as unsaved
           setHasChanges(true); // Mark as having changes so user can save
 
           setDefaultSpreadsheetData();
@@ -395,6 +406,56 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     e.stopPropagation();
     console.log('Back button clicked');
     router.push('/');
+  };
+
+  const handlePublish = async () => {
+    try {
+      // First ensure everything is saved
+      if (hasChanges) {
+        message.warning('Please save your changes before publishing');
+        return;
+      }
+
+      if (!spreadInstance) {
+        message.error('Spreadsheet not loaded');
+        return;
+      }
+
+      if (apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0) {
+        message.error('Please define at least one input and one output parameter');
+        return;
+      }
+
+      setLoading(true);
+      message.info('Preparing service for publishing...');
+
+      // Prepare the publish data
+      const publishData = await prepareServiceForPublish(
+        spreadInstance,
+        apiConfig,
+        {
+          enableCaching: apiConfig.enableCaching,
+          requireToken: apiConfig.requireToken,
+          tokens: [] // Will add token management later
+        }
+      );
+
+      // Publish the service
+      const result = await publishService(serviceId, publishData);
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      message.success('Service published successfully!');
+      console.log('Publish result:', result);
+
+    } catch (error) {
+      console.error('Error publishing service:', error);
+      message.error('Failed to publish service: ' + (error.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -685,10 +746,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }
 
   return (
-    <Layout style={{ height: '100vh' }}>
+    <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{
+        minHeight: 56,
         height: 56,
+        flexShrink: 0,
         background: 'white',
         padding: 0,
         paddingLeft: 8,
@@ -735,36 +798,48 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           >
             {savingWorkbook ? 'Saving Workbook...' : 'Save API'}
           </Button>
+          <Button
+            type="default"
+            onClick={handlePublish}
+            loading={loading}
+            disabled={hasChanges || apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0}
+          >
+            Publish API
+          </Button>
         </Space>
       </div>
 
       {/* Main Layout */}
-      {!isMobile ? (
-        <Splitter
-          style={{ height: 'calc(100vh - 56px)' }}
-          onResize={handlePanelResize}
-        >
-          <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
-            {renderSpreadsheet}
-          </Splitter.Panel>
-          <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
-            <div style={{
-              height: '100%',
-              background: 'white',
-              // borderLeft: `1px solid ${COLORS.border}`,
-              overflow: 'auto',
-            }}>
-              {configPanel}
-            </div>
-          </Splitter.Panel>
-        </Splitter>
-      ) : (
-        <Layout>
-          <Content style={{ overflow: 'auto' }}>
-            {renderSpreadsheet}
-          </Content>
-        </Layout>
-      )}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
+        {!isMobile ? (
+          <Splitter
+            style={{ height: '100%' }}
+            onResize={handlePanelResize}
+          >
+            <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
+              {renderSpreadsheet}
+            </Splitter.Panel>
+            <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
+              <div style={{
+                height: '100%',
+                background: 'white',
+                // borderLeft: `1px solid ${COLORS.border}`,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                {configPanel}
+              </div>
+            </Splitter.Panel>
+          </Splitter>
+        ) : (
+          <Layout style={{ height: '100%', overflow: 'auto' }}>
+            <Content style={{ overflow: 'auto' }}>
+              {renderSpreadsheet}
+            </Content>
+          </Layout>
+        )}
+      </div>
 
       {/* Mobile Drawer */}
       <Drawer
