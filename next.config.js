@@ -17,6 +17,18 @@ const nextConfig = {
     'mock-browser',
     '@mescius/spread-sheets',
     '@mescius/spread-sheets-tablesheet',
+    '@mescius/spread-sheets-charts',
+    '@mescius/spread-sheets-shapes',
+    '@mescius/spread-sheets-slicers',
+    '@mescius/spread-sheets-designer',
+    '@mescius/spread-sheets-designer-react',
+    '@mescius/spread-sheets-designer-resources-en',
+    '@mescius/spread-sheets-formula-panel',
+    '@mescius/spread-sheets-barcode',
+    '@mescius/spread-sheets-languagepackages',
+    '@mescius/spread-sheets-print',
+    '@mescius/spread-sheets-pdf',
+    '@mescius/spread-sheets-io',
   ],
   
   experimental: {

@@ -152,7 +152,7 @@ const ListsPage: React.FC = observer(() => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <Content style={{ background: '#fdfdfd', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Content style={{ background: '#ffffff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {/* Drag and drop overlay */}
           {isDragging && (
             <div
@@ -230,7 +230,7 @@ const ListsPage: React.FC = observer(() => {
           </div>
 
           {/* Main content */}
-          <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, background: '#ffffff', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Page Title and Search */}
             <div style={{ marginTop: '10px', marginBottom: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
 

@@ -1,21 +1,49 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout, Button, Drawer, Typography, Space, Upload, Card, message, Spin, Splitter, Breadcrumb } from 'antd';
-import { InboxOutlined, ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
+import { Layout, Button, Drawer, Typography, Space, Upload, message, Spin, Splitter, Breadcrumb } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
-import ConfigPanel from './ConfigPanel';
+import EditorPanel from './EditorPanel';
+import StatusBar from './StatusBar';
+import dynamic from 'next/dynamic';
+
+// Dynamically import WorkbookViewer to avoid SSR issues
+const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => ({ default: mod.WorkbookViewer })), {
+  ssr: false,
+  loading: () => (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <Spin size="default" />
+    </div>
+  )
+});
 
 const { Content, Sider } = Layout;
-const { Title, Text } = Typography;
-const { Dragger } = Upload;
+// const { Title, Text } = Typography;
+// const { Dragger } = Upload;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [spreadsheetData, setSpreadsheetData] = useState<any>(null);
+  const [spreadsheetData, setSpreadsheetData] = useState<any>({
+    version: "18.0.7",
+    sheets: {
+      Sheet1: {
+        name: "Sheet1",
+        isSelected: true,
+        rowCount: 100,
+        columnCount: 26
+      }
+    }
+  });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
@@ -140,7 +168,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Check for pre-uploaded file from drag & drop
       if (typeof window !== 'undefined' && (window as any).__draggedFile) {
         const file = (window as any).__draggedFile;
-        setSpreadsheetData(file);
+
+        // Process the dragged file
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const arrayBuffer = e.target?.result;
+          if (arrayBuffer) {
+            setSpreadsheetData({
+              type: 'excel',
+              data: arrayBuffer,
+              fileName: file.name
+            });
+          }
+        };
+        reader.readAsArrayBuffer(file);
+
         delete (window as any).__draggedFile;
       }
 
@@ -162,13 +204,36 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     };
   }, [serviceId, isMobile]);
 
-  const handleFileUpload = (info: any) => {
-    const { status } = info.file;
+  const handleFileUpload = async (info: any) => {
+    const { status, originFileObj } = info.file;
 
     if (status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully.`);
-      // TODO: Process the Excel file and initialize SpreadJS
-      setSpreadsheetData(info.file);
+      try {
+        // Read the file content
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target?.result;
+            if (arrayBuffer) {
+              // For Excel files, we'll pass the array buffer to WorkbookViewer
+              // It will handle the import internally
+              setSpreadsheetData({
+                type: 'excel',
+                data: arrayBuffer,
+                fileName: info.file.name
+              });
+              message.success(`${info.file.name} loaded successfully.`);
+            }
+          } catch (error) {
+            console.error('Error processing file:', error);
+            message.error('Failed to process the file');
+          }
+        };
+        reader.readAsArrayBuffer(originFileObj);
+      } catch (error) {
+        console.error('Error reading file:', error);
+        message.error('Failed to read the file');
+      }
     } else if (status === 'error') {
       message.error(`${info.file.name} file upload failed.`);
     }
@@ -247,31 +312,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
-  const renderSpreadsheet = () => {
-    if (!spreadsheetData) {
-      return (
-        <div style={{
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#fafafa',
-          border: '1px dashed #d9d9d9',
-          borderRadius: '8px',
-        }}>
-          <Dragger {...uploadProps} style={{ maxWidth: 400 }}>
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined style={{ fontSize: 48, color: COLORS.primary }} />
-            </p>
-            <p className="ant-upload-text">Click or drag Excel file to this area</p>
-            <p className="ant-upload-hint">
-              Support for .xlsx, .xls, and .csv files
-            </p>
-          </Dragger>
-        </div>
-      );
-    }
+  // Handle zoom level changes
+  const handleZoomChange = useCallback((newZoom: number) => {
+    // setZoomLevel(newZoom);
+    // // For TableSheet, use the sheetRef directly
+    // if (sheetRef.current) {
+    //   sheetRef.current.zoom(newZoom / 100);
+    // } else if (spreadRef.current) {
+    //   // Fallback to getting sheet by name for TableSheet
+    //   const sheet = spreadRef.current.getSheetFromName("Data");
+    //   if (sheet) {
+    //     sheet.zoom(newZoom / 100);
+    //   }
+    // }
+  }, []);
 
+
+  const renderSpreadsheet = () => {
     return (
       <div style={{ height: '100%', position: 'relative' }}>
         {loading && (
@@ -281,7 +338,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(255,255,255,0.9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -290,18 +346,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             <Spin size="default" />
           </div>
         )}
-        <div id="spreadsheet-container" style={{ width: '100%', height: '100%' }}>
-          {/* SpreadJS will be mounted here */}
-          <div style={{
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#f0f0f0',
-          }}>
-            <Text type="secondary">Spreadsheet viewer will be displayed here</Text>
-          </div>
-        </div>
+        <WorkbookViewer
+          storeLocal={{ spread: spreadsheetData }}
+          readOnly={false}
+          workbookLayout="default"
+          actionHandlerProc={(action, data) => {
+            console.log('Workbook action:', action, data);
+            if (action === 'spread-changed' || action === 'designer-initialized') {
+              setSpreadInstance(data);
+            }
+          }}
+          createNewShareProc={(selection) => {
+            console.log('Share selection:', selection);
+          }}
+        />
       </div>
     );
   };
@@ -311,7 +369,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, []);
 
   const configPanel = (
-    <ConfigPanel
+    <EditorPanel
       spreadInstance={spreadInstance}
       onConfigChange={handleConfigChange}
       initialConfig={apiConfig}
@@ -321,7 +379,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Show loading spinner until everything is ready
   if (initialLoading) {
     return (
-      <Layout style={{ height: '100vh', background: '#f0f2f5' }}>
+      <Layout style={{ height: '100vh' }}>
         <div style={{
           height: '100vh',
           display: 'flex',
@@ -335,17 +393,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }
 
   return (
-    <Layout style={{ height: '100vh', background: '#f0f2f5' }}>
+    <Layout style={{ height: '100vh' }}>
       {/* Header */}
       <div style={{
-        height: 64,
+        height: 56,
         background: 'white',
-        borderBottom: `1px solid ${COLORS.border}`,
-        padding: '0 24px',
+        padding: 0,
+        paddingLeft: 8,
+        paddingRight: 12,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        borderBottom: `1px solid ${COLORS.border}`,
       }}>
         <Space size="small" align="center">
           <Button
@@ -390,19 +449,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       {/* Main Layout */}
       {!isMobile ? (
         <Splitter
-          style={{ height: 'calc(100vh - 64px)' }}
+          style={{ height: 'calc(100vh - 56px)' }}
           onResize={handlePanelResize}
         >
           <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
-            <div style={{ padding: 24, height: '100%', overflow: 'auto' }}>
-              {renderSpreadsheet()}
-            </div>
+            {renderSpreadsheet()}
           </Splitter.Panel>
           <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
             <div style={{
               height: '100%',
               background: 'white',
-              borderLeft: `1px solid ${COLORS.border}`,
+              // borderLeft: `1px solid ${COLORS.border}`,
               overflow: 'auto',
             }}>
               {configPanel}
@@ -411,7 +468,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         </Splitter>
       ) : (
         <Layout>
-          <Content style={{ padding: 24, overflow: 'auto' }}>
+          <Content style={{ overflow: 'auto' }}>
             {renderSpreadsheet()}
           </Content>
         </Layout>
@@ -434,6 +491,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       >
         {configPanel}
       </Drawer>
+      {/* Status Bar */}
+      <StatusBar
+        recordCount={0}
+        selectedCount={0}
+        zoomLevel={1}
+        onZoomChange={handleZoomChange}
+      />
     </Layout>
   );
 }

@@ -29,7 +29,7 @@ export const SubPageLayout: React.FC<SubPageLayoutProps> = ({
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#fdfdfd' }}>
+    <Layout style={{ minHeight: '100vh' }}>
       <Content style={{ padding: 0 }}>
         {/* Header with back button */}
         <div
