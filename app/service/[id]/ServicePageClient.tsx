@@ -91,17 +91,50 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   };
 
   const setDefaultSpreadsheetData = () => {
-    setSpreadsheetData({
+    // Create a proper empty workbook structure that matches SpreadJS format
+    const emptyWorkbook = {
       version: "18.0.7",
+      sheetCount: 1,
+      activeSheetIndex: 0,
       sheets: {
         Sheet1: {
           name: "Sheet1",
           isSelected: true,
-          rowCount: 100,
-          columnCount: 26
+          activeRow: 0,
+          activeCol: 0,
+          rowCount: 200,
+          columnCount: 20,
+          theme: "Office",
+          data: {
+            dataTable: {}
+          },
+          rowHeaderData: {},
+          colHeaderData: {},
+          selections: {
+            0: {
+              row: 0,
+              col: 0,
+              rowCount: 1,
+              colCount: 1
+            },
+            length: 1
+          },
+          defaults: {
+            colHeaderRowHeight: 20,
+            colWidth: 64,
+            rowHeaderColWidth: 40,
+            rowHeight: 20
+          },
+          index: 0
         }
-      }
-    });
+      },
+      namedStyles: {},
+      names: {},
+      customLists: []
+    };
+    
+    console.log('Setting default empty workbook');
+    setSpreadsheetData(emptyWorkbook);
   };
 
   // Check if mobile on mount and window resize
@@ -179,6 +212,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   hasData: !!workbookResult.workbookData,
                   type: typeof workbookResult.workbookData
                 });
+              } else if (workbookResult.error === 'No workbook found for this service') {
+                // No workbook exists yet, check legacy or set default
+                if (data.file) {
+                  setSpreadsheetData(data.file);
+                  console.log('Workbook loaded from legacy storage');
+                } else {
+                  setDefaultSpreadsheetData();
+                  console.log('No workbook found, using default');
+                }
               }
             } else {
               // Check legacy file data in Redis
@@ -232,8 +274,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         delete (window as any).__draggedFile;
       }
 
-      // Mark initial load as complete immediately
-      setInitialLoading(false);
+      // Initial loading will be handled in a separate effect
 
       // Show drawer on mobile after initial load
       if (isMobile) {
@@ -247,6 +288,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       mounted = false;
     };
   }, [serviceId, isMobile]);
+
+  // Handle initial loading state based on spreadsheet data
+  useEffect(() => {
+    if (spreadsheetData !== null) {
+      setInitialLoading(false);
+    }
+  }, [spreadsheetData]);
 
   const handleFileUpload = async (info: any) => {
     const { status, originFileObj } = info.file;
@@ -319,7 +367,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         } else {
           console.log('Got workbook data:', { 
             hasData: !!workbookData,
-            sheetCount: workbookData.sheets ? Object.keys(workbookData.sheets).length : 0
+            sheetCount: workbookData.sheets ? Object.keys(workbookData.sheets).length : 0,
+            sheetNames: workbookData.sheets ? Object.keys(workbookData.sheets) : [],
+            version: workbookData.version
           });
         }
       } else {
@@ -437,7 +487,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           justifyContent: 'center',
           background: '#f5f5f5'
         }}>
-          <Spin size="default" tip="Loading workbook..." />
+          <Spin size="default" />
         </div>
       );
     }
