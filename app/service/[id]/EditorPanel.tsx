@@ -1,20 +1,40 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, message, Modal, Form, Select } from 'antd';
+import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, message, Modal, Form, Select, Checkbox } from 'antd';
 import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 
 const { Title, Text } = Typography;
 
+// Declare GC namespace for TypeScript
+declare global {
+  interface Window {
+    GC?: {
+      Spread?: {
+        Sheets?: {
+          Events?: {
+            SelectionChanged?: string;
+          };
+        };
+      };
+    };
+  }
+}
+
 type ActiveCard = 'detail' | 'parameters' | 'endpoint' | null;
 
 interface InputDefinition {
   id: string;
+  address: string; // Full address like "Savings!D4"
   name: string;
-  cell: string;
+  alias: string; // URL-safe name
+  row: number;
+  col: number;
   type: 'number' | 'string' | 'boolean';
-  defaultValue?: any;
+  value?: any;
+  direction: 'input';
+  mandatory?: boolean;
   min?: number;
   max?: number;
   description?: string;
@@ -22,9 +42,14 @@ interface InputDefinition {
 
 interface OutputDefinition {
   id: string;
+  address: string; // Full address like "Savings!D9"
   name: string;
-  cell: string;
+  alias: string; // URL-safe name
+  row: number;
+  col: number;
   type: 'number' | 'string' | 'boolean';
+  value?: any;
+  direction: 'output';
   description?: string;
 }
 
@@ -85,34 +110,74 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Monitor selection changes
   useEffect(() => {
     if (spreadInstance && activeCard === 'parameters') {
-      try {
-        const sheet = spreadInstance.getActiveSheet();
-        if (sheet) {
-          // Get current selection
-          const selections = sheet.getSelections();
-          if (selections && selections.length > 0) {
-            const selection = selections[0];
-            const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
-            let hasFormula = false;
-            
-            if (isSingleCell) {
-              hasFormula = sheet.hasFormula(selection.row, selection.col);
+      const handleSelectionChanged = () => {
+        try {
+          const sheet = spreadInstance.getActiveSheet();
+          if (sheet) {
+            // Get current selection
+            const selections = sheet.getSelections();
+            if (selections && selections.length > 0) {
+              const selection = selections[0];
+              const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
+              let hasFormula = false;
+              
+              if (isSingleCell) {
+                hasFormula = sheet.hasFormula(selection.row, selection.col);
+              }
+              
+              setCurrentSelection({
+                row: selection.row,
+                col: selection.col,
+                rowCount: selection.rowCount,
+                colCount: selection.colCount,
+                isSingleCell,
+                hasFormula,
+                isRange: !isSingleCell
+              });
             }
-            
-            setCurrentSelection({
-              row: selection.row,
-              col: selection.col,
-              rowCount: selection.rowCount,
-              colCount: selection.colCount,
-              isSingleCell,
-              hasFormula,
-              isRange: !isSingleCell
-            });
           }
+        } catch (e) {
+          console.error('Error checking selection:', e);
         }
-      } catch (e) {
-        console.error('Error checking selection:', e);
-      }
+      };
+
+      // Initial check
+      handleSelectionChanged();
+
+      // Alternative approach: poll for selection changes
+      // Since SpreadJS might be minified and events are not accessible,
+      // we'll use a polling approach to detect selection changes
+      let lastSelection = '';
+      
+      const checkInterval = setInterval(() => {
+        try {
+          const sheet = spreadInstance.getActiveSheet();
+          if (sheet) {
+            const selections = sheet.getSelections();
+            if (selections && selections.length > 0) {
+              const sel = selections[0];
+              const currentSelection = JSON.stringify({
+                row: sel.row,
+                col: sel.col,
+                rowCount: sel.rowCount,
+                colCount: sel.colCount
+              });
+              
+              if (currentSelection !== lastSelection) {
+                lastSelection = currentSelection;
+                handleSelectionChanged();
+              }
+            }
+          }
+        } catch (e) {
+          // Silently ignore errors during polling
+        }
+      }, 100); // Check every 100ms
+      
+      // Cleanup
+      return () => {
+        clearInterval(checkInterval);
+      };
     }
   }, [spreadInstance, activeCard]);
 
@@ -300,17 +365,68 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Handle modal form submission
   const handleAddParameter = (values: any) => {
-    const newParam = {
-      id: Date.now().toString(),
-      name: values.name,
-      cell: selectedCellInfo.address,
-      type: values.dataType || 'string',
-      ...(values.description && { description: values.description })
+    // Generate a unique ID
+    const generateId = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      let id = '';
+      for (let i = 0; i < 21; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return id;
     };
 
+    // Get sheet name from spread instance
+    let sheetName = 'Sheet1';
+    try {
+      if (spreadInstance && spreadInstance.getActiveSheet) {
+        const sheet = spreadInstance.getActiveSheet();
+        sheetName = sheet.name();
+      }
+    } catch (e) {
+      console.error('Error getting sheet name:', e);
+    }
+
+    // Create full address with sheet name
+    const fullAddress = selectedCellInfo.isSingleCell
+      ? `${sheetName}!${selectedCellInfo.address}`
+      : `${sheetName}!${selectedCellInfo.address}:${getCellAddress(
+          selectedCellInfo.row + selectedCellInfo.rowCount - 1,
+          selectedCellInfo.col + selectedCellInfo.colCount - 1
+        )}`;
+
+    // Generate alias from name
+    const alias = values.name.toLowerCase()
+      .replace(/[\s-]+/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
     if (parameterType === 'input') {
+      const newParam: InputDefinition = {
+        id: generateId(),
+        address: fullAddress,
+        name: values.name,
+        alias: alias || values.name.toLowerCase(),
+        row: selectedCellInfo.row,
+        col: selectedCellInfo.col,
+        type: values.dataType || 'string',
+        value: selectedCellInfo.value,
+        direction: 'input',
+        mandatory: values.mandatory !== false,
+        ...(values.description && { description: values.description })
+      };
       setInputs([...inputs, newParam]);
     } else {
+      const newParam: OutputDefinition = {
+        id: generateId(),
+        address: fullAddress,
+        name: values.name,
+        alias: alias || values.name.toLowerCase(),
+        row: selectedCellInfo.row,
+        col: selectedCellInfo.col,
+        type: values.dataType || 'string',
+        value: selectedCellInfo.value,
+        direction: 'output',
+        ...(values.description && { description: values.description })
+      };
       setOutputs([...outputs, newParam]);
     }
 
@@ -517,6 +633,33 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
               <Space direction="vertical" style={{ width: '100%' }}>
+                {(() => {
+                  const buttonInfo = getAddButtonInfo();
+                  return (
+                    <div style={{ marginBottom: '16px' }}>
+                      <Button 
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        style={{ width: '100%' }}
+                        onClick={handleAddFromSelection}
+                        disabled={buttonInfo.disabled || !spreadInstance}
+                      >
+                        {buttonInfo.text}
+                      </Button>
+                      {!spreadInstance && (
+                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                          Waiting for spreadsheet to load...
+                        </div>
+                      )}
+                      {spreadInstance && !currentSelection && (
+                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                          Select a cell or range in the spreadsheet
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Input Parameters</strong></div>
                   <div style={{ 
@@ -525,9 +668,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     borderRadius: '4px',
                     fontSize: '12px'
                   }}>
-                    <div style={{ marginBottom: '8px', color: '#666' }}>
-                      Define input parameters that users can pass to your service
-                    </div>
                     {inputs.length === 0 ? (
                       <div style={{ color: '#999' }}>No input parameters defined yet</div>
                     ) : (
@@ -542,7 +682,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong>{input.name}</strong> ({input.type})
-                                {input.cell && <span style={{ marginLeft: '8px', color: '#666' }}>→ Cell {input.cell}</span>}
+                                {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
                               </div>
                               <Button 
                                 size="small" 
@@ -556,15 +696,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                         ))}
                       </Space>
                     )}
-                    <Button 
-                      size="small" 
-                      type="dashed" 
-                      icon={<PlusOutlined />}
-                      style={{ marginTop: '8px', width: '100%' }}
-                      onClick={() => handleAddFromSelection('input')}
-                    >
-                      Add from Selection
-                    </Button>
                   </div>
                 </div>
 
@@ -576,9 +707,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     borderRadius: '4px',
                     fontSize: '12px'
                   }}>
-                    <div style={{ marginBottom: '8px', color: '#666' }}>
-                      Define output values that your service will return
-                    </div>
                     {outputs.length === 0 ? (
                       <div style={{ color: '#999' }}>No output parameters defined yet</div>
                     ) : (
@@ -593,7 +721,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong>{output.name}</strong> ({output.type})
-                                {output.cell && <span style={{ marginLeft: '8px', color: '#666' }}>← Cell {output.cell}</span>}
+                                {output.address && <span style={{ marginLeft: '8px', color: '#666' }}>← {output.address}</span>}
                               </div>
                               <Button 
                                 size="small" 
@@ -607,15 +735,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                         ))}
                       </Space>
                     )}
-                    <Button 
-                      size="small" 
-                      type="dashed" 
-                      icon={<PlusOutlined />}
-                      style={{ marginTop: '8px', width: '100%' }}
-                      onClick={() => handleAddFromSelection('output')}
-                    >
-                      Add from Selection
-                    </Button>
                   </div>
                 </div>
 
@@ -635,23 +754,44 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Service Endpoint</strong></div>
                   <Input
-                    value={`/api/getresults?api=${serviceId || '{serviceId}'}&{param1}={value1}&{param2}={value2}`}
+                    value={`/api/getresults?api=${serviceId || '{serviceId}'}${inputs.map(i => `&${i.alias}={value}`).join('')}`}
                     disabled
                     addonBefore="GET"
                   />
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                    Replace {'{param1}'}, {'{param2}'} with your actual input parameter names
-                  </div>
+                  {inputs.length > 0 && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                      Replace {inputs.map((i, idx) => <span key={i.id}>{idx > 0 && ', '}<code>{`{${i.alias}}`}</code></span>)} with actual values
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{ marginTop: '16px' }}>
                   <div style={{ marginBottom: '8px' }}><strong>Example Usage</strong></div>
                   <Input.TextArea
-                    value={`GET /api/getresults?api=${serviceId || '{serviceId}'}&amount=1000&rate=0.05`}
+                    value={inputs.length > 0 
+                      ? `GET /api/getresults?api=${serviceId || '{serviceId}'}${inputs.map(i => `&${i.alias}=${i.value || '1000'}`).join('')}`
+                      : `GET /api/getresults?api=${serviceId || '{serviceId}'}`
+                    }
                     disabled
                     rows={2}
                     style={{ fontFamily: 'monospace', fontSize: '12px' }}
                   />
+                </div>
+                
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>Response Format</strong></div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {outputs.length > 0 ? (
+                      <>
+                        The API will return the following outputs:<br />
+                        {outputs.map(o => (
+                          <div key={o.id}>• <code>{o.alias}</code> - {o.name}</div>
+                        ))}
+                      </>
+                    ) : (
+                      'No outputs defined yet'
+                    )}
+                  </div>
                 </div>
                 
                 <div style={{ marginTop: '16px' }}>
@@ -726,6 +866,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Input.TextArea rows={2} placeholder="Optional description" />
           </Form.Item>
 
+          {parameterType === 'input' && (
+            <Form.Item
+              name="mandatory"
+              valuePropName="checked"
+              initialValue={true}
+            >
+              <Checkbox>Mandatory parameter</Checkbox>
+            </Form.Item>
+          )}
+
           <Form.Item style={{ marginBottom: 8 }}>
             <div style={{ 
               padding: '12px', 
@@ -742,6 +892,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && (
                 <div style={{ marginTop: '4px' }}>
                   Current value: {selectedCellInfo.value}
+                </div>
+              )}
+              {!selectedCellInfo?.isSingleCell && (
+                <div style={{ marginTop: '4px', color: '#1890ff' }}>
+                  Range: {selectedCellInfo?.rowCount} rows × {selectedCellInfo?.colCount} columns
                 </div>
               )}
             </div>
