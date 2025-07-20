@@ -218,27 +218,25 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {activeCard === 'detail' && (
               <Space direction="vertical" style={{ width: '100%' }} >
                 <div>
-                  <Title level={5}>API Name</Title>
+                  <div style={{ marginBottom: '8px' }}><strong>API Name</strong></div>
                   <Input
                     placeholder="Enter API name"
                     value={apiName}
                     onChange={(e) => setApiName(e.target.value)}
-                    size="large"
                   />
                 </div>
 
                 <div>
-                  <Title level={5}>Description</Title>
+                  <div style={{ marginBottom: '8px' }}><strong>Description</strong></div>
                   <Input.TextArea
                     placeholder="Describe what this API does"
                     value={apiDescription}
                     onChange={(e) => setApiDescription(e.target.value)}
-                    rows={4}
-                  />
+                    rows={4} />
                 </div>
 
                 <div>
-                  <Title level={5}>API Endpoint</Title>
+                  <div style={{ marginBottom: '8px' }}><strong>API Endpoint</strong></div>
                   <Input
                     value={`/api/v1/spreadapi/${apiName || 'untitled'}`}
                     disabled
@@ -247,7 +245,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 </div>
 
                 <div>
-                  <Title level={5}>Status</Title>
+                  <div style={{ marginBottom: '8px' }}><strong>Status</strong></div>
                   <Tag color="orange">Draft</Tag>
                 </div>
               </Space>
