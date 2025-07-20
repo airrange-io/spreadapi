@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Layout, Button, Drawer, Typography, Space, Upload, message, Spin, Splitter, Breadcrumb } from 'antd';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Layout, Button, Drawer, Space, message, Spin, Splitter, Breadcrumb } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import { COLORS, TRANSITIONS } from '@/constants/theme';
+import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
@@ -189,15 +189,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         delete (window as any).__draggedFile;
       }
 
-      // Add a small delay to ensure smooth loading
-      setTimeout(() => {
-        setInitialLoading(false); // Mark initial load as complete
+      // Mark initial load as complete immediately
+      setInitialLoading(false);
 
-        // Show drawer on mobile after initial load
-        if (isMobile) {
-          setDrawerVisible(true);
-        }
-      }, 300); // 300ms delay for smoother transition
+      // Show drawer on mobile after initial load
+      if (isMobile) {
+        setDrawerVisible(true);
+      }
     };
 
     loadWorkbook();
@@ -281,7 +279,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       if (!createResponse.ok && createResponse.status !== 409 && createResponse.status !== 400) {
         // 409 = already exists, 400 = validation error (both are ok to continue)
         const error = await createResponse.json();
-        console.log('Create service response:', error);
+        // console.log('Create service response:', error);
       }
 
       // Update the service with file and configuration
@@ -324,7 +322,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, []);
 
-  const renderSpreadsheet = () => {
+  const handleWorkbookAction = useCallback((action, data) => {
+    // console.log('Workbook action:', action, data);
+    if (action === 'spread-changed' || action === 'designer-initialized') {
+      setSpreadInstance(data);
+    } else if (action === 'zoom-handler') {
+      zoomHandlerRef.current = data;
+    }
+  }, []);
+
+  const renderSpreadsheet = useMemo(() => {
     return (
       <div style={{ height: '100%', position: 'relative' }}>
         {loading && (
@@ -348,21 +355,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           ref={sheetRef}
           workbookLayout="default"
           initialZoom={zoomLevel}
-          actionHandlerProc={(action, data) => {
-            console.log('Workbook action:', action, data);
-            if (action === 'spread-changed' || action === 'designer-initialized') {
-              setSpreadInstance(data);
-            } else if (action === 'zoom-handler') {
-              zoomHandlerRef.current = data;
-            }
-          }}
-          createNewShareProc={(selection) => {
-            console.log('Share selection:', selection);
-          }}
+          actionHandlerProc={handleWorkbookAction}
+        // createNewShareProc={(selection) => {
+        //   console.log('Share selection:', selection);
+        // }}
         />
       </div>
     );
-  };
+  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction]);
 
   const handleConfigChange = useCallback((config: any) => {
     setApiConfig(config);
@@ -453,7 +453,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           onResize={handlePanelResize}
         >
           <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
-            {renderSpreadsheet()}
+            {renderSpreadsheet}
           </Splitter.Panel>
           <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
             <div style={{
@@ -469,7 +469,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       ) : (
         <Layout>
           <Content style={{ overflow: 'auto' }}>
-            {renderSpreadsheet()}
+            {renderSpreadsheet}
           </Content>
         </Layout>
       )}

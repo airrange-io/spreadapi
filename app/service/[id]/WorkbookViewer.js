@@ -1,12 +1,18 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import * as GC from "@mescius/spread-sheets";
-import "@mescius/spread-sheets-io";
-import "@mescius/spread-sheets-charts";
-import "@mescius/spread-sheets-shapes";
-import "@mescius/spread-sheets-tablesheet";
-import "@mescius/spread-sheets-languagepackages";
+// import "@mescius/spread-sheets-io";
+// import "@mescius/spread-sheets-charts";
+// import "@mescius/spread-sheets-shapes";
+// import "@mescius/spread-sheets-tablesheet";
+// import "@mescius/spread-sheets-languagepackages";
 import "@mescius/spread-sheets-designer-resources-en";
-import "@mescius/spread-sheets-formula-panel";
+// import "@mescius/spread-sheets-formula-panel";
 import { Designer } from "@mescius/spread-sheets-designer-react";
 import "@mescius/spread-sheets-designer/styles/gc.spread.sheets.designer.min.css";
 import "@mescius/spread-sheets/styles/gc.spread.sheets.excel2013white.css";
@@ -30,10 +36,11 @@ export function WorkbookViewer(props) {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [recordCount, setRecordCount] = useState(0);
   const [changeCount, setChangeCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const handleZoomChangeRef = useRef(null);
 
   // Initialize ribbon configuration
-  const initRibbon = (showRibbon) => {
+  const initRibbon = useCallback((showRibbon) => {
     const config = GC.Spread.Sheets.Designer.ToolBarModeConfig;
 
     // Set compact ribbon height
@@ -80,78 +87,81 @@ export function WorkbookViewer(props) {
         );
     }
     return config;
-  };
+  }, []);
 
-  const initDesigner = (designerInstance) => {
-    if (isInitialized) return;
+  const initDesigner = useCallback(
+    (designerInstance) => {
+      if (isInitialized) return;
 
-    console.log("Initializing designer...");
-    setIsInitialized(true);
-    setDesigner(designerInstance);
+      console.log("Initializing designer...");
+      setIsInitialized(true);
+      setDesigner(designerInstance);
 
-    const workbook = designerInstance.getWorkbook();
-    setSpread(workbook);
+      const workbook = designerInstance.getWorkbook();
+      setSpread(workbook);
+      setIsLoading(false);
 
-    // Configure workbook options
-    workbook.options.allowDynamicArray = true;
-    workbook.options.scrollbarMaxAlign = true;
-    workbook.options.scrollbarShowMax = true;
-    workbook.options.calcOnDemand = true;
-    workbook.options.allowUserResize = true;
-    workbook.options.allowUserZoom = true;
-    workbook.options.scrollPixel = true;
+      // Configure workbook options
+      workbook.options.allowDynamicArray = true;
+      workbook.options.scrollbarMaxAlign = true;
+      workbook.options.scrollbarShowMax = true;
+      workbook.options.calcOnDemand = true;
+      workbook.options.allowUserResize = true;
+      workbook.options.allowUserZoom = true;
+      workbook.options.scrollPixel = true;
 
-    // Set read-only mode if specified
-    if (props.readOnly) {
-      workbook.options.protect = true;
-    }
-
-    // Apply minimal layout if specified
-    if (props.workbookLayout === "minimum") {
-      workbook.options.showHorizontalScrollbar = true;
-      workbook.options.showVerticalScrollbar = true;
-      workbook.options.tabStripVisible = false;
-      workbook.options.newTabVisible = false;
-    }
-
-    // Notify parent component
-    if (props.actionHandlerProc) {
-      props.actionHandlerProc("spread-changed", workbook);
-      props.actionHandlerProc("designer-initialized", designerInstance);
-      
-    }
-
-    // Add event listeners
-    workbook.bind(GC.Spread.Sheets.Events.SelectionChanged, (e, info) => {
-      if (props.actionHandlerProc) {
-        props.actionHandlerProc("selection-changed", info);
+      // Set read-only mode if specified
+      if (props.readOnly) {
+        workbook.options.protect = true;
       }
 
-      // Update selected cell count
+      // Apply minimal layout if specified
+      if (props.workbookLayout === "minimum") {
+        workbook.options.showHorizontalScrollbar = true;
+        workbook.options.showVerticalScrollbar = true;
+        workbook.options.tabStripVisible = false;
+        workbook.options.newTabVisible = false;
+      }
+
+      // Notify parent component
+      if (props.actionHandlerProc) {
+        props.actionHandlerProc("spread-changed", workbook);
+        props.actionHandlerProc("designer-initialized", designerInstance);
+      }
+
+      // Add event listeners
+      workbook.bind(GC.Spread.Sheets.Events.SelectionChanged, (e, info) => {
+        if (props.actionHandlerProc) {
+          props.actionHandlerProc("selection-changed", info);
+        }
+
+        // Update selected cell count
+        const sheet = workbook.getActiveSheet();
+        if (sheet) {
+          const selections = sheet.getSelections();
+          let count = 0;
+          selections.forEach((sel) => {
+            count += sel.rowCount * sel.colCount;
+          });
+          setSelectedCellCount(count);
+        }
+      });
+
+      workbook.bind(GC.Spread.Sheets.Events.EditEnded, (e, info) => {
+        if (props.actionHandlerProc) {
+          props.actionHandlerProc("edit-ended", info);
+        }
+        setChangeCount((prev) => prev + 1);
+      });
+
+      // Update record count
       const sheet = workbook.getActiveSheet();
       if (sheet) {
-        const selections = sheet.getSelections();
-        let count = 0;
-        selections.forEach((sel) => {
-          count += sel.rowCount * sel.colCount;
-        });
-        setSelectedCellCount(count);
+        setRecordCount(sheet.getRowCount());
       }
-    });
-
-    workbook.bind(GC.Spread.Sheets.Events.EditEnded, (e, info) => {
-      if (props.actionHandlerProc) {
-        props.actionHandlerProc("edit-ended", info);
-      }
-      setChangeCount((prev) => prev + 1);
-    });
-
-    // Update record count
-    const sheet = workbook.getActiveSheet();
-    if (sheet) {
-      setRecordCount(sheet.getRowCount());
-    }
-  };
+    },
+    [isInitialized, props]
+  );
 
   // Define the zoom handler
   useEffect(() => {
@@ -159,7 +169,7 @@ export function WorkbookViewer(props) {
       if (spread) {
         const zoomFactor = newZoom / 100;
         spread.options.zoomFactor = zoomFactor;
-        
+
         // Apply zoom to all sheets
         const sheetCount = spread.getSheetCount();
         for (let i = 0; i < sheetCount; i++) {
@@ -168,11 +178,11 @@ export function WorkbookViewer(props) {
             sheet.zoom(zoomFactor);
           }
         }
-        
+
         setZoomLevel(newZoom);
       }
     };
-    
+
     // Notify parent that zoom handler is ready (only once when spread is available)
     if (props.actionHandlerProc && spread && handleZoomChangeRef.current) {
       props.actionHandlerProc("zoom-handler", handleZoomChangeRef.current);
@@ -187,10 +197,15 @@ export function WorkbookViewer(props) {
       }
     }
   };
-  
+
   // Apply initial zoom if provided
   useEffect(() => {
-    if (spread && props.initialZoom && props.initialZoom !== 100 && handleZoomChangeRef.current) {
+    if (
+      spread &&
+      props.initialZoom &&
+      props.initialZoom !== 100 &&
+      handleZoomChangeRef.current
+    ) {
       // Apply initial zoom after a short delay to ensure spread is fully initialized
       setTimeout(() => {
         if (handleZoomChangeRef.current) {
@@ -239,10 +254,10 @@ export function WorkbookViewer(props) {
     }
   }, [designer, spread, props.storeLocal?.spread]);
 
-  const getDesignerConfig = () => {
+  const getDesignerConfig = useMemo(() => {
     const showRibbon = props.workbookLayout !== "minimum";
     return initRibbon(showRibbon);
-  };
+  }, [props.workbookLayout, initRibbon]);
 
   return (
     <div
@@ -257,7 +272,7 @@ export function WorkbookViewer(props) {
       <div style={{ flex: 1 }}>
         <Designer
           styleInfo={{ width: "100%", height: "100%" }}
-          config={getDesignerConfig()}
+          config={getDesignerConfig}
           designerInitialized={initDesigner}
         />
       </div>
