@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { put, del, head } from '@vercel/blob';
+import { putBlob, delBlob } from '../../../../lib/blob-client';
 import redis from '../../../../lib/redis';
+
+// For now, use a fixed test user (same as services API)
+const TEST_USER_ID = 'test1234';
 
 // GET /api/workbook/[id] - Retrieve workbook from blob storage
 export async function GET(request, { params }) {
@@ -115,19 +118,19 @@ export async function PUT(request, { params }) {
     if (service.workbookUrl) {
       try {
         const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
-        await del(blobUrl);
+        await delBlob(blobUrl);
       } catch (error) {
         console.warn('Failed to delete old workbook:', error);
       }
     }
 
-    // Upload new workbook to blob storage
-    const tenant = service.tenantId || 'default';
-    const uploadPath = `${tenant}/workbooks/${id}.json`;
+    // Upload new workbook to blob storage - use userId for organization
+    const userId = service.userId || TEST_USER_ID;
+    const uploadPath = `users/${userId}/workbooks/${id}.json`;
     const timestamp = new Date().toISOString();
     
     console.log(`Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB`);
-    const blob = await put(uploadPath, workbookBuffer, {
+    const blob = await putBlob(uploadPath, workbookBuffer, {
       access: 'public',
       contentType: 'application/json',
       addRandomSuffix: false,
@@ -185,7 +188,7 @@ export async function DELETE(request, { params }) {
     if (service.workbookUrl) {
       try {
         const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
-        await del(blobUrl);
+        await delBlob(blobUrl);
         
         // Remove workbook URL from service
         const updatedService = { ...service };

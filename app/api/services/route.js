@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { delBlob } from '@/lib/blob-client';
 
 // For now, use a fixed test user
 const TEST_USER_ID = 'test1234';
@@ -114,11 +115,35 @@ export async function DELETE(request) {
       );
     }
     
-    // Delete from both locations
+    // Get service data to find workbook URL
+    const serviceData = await redis.get(`service:${serviceId}`);
+    let workbookDeleted = false;
+    
+    if (serviceData) {
+      try {
+        const service = JSON.parse(serviceData);
+        
+        // Delete workbook from blob storage if it exists
+        if (service.workbookUrl) {
+          const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
+          await delBlob(blobUrl);
+          workbookDeleted = true;
+          console.log(`Deleted workbook blob: ${blobUrl}`);
+        }
+      } catch (error) {
+        console.error('Error deleting workbook blob:', error);
+        // Continue with service deletion even if blob deletion fails
+      }
+    }
+    
+    // Delete from both Redis locations
     await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
     await redis.del(`service:${serviceId}`);
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true,
+      workbookDeleted 
+    });
   } catch (error) {
     console.error('Error deleting service:', error);
     return NextResponse.json(
