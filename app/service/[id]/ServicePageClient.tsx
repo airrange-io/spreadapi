@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Space, message, Spin, Splitter, Breadcrumb } from 'antd';
+import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
@@ -32,6 +32,7 @@ const { Content, Sider } = Layout;
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
   const workbookRef = useRef<any>(null);
+  const { message } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
@@ -132,7 +133,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       names: {},
       customLists: []
     };
-    
+
     console.log('Setting default empty workbook');
     setSpreadsheetData(emptyWorkbook);
   };
@@ -184,7 +185,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const response = await fetch(`/api/services/${serviceId}`);
         if (!mounted) return;
 
-        if (response.ok) {
+        if (response.ok && response.status !== 204) {
           const data = await response.json();
 
           // Load the configuration data
@@ -201,34 +202,56 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           try {
             setLoadingMessage('Loading workbook data...');
             const workbookResponse = await fetch(`/api/workbook/${serviceId}?t=${Date.now()}`, {
-              cache: 'no-store'
+              cache: 'no-store',
+              // Add custom header to suppress console errors for expected 404s
+              headers: {
+                'X-Expected-404': 'true'
+              }
             });
-            if (workbookResponse.ok) {
+            if (workbookResponse.ok && workbookResponse.status !== 204) {
               const workbookResult = await workbookResponse.json();
               console.log('Workbook API response:', workbookResult);
-              if (workbookResult.workbookData) {
+
+              if (workbookResult.format === 'sjs' && workbookResult.workbookBlob) {
+                // Handle SJS format
+                const base64 = workbookResult.workbookBlob;
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                  bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'application/octet-stream' });
+
+                setSpreadsheetData({
+                  type: 'sjs',
+                  blob: blob,
+                  format: 'sjs'
+                });
+                console.log('SJS workbook loaded from blob storage');
+              } else if (workbookResult.workbookData) {
+                // Handle JSON format
                 setSpreadsheetData(workbookResult.workbookData);
-                console.log('Workbook loaded from blob storage', {
+                console.log('JSON workbook loaded from blob storage', {
                   hasData: !!workbookResult.workbookData,
                   type: typeof workbookResult.workbookData
                 });
-              } else if (workbookResult.error === 'No workbook found for this service') {
-                // No workbook exists yet, check legacy or set default
-                if (data.file) {
-                  setSpreadsheetData(data.file);
-                  console.log('Workbook loaded from legacy storage');
-                } else {
-                  setDefaultSpreadsheetData();
-                  console.log('No workbook found, using default');
-                }
               }
-            } else {
-              // Check legacy file data in Redis
+            } else if (workbookResponse.status === 204) {
+              // 204 No Content - no workbook exists yet
+              console.log('No workbook exists yet, checking legacy storage');
               if (data.file) {
                 setSpreadsheetData(data.file);
                 console.log('Workbook loaded from legacy storage');
               } else {
-                // Only set default data if no workbook exists anywhere
+                setDefaultSpreadsheetData();
+                console.log('No workbook found, using default');
+              }
+            } else {
+              // Other error
+              console.error('Error loading workbook:', workbookResponse.status);
+              if (data.file) {
+                setSpreadsheetData(data.file);
+              } else {
                 setDefaultSpreadsheetData();
               }
             }
@@ -242,13 +265,32 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               setDefaultSpreadsheetData();
             }
           }
-        } else if (response.status === 404) {
-          // This is expected for new workbooks
-          console.log('Creating new workbook');
+        } else if (response.status === 404 || response.status === 204) {
+          // 204 No Content is expected for new services
+          console.log('Creating new service');
+
+          // Generate automatic name for new service
+          const date = new Date();
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const automaticName = `Service ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+          const newConfig = {
+            name: automaticName,
+            description: '',
+            inputs: [],
+            outputs: []
+          };
+          setApiConfig(newConfig);
+          setSavedConfig({ name: '', description: '', inputs: [], outputs: [] }); // Track as unsaved
+          setHasChanges(true); // Mark as having changes so user can save
+
           setDefaultSpreadsheetData();
         }
       } catch (error) {
-        console.error('Error loading workbook:', error);
+        // Only log actual errors, not expected 404s
+        if (error instanceof Error && !error.message.includes('404')) {
+          console.error('Error loading service:', error);
+        }
         // If all else fails, set default data
         setDefaultSpreadsheetData();
       }
@@ -292,7 +334,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Handle initial loading state based on spreadsheet data
   useEffect(() => {
     if (spreadsheetData !== null) {
-      setInitialLoading(false);
+      // Add a small delay to ensure smooth transition
+      setTimeout(() => {
+        setInitialLoading(false);
+      }, 100);
     }
   }, [spreadsheetData]);
 
@@ -356,37 +401,47 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       setLoading(true);
       setSavingWorkbook(true);
-      
+
       // Get current workbook state from designer
-      let workbookData = null;
-      if (workbookRef.current) {
-        console.log('WorkbookRef exists, getting JSON...');
-        workbookData = workbookRef.current.getWorkbookJSON();
-        if (!workbookData) {
-          console.warn('No workbook data available');
-        } else {
-          console.log('Got workbook data:', { 
-            hasData: !!workbookData,
-            sheetCount: workbookData.sheets ? Object.keys(workbookData.sheets).length : 0,
-            sheetNames: workbookData.sheets ? Object.keys(workbookData.sheets) : [],
-            version: workbookData.version
-          });
+      let workbookBlob = null;
+      if (workbookRef.current && workbookRef.current.saveWorkbookSJS) {
+        console.log('WorkbookRef exists, getting SJS blob...');
+        try {
+          workbookBlob = await workbookRef.current.saveWorkbookSJS();
+          if (!workbookBlob) {
+            console.warn('No workbook blob available');
+          } else {
+            console.log('Got workbook blob:', {
+              hasData: !!workbookBlob,
+              size: workbookBlob.size,
+              type: workbookBlob.type
+            });
+          }
+        } catch (error) {
+          console.error('Error getting workbook SJS:', error);
+          // Fallback to JSON if SJS fails
+          const workbookData = workbookRef.current.getWorkbookJSON();
+          if (workbookData) {
+            // Convert JSON to blob
+            const jsonString = JSON.stringify(workbookData);
+            workbookBlob = new Blob([jsonString], { type: 'application/json' });
+          }
         }
       } else {
-        console.error('WorkbookRef.current is null - cannot save workbook data');
+        console.error('WorkbookRef.current is null or SJS not supported - cannot save workbook data');
       }
 
       // Check if service exists first
       const checkResponse = await fetch(`/api/services/${serviceId}`);
-      
-      if (checkResponse.status === 404) {
+
+      if (checkResponse.status === 404 || checkResponse.status === 204) {
         // Service doesn't exist, create it
         const createResponse = await fetch('/api/services', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: serviceId,
-            name: apiConfig.name || 'Untitled API',
+            name: apiConfig.name || 'Untitled Service',
             description: apiConfig.description || ''
           })
         });
@@ -396,13 +451,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           console.error('Failed to create service:', error);
           throw new Error(error.error || 'Failed to create service');
         }
-        
+
         const createResult = await createResponse.json();
         console.log('Service created successfully:', createResult);
       } else if (!checkResponse.ok) {
         throw new Error('Failed to check service existence');
       }
-      
+
       // First update the service with configuration
       const updateResponse = await fetch(`/api/services/${serviceId}`, {
         method: 'PUT',
@@ -422,18 +477,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       // Save workbook to blob storage if we have data
-      if (workbookData) {
+      if (workbookBlob) {
+        const formData = new FormData();
+        formData.append('workbook', workbookBlob, `${serviceId}.sjs`);
+
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ workbookData })
+          body: formData
         });
-        
+
         if (!workbookResponse.ok) {
           const error = await workbookResponse.json();
           throw new Error(error.error || 'Failed to save workbook');
         }
-        
+
         const result = await workbookResponse.json();
         console.log('Workbook saved successfully:', {
           url: result.workbookUrl,
@@ -442,12 +499,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         });
       }
 
-      message.success('API and workbook saved successfully!');
+      message.success('Service and workbook saved successfully!');
 
       // Update saved state to match current state
       setSavedConfig(apiConfig);
       setHasChanges(false);
-      
+
       // Reset change count in workbook
       if (workbookRef.current) {
         workbookRef.current.resetChangeCount();
@@ -472,8 +529,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   const handleWorkbookAction = useCallback((action, data) => {
     // console.log('Workbook action:', action, data);
-    if (action === 'spread-changed' || action === 'designer-initialized') {
+    if (action === 'spread-changed') {
+      // This is the workbook/spread instance
       setSpreadInstance(data);
+    } else if (action === 'designer-initialized') {
+      // This is the designer instance, get the workbook from it
+      if (data && typeof data.getWorkbook === 'function') {
+        setSpreadInstance(data.getWorkbook());
+      }
     } else if (action === 'zoom-handler') {
       zoomHandlerRef.current = data;
     } else if (action === 'edit-ended' || action === 'selection-changed') {
@@ -487,13 +550,28 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, []);
 
   const renderSpreadsheet = useMemo(() => {
+    // Show loading spinner during initial load
+    if (initialLoading) {
+      return (
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#f5f5f5'
+        }}>
+          <Spin size="default" />
+        </div>
+      );
+    }
+
     // Don't render WorkbookViewer until we have data
     if (!spreadsheetData) {
       return (
-        <div style={{ 
-          height: '100%', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           background: '#f5f5f5'
         }}>
@@ -532,16 +610,57 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         />
       </div>
     );
-  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction]);
+  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading]);
 
   const handleConfigChange = useCallback((config: any) => {
     setApiConfig(config);
   }, []);
 
+  const handleImportExcel = useCallback(async (file: File) => {
+    try {
+      setSavingWorkbook(true);
+
+      if (workbookRef.current && workbookRef.current.importExcel) {
+        try {
+          await workbookRef.current.importExcel(file);
+          setHasChanges(true); // Mark as having changes
+          
+          let successMessage = 'Excel file imported successfully!';
+          
+          // Check if the current name is a default name pattern (starts with "Service")
+          if (apiConfig.name.startsWith('Service ')) {
+            // Extract filename without extension
+            const filename = file.name.replace(/\.[^/.]+$/, '');
+            // Update the service name to the Excel filename
+            setApiConfig(prev => ({
+              ...prev,
+              name: filename
+            }));
+            successMessage = `Excel file imported and service renamed to "${filename}"`;
+          }
+          
+          message.success(successMessage);
+        } catch (error: any) {
+          console.error('Error importing Excel file:', error);
+          message.error('Failed to import Excel file: ' + (error.message || 'Unknown error'));
+        }
+      } else {
+        message.error('Spreadsheet not initialized. Please wait for the workbook to load.');
+      }
+    } catch (error) {
+      console.error('Error handling Excel import:', error);
+      message.error('Failed to import Excel file');
+    } finally {
+      setSavingWorkbook(false);
+    }
+  }, [apiConfig.name]);
+
   const configPanel = (
     <EditorPanel
       spreadInstance={spreadInstance}
+      serviceId={serviceId}
       onConfigChange={handleConfigChange}
+      onImportExcel={handleImportExcel}
       initialConfig={apiConfig}
     />
   );
@@ -589,10 +708,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Breadcrumb
             items={[
               {
-                title: <a onClick={handleBack}>APIs</a>,
+                title: <a onClick={handleBack}>Services</a>,
               },
               {
-                title: apiConfig.name || 'New API',
+                title: apiConfig.name || 'New Service',
               },
             ]}
           />

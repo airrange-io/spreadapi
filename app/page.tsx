@@ -223,7 +223,7 @@ const ListsPage: React.FC = observer(() => {
                 }}
                 className="new-list-button"
               >
-                <span className="desktop-text">New API</span>
+                <span className="desktop-text">New Service</span>
                 <span className="mobile-text">New</span>
               </Button>
             </div>
@@ -236,7 +236,7 @@ const ListsPage: React.FC = observer(() => {
 
               {/* Search Bar - Always show to allow searching public lists */}
               <Input
-                placeholder="Search APIs..."
+                placeholder="Search Service APIs..."
                 disabled={appStore.loading}
                 prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
                 value={searchQuery}

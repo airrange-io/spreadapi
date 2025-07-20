@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Tag } from 'antd';
-import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, message, Modal, Form, Select } from 'antd';
+import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 
 const { Title, Text } = Typography;
 
-type ActiveCard = 'detail' | 'inputoutput' | 'analytics' | null;
+type ActiveCard = 'detail' | 'parameters' | 'endpoint' | null;
 
 interface InputDefinition {
   id: string;
@@ -30,7 +30,9 @@ interface OutputDefinition {
 
 interface EditorPanelProps {
   spreadInstance: any;
+  serviceId?: string;
   onConfigChange?: (config: any) => void;
+  onImportExcel?: (file: File) => void;
   initialConfig?: {
     name: string;
     description: string;
@@ -40,14 +42,18 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
-  spreadInstance, onConfigChange, initialConfig
+  spreadInstance, serviceId, onConfigChange, onImportExcel, initialConfig
 }) => {
-  const [activeCard, setActiveCard] = useState<ActiveCard>(null);
+  const [activeCard, setActiveCard] = useState<ActiveCard>('detail');
   const [apiName, setApiName] = useState(initialConfig?.name || '');
   const [apiDescription, setApiDescription] = useState(initialConfig?.description || '');
   const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
   const [outputs, setOutputs] = useState<OutputDefinition[]>(initialConfig?.outputs || []);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [showAddParameterModal, setShowAddParameterModal] = useState(false);
+  const [parameterType, setParameterType] = useState<'input' | 'output'>('input');
+  const [selectedCellInfo, setSelectedCellInfo] = useState<any>(null);
+  const [currentSelection, setCurrentSelection] = useState<any>(null);
 
   // Handle card activation
   const handleCardClick = (cardType: ActiveCard) => {
@@ -75,6 +81,252 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     return () => clearTimeout(timer);
   }, [apiName, apiDescription, inputs, outputs]);
+
+  // Monitor selection changes
+  useEffect(() => {
+    if (spreadInstance && activeCard === 'parameters') {
+      try {
+        const sheet = spreadInstance.getActiveSheet();
+        if (sheet) {
+          // Get current selection
+          const selections = sheet.getSelections();
+          if (selections && selections.length > 0) {
+            const selection = selections[0];
+            const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
+            let hasFormula = false;
+            
+            if (isSingleCell) {
+              hasFormula = sheet.hasFormula(selection.row, selection.col);
+            }
+            
+            setCurrentSelection({
+              row: selection.row,
+              col: selection.col,
+              rowCount: selection.rowCount,
+              colCount: selection.colCount,
+              isSingleCell,
+              hasFormula,
+              isRange: !isSingleCell
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Error checking selection:', e);
+      }
+    }
+  }, [spreadInstance, activeCard]);
+
+  // Helper function to get cell address from row/col
+  const getCellAddress = (row: number, col: number) => {
+    // Handle columns beyond Z (AA, AB, etc.)
+    let columnLetter = '';
+    let tempCol = col;
+    
+    while (tempCol >= 0) {
+      columnLetter = String.fromCharCode(65 + (tempCol % 26)) + columnLetter;
+      tempCol = Math.floor(tempCol / 26) - 1;
+    }
+    
+    return `${columnLetter}${row + 1}`; // Convert 0-based to 1-based
+  };
+
+  // Determine button text and parameter type based on selection
+  const getAddButtonInfo = () => {
+    if (!currentSelection) {
+      return { text: 'Add Selection as Parameter', disabled: true };
+    }
+    
+    const { isSingleCell, hasFormula, isRange, row, col, rowCount, colCount } = currentSelection;
+    const cellRef = getCellAddress(row, col);
+    
+    if (isRange) {
+      const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
+      return { 
+        text: `Add ${cellRef}:${endCellRef} as Output`, 
+        type: 'output' as const,
+        disabled: false 
+      };
+    } else if (hasFormula) {
+      return { 
+        text: `Add ${cellRef} as Output`, 
+        type: 'output' as const,
+        disabled: false 
+      };
+    } else {
+      return { 
+        text: `Add ${cellRef} as Input`, 
+        type: 'input' as const,
+        disabled: false 
+      };
+    }
+  };
+
+  // Handle adding parameter from selection
+  const handleAddFromSelection = () => {
+    console.log('handleAddFromSelection called, spreadInstance:', spreadInstance);
+    
+    if (!spreadInstance) {
+      message.warning('Spreadsheet not initialized');
+      return;
+    }
+
+    // SpreadJS Workbook should have getActiveSheet method even if minified
+    let sheet;
+    try {
+      // Standard SpreadJS API - this should work regardless of minification
+      sheet = spreadInstance.getActiveSheet();
+      console.log('Got active sheet:', sheet);
+    } catch (e) {
+      console.error('Error calling getActiveSheet:', e);
+      
+      // Fallback: try to get sheet by index
+      try {
+        sheet = spreadInstance.getSheet(0);
+        console.log('Got sheet by index:', sheet);
+      } catch (e2) {
+        console.error('Error calling getSheet(0):', e2);
+        message.warning('Cannot access spreadsheet. The workbook may not be fully loaded.');
+        return;
+      }
+    }
+    
+    if (!sheet) {
+      message.warning('No active sheet found');
+      return;
+    }
+
+    const selections = sheet.getSelections();
+    if (!selections || selections.length === 0) {
+      message.warning('Please select a cell or range in the spreadsheet');
+      return;
+    }
+
+    // Get the first selection
+    const selection = selections[0];
+    const cellAddress = getCellAddress(selection.row, selection.col);
+    
+    // Check if it's a single cell
+    const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
+    
+    let hasFormula = false;
+    let cellValue = null;
+    
+    if (isSingleCell) {
+      // Check if cell has formula
+      hasFormula = sheet.hasFormula(selection.row, selection.col);
+      const cell = sheet.getCell(selection.row, selection.col);
+      cellValue = cell.value();
+    }
+
+    // Auto-detect parameter type based on selection
+    const isRange = selection.rowCount > 1 || selection.colCount > 1;
+    const suggestedType = (hasFormula || isRange) ? 'output' : 'input';
+    
+    // Auto-detect data type based on cell value
+    let detectedDataType = 'string';
+    if (cellValue !== null && cellValue !== undefined) {
+      if (typeof cellValue === 'number') {
+        detectedDataType = 'number';
+      } else if (typeof cellValue === 'boolean') {
+        detectedDataType = 'boolean';
+      } else if (typeof cellValue === 'string') {
+        // Check if string is actually a number
+        const numValue = parseFloat(cellValue);
+        if (!isNaN(numValue) && cellValue.trim() === numValue.toString()) {
+          detectedDataType = 'number';
+        }
+      }
+    }
+    
+    // Try to guess parameter name from adjacent cells
+    let suggestedName = '';
+    try {
+      // Check cell to the left (same row, col-1)
+      if (selection.col > 0) {
+        const leftCell = sheet.getCell(selection.row, selection.col - 1);
+        const leftValue = leftCell.value();
+        if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
+          suggestedName = leftValue.trim();
+        }
+      }
+      
+      // If no name found on left, check cell above (row-1, same col)
+      if (!suggestedName && selection.row > 0) {
+        const aboveCell = sheet.getCell(selection.row - 1, selection.col);
+        const aboveValue = aboveCell.value();
+        if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
+          suggestedName = aboveValue.trim();
+        }
+      }
+      
+      // Clean the suggested name to be URL parameter safe
+      if (suggestedName) {
+        // Convert to lowercase, replace spaces with underscores
+        suggestedName = suggestedName.toLowerCase()
+          // Replace spaces and dashes with underscores
+          .replace(/[\s-]+/g, '_')
+          // Remove all non-alphanumeric characters except underscores
+          .replace(/[^a-z0-9_]/g, '')
+          // Remove leading/trailing underscores
+          .replace(/^_+|_+$/g, '')
+          // Ensure it doesn't start with a number
+          .replace(/^(\d)/, '_$1');
+        
+        // If the name is now empty or just underscores, clear it
+        if (!suggestedName || suggestedName.match(/^_*$/)) {
+          suggestedName = '';
+        }
+      }
+    } catch (e) {
+      console.error('Error getting adjacent cell values:', e);
+    }
+    
+    setSelectedCellInfo({
+      address: cellAddress,
+      row: selection.row,
+      col: selection.col,
+      rowCount: selection.rowCount,
+      colCount: selection.colCount,
+      hasFormula,
+      value: cellValue,
+      isSingleCell,
+      detectedDataType,
+      suggestedName
+    });
+    
+    setParameterType(suggestedType);
+    setShowAddParameterModal(true);
+  };
+
+  // Handle modal form submission
+  const handleAddParameter = (values: any) => {
+    const newParam = {
+      id: Date.now().toString(),
+      name: values.name,
+      cell: selectedCellInfo.address,
+      type: values.dataType || 'string',
+      ...(values.description && { description: values.description })
+    };
+
+    if (parameterType === 'input') {
+      setInputs([...inputs, newParam]);
+    } else {
+      setOutputs([...outputs, newParam]);
+    }
+
+    setShowAddParameterModal(false);
+    message.success(`${parameterType === 'input' ? 'Input' : 'Output'} parameter added`);
+  };
+
+  // Handle parameter deletion
+  const handleDeleteParameter = (type: 'input' | 'output', id: string) => {
+    if (type === 'input') {
+      setInputs(inputs.filter(input => input.id !== id));
+    } else {
+      setOutputs(outputs.filter(output => output.id !== id));
+    }
+    message.success('Parameter deleted');
+  };
 
 
   // Get card styling based on active state
@@ -137,7 +389,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             onClick={() => handleCardClick('detail')}
           >
             <Statistic
-              title="Detail"
+              title="Service"
               value={'---'}
               prefix={<FileTextOutlined />}
               valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
@@ -147,38 +399,38 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           <Card
             size="small"
             style={{
-              ...getCardStyle('inputoutput'),
+              ...getCardStyle('parameters'),
               //flex: '0 0 calc(25% - 6px)' 
               flex: '0 0 calc(33.33% - 5.33px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
-            onClick={() => handleCardClick('inputoutput')}
+            onClick={() => handleCardClick('parameters')}
           >
             <Statistic
-              title="Input/Output"
+              title="Parameters"
               value={"---"}
               prefix={<NodeIndexOutlined />}
-              valueStyle={getStatisticValueStyle('inputoutput', '#4F2D7F')}
+              valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
             />
           </Card>
 
           <Card
             size="small"
             style={{
-              ...getCardStyle('analytics'),
+              ...getCardStyle('endpoint'),
               //flex: '0 0 calc(25% - 6px)' 
               flex: '0 0 calc(33.33% - 5.33px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
-            onClick={() => handleCardClick('analytics')}
+            onClick={() => handleCardClick('endpoint')}
           >
             <Statistic
-              title="Analytics"
+              title="Endpoint"
               value={"---"}
               prefix={<BarChartOutlined />}
-              valueStyle={getStatisticValueStyle('analytics', '#4F2D7F')}
+              valueStyle={getStatisticValueStyle('endpoint', '#4F2D7F')}
             />
           </Card>
 
@@ -215,9 +467,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {activeCard === 'detail' && (
               <Space direction="vertical" style={{ width: '100%' }} >
                 <div>
-                  <div style={{ marginBottom: '8px' }}><strong>API Name</strong></div>
+                  <div style={{ marginBottom: '8px' }}><strong>Service Name</strong></div>
                   <Input
-                    placeholder="Enter API name"
+                    placeholder="Enter service name"
                     value={apiName}
                     onChange={(e) => setApiName(e.target.value)}
                   />
@@ -233,29 +485,183 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 </div>
 
                 <div>
-                  <div style={{ marginBottom: '8px' }}><strong>API Endpoint</strong></div>
-                  <Input
-                    value={`/api/v1/spreadapi/${apiName || 'untitled'}`}
-                    disabled
-                    addonBefore="POST"
-                  />
-                </div>
-
-                <div>
                   <div style={{ marginBottom: '8px' }}><strong>Status</strong></div>
                   <Tag color="orange">Draft</Tag>
+                </div>
+
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>Import Data</strong></div>
+                  <Upload
+                    accept=".xlsx,.xls"
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                      if (onImportExcel) {
+                        onImportExcel(file);
+                      } else {
+                        message.error('Import handler not configured');
+                      }
+                      return false; // Prevent default upload behavior
+                    }}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Import Excel File
+                    </Button>
+                  </Upload>
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                    Supports .xlsx and .xls formats
+                  </div>
                 </div>
               </Space>
             )}
 
-            {/* Records Detail */}
-            {activeCard === 'inputoutput' && (
-              <div>Input/Output</div>
+            {/* Parameters Detail */}
+            {activeCard === 'parameters' && (
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <div style={{ marginBottom: '8px' }}><strong>Input Parameters</strong></div>
+                  <div style={{ 
+                    padding: '12px', 
+                    background: '#f5f5f5', 
+                    borderRadius: '4px',
+                    fontSize: '12px'
+                  }}>
+                    <div style={{ marginBottom: '8px', color: '#666' }}>
+                      Define input parameters that users can pass to your service
+                    </div>
+                    {inputs.length === 0 ? (
+                      <div style={{ color: '#999' }}>No input parameters defined yet</div>
+                    ) : (
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        {inputs.map((input, index) => (
+                          <div key={input.id} style={{ 
+                            padding: '8px', 
+                            background: 'white', 
+                            borderRadius: '4px',
+                            border: '1px solid #e8e8e8' 
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <strong>{input.name}</strong> ({input.type})
+                                {input.cell && <span style={{ marginLeft: '8px', color: '#666' }}>→ Cell {input.cell}</span>}
+                              </div>
+                              <Button 
+                                size="small" 
+                                type="text" 
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteParameter('input', input.id)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </Space>
+                    )}
+                    <Button 
+                      size="small" 
+                      type="dashed" 
+                      icon={<PlusOutlined />}
+                      style={{ marginTop: '8px', width: '100%' }}
+                      onClick={() => handleAddFromSelection('input')}
+                    >
+                      Add from Selection
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ marginBottom: '8px' }}><strong>Output Parameters</strong></div>
+                  <div style={{ 
+                    padding: '12px', 
+                    background: '#f5f5f5', 
+                    borderRadius: '4px',
+                    fontSize: '12px'
+                  }}>
+                    <div style={{ marginBottom: '8px', color: '#666' }}>
+                      Define output values that your service will return
+                    </div>
+                    {outputs.length === 0 ? (
+                      <div style={{ color: '#999' }}>No output parameters defined yet</div>
+                    ) : (
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        {outputs.map((output, index) => (
+                          <div key={output.id} style={{ 
+                            padding: '8px', 
+                            background: 'white', 
+                            borderRadius: '4px',
+                            border: '1px solid #e8e8e8' 
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <strong>{output.name}</strong> ({output.type})
+                                {output.cell && <span style={{ marginLeft: '8px', color: '#666' }}>← Cell {output.cell}</span>}
+                              </div>
+                              <Button 
+                                size="small" 
+                                type="text" 
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDeleteParameter('output', output.id)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </Space>
+                    )}
+                    <Button 
+                      size="small" 
+                      type="dashed" 
+                      icon={<PlusOutlined />}
+                      style={{ marginTop: '8px', width: '100%' }}
+                      onClick={() => handleAddFromSelection('output')}
+                    >
+                      Add from Selection
+                    </Button>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '16px', fontSize: '12px', color: '#666' }}>
+                  <strong>How it works:</strong><br />
+                  • Input parameters are values users provide when calling your service<br />
+                  • These values are placed into the specified spreadsheet cells<br />
+                  • Output parameters are calculated results read from spreadsheet cells<br />
+                  • The service returns these output values as the API response
+                </div>
+              </Space>
             )}
 
-            {/* Analytics Detail */}
-            {activeCard === 'analytics' && (
-              <div>Analytics</div>
+            {/* Endpoint Detail */}
+            {activeCard === 'endpoint' && (
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <div style={{ marginBottom: '8px' }}><strong>Service Endpoint</strong></div>
+                  <Input
+                    value={`/api/getresults?api=${serviceId || '{serviceId}'}&{param1}={value1}&{param2}={value2}`}
+                    disabled
+                    addonBefore="GET"
+                  />
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                    Replace {'{param1}'}, {'{param2}'} with your actual input parameter names
+                  </div>
+                </div>
+                
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>Example Usage</strong></div>
+                  <Input.TextArea
+                    value={`GET /api/getresults?api=${serviceId || '{serviceId}'}&amount=1000&rate=0.05`}
+                    disabled
+                    rows={2}
+                    style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                  />
+                </div>
+                
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>Optional Parameters</strong></div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    • <code>token</code> - API token for authentication<br />
+                    • <code>nocache=true</code> - Bypass result caching
+                  </div>
+                </div>
+              </Space>
             )}
 
           </div>
@@ -278,6 +684,81 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         )}
 
       </div>
+
+      {/* Add Parameter Modal */}
+      <Modal
+        title={`Add ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
+        open={showAddParameterModal}
+        onCancel={() => setShowAddParameterModal(false)}
+        footer={null}
+      >
+        <Form
+          layout="vertical"
+          onFinish={handleAddParameter}
+          initialValues={{
+            name: selectedCellInfo?.suggestedName || '',
+            dataType: selectedCellInfo?.detectedDataType || 'string'
+          }}
+        >
+          <Form.Item
+            label="Parameter Name"
+            name="name"
+            rules={[{ required: true, message: 'Please enter a parameter name' }]}
+          >
+            <Input placeholder="e.g., amount, rate, result" />
+          </Form.Item>
+
+          <Form.Item
+            label="Data Type"
+            name="dataType"
+          >
+            <Select>
+              <Select.Option value="string">String</Select.Option>
+              <Select.Option value="number">Number</Select.Option>
+              <Select.Option value="boolean">Boolean</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Description"
+            name="description"
+          >
+            <Input.TextArea rows={2} placeholder="Optional description" />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 8 }}>
+            <div style={{ 
+              padding: '12px', 
+              background: '#f5f5f5', 
+              borderRadius: '4px',
+              fontSize: '12px'
+            }}>
+              <strong>Selected Cell:</strong> {selectedCellInfo?.address}
+              {selectedCellInfo?.hasFormula && (
+                <div style={{ marginTop: '4px', color: '#52c41a' }}>
+                  ✓ Contains formula (recommended as output)
+                </div>
+              )}
+              {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && (
+                <div style={{ marginTop: '4px' }}>
+                  Current value: {selectedCellInfo.value}
+                </div>
+              )}
+            </div>
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                Add Parameter
+              </Button>
+              <Button onClick={() => setShowAddParameterModal(false)}>
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
 
     </div>
   );

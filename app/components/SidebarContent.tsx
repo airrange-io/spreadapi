@@ -360,7 +360,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               borderColor: COLORS.primary,
             }}
           >
-            New API
+            New Service
           </Button>
         )}
       </div>

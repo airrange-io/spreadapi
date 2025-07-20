@@ -11,10 +11,8 @@ export async function GET(request, { params }) {
     // Check if user has access to this service
     const summary = await redis.hGet(`user:${TEST_USER_ID}:services`, serviceId);
     if (!summary) {
-      return NextResponse.json(
-        { error: 'Service not found' },
-        { status: 404 }
-      );
+      // Return 204 No Content for non-existent services (expected for new services)
+      return new NextResponse(null, { status: 204 });
     }
     
     // Get full service data

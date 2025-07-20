@@ -20,7 +20,8 @@ export async function GET(request, { params }) {
     const serviceData = await redis.get(`service:${id}`);
     
     if (!serviceData) {
-      return NextResponse.json({ error: 'Service not found' }, { status: 404 });
+      // Return 204 No Content for non-existent services (expected for new services)
+      return new NextResponse(null, { status: 204 });
     }
 
     const service = JSON.parse(serviceData);
@@ -39,10 +40,8 @@ export async function GET(request, { params }) {
     const workbookUrl = service.workbookUrl;
     
     if (!workbookUrl) {
-      return NextResponse.json({ 
-        error: 'No workbook found for this service',
-        workbookData: null 
-      }, { status: 200 });
+      // Return 204 No Content when no workbook exists yet (expected for new services)
+      return new NextResponse(null, { status: 204 });
     }
 
     // Fetch the workbook from blob storage
@@ -62,15 +61,36 @@ export async function GET(request, { params }) {
         }, { status: 500 });
       }
       
-      const workbookData = await response.json();
-      console.log('Workbook fetched successfully');
+      // Check if it's SJS (binary) or JSON format
+      const contentType = response.headers.get('content-type') || '';
+      const isSJS = contentType.includes('octet-stream') || workbookUrl.includes('.sjs');
       
-      // Return the workbook data directly
-      return NextResponse.json({
-        workbookData,
-        lastModified: service.workbookModified || service.modified,
-        success: true
-      });
+      if (isSJS) {
+        // Return blob data for SJS files
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        
+        console.log('SJS workbook fetched successfully');
+        return NextResponse.json({
+          workbookData: null, // No JSON data
+          workbookBlob: base64, // Base64 encoded SJS data
+          format: 'sjs',
+          lastModified: service.workbookModified || service.modified,
+          success: true
+        });
+      } else {
+        // Return JSON data for JSON files
+        const workbookData = await response.json();
+        console.log('JSON workbook fetched successfully');
+        
+        return NextResponse.json({
+          workbookData,
+          workbookBlob: null,
+          format: 'json',
+          lastModified: service.workbookModified || service.modified,
+          success: true
+        });
+      }
       
     } catch (error) {
       console.error('Error fetching blob:', error);
@@ -100,12 +120,36 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
     }
 
-    // Get request body
-    const body = await request.json();
-    const { workbookData } = body;
+    // Get request body - handle both FormData (SJS) and JSON
+    let workbookBuffer;
+    let fileExtension = 'sjs';
+    let contentType = 'application/octet-stream';
     
-    if (!workbookData) {
-      return NextResponse.json({ error: 'Workbook data is required' }, { status: 400 });
+    const contentTypeHeader = request.headers.get('content-type');
+    
+    if (contentTypeHeader && contentTypeHeader.includes('multipart/form-data')) {
+      // Handle SJS file upload
+      const formData = await request.formData();
+      const workbookFile = formData.get('workbook');
+      
+      if (!workbookFile) {
+        return NextResponse.json({ error: 'Workbook file is required' }, { status: 400 });
+      }
+      
+      workbookBuffer = Buffer.from(await workbookFile.arrayBuffer());
+    } else {
+      // Handle JSON data (fallback)
+      const body = await request.json();
+      const { workbookData } = body;
+      
+      if (!workbookData) {
+        return NextResponse.json({ error: 'Workbook data is required' }, { status: 400 });
+      }
+      
+      const workbookJson = JSON.stringify(workbookData);
+      workbookBuffer = Buffer.from(workbookJson);
+      fileExtension = 'json';
+      contentType = 'application/json';
     }
 
     // Get service data from Redis (stored as JSON string)
@@ -142,10 +186,6 @@ export async function PUT(request, { params }) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     // }
 
-    // Prepare workbook data for storage
-    const workbookJson = JSON.stringify(workbookData);
-    const workbookBuffer = Buffer.from(workbookJson);
-    
     // Check size (Vercel Blob limit is 512MB)
     const sizeMB = workbookBuffer.length / (1024 * 1024);
     if (sizeMB > 500) {
@@ -166,13 +206,13 @@ export async function PUT(request, { params }) {
 
     // Upload new workbook to blob storage - use userId for organization
     const userId = service.userId || TEST_USER_ID;
-    const uploadPath = `users/${userId}/workbooks/${id}.json`;
+    const uploadPath = `users/${userId}/workbooks/${id}.${fileExtension}`;
     const timestamp = new Date().toISOString();
     
-    console.log(`Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB`);
+    console.log(`Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB, type: ${contentType}`);
     const blob = await putBlob(uploadPath, workbookBuffer, {
       access: 'public', // Required when using custom token
-      contentType: 'application/json',
+      contentType: contentType,
       addRandomSuffix: true, // Add random suffix for security
       cacheControlMaxAge: 0, // No cache - always fetch fresh data
     });

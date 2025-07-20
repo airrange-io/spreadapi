@@ -1,4 +1,5 @@
 import React from 'react';
+import { App } from 'antd';
 import ServicePageClient from './ServicePageClient';
 
 interface ServicePageProps {
@@ -10,5 +11,9 @@ interface ServicePageProps {
 export default async function ServicePage({ params }: ServicePageProps) {
   const { id: serviceId } = await params;
   
-  return <ServicePageClient serviceId={serviceId} />;
+  return (
+    <App>
+      <ServicePageClient serviceId={serviceId} />
+    </App>
+  );
 }

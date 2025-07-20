@@ -40,12 +40,12 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = services.filter(service => 
+    const filtered = services.filter(service =>
       service.name.toLowerCase().includes(query) ||
       service.description.toLowerCase().includes(query) ||
       service.id.toLowerCase().includes(query)
     );
-    
+
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
@@ -54,7 +54,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
       setLoading(true);
       const response = await fetch('/api/services');
       const data = await response.json();
-      
+
       if (response.ok) {
         const loadedServices = data.services || [];
         setServices(loadedServices);
@@ -102,8 +102,8 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
@@ -113,7 +113,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
 
   if (loading) {
     return (
-      <div style={{ 
+      <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -127,8 +127,9 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
   if (services.length === 0 && !searchQuery) {
     return (
       <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
         description="No APIs created yet"
-        style={{ marginTop: 100 }}
+        style={{ marginTop: 180 }}
       >
         <Button type="primary" onClick={() => {
           const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -159,44 +160,43 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
               onClick={() => handleEdit(service.id)}
               style={{ cursor: 'pointer' }}
               actions={[
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(service.id);
-                  }}
-                >
-                  Edit
-                </Button>,
-                <Button
-                  type="text"
-                  icon={<PlayCircleOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTest(service.id);
-                  }}
-                  disabled={service.status === 'draft'}
-                >
-                  Test
-                </Button>,
-                <Popconfirm
-                  title="Delete this API?"
-                  description="This action cannot be undone."
-                  onConfirm={() => handleDelete(service.id, service.name)}
-                  okText="Yes"
-                  cancelText="No"
-                  okButtonProps={{ danger: true }}
-                >
+                <div onClick={(e) => e.stopPropagation()}>
                   <Button
                     type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={(e) => e.stopPropagation()}
+                    icon={<EditOutlined />}
+                    onClick={() => handleEdit(service.id)}
                   >
-                    Delete
+                    Edit
                   </Button>
-                </Popconfirm>
+                </div>,
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    type="text"
+                    icon={<PlayCircleOutlined />}
+                    onClick={() => handleTest(service.id)}
+                    disabled={service.status === 'draft'}
+                  >
+                    Test
+                  </Button>
+                </div>,
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Popconfirm
+                    title="Delete this API?"
+                    description="This action cannot be undone."
+                    onConfirm={() => handleDelete(service.id, service.name)}
+                    okText="Yes"
+                    cancelText="No"
+                    okButtonProps={{ danger: true }}
+                  >
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                    >
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </div>
               ]}
             >
               <Card.Meta
@@ -210,20 +210,20 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                 }
                 description={
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Paragraph 
-                      ellipsis={{ rows: 2 }} 
+                    <Paragraph
+                      ellipsis={{ rows: 2 }}
                       style={{ marginBottom: 8 }}
                     >
                       {service.description || 'No description'}
                     </Paragraph>
-                    
+
                     <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
                       <CalendarOutlined />
                       <Text type="secondary" style={{ fontSize: '12px' }}>
                         {formatDate(service.updatedAt)}
                       </Text>
                     </Space>
-                    
+
                     {service.calls > 0 && (
                       <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
                         <BarChartOutlined />

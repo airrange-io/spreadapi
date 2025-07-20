@@ -8,7 +8,7 @@ import React, {
   forwardRef,
 } from "react";
 import * as GC from "@mescius/spread-sheets";
-// import "@mescius/spread-sheets-io";
+import "@mescius/spread-sheets-io";
 // import "@mescius/spread-sheets-charts";
 // import "@mescius/spread-sheets-shapes";
 // import "@mescius/spread-sheets-tablesheet";
@@ -39,6 +39,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [recordCount, setRecordCount] = useState(0);
   const [changeCount, setChangeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const handleZoomChangeRef = useRef(null);
 
   // Initialize ribbon configuration
@@ -101,7 +102,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
 
       const workbook = designerInstance.getWorkbook();
       setSpread(workbook);
-      setIsLoading(false);
+      // Don't set isLoading to false here - wait for data to load
 
       // Configure workbook options
       workbook.options.allowDynamicArray = true;
@@ -225,11 +226,18 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       console.log("WorkbookViewer: No spreadsheet data yet, waiting...");
       return;
     }
+    
+    // Check if this is just the default empty workbook
+    const isDefaultWorkbook = props.storeLocal.spread.version && 
+                             props.storeLocal.spread.sheets && 
+                             Object.keys(props.storeLocal.spread.sheets).length === 1 &&
+                             !props.storeLocal.spread.type;
 
     console.log("WorkbookViewer: Attempting to load data", {
       hasSpread: !!spread,
       dataType: typeof props.storeLocal.spread,
       isExcel: props.storeLocal.spread.type === "excel",
+      isSJS: props.storeLocal.spread.type === "sjs",
       hasSheets: !!(props.storeLocal.spread.sheets),
       dataKeys: Object.keys(props.storeLocal.spread || {}).slice(0, 10) // First 10 keys
     });
@@ -237,6 +245,31 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     try {
       // Load spreadsheet data if provided
       if (
+        props.storeLocal.spread.type === "sjs" &&
+        props.storeLocal.spread.blob
+      ) {
+        // Load SJS binary format
+        console.log("Loading SJS file...");
+        spread.open(
+          props.storeLocal.spread.blob,
+          () => {
+            console.log("SJS file loaded successfully");
+            setDataLoaded(true);
+            setIsLoading(false);
+            if (props.actionHandlerProc) {
+              props.actionHandlerProc("workbook-loaded", spread);
+            }
+          },
+          (error) => {
+            console.error("Error loading SJS file:", error);
+            setDataLoaded(true);
+            setIsLoading(false);
+          },
+          {
+            openMode: 1 // 1 = normal
+          }
+        );
+      } else if (
         props.storeLocal.spread.type === "excel" &&
         props.storeLocal.spread.data
       ) {
@@ -247,12 +280,16 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           (json) => {
             spread.fromJSON(json);
             console.log("Excel file imported successfully");
+            setDataLoaded(true);
+            setIsLoading(false);
             if (props.actionHandlerProc) {
               props.actionHandlerProc("file-loaded", spread);
             }
           },
           (error) => {
             console.error("Error importing Excel file:", error);
+            setDataLoaded(true);
+            setIsLoading(false);
           }
         );
       } else if (
@@ -262,12 +299,23 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         console.log("Loading JSON data into spread...");
         spread.fromJSON(props.storeLocal.spread);
         console.log("JSON data loaded successfully");
+        setDataLoaded(true);
+        setIsLoading(false);
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
       }
     } catch (error) {
       console.error("Error loading spreadsheet data:", error);
+      setDataLoaded(true);
+      setIsLoading(false);
+    }
+    
+    // If it's a default workbook, immediately mark as loaded
+    if (isDefaultWorkbook) {
+      console.log("Default workbook detected, marking as loaded");
+      setDataLoaded(true);
+      setIsLoading(false);
     }
   }, [designer, spread, props.storeLocal?.spread]);
 
@@ -309,6 +357,82 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     hasChanges: () => changeCount > 0,
     // Reset change count
     resetChangeCount: () => setChangeCount(0),
+    // Save workbook as SJS format (binary)
+    saveWorkbookSJS: () => {
+      return new Promise((resolve, reject) => {
+        if (spread) {
+          spread.save(
+            (blob) => {
+              resolve(blob);
+            },
+            (error) => {
+              console.error("Error saving workbook as SJS:", error);
+              reject(error);
+            },
+            {
+              includeStyles: true,
+              includeFormulas: true,
+              includeUnusedNames: false,
+              saveAsView: false
+            }
+          );
+        } else {
+          reject(new Error("Spread instance not available"));
+        }
+      });
+    },
+    // Load workbook from SJS format (binary)
+    loadWorkbookSJS: (blob) => {
+      return new Promise((resolve, reject) => {
+        if (spread && blob) {
+          spread.open(
+            blob,
+            () => {
+              console.log("SJS workbook loaded successfully");
+              if (props.actionHandlerProc) {
+                props.actionHandlerProc("workbook-loaded", spread);
+              }
+              resolve(true);
+            },
+            (error) => {
+              console.error("Error loading workbook SJS:", error);
+              reject(error);
+            },
+            {
+              openMode: 1 // 1 = normal
+            }
+          );
+        } else {
+          reject(new Error("Spread instance or blob not available"));
+        }
+      });
+    },
+    // Import Excel file
+    importExcel: (file) => {
+      return new Promise((resolve, reject) => {
+        if (spread && spread.import) {
+          spread.import(
+            file,
+            () => {
+              console.log("Excel file imported successfully");
+              if (props.actionHandlerProc) {
+                props.actionHandlerProc("workbook-loaded", spread);
+              }
+              resolve(true);
+            },
+            (error) => {
+              console.error("Error importing Excel:", error);
+              reject(error);
+            },
+            {
+              fileType: GC.Spread.Sheets.FileType.excel
+            }
+          );
+        } else {
+          reject(new Error("Spread instance not available or import not supported"));
+        }
+      });
+    }
   }), [spread, designer, changeCount, props]);
 
   return (
@@ -321,12 +445,44 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         flexDirection: "column",
       }}
     >
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, position: "relative" }}>
         <Designer
           styleInfo={{ width: "100%", height: "100%" }}
           config={getDesignerConfig}
           designerInitialized={initDesigner}
         />
+        {/* Loading overlay */}
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  border: "3px solid #f3f3f3",
+                  borderTop: "3px solid #8A64C0",
+                  borderRadius: "50%",
+                  margin: "0 auto 16px",
+                }}
+                className="workbook-spinner"
+              />
+              <div style={{ color: "#666" }}>Loading workbook...</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
