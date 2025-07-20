@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Layout, Button, Drawer, Typography, Space, Upload, message, Spin, Splitter, Breadcrumb } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -60,6 +60,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     outputs: []
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const sheetRef = useRef<any>(null); // Reference to the TableSheet
+  const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
   // Initialize panel sizes from localStorage to prevent flickering
   const getInitialPanelSizes = (): number[] => {
@@ -314,19 +317,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Handle zoom level changes
   const handleZoomChange = useCallback((newZoom: number) => {
-    // setZoomLevel(newZoom);
-    // // For TableSheet, use the sheetRef directly
-    // if (sheetRef.current) {
-    //   sheetRef.current.zoom(newZoom / 100);
-    // } else if (spreadRef.current) {
-    //   // Fallback to getting sheet by name for TableSheet
-    //   const sheet = spreadRef.current.getSheetFromName("Data");
-    //   if (sheet) {
-    //     sheet.zoom(newZoom / 100);
-    //   }
-    // }
+    setZoomLevel(newZoom);
+    // Call the WorkbookViewer's zoom handler if available
+    if (zoomHandlerRef.current) {
+      zoomHandlerRef.current(newZoom);
+    }
   }, []);
-
 
   const renderSpreadsheet = () => {
     return (
@@ -349,11 +345,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <WorkbookViewer
           storeLocal={{ spread: spreadsheetData }}
           readOnly={false}
+          ref={sheetRef}
           workbookLayout="default"
+          initialZoom={zoomLevel}
           actionHandlerProc={(action, data) => {
             console.log('Workbook action:', action, data);
             if (action === 'spread-changed' || action === 'designer-initialized') {
               setSpreadInstance(data);
+            } else if (action === 'zoom-handler') {
+              zoomHandlerRef.current = data;
             }
           }}
           createNewShareProc={(selection) => {
@@ -495,7 +495,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       <StatusBar
         recordCount={0}
         selectedCount={0}
-        zoomLevel={1}
+        zoomLevel={zoomLevel}
         onZoomChange={handleZoomChange}
       />
     </Layout>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import * as GC from "@mescius/spread-sheets";
 import "@mescius/spread-sheets-io";
 import "@mescius/spread-sheets-charts";
@@ -30,6 +30,7 @@ export function WorkbookViewer(props) {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [recordCount, setRecordCount] = useState(0);
   const [changeCount, setChangeCount] = useState(0);
+  const handleZoomChangeRef = useRef(null);
 
   // Initialize ribbon configuration
   const initRibbon = (showRibbon) => {
@@ -117,6 +118,7 @@ export function WorkbookViewer(props) {
     if (props.actionHandlerProc) {
       props.actionHandlerProc("spread-changed", workbook);
       props.actionHandlerProc("designer-initialized", designerInstance);
+      
     }
 
     // Add event listeners
@@ -151,12 +153,31 @@ export function WorkbookViewer(props) {
     }
   };
 
-  const handleZoomChange = (newZoom) => {
-    if (spread) {
-      spread.options.zoomFactor = newZoom / 100;
-      setZoomLevel(newZoom);
+  // Define the zoom handler
+  useEffect(() => {
+    handleZoomChangeRef.current = (newZoom) => {
+      if (spread) {
+        const zoomFactor = newZoom / 100;
+        spread.options.zoomFactor = zoomFactor;
+        
+        // Apply zoom to all sheets
+        const sheetCount = spread.getSheetCount();
+        for (let i = 0; i < sheetCount; i++) {
+          const sheet = spread.getSheet(i);
+          if (sheet) {
+            sheet.zoom(zoomFactor);
+          }
+        }
+        
+        setZoomLevel(newZoom);
+      }
+    };
+    
+    // Notify parent that zoom handler is ready (only once when spread is available)
+    if (props.actionHandlerProc && spread && handleZoomChangeRef.current) {
+      props.actionHandlerProc("zoom-handler", handleZoomChangeRef.current);
     }
-  };
+  }, [spread, props]);
 
   const clearSelection = () => {
     if (spread) {
@@ -166,6 +187,18 @@ export function WorkbookViewer(props) {
       }
     }
   };
+  
+  // Apply initial zoom if provided
+  useEffect(() => {
+    if (spread && props.initialZoom && props.initialZoom !== 100 && handleZoomChangeRef.current) {
+      // Apply initial zoom after a short delay to ensure spread is fully initialized
+      setTimeout(() => {
+        if (handleZoomChangeRef.current) {
+          handleZoomChangeRef.current(props.initialZoom);
+        }
+      }, 100);
+    }
+  }, [spread]); // Only depend on spread to avoid re-running
 
   useEffect(() => {
     if (!designer || !spread || !props.storeLocal?.spread) return;
