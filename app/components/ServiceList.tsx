@@ -156,18 +156,26 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
           <Col xs={24} sm={24} md={12} lg={8} xl={6} key={service.id}>
             <Card
               hoverable
+              onClick={() => handleEdit(service.id)}
+              style={{ cursor: 'pointer' }}
               actions={[
                 <Button
                   type="text"
                   icon={<EditOutlined />}
-                  onClick={() => handleEdit(service.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(service.id);
+                  }}
                 >
                   Edit
                 </Button>,
                 <Button
                   type="text"
                   icon={<PlayCircleOutlined />}
-                  onClick={() => handleTest(service.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTest(service.id);
+                  }}
                   disabled={service.status === 'draft'}
                 >
                   Test
@@ -184,6 +192,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                     type="text"
                     danger
                     icon={<DeleteOutlined />}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Delete
                   </Button>

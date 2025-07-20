@@ -376,23 +376,51 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         console.error('WorkbookRef.current is null - cannot save workbook data');
       }
 
-      // Create the service if it doesn't exist
-      const createResponse = await fetch('/api/services', {
-        method: 'POST',
+      // Check if service exists first
+      const checkResponse = await fetch(`/api/services/${serviceId}`);
+      
+      if (checkResponse.status === 404) {
+        // Service doesn't exist, create it
+        const createResponse = await fetch('/api/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: serviceId,
+            name: apiConfig.name || 'Untitled API',
+            description: apiConfig.description || ''
+          })
+        });
+
+        if (!createResponse.ok) {
+          const error = await createResponse.json();
+          console.error('Failed to create service:', error);
+          throw new Error(error.error || 'Failed to create service');
+        }
+        
+        const createResult = await createResponse.json();
+        console.log('Service created successfully:', createResult);
+      } else if (!checkResponse.ok) {
+        throw new Error('Failed to check service existence');
+      }
+      
+      // First update the service with configuration
+      const updateResponse = await fetch(`/api/services/${serviceId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: serviceId,
           name: apiConfig.name || 'Untitled API',
-          description: apiConfig.description || ''
+          description: apiConfig.description || '',
+          file: null, // Don't store workbook in Redis anymore
+          inputs: apiConfig.inputs,
+          outputs: apiConfig.outputs,
+          status: 'draft'
         })
       });
 
-      if (!createResponse.ok && createResponse.status !== 409 && createResponse.status !== 400) {
-        // 409 = already exists, 400 = validation error (both are ok to continue)
-        const error = await createResponse.json();
-        // console.log('Create service response:', error);
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update service');
       }
-      
+
       // Save workbook to blob storage if we have data
       if (workbookData) {
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
@@ -412,24 +440,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           size: result.size,
           timestamp: result.timestamp
         });
-      }
-
-      // Update the service with configuration (without file data)
-      const updateResponse = await fetch(`/api/services/${serviceId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: apiConfig.name || 'Untitled API',
-          description: apiConfig.description || '',
-          file: null, // Don't store workbook in Redis anymore
-          inputs: apiConfig.inputs,
-          outputs: apiConfig.outputs,
-          status: 'draft'
-        })
-      });
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to update service');
       }
 
       message.success('API and workbook saved successfully!');

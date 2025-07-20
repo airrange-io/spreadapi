@@ -45,6 +45,15 @@ export async function POST(request) {
       );
     }
     
+    // Check if service already exists
+    const exists = await redis.hExists(`user:${TEST_USER_ID}:services`, id);
+    if (exists) {
+      return NextResponse.json(
+        { error: 'Service already exists' },
+        { status: 409 }
+      );
+    }
+    
     const now = new Date().toISOString();
     
     // Create service summary for list view
