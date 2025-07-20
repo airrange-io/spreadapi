@@ -139,7 +139,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Statistic
               title="Detail"
               value={'---'}
-              prefix={<BarChartOutlined />}
+              prefix={<FileTextOutlined />}
               valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
             />
           </Card>
@@ -175,9 +175,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             onClick={() => handleCardClick('analytics')}
           >
             <Statistic
-              title="Columns"
+              title="Analytics"
               value={"---"}
-              prefix={<FileTextOutlined />}
+              prefix={<BarChartOutlined />}
               valueStyle={getStatisticValueStyle('analytics', '#4F2D7F')}
             />
           </Card>
@@ -195,15 +195,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             minHeight: 0
           }}>
             {/* Header with close button and optional actions */}
-            <div style={{
+            {/* <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '8px'
             }}>
-              <Text strong style={{ textTransform: 'capitalize' }}>
-                {/* {activeCard} Details */}
-              </Text>
               <Space size={4}>
                 <Button
                   type="text"
@@ -212,7 +209,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   onClick={() => setActiveCard(null)}
                 />
               </Space>
-            </div>
+            </div> */}
 
             {/* Columns Detail */}
             {activeCard === 'detail' && (
