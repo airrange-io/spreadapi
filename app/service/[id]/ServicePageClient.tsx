@@ -60,6 +60,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
+  const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
@@ -185,6 +186,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const loadWorkbook = async () => {
       // Skip if component unmounted (prevents double fetch in StrictMode)
       if (!mounted) return;
+
+      // Check service status first
+      try {
+        const statusResponse = await fetch(`/api/services/${serviceId}/status`);
+        if (statusResponse.ok) {
+          const status = await statusResponse.json();
+          setServiceStatus(status);
+        }
+      } catch (error) {
+        console.error('Error checking service status:', error);
+      }
 
       // Check if this is an existing workbook
       try {
@@ -439,16 +451,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           tokens: [] // Will add token management later
         }
       );
+      console.log("🚀 ~ handlePublish ~ publishData:", publishData)
 
       // Publish the service
       const result = await publishService(serviceId, publishData);
-      
+
       if (result.error) {
         throw new Error(result.error);
       }
 
       message.success('Service published successfully!');
       console.log('Publish result:', result);
+      
+      // Update the service status
+      setServiceStatus({
+        published: true,
+        status: 'published',
+        publishedAt: new Date().toISOString(),
+        useCaching: apiConfig.enableCaching,
+        needsToken: apiConfig.requireToken
+      });
 
     } catch (error) {
       console.error('Error publishing service:', error);
@@ -685,9 +707,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         try {
           await workbookRef.current.importExcel(file);
           setHasChanges(true); // Mark as having changes
-          
+
           let successMessage = 'Excel file imported successfully!';
-          
+
           // Check if the current name is a default name pattern (starts with "Service")
           if (apiConfig.name.startsWith('Service ')) {
             // Extract filename without extension
@@ -699,7 +721,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             }));
             successMessage = `Excel file imported and service renamed to "${filename}"`;
           }
-          
+
           message.success(successMessage);
         } catch (error: any) {
           console.error('Error importing Excel file:', error);
@@ -720,6 +742,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     <EditorPanel
       spreadInstance={spreadInstance}
       serviceId={serviceId}
+      serviceStatus={serviceStatus}
       onConfigChange={handleConfigChange}
       onImportExcel={handleImportExcel}
       initialConfig={apiConfig}

@@ -58,6 +58,7 @@ interface EditorPanelProps {
   serviceId?: string;
   onConfigChange?: (config: any) => void;
   onImportExcel?: (file: File) => void;
+  serviceStatus?: any;
   initialConfig?: {
     name: string;
     description: string;
@@ -69,7 +70,7 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, onImportExcel, initialConfig
+  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig
 }) => {
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
@@ -671,7 +672,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Status</strong></div>
-                  <Tag color="orange">Draft</Tag>
+                  <Space>
+                    <Tag color={serviceStatus?.published ? 'green' : 'orange'}>
+                      {serviceStatus?.published ? 'Published' : 'Draft'}
+                    </Tag>
+                    {serviceStatus?.published && serviceStatus?.publishedAt && (
+                      <Text style={{ fontSize: '12px', color: '#666' }}>
+                        Published {new Date(serviceStatus.publishedAt).toLocaleDateString()}
+                      </Text>
+                    )}
+                  </Space>
                 </div>
 
                 <div style={{ marginTop: '16px' }}>

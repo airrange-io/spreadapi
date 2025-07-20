@@ -1,3 +1,92 @@
+// Import the direct service management functions
+import { createOrUpdateService } from '../lib/publishService';
+
+// Helper function to get object size in bytes
+function getObjectSize(obj) {
+  const jsonString = JSON.stringify(obj);
+  return new Blob([jsonString]).size;
+}
+
+// Helper function for deep copy
+function jsonCopy(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+// Optimize workbook data for API service (remove unnecessary data)
+function optimizeForService(fileData) {
+  if (!fileData) return null;
+  
+  const data = jsonCopy(fileData);
+  let sizeAfter;
+
+  try {
+    const sizeBefore = getObjectSize(data);
+    console.log("Size before optimization:", sizeBefore);
+
+    // Remove named styles (not needed for calculations)
+    if (data.namedStyles) {
+      data.namedStyles = {};
+    }
+
+    // Get sheets object
+    const sheets = data.sheets || {};
+
+    // Remove internal sheets
+    if (sheets.hasOwnProperty("AR_INFO")) delete sheets["AR_INFO"];
+    if (sheets.hasOwnProperty("AR_LOGS")) delete sheets["AR_LOGS"];
+
+    // Clean each sheet
+    Object.keys(sheets).forEach((sheetName) => {
+      const sheet = sheets[sheetName];
+      
+      // Remove visual elements not needed for calculations
+      if (sheet.shapes) sheet.shapes = [];
+      if (sheet.charts) sheet.charts = [];
+      if (sheet.pictures) sheet.pictures = [];
+      if (sheet.floatingObjects) sheet.floatingObjects = [];
+      
+      // Remove print settings
+      if (sheet.printInfo) sheet.printInfo = {};
+      
+      // Remove conditional formatting (keep for calculations but remove if not needed)
+      // if (sheet.conditionalFormats) sheet.conditionalFormats = {};
+      
+      // Clean cell styles from dataTable (keep values and formulas)
+      const dataTable = sheet.data?.dataTable || {};
+      Object.keys(dataTable).forEach((row) => {
+        const rowData = dataTable[row];
+        if (rowData && typeof rowData === 'object') {
+          Object.keys(rowData).forEach((col) => {
+            const cell = rowData[col];
+            if (cell && typeof cell === 'object') {
+              // Keep only essential properties for calculations
+              const essentialProps = ['value', 'formula'];
+              Object.keys(cell).forEach(prop => {
+                if (!essentialProps.includes(prop)) {
+                  delete cell[prop];
+                }
+              });
+            }
+          });
+        }
+      });
+
+      // Remove row/column styles
+      if (sheet.rowHeaderData) sheet.rowHeaderData = {};
+      if (sheet.colHeaderData) sheet.colHeaderData = {};
+    });
+
+    sizeAfter = getObjectSize(data);
+    console.log("Size after optimization:", sizeAfter);
+    console.log("Size reduction:", ((sizeBefore - sizeAfter) / sizeBefore * 100).toFixed(1) + "%");
+
+    return { data, dataSize: sizeAfter };
+  } catch (error) {
+    console.error("Error optimizing for service:", error);
+    return { data: fileData, dataSize: getObjectSize(fileData) };
+  }
+}
+
 // Transform UI service data to manageapi format
 export async function prepareServiceForPublish(spreadInstance, service, flags = {}) {
   if (!spreadInstance || !spreadInstance.toJSON) {
@@ -9,6 +98,10 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     includeBindingSource: true,
     saveAsView: false
   });
+
+  // Optimize the workbook data for API service
+  const optimized = optimizeForService(workbookJSON);
+  const optimizedWorkbook = optimized.data;
 
   // Transform input definitions to match manageapi format
   const transformedInputs = service.inputs.map(input => {
@@ -66,43 +159,28 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
         needsToken: flags.requireToken === true ? "true" : "false"
       }
     },
-    fileJson: workbookJSON // The spreadsheet data in JSON format
+    fileJson: optimizedWorkbook // The optimized spreadsheet data
   };
+
+  console.log(`Prepared service for publishing: ${service.inputs.length} inputs, ${service.outputs.length} outputs`);
+  console.log(`Workbook size: ${(optimized.dataSize / 1024).toFixed(1)}KB`);
 
   return publishData;
 }
 
-// Call manageapi to publish the service
-export async function publishService(serviceId, publishData, tenant = 'default') {
+// Call service management directly (no HTTP needed)
+export async function publishService(serviceId, publishData, tenant = 'test1234') {
   try {
-    // Convert to FormData as manageapi expects
-    const jsonString = JSON.stringify(publishData);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const file = new File([blob], `${serviceId}.json`, { type: 'application/json' });
+    // Use the direct function instead of HTTP API
+    const result = await createOrUpdateService(serviceId, publishData, tenant);
     
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Check if service exists
-    const checkResponse = await fetch(`/api/manageapi?type=check&api=${serviceId}`, {
-      method: 'GET'
+    console.log(`Service ${result.status} successfully:`, {
+      apiId: result.apiId,
+      size: result.fileSize,
+      url: result.fileUrl
     });
     
-    const checkResult = await checkResponse.json();
-    const type = checkResult.status === 'active' ? 'update' : 'create';
-
-    // Create or update the service
-    const response = await fetch(`/api/manageapi?type=${type}&api=${serviceId}&tenant=${tenant}`, {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to publish service');
-    }
-
-    return await response.json();
+    return result;
   } catch (error) {
     console.error('Error publishing service:', error);
     throw error;
