@@ -4,6 +4,8 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  useImperativeHandle,
+  forwardRef,
 } from "react";
 import * as GC from "@mescius/spread-sheets";
 // import "@mescius/spread-sheets-io";
@@ -28,7 +30,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-export function WorkbookViewer(props) {
+export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [designer, setDesigner] = useState(null);
   const [spread, setSpread] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -216,7 +218,21 @@ export function WorkbookViewer(props) {
   }, [spread]); // Only depend on spread to avoid re-running
 
   useEffect(() => {
-    if (!designer || !spread || !props.storeLocal?.spread) return;
+    if (!designer || !spread) return;
+    
+    // Don't load if spreadsheet data is null (still loading)
+    if (!props.storeLocal?.spread) {
+      console.log("WorkbookViewer: No spreadsheet data yet, waiting...");
+      return;
+    }
+
+    console.log("WorkbookViewer: Attempting to load data", {
+      hasSpread: !!spread,
+      dataType: typeof props.storeLocal.spread,
+      isExcel: props.storeLocal.spread.type === "excel",
+      hasSheets: !!(props.storeLocal.spread.sheets),
+      dataKeys: Object.keys(props.storeLocal.spread || {}).slice(0, 10) // First 10 keys
+    });
 
     try {
       // Load spreadsheet data if provided
@@ -240,11 +256,12 @@ export function WorkbookViewer(props) {
           }
         );
       } else if (
-        typeof props.storeLocal.spread === "object" &&
-        props.storeLocal.spread.sheets
+        typeof props.storeLocal.spread === "object"
       ) {
-        // Load JSON data
+        // Load JSON data - don't check for specific properties, just try to load
+        console.log("Loading JSON data into spread...");
         spread.fromJSON(props.storeLocal.spread);
+        console.log("JSON data loaded successfully");
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
@@ -258,6 +275,41 @@ export function WorkbookViewer(props) {
     const showRibbon = props.workbookLayout !== "minimum";
     return initRibbon(showRibbon);
   }, [props.workbookLayout, initRibbon]);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    // Get current workbook state as JSON
+    getWorkbookJSON: () => {
+      if (spread) {
+        return spread.toJSON();
+      }
+      return null;
+    },
+    // Load workbook from JSON
+    loadWorkbookJSON: (jsonData) => {
+      if (spread && jsonData) {
+        try {
+          spread.fromJSON(jsonData);
+          if (props.actionHandlerProc) {
+            props.actionHandlerProc("workbook-loaded", spread);
+          }
+          return true;
+        } catch (error) {
+          console.error("Error loading workbook JSON:", error);
+          return false;
+        }
+      }
+      return false;
+    },
+    // Get designer instance
+    getDesigner: () => designer,
+    // Get spread instance
+    getSpread: () => spread,
+    // Check if workbook has changes
+    hasChanges: () => changeCount > 0,
+    // Reset change count
+    resetChangeCount: () => setChangeCount(0),
+  }), [spread, designer, changeCount, props]);
 
   return (
     <div
@@ -278,4 +330,4 @@ export function WorkbookViewer(props) {
       </div>
     </div>
   );
-}
+});

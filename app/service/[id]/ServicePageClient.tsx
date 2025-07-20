@@ -10,7 +10,7 @@ import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
-const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => ({ default: mod.WorkbookViewer })), {
+const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
   ssr: false,
   loading: () => (
     <div style={{
@@ -23,7 +23,7 @@ const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => ({ d
       <Spin size="default" />
     </div>
   )
-});
+}) as any;
 
 const { Content, Sider } = Layout;
 // const { Title, Text } = Typography;
@@ -31,21 +31,14 @@ const { Content, Sider } = Layout;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
+  const workbookRef = useRef<any>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [spreadsheetData, setSpreadsheetData] = useState<any>({
-    version: "18.0.7",
-    sheets: {
-      Sheet1: {
-        name: "Sheet1",
-        isSelected: true,
-        rowCount: 100,
-        columnCount: 26
-      }
-    }
-  });
+  const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
   const [loading, setLoading] = useState(false);
+  const [savingWorkbook, setSavingWorkbook] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
+  const [loadingMessage, setLoadingMessage] = useState('Loading service...');
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
   const [apiConfig, setApiConfig] = useState({
     name: '',
@@ -61,7 +54,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
-  const sheetRef = useRef<any>(null); // Reference to the TableSheet
+  // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
   // Initialize panel sizes from localStorage to prevent flickering
@@ -95,6 +88,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     });
     setPanelSizes(numericSizes);
     localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(numericSizes));
+  };
+
+  const setDefaultSpreadsheetData = () => {
+    setSpreadsheetData({
+      version: "18.0.7",
+      sheets: {
+        Sheet1: {
+          name: "Sheet1",
+          isSelected: true,
+          rowCount: 100,
+          columnCount: 26
+        }
+      }
+    });
   };
 
   // Check if mobile on mount and window resize
@@ -140,6 +147,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check if this is an existing workbook
       try {
+        setLoadingMessage('Loading service configuration...');
         const response = await fetch(`/api/services/${serviceId}`);
         if (!mounted) return;
 
@@ -156,16 +164,51 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setApiConfig(loadedConfig);
           setSavedConfig(loadedConfig); // Track the saved state
 
-          // Load spreadsheet if exists
-          if (data.file) {
-            setSpreadsheetData(data.file);
+          // Load workbook from blob storage
+          try {
+            setLoadingMessage('Loading workbook data...');
+            const workbookResponse = await fetch(`/api/workbook/${serviceId}?t=${Date.now()}`, {
+              cache: 'no-store'
+            });
+            if (workbookResponse.ok) {
+              const workbookResult = await workbookResponse.json();
+              console.log('Workbook API response:', workbookResult);
+              if (workbookResult.workbookData) {
+                setSpreadsheetData(workbookResult.workbookData);
+                console.log('Workbook loaded from blob storage', {
+                  hasData: !!workbookResult.workbookData,
+                  type: typeof workbookResult.workbookData
+                });
+              }
+            } else {
+              // Check legacy file data in Redis
+              if (data.file) {
+                setSpreadsheetData(data.file);
+                console.log('Workbook loaded from legacy storage');
+              } else {
+                // Only set default data if no workbook exists anywhere
+                setDefaultSpreadsheetData();
+              }
+            }
+          } catch (error) {
+            console.error('Error loading workbook from blob:', error);
+            // Fallback to legacy file data if available
+            if (data.file) {
+              setSpreadsheetData(data.file);
+            } else {
+              // Only set default data if no workbook exists anywhere
+              setDefaultSpreadsheetData();
+            }
           }
         } else if (response.status === 404) {
           // This is expected for new workbooks
           console.log('Creating new workbook');
+          setDefaultSpreadsheetData();
         }
       } catch (error) {
         console.error('Error loading workbook:', error);
+        // If all else fails, set default data
+        setDefaultSpreadsheetData();
       }
 
       // Check for pre-uploaded file from drag & drop
@@ -264,6 +307,24 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     try {
       setLoading(true);
+      setSavingWorkbook(true);
+      
+      // Get current workbook state from designer
+      let workbookData = null;
+      if (workbookRef.current) {
+        console.log('WorkbookRef exists, getting JSON...');
+        workbookData = workbookRef.current.getWorkbookJSON();
+        if (!workbookData) {
+          console.warn('No workbook data available');
+        } else {
+          console.log('Got workbook data:', { 
+            hasData: !!workbookData,
+            sheetCount: workbookData.sheets ? Object.keys(workbookData.sheets).length : 0
+          });
+        }
+      } else {
+        console.error('WorkbookRef.current is null - cannot save workbook data');
+      }
 
       // Create the service if it doesn't exist
       const createResponse = await fetch('/api/services', {
@@ -281,15 +342,36 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const error = await createResponse.json();
         // console.log('Create service response:', error);
       }
+      
+      // Save workbook to blob storage if we have data
+      if (workbookData) {
+        const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workbookData })
+        });
+        
+        if (!workbookResponse.ok) {
+          const error = await workbookResponse.json();
+          throw new Error(error.error || 'Failed to save workbook');
+        }
+        
+        const result = await workbookResponse.json();
+        console.log('Workbook saved successfully:', {
+          url: result.workbookUrl,
+          size: result.size,
+          timestamp: result.timestamp
+        });
+      }
 
-      // Update the service with file and configuration
+      // Update the service with configuration (without file data)
       const updateResponse = await fetch(`/api/services/${serviceId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: apiConfig.name || 'Untitled API',
           description: apiConfig.description || '',
-          file: spreadsheetData, // Can be null initially
+          file: null, // Don't store workbook in Redis anymore
           inputs: apiConfig.inputs,
           outputs: apiConfig.outputs,
           status: 'draft'
@@ -300,16 +382,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error('Failed to update service');
       }
 
-      message.success('API saved successfully!');
+      message.success('API and workbook saved successfully!');
 
       // Update saved state to match current state
       setSavedConfig(apiConfig);
       setHasChanges(false);
+      
+      // Reset change count in workbook
+      if (workbookRef.current) {
+        workbookRef.current.resetChangeCount();
+      }
     } catch (error) {
       console.error('Error saving service:', error);
-      message.error('Failed to save API');
+      message.error('Failed to save: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
+      setSavingWorkbook(false);
     }
   };
 
@@ -328,10 +416,32 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setSpreadInstance(data);
     } else if (action === 'zoom-handler') {
       zoomHandlerRef.current = data;
+    } else if (action === 'edit-ended' || action === 'selection-changed') {
+      // Mark as having changes when user edits
+      if (action === 'edit-ended') {
+        setHasChanges(true);
+      }
+    } else if (action === 'workbook-loaded') {
+      console.log('Workbook loaded successfully');
     }
   }, []);
 
   const renderSpreadsheet = useMemo(() => {
+    // Don't render WorkbookViewer until we have data
+    if (!spreadsheetData) {
+      return (
+        <div style={{ 
+          height: '100%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          background: '#f5f5f5'
+        }}>
+          <Spin size="default" tip="Loading workbook..." />
+        </div>
+      );
+    }
+
     return (
       <div style={{ height: '100%', position: 'relative' }}>
         {loading && (
@@ -352,7 +462,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <WorkbookViewer
           storeLocal={{ spread: spreadsheetData }}
           readOnly={false}
-          ref={sheetRef}
+          ref={workbookRef}
           workbookLayout="default"
           initialZoom={zoomLevel}
           actionHandlerProc={handleWorkbookAction}
@@ -383,10 +493,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <div style={{
           height: '100vh',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          gap: 16
         }}>
           <Spin size="default" />
+          <div style={{ color: '#666' }}>{loadingMessage}</div>
         </div>
       </Layout>
     );
@@ -441,7 +554,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             loading={loading}
             disabled={!hasChanges}
           >
-            Save API
+            {savingWorkbook ? 'Saving Workbook...' : 'Save API'}
           </Button>
         </Space>
       </div>
