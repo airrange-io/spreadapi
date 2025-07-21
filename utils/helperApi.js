@@ -42,7 +42,8 @@ export async function getApiDefinition(apiId, apiToken) {
 
     let serviceInfo;
     try {
-      serviceInfo = await redis.HMGET("service:" + apiId, [
+      // Look for published service data
+      serviceInfo = await redis.HMGET(`service:${apiId}:published`, [
         "urlData",
         "tenantId",
         "needsToken",
@@ -118,7 +119,8 @@ export async function getApiDefinition(apiId, apiToken) {
     // if not found, fetch from the api url
     if (!result) {
       try {
-        const fetchUrl = blobBasicUrl + apiUrl;
+        // If apiUrl already contains the full URL, use it directly
+        const fetchUrl = apiUrl.startsWith('http') ? apiUrl : blobBasicUrl + apiUrl;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 

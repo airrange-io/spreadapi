@@ -891,7 +891,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             loading={loading}
             disabled={!hasChanges}
           >
-            {savingWorkbook ? 'Saving Workbook...' : 'Save API'}
+            {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
           </Button>
           {serviceStatus?.published ? (
             <Button

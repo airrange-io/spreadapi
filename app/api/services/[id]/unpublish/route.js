@@ -33,9 +33,6 @@ export async function POST(request, { params }) {
     // Delete the published service data
     await redis.del(`service:${serviceId}:published`);
     
-    // Delete the legacy structure for calculation engine
-    await redis.del(`service:${serviceId}`);
-    
     // Also delete the cached API data if it exists
     await redis.del(CACHE_KEYS.apiCache(serviceId));
     

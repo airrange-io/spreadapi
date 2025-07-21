@@ -22,39 +22,17 @@ async function getServiceAnalytics(serviceId) {
       last7Days.push(dateStr);
     }
     
-    // Build Redis pipeline for efficient data retrieval
-    const pipeline = redis.pipeline();
+    // Get all analytics data from hash
+    const analyticsData = await redis.hGetAll(`service:${serviceId}:analytics`);
     
-    // Get total calls
-    pipeline.get(`analytics:${serviceId}:total`);
-    
-    // Get today's calls per hour
-    for (let hour = 0; hour <= currentHour; hour++) {
-      pipeline.get(`analytics:${serviceId}:${today}:${hour}`);
-    }
-    
-    // Get last 7 days data
-    last7Days.forEach(date => {
-      pipeline.get(`analytics:${serviceId}:${date}:calls`);
-      pipeline.get(`analytics:${serviceId}:${date}:errors`);
-    });
-    
-    // Get cache statistics
-    pipeline.get(`analytics:${serviceId}:cache:hits`);
-    pipeline.get(`analytics:${serviceId}:cache:misses`);
-    
-    // Execute pipeline
-    const results = await pipeline.exec();
-    let resultIndex = 0;
-    
-    // Parse total calls
-    const totalCalls = parseInt(results[resultIndex++][1] || '0');
+    // Parse analytics data
+    const totalCalls = parseInt(analyticsData.total || '0');
     
     // Parse today's hourly calls
     let todayCalls = 0;
     const hourlyData = [];
     for (let hour = 0; hour <= currentHour; hour++) {
-      const calls = parseInt(results[resultIndex++][1] || '0');
+      const calls = parseInt(analyticsData[`${today}:${hour}`] || '0');
       todayCalls += calls;
       hourlyData.push({ hour, calls });
     }
@@ -63,8 +41,8 @@ async function getServiceAnalytics(serviceId) {
     const dailyData = [];
     let totalErrors = 0;
     last7Days.forEach((date, index) => {
-      const calls = parseInt(results[resultIndex++][1] || '0');
-      const errors = parseInt(results[resultIndex++][1] || '0');
+      const calls = parseInt(analyticsData[`${date}:calls`] || '0');
+      const errors = parseInt(analyticsData[`${date}:errors`] || '0');
       totalErrors += errors;
       dailyData.push({
         date,
@@ -75,8 +53,8 @@ async function getServiceAnalytics(serviceId) {
     });
     
     // Parse cache data
-    const cacheHits = parseInt(results[resultIndex++][1] || '0');
-    const cacheMisses = parseInt(results[resultIndex++][1] || '0');
+    const cacheHits = parseInt(analyticsData['cache:hits'] || '0');
+    const cacheMisses = parseInt(analyticsData['cache:misses'] || '0');
     const cacheTotal = cacheHits + cacheMisses;
     const cacheHitRate = cacheTotal > 0 ? (cacheHits / cacheTotal * 100).toFixed(1) : '0.0';
     
@@ -85,8 +63,8 @@ async function getServiceAnalytics(serviceId) {
       ? ((totalCalls - totalErrors) / totalCalls * 100).toFixed(1) 
       : '100.0';
     
-    // Get average response time (if tracked)
-    const avgResponseTime = await redis.get(`analytics:${serviceId}:avg_response_time`);
+    // Get average response time from analytics hash
+    const avgResponseTime = analyticsData.avg_response_time || '0';
     
     // Also get legacy data format for backward compatibility
     const serviceInfo = await redis.hGetAll("service:" + serviceId);
@@ -281,34 +259,35 @@ export async function POST(request) {
     // Record the event based on type
     switch (event) {
       case 'call':
-        // Increment total calls
-        await redis.incr(`analytics:${serviceId}:total`);
-        // Increment today's hourly calls
-        await redis.incr(`analytics:${serviceId}:${today}:${currentHour}`);
-        // Increment today's total calls
-        await redis.incr(`analytics:${serviceId}:${today}:calls`);
+        // Use multi for atomic updates
+        const multi = redis.multi();
+        // Update analytics hash
+        multi.hIncrBy(`service:${serviceId}:analytics`, 'total', 1);
+        multi.hIncrBy(`service:${serviceId}:analytics`, `${today}:${currentHour}`, 1);
+        multi.hIncrBy(`service:${serviceId}:analytics`, `${today}:calls`, 1);
         // Also update legacy format for backward compatibility
-        await redis.hIncrBy(`service:${serviceId}`, 'calls', 1);
-        await redis.hIncrBy(`service:${serviceId}`, `calls:${today}`, 1);
+        multi.hIncrBy(`service:${serviceId}`, 'calls', 1);
+        multi.hIncrBy(`service:${serviceId}`, `calls:${today}`, 1);
+        await multi.exec();
         break;
         
       case 'error':
         // Increment error count
-        await redis.incr(`analytics:${serviceId}:${today}:errors`);
+        await redis.hIncrBy(`service:${serviceId}:analytics`, `${today}:errors`, 1);
         break;
         
       case 'cache_hit':
-        await redis.incr(`analytics:${serviceId}:cache:hits`);
+        await redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:hits', 1);
         break;
         
       case 'cache_miss':
-        await redis.incr(`analytics:${serviceId}:cache:misses`);
+        await redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:misses', 1);
         break;
         
       case 'response_time':
         // Update average response time (simplified - in production, use proper averaging)
         if (data?.responseTime) {
-          await redis.set(`analytics:${serviceId}:avg_response_time`, data.responseTime);
+          await redis.hSet(`service:${serviceId}:analytics`, { avg_response_time: data.responseTime.toString() });
         }
         break;
         

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis, { isRedisConnected } from '../../../lib/redis';
+import { CACHE_KEYS } from '../../../lib/cacheHelpers';
 
 export async function GET(request) {
   try {
@@ -12,8 +13,9 @@ export async function GET(request) {
       redis: {
         connected: false,
         serviceInfo: null,
+        publishedInfo: null,
         cacheExists: false,
-        cacheKey: `cache:blob:${apiId}`
+        cacheKey: CACHE_KEYS.apiCache(apiId)
       },
       recommendations: []
     };
@@ -30,44 +32,58 @@ export async function GET(request) {
     }
     
     if (diagnosis.redis.connected) {
-      // Check service configuration
+      // Check service definition
       try {
-        const serviceInfo = await redis.HMGET(`service:${apiId}`, [
-          "urlData",
-          "tenantId", 
-          "needsToken",
-          "useCaching",
-          "tokens"
-        ]);
-        
-        diagnosis.redis.serviceInfo = {
-          urlData: serviceInfo[0],
-          tenantId: serviceInfo[1],
-          needsToken: serviceInfo[2],
-          useCaching: serviceInfo[3],
-          tokens: serviceInfo[4]
-        };
-        
-        if (!serviceInfo[0]) {
-          diagnosis.recommendations.push(`Service ${apiId} not found in Redis. Make sure the service is properly configured.`);
+        const serviceExists = await redis.exists(`service:${apiId}`);
+        if (serviceExists) {
+          const serviceInfo = await redis.hGetAll(`service:${apiId}`);
+          diagnosis.redis.serviceInfo = serviceInfo;
+        } else {
+          diagnosis.recommendations.push(`Service ${apiId} not found in Redis. Make sure the service exists.`);
         }
         
-        if (serviceInfo[3] !== "true") {
-          diagnosis.recommendations.push(`Caching is disabled for service ${apiId}. Set useCaching to "true" in Redis to enable caching.`);
-          diagnosis.recommendations.push(`Run: redis-cli HSET service:${apiId} useCaching true`);
+        // Check published data
+        const publishedExists = await redis.exists(`service:${apiId}:published`);
+        if (publishedExists) {
+          const publishedInfo = await redis.HMGET(`service:${apiId}:published`, [
+            "urlData",
+            "tenantId", 
+            "needsToken",
+            "useCaching",
+            "tokens"
+          ]);
+          
+          diagnosis.redis.publishedInfo = {
+            urlData: publishedInfo[0],
+            tenantId: publishedInfo[1],
+            needsToken: publishedInfo[2],
+            useCaching: publishedInfo[3],
+            tokens: publishedInfo[4]
+          };
+          
+          if (!publishedInfo[0]) {
+            diagnosis.recommendations.push(`Published service ${apiId} has no urlData. Re-publish the service.`);
+          }
+          
+          if (publishedInfo[3] !== "true") {
+            diagnosis.recommendations.push(`Caching is disabled for service ${apiId}. Enable caching in service settings.`);
+          }
+        } else {
+          diagnosis.recommendations.push(`Service ${apiId} is not published. Publish the service to make it available.`);
         }
         
         // Check if cache exists
-        const cacheExists = await redis.exists(`cache:blob:${apiId}`);
+        const cacheKey = CACHE_KEYS.apiCache(apiId);
+        const cacheExists = await redis.exists(cacheKey);
         diagnosis.redis.cacheExists = cacheExists > 0;
         
-        if (!diagnosis.redis.cacheExists && serviceInfo[3] === "true") {
+        if (!diagnosis.redis.cacheExists && diagnosis.redis.publishedInfo?.useCaching === "true") {
           diagnosis.recommendations.push('Cache is enabled but no cached data found. The first request will populate the cache.');
         }
         
         // Check cache TTL if exists
         if (diagnosis.redis.cacheExists) {
-          const ttl = await redis.ttl(`cache:blob:${apiId}`);
+          const ttl = await redis.ttl(cacheKey);
           diagnosis.redis.cacheTTL = ttl > 0 ? `${ttl} seconds` : 'no expiry';
         }
         

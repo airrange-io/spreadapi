@@ -51,9 +51,9 @@ async function logCalls(apiId, apiToken) {
     multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
     
     // New analytics tracking
-    multi.incr(`analytics:${apiId}:total`);
-    multi.incr(`analytics:${apiId}:${today}:${currentHour}`);
-    multi.incr(`analytics:${apiId}:${today}:calls`);
+    multi.hIncrBy(`service:${apiId}:analytics`, 'total', 1);
+    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:${currentHour}`, 1);
+    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:calls`, 1);
 
     if (apiToken) {
       multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
@@ -180,7 +180,7 @@ async function getResults(requestInfo) {
         cacheResult = await redis.json.get(cacheKey);
         if (cacheResult) {
           // Track cache hit
-          redis.incr(`analytics:${apiId}:cache:hits`).catch(() => {});
+          redis.hIncrBy(`service:${requestInfo.apiId}:analytics`, 'cache:hits', 1).catch(() => {});
           return cacheResult;
         }
       }
@@ -203,7 +203,7 @@ async function getResults(requestInfo) {
   
   // Track cache miss (we're here because cache didn't return)
   if (useCaching) {
-    redis.incr(`analytics:${apiId}:cache:misses`).catch(() => {});
+    redis.hIncrBy(`service:${requestInfo.apiId}:analytics`, 'cache:misses', 1).catch(() => {});
   }
 
   try {
@@ -496,8 +496,9 @@ async function getResults(requestInfo) {
       outputs: answerOutputs,
     };
     
-    // Track response time
-    redis.set(`analytics:${requestInfo.apiId}:avg_response_time`, timeAll).catch(() => {});
+    // Track response time in milliseconds
+    const totalResponseTime = timeEnd - timeAll;
+    redis.hSet(`service:${requestInfo.apiId}:analytics`, { avg_response_time: totalResponseTime.toString() }).catch(() => {});
 
     // write to cache (non-blocking for better performance)
     if (useCaching && cacheKey) {
@@ -532,7 +533,7 @@ async function getResults(requestInfo) {
     // Track error in analytics
     const now = new Date();
     const today = now.toISOString().split('T')[0];
-    redis.incr(`analytics:${requestInfo.apiId}:${today}:errors`).catch(() => {});
+    redis.hIncrBy(`service:${requestInfo.apiId}:analytics`, `${today}:errors`, 1).catch(() => {});
 
     return getError(
       "calculation failed: " + (error.message || "unknown error")

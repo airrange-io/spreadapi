@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Space, Typography, Alert, Spin, message, Statistic, Row, Col, Divider, Tag } from 'antd';
+import { Form, Input, Button, Card, Space, Typography, Alert, Spin, message, Statistic, Row, Col, Divider, Tag, App } from 'antd';
 import { SubPageLayout } from '@/components/SubPageLayout';
 import { SendOutlined, ClearOutlined, ThunderboltOutlined, DatabaseOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'next/navigation';
@@ -14,7 +14,9 @@ export default function ApiTesterPage() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [serviceInfo, setServiceInfo] = useState<any>(null);
   const searchParams = useSearchParams();
+  const { message: messageApi } = App.useApp();
 
   // Default demo data
   const demoData = {
@@ -33,13 +35,51 @@ export default function ApiTesterPage() {
     const serviceIdFromUrl = searchParams.get('service');
     const apiId = serviceIdFromUrl || demoData.apiId;
     
-    // Set initial values
-    form.setFieldsValue({
-      apiId: apiId,
-      token: serviceIdFromUrl ? "" : demoData.token, // Only use demo token if using demo service
-      inputs: serviceIdFromUrl ? "{}" : JSON.stringify(demoData.inputs, null, 2)
-    });
+    if (serviceIdFromUrl) {
+      // Fetch service details to get input parameters
+      fetchServiceDetails(serviceIdFromUrl);
+    } else {
+      // Use demo data
+      setServiceInfo(null);
+      form.setFieldsValue({
+        apiId: apiId,
+        token: demoData.token,
+        inputs: JSON.stringify(demoData.inputs, null, 2)
+      });
+    }
   }, [searchParams]);
+
+  const fetchServiceDetails = async (serviceId: string) => {
+    try {
+      const response = await fetch(`/api/services/${serviceId}`);
+      if (response.ok) {
+        const service = await response.json();
+        setServiceInfo(service);
+        
+        // Build inputs object from service input definitions
+        const inputsObj: Record<string, any> = {};
+        if (service.inputs && Array.isArray(service.inputs)) {
+          service.inputs.forEach((input: any) => {
+            inputsObj[input.name] = input.value || (input.type === 'number' ? 0 : '');
+          });
+        }
+        
+        form.setFieldsValue({
+          apiId: serviceId,
+          token: '', // User needs to provide token
+          inputs: JSON.stringify(inputsObj, null, 2)
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch service details:', error);
+      // Fallback to empty inputs
+      form.setFieldsValue({
+        apiId: serviceId,
+        token: '',
+        inputs: '{}'
+      });
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
@@ -93,12 +133,13 @@ export default function ApiTesterPage() {
   };
 
   const loadDemoData = () => {
+    setServiceInfo(null);
     form.setFieldsValue({
       apiId: demoData.apiId,
       token: demoData.token,
       inputs: JSON.stringify(demoData.inputs, null, 2)
     });
-    message.info('Demo data loaded');
+    messageApi.info('Demo data loaded');
   };
 
   return (
@@ -123,6 +164,30 @@ export default function ApiTesterPage() {
       }
     >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        {serviceInfo && (
+          <Alert
+            message={
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Text strong>{serviceInfo.name}</Text>
+                {serviceInfo.description && <Text type="secondary">{serviceInfo.description}</Text>}
+                <Space direction="vertical" size={0}>
+                  <Text type="secondary">
+                    <strong>Expected Outputs:</strong>
+                  </Text>
+                  {serviceInfo.outputs && serviceInfo.outputs.map((output: any) => (
+                    <Text key={output.id} type="secondary" style={{ marginLeft: 16 }}>
+                      • <strong>{output.name}</strong>: {output.type}
+                      {output.value !== undefined && ` (example: ${output.value})`}
+                    </Text>
+                  ))}
+                </Space>
+              </Space>
+            }
+            type="info"
+            closable
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <Card>
           <Title level={4}>Test API Endpoint</Title>
           <Paragraph type="secondary">
