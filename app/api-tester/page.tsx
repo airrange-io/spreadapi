@@ -14,6 +14,7 @@ export default function ApiTesterPage() {
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
+  const [serviceLoading, setServiceLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { message: messageApi } = App.useApp();
@@ -33,14 +34,25 @@ export default function ApiTesterPage() {
   useEffect(() => {
     // Get service ID from URL parameter, fallback to demo
     const serviceIdFromUrl = searchParams.get('service');
+    const serviceNameFromUrl = searchParams.get('name');
     const apiId = serviceIdFromUrl || demoData.apiId;
 
     if (serviceIdFromUrl) {
-      // Fetch service details to get input parameters
-      fetchServiceDetails(serviceIdFromUrl);
+      // If we have the name from URL, use it immediately
+      if (serviceNameFromUrl) {
+        setServiceInfo({ id: serviceIdFromUrl, name: serviceNameFromUrl });
+        setServiceLoading(false);
+        // Still fetch full details for inputs, but don't block UI
+        fetchServiceDetails(serviceIdFromUrl, false);
+      } else {
+        // Only set loading if we don't have the name
+        setServiceLoading(true);
+        fetchServiceDetails(serviceIdFromUrl, true);
+      }
     } else {
       // Use demo data
       setServiceInfo(null);
+      setServiceLoading(false);
       form.setFieldsValue({
         apiId: apiId,
         token: demoData.token,
@@ -49,12 +61,16 @@ export default function ApiTesterPage() {
     }
   }, [searchParams]);
 
-  const fetchServiceDetails = async (serviceId: string) => {
+  const fetchServiceDetails = async (serviceId: string, updateServiceInfo: boolean = true) => {
     try {
       const response = await fetch(`/api/services/${serviceId}`);
       if (response.ok) {
         const service = await response.json();
-        setServiceInfo(service);
+        
+        // Only update service info if requested (for cases where we already have name from URL)
+        if (updateServiceInfo) {
+          setServiceInfo(service);
+        }
 
         // Build inputs object from service input definitions
         const inputsObj: Record<string, any> = {};
@@ -78,6 +94,10 @@ export default function ApiTesterPage() {
         token: '',
         inputs: '{}'
       });
+    } finally {
+      if (updateServiceInfo) {
+        setServiceLoading(false);
+      }
     }
   };
 
@@ -153,11 +173,13 @@ export default function ApiTesterPage() {
         padding: '0 24px',
         borderBottom: '1px solid #f0f0f0'
       }}>
-        <Breadcrumb items={[
-          { title: <a onClick={() => router.push('/')}>Services</a> },
-          ...(serviceInfo ? [{ title: <a onClick={() => router.push(`/service/${serviceInfo.id}`)}>{serviceInfo.name}</a> }] : []),
-          { title: 'API Tester' }
-        ]} />
+        {(!searchParams.get('service') || !serviceLoading) && (
+          <Breadcrumb items={[
+            { title: <a onClick={() => router.push('/')}>Services</a> },
+            ...(serviceInfo ? [{ title: <a onClick={() => router.push(`/service/${serviceInfo.id}`)}>{serviceInfo.name}</a> }] : []),
+            { title: 'API Tester' }
+          ]} />
+        )}
         
         <Space>
           <Button

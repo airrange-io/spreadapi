@@ -884,15 +884,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               Configure
             </Button>
           )}
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleSave}
-            loading={loading}
-            disabled={!hasChanges}
-          >
-            {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
-          </Button>
+          {hasChanges && (
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={handleSave}
+              loading={loading}
+            >
+              {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
+            </Button>
+          )}
           {serviceStatus?.published ? (
             <Button
               type="default"
@@ -905,12 +906,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </Button>
           ) : (
             <Button
-              type="default"
+              type="primary"
               onClick={handlePublish}
               loading={loading}
               disabled={hasChanges || apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0}
             >
-              Publish API
+              Publish Service
             </Button>
           )}
         </Space>

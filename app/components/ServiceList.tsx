@@ -97,9 +97,9 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
     router.push(`/service/${serviceId}`);
   };
 
-  const handleTest = (serviceId: string) => {
-    // Navigate to API tester with pre-filled service ID
-    router.push(`/api-tester?service=${serviceId}`);
+  const handleTest = (serviceId: string, serviceName: string) => {
+    // Navigate to API tester with pre-filled service ID and name
+    router.push(`/api-tester?service=${serviceId}&name=${encodeURIComponent(serviceName)}`);
   };
 
   const handleUsage = (serviceId: string) => {
@@ -181,7 +181,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                   <Button
                     type="text"
                     icon={<PlayCircleOutlined />}
-                    onClick={() => handleTest(service.id)}
+                    onClick={() => handleTest(service.id, service.name)}
                     disabled={service.status === 'draft'}
                   >
                     Test
