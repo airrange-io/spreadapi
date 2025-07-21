@@ -644,9 +644,24 @@ console.log(response.data);`;
                           />
                         )}
 
-                        {response.result && (
+                        {response.inputs && (
                           <div style={{ marginBottom: 16 }}>
-                            <Title level={5}>Result</Title>
+                            <Title level={5}>Inputs</Title>
+                            <pre style={{
+                              background: '#f5f5f5',
+                              padding: 12,
+                              borderRadius: 4,
+                              overflow: 'auto',
+                              maxHeight: 150
+                            }}>
+                              {JSON.stringify(response.inputs, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+
+                        {(response.outputs || response.result) && (
+                          <div style={{ marginBottom: 16 }}>
+                            <Title level={5}>Outputs</Title>
                             <pre style={{
                               background: '#f5f5f5',
                               padding: 12,
@@ -654,26 +669,26 @@ console.log(response.data);`;
                               overflow: 'auto',
                               maxHeight: 300
                             }}>
-                              {JSON.stringify(response.result, null, 2)}
+                              {JSON.stringify(response.outputs || response.result, null, 2)}
                             </pre>
                           </div>
                         )}
 
-                        {response.meta && (
+                        {(response.info || response.meta) && (
                           <Row gutter={[16, 16]}>
                             <Col span={8}>
                               <Statistic
                                 title="Calculation Time"
-                                value={response.meta.executionTime}
+                                value={response.info?.timeCalculation || response.meta?.executionTime || 0}
                                 suffix="ms"
                                 prefix={<ThunderboltOutlined />}
                               />
                             </Col>
                             <Col span={8}>
                               <Statistic
-                                title="Cache"
-                                value={response.meta.fromCache ? 'HIT' : 'MISS'}
-                                valueStyle={{ color: response.meta.fromCache ? '#52c41a' : '#1890ff' }}
+                                title="API Data Time"
+                                value={response.info?.timeApiData || 0}
+                                suffix="ms"
                                 prefix={<DatabaseOutlined />}
                               />
                             </Col>
