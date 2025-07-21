@@ -7,23 +7,46 @@ import { getError } from '../../../utils/helper';
 //===============================================
 
 // Enhanced analytics function with more comprehensive tracking
-async function getServiceAnalytics(serviceId) {
+async function getServiceAnalytics(serviceId, options = {}) {
   try {
+    const { days = 7 } = options;
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const currentHour = now.getUTCHours();
     
-    // Get last 7 days of data
-    const last7Days = [];
-    for (let i = 0; i < 7; i++) {
+    // Get last N days of data
+    const lastNDays = [];
+    for (let i = 0; i < days; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      last7Days.push(dateStr);
+      lastNDays.push(dateStr);
     }
     
-    // Get all analytics data from hash
-    const analyticsData = await redis.hGetAll(`service:${serviceId}:analytics`);
+    // Build specific fields to fetch (more efficient than hGetAll)
+    const fieldsToFetch = ['total', 'errors', 'avg_response_time', 'cache:hits', 'cache:misses'];
+    
+    // Add hourly fields for today
+    for (let hour = 0; hour <= currentHour; hour++) {
+      fieldsToFetch.push(`${today}:${hour}`);
+    }
+    
+    // Add daily fields for requested days
+    lastNDays.forEach(date => {
+      fieldsToFetch.push(`${date}:calls`);
+      fieldsToFetch.push(`${date}:errors`);
+    });
+    
+    // Use hMGet for specific fields instead of hGetAll (more efficient)
+    const values = await redis.hmGet(`service:${serviceId}:analytics`, fieldsToFetch);
+    
+    // Build analytics data object from specific fields
+    const analyticsData = {};
+    fieldsToFetch.forEach((field, index) => {
+      if (values[index] !== null) {
+        analyticsData[field] = values[index];
+      }
+    });
     
     // Parse analytics data
     const totalCalls = parseInt(analyticsData.total || '0');
@@ -40,7 +63,7 @@ async function getServiceAnalytics(serviceId) {
     // Parse last 7 days data
     const dailyData = [];
     let totalErrors = 0;
-    last7Days.forEach((date, index) => {
+    lastNDays.forEach((date, index) => {
       const calls = parseInt(analyticsData[`${date}:calls`] || '0');
       const errors = parseInt(analyticsData[`${date}:errors`] || '0');
       totalErrors += errors;
@@ -180,6 +203,10 @@ async function getServicesByTenant(tenantId) {
 // Route Handlers
 //===============================================
 
+// Simple in-memory cache
+const analyticsCache = new Map();
+const CACHE_TTL = 30000; // 30 seconds
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -195,8 +222,41 @@ export async function GET(request) {
     
     // Handle single service analytics
     if (serviceId) {
-      const analytics = await getServiceAnalytics(serviceId);
-      return NextResponse.json(analytics);
+      const days = parseInt(searchParams.get('days') || '7');
+      const cacheKey = `${serviceId}:${days}`;
+      
+      // Check cache first
+      const cached = analyticsCache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return NextResponse.json(cached.data, {
+          headers: {
+            'X-Cache': 'HIT',
+            'Cache-Control': 'private, max-age=30'
+          }
+        });
+      }
+      
+      // Fetch fresh data
+      const analytics = await getServiceAnalytics(serviceId, { days });
+      
+      // Cache the result
+      analyticsCache.set(cacheKey, {
+        data: analytics,
+        timestamp: Date.now()
+      });
+      
+      // Clean old cache entries if too many
+      if (analyticsCache.size > 100) {
+        const oldestKey = analyticsCache.keys().next().value;
+        analyticsCache.delete(oldestKey);
+      }
+      
+      return NextResponse.json(analytics, {
+        headers: {
+          'X-Cache': 'MISS',
+          'Cache-Control': 'private, max-age=30'
+        }
+      });
     }
     
     // Handle multiple services analytics (batch request)

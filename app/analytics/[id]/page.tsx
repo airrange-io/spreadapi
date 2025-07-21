@@ -13,7 +13,7 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ id: 
         alignItems: 'center', 
         justifyContent: 'center' 
       }}>
-        <Spin size="large" />
+        <Spin size="default" />
       </div>
     }>
       <AnalyticsPageClient serviceId={id} />

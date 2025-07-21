@@ -111,6 +111,7 @@ export default function AnalyticsPageClient({ serviceId }: { serviceId: string }
   ]);
   const [refreshing, setRefreshing] = useState(false);
   const [timeView, setTimeView] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [summaryLoaded, setSummaryLoaded] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -120,15 +121,17 @@ export default function AnalyticsPageClient({ serviceId }: { serviceId: string }
     try {
       setLoading(true);
       
-      // Load service info
-      const serviceResponse = await fetch(`/api/services/${serviceId}`);
+      // Fetch both service info and analytics in parallel
+      const [serviceResponse, analyticsResponse] = await Promise.all([
+        fetch(`/api/services/${serviceId}`),
+        fetch(`/api/getanalytics?serviceId=${serviceId}&days=7`) // Add days parameter
+      ]);
+
       if (serviceResponse.ok) {
         const service = await serviceResponse.json();
         setServiceInfo(service);
       }
 
-      // Load analytics data
-      const analyticsResponse = await fetch(`/api/getanalytics?serviceId=${serviceId}`);
       if (analyticsResponse.ok) {
         const data = await analyticsResponse.json();
         console.log('Analytics data received:', data);
@@ -159,7 +162,7 @@ export default function AnalyticsPageClient({ serviceId }: { serviceId: string }
         alignItems: 'center', 
         justifyContent: 'center' 
       }}>
-        <Spin size="large" />
+        <Spin size="default" />
       </div>
     );
   }
