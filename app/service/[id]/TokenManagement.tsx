@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Space, 
-  Table, 
-  Button, 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
-  DatePicker, 
-  Typography, 
-  Tag, 
+import {
+  Space,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Typography,
+  Tag,
   Tooltip,
   Popconfirm,
   message,
@@ -18,10 +18,10 @@ import {
   Card,
   Alert
 } from 'antd';
-import { 
-  PlusOutlined, 
-  KeyOutlined, 
-  CopyOutlined, 
+import {
+  PlusOutlined,
+  KeyOutlined,
+  CopyOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
   ClockCircleOutlined
@@ -52,7 +52,7 @@ interface TokenManagementProps {
   onTokenCountChange?: (count: number) => void;
 }
 
-export default function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange }: TokenManagementProps) {
+const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange }: TokenManagementProps) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -60,26 +60,35 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
   const [newToken, setNewToken] = useState<Token | null>(null);
   const [creating, setCreating] = useState(false);
   const [form] = Form.useForm();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  // Load tokens on mount
+  // Load tokens on mount and when component becomes visible
   useEffect(() => {
-    loadTokens();
+    // Only load if we haven't loaded before or if serviceId changes
+    if (!hasLoadedOnce || !tokens.length) {
+      loadTokens();
+    }
   }, [serviceId]);
 
   const loadTokens = async () => {
     setLoading(true);
     try {
+      const startTime = performance.now();
       const response = await fetch(`/api/services/${serviceId}/tokens`);
+      const endTime = performance.now();
+      console.log(`[TokenManagement] API call took ${endTime - startTime}ms`);
+      
       if (response.ok) {
         const data = await response.json();
         const tokenList = data.tokens || [];
         setTokens(tokenList);
-        
+        setHasLoadedOnce(true);
+
         // Update token count
         if (onTokenCountChange) {
           onTokenCountChange(tokenList.length);
         }
-        
+
         // Auto-enable token requirement if tokens exist
         if (tokenList.length > 0 && !requireToken) {
           onRequireTokenChange(true);
@@ -95,6 +104,9 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
     } catch (error) {
       console.error('Error loading tokens:', error);
       message.error('Error loading tokens');
+      if (onTokenCountChange) {
+        onTokenCountChange(0);
+      }
     } finally {
       setLoading(false);
     }
@@ -121,7 +133,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
         setShowTokenModal(true);
         form.resetFields();
         await loadTokens();
-        
+
         // Auto-enable token requirement when first token is created
         if (tokens.length === 0 && !requireToken) {
           onRequireTokenChange(true);
@@ -148,7 +160,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
       if (response.ok) {
         message.success('Token revoked successfully');
         await loadTokens();
-        
+
         // Auto-disable token requirement when last token is deleted
         if (tokens.length === 1 && requireToken) {
           onRequireTokenChange(false);
@@ -191,7 +203,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
           mcp: { label: 'MCP Access', color: 'purple' },
           '*': { label: 'All Permissions', color: 'red' }
         };
-        
+
         return (
           <Space>
             {scopes.map(scope => {
@@ -253,9 +265,9 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
           okText="Revoke"
           okButtonProps={{ danger: true }}
         >
-          <Button 
-            type="text" 
-            danger 
+          <Button
+            type="text"
+            danger
             icon={<DeleteOutlined />}
             size="small"
           >
@@ -267,15 +279,19 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
   ];
 
   return (
-    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      height: '100%',
+      gap: '12px'
+    }}>
       {/* Token requirement toggle */}
       {tokens.length === 0 ? (
         <Alert
-          message="No tokens created yet"
           description="Create your first API token to enable authentication. Token authentication will be automatically enabled when you create your first token."
           type="info"
           style={{ padding: '14px 18px', borderColor: "#ffffff" }}
-          // showIcon
         />
       ) : (
         <Alert
@@ -286,14 +302,14 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
               <Text type="secondary">({tokens.length} active {tokens.length === 1 ? 'token' : 'tokens'})</Text>
             </Space>
           }
-          description={requireToken ? 
+          description={requireToken ?
             "API calls must include a valid token. Authentication will be automatically disabled if all tokens are removed." :
             "Authentication is disabled but tokens exist. Enable it to require tokens for API access."
           }
           type={requireToken ? 'success' : 'warning'}
           showIcon
           action={!requireToken && tokens.length > 0 ? (
-            <Button 
+            <Button
               size="small"
               type="primary"
               onClick={() => onRequireTokenChange(true)}
@@ -305,11 +321,28 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
       )}
 
       {/* Tokens table */}
-      <Card>
+      <Card
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0
+        }}
+        styles={{
+          body: {
+            padding: 16,
+            backgroundColor: '#f2f2f2',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0
+          }
+        }}
+      >
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={5} style={{ margin: 0 }}>API Tokens</Title>
-          <Button 
-            type="primary" 
+          <Title level={5} style={{ margin: 0, color: '#898989' }}>API Tokens</Title>
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => setShowCreateModal(true)}
           >
@@ -322,18 +355,33 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
             <Spin />
           </div>
         ) : tokens.length === 0 ? (
-          <Empty 
-            description="No tokens created yet"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Empty
+              description="No tokens created yet"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
         ) : (
-          <Table 
-            columns={columns}
-            dataSource={tokens}
-            rowKey="id"
-            size="small"
-            pagination={false}
-          />
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            minHeight: 0
+          }}>
+            <Table
+              columns={columns}
+              dataSource={tokens}
+              rowKey="id"
+              size="small"
+              pagination={false}
+              scroll={{ y: 'calc(100vh - 450px)' }}
+              sticky
+            />
+          </div>
         )}
       </Card>
 
@@ -357,7 +405,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
             label="Token Name"
             rules={[{ required: true, message: 'Please enter a token name' }]}
           >
-            <Input 
+            <Input
               placeholder="e.g., Production API Key"
               prefix={<KeyOutlined />}
             />
@@ -367,7 +415,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
             name="description"
             label="Description"
           >
-            <Input.TextArea 
+            <Input.TextArea
               placeholder="Optional description for this token"
               rows={2}
             />
@@ -392,7 +440,7 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
             name="expiresAt"
             label="Expiration (Optional)"
           >
-            <DatePicker 
+            <DatePicker
               showTime
               style={{ width: '100%' }}
               disabledDate={(current) => current && current < dayjs().startOf('day')}
@@ -400,9 +448,9 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
+            <Button
+              type="primary"
+              htmlType="submit"
               loading={creating}
               block
             >
@@ -421,8 +469,8 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
           setNewToken(null);
         }}
         footer={[
-          <Button 
-            key="close" 
+          <Button
+            key="close"
             type="primary"
             onClick={() => {
               setShowTokenModal(false);
@@ -442,9 +490,9 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
               showIcon
             />
 
-            <div style={{ 
-              background: '#f5f5f5', 
-              padding: '12px', 
+            <div style={{
+              background: '#f5f5f5',
+              padding: '12px',
               borderRadius: '4px',
               wordBreak: 'break-all',
               fontFamily: 'monospace'
@@ -458,8 +506,8 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
               <Text type="secondary">
                 <InfoCircleOutlined /> Use this token in your API requests:
               </Text>
-              <Paragraph 
-                code 
+              <Paragraph
+                code
                 copyable
                 style={{ marginTop: 8 }}
               >
@@ -469,6 +517,8 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
           </Space>
         )}
       </Modal>
-    </Space>
+    </div>
   );
-}
+});
+
+export default TokenManagement;

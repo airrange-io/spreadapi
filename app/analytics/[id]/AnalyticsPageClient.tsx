@@ -222,11 +222,19 @@ export default function AnalyticsPageClient({ serviceId }: { serviceId: string }
         padding: '0 24px',
         borderBottom: '1px solid #f0f0f0'
       }}>
-        <Breadcrumb items={[
-          { title: <a onClick={handleBack}>Services</a> },
-          { title: <a onClick={() => router.push(`/service/${serviceId}`)}>{serviceInfo.name}</a> },
-          { title: 'Analytics' }
-        ]} />
+        <Space>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => router.push(`/service/${serviceId}`)}
+            style={{ padding: '4px 8px' }}
+          />
+          <Breadcrumb items={[
+            { title: <a onClick={handleBack}>Services</a> },
+            { title: <a onClick={() => router.push(`/service/${serviceId}`)}>{serviceInfo.name}</a> },
+            { title: 'Analytics' }
+          ]} />
+        </Space>
         
         <Space>
           <Button 

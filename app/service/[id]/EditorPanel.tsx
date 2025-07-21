@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Statistic, Typography, Space, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -99,13 +99,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [tokenCount, setTokenCount] = useState<number>(0);
 
   // Handle card activation
-  const handleCardClick = (cardType: ActiveCard) => {
+  const handleCardClick = useCallback((cardType: ActiveCard) => {
     if (activeCard === cardType) {
       setActiveCard(null); // Deactivate if already active
     } else {
       setActiveCard(cardType);
     }
-  };
+  }, [activeCard]);
 
   // Notify parent of changes
   useEffect(() => {
@@ -609,6 +609,25 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     borderRadius: '8px',
   });
 
+  // Memoize token callbacks to prevent unnecessary re-renders
+  const handleRequireTokenChange = useCallback((value: boolean) => {
+    setRequireToken(value);
+    if (onConfigChange) {
+      onConfigChange({
+        name: apiName,
+        description: apiDescription,
+        inputs,
+        outputs,
+        enableCaching,
+        requireToken: value
+      });
+    }
+  }, [apiName, apiDescription, inputs, outputs, enableCaching, onConfigChange]);
+
+  const handleTokenCountChange = useCallback((count: number) => {
+    setTokenCount(count);
+  }, []);
+
   // Get statistic value style based on active state
   const getStatisticValueStyle = (cardType: ActiveCard, originalColor: string) => {
     if (activeCard === cardType) {
@@ -644,7 +663,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Statistic
               title="Service"
               value={'---'}
-              prefix={<FileTextOutlined />}
+              prefix={<FileTextOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
             />
           </Card>
@@ -662,7 +681,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Statistic
               title="Parameters"
               value={inputs.length + outputs.length}
-              prefix={<SwapOutlined />}
+              prefix={<SwapOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
               suffix={
                 <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
@@ -685,13 +704,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Statistic
               title="API Tokens"
               value={tokenCount}
-              prefix={<SafetyOutlined />}
+              prefix={<SafetyOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
-              suffix={
-                <span style={{ fontSize: '12px', fontWeight: 'normal' }}>
-                  {requireToken ? 'Required' : 'Optional'}
-                </span>
-              }
+              // suffix={
+              //   <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+              //     {requireToken ? 'Required' : 'Optional'}
+              //   </span>
+              // }
             />
           </Card>
         </div>
@@ -702,24 +721,43 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         flex: 1,
         overflow: 'auto',
         padding: '0 12px',
-        paddingBottom: buttonAreaHeight + 12,
+        paddingBottom: 12, //buttonAreaHeight + 12,
         minHeight: 0
       }}>
         {/* Active Card Detail Areas or Default AI Area */}
         {activeCard ? (
           <div style={{
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            height: '100%'
           }}>
             {/* Columns Detail */}
             {activeCard === 'detail' && (
-              <Space direction='vertical' size={12} style={{ width: '100%', marginTop: '8px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                width: '100%', 
+                height: '100%',
+                marginTop: '8px',
+                gap: '12px'
+              }}>
                 <ApiEndpointPreview
                   serviceId={serviceId || ''}
                   isPublished={serviceStatus?.published || false}
                   requireToken={requireToken}
                 />
-                <Space direction="vertical" style={{ width: '100%', padding: 14, backgroundColor: "#f2f2f2", border: `1px solid #ffffff`, borderRadius: 8 }} >
+                <div style={{ 
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 14, 
+                  backgroundColor: "#f2f2f2", 
+                  border: `1px solid #ffffff`, 
+                  borderRadius: 8,
+                  minHeight: 0,
+                  overflow: 'auto'
+                }}>
+                  <Space direction="vertical" style={{ width: '100%' }} size={12}>
 
                   <div>
                     <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
@@ -740,7 +778,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   </div>
 
                   <div style={{ marginTop: '0px' }}>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Options</strong></div>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Advanced Options</strong></div>
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <Space align="center">
                         <Checkbox
@@ -778,27 +816,31 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     Supports .xlsx and .xls formats
                   </div> */}
                   </div>
-                </Space>
-                <Button
-                  type="link"
-                  // icon={<BarChartOutlined />}
-                  onClick={() => {
-                    if (serviceId) {
-                      window.open(`/api-tester?service=${serviceId}${apiName ? `&name=${encodeURIComponent(apiName)}` : ''}`, '_blank');
-                    }
-                  }}
-                  style={{ padding: '4px 0', marginTop: '8px' }}
-                >
-                  Open API Tester & Documentation
-                </Button>
-
-              </Space>
+                  </Space>
+                </div>
+              </div>
             )}
 
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
-              <Space direction="vertical" style={{ width: '100%', marginTop: '8px' }}>
-                <Space direction="vertical" style={{ width: '100%', padding: 14, backgroundColor: "#f2f2f2", border: `1px solid #ffffff`, borderRadius: 8 }} >
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                width: '100%', 
+                marginTop: '8px',
+                height: '100%',
+                minHeight: 0
+              }}>
+                <div style={{ 
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 14, 
+                  backgroundColor: "#f2f2f2", 
+                  // border: `1px solid #ffffff`, 
+                  borderRadius: 8,
+                  overflow: 'auto'
+                }}>
                   <div>
                     <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Input Parameters</strong></div>
                     <div style={{
@@ -917,34 +959,27 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     • Output parameters are calculated results read from spreadsheet cells<br />
                     • The service returns these output values as the API response
                   </div>
-                </Space>
-              </Space>
+                </div>
+              </div>
             )}
 
             {/* Tokens Detail */}
             {activeCard === 'tokens' && (
-              <Space direction='vertical' size={16} style={{ width: '100%', marginTop: '8px' }}>
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%', 
+                height: '100%', 
+                marginTop: '8px',
+                minHeight: 0
+              }}>
                 <TokenManagement
                   serviceId={serviceId || ''}
                   requireToken={requireToken}
-                  onRequireTokenChange={(value) => {
-                    setRequireToken(value);
-                    if (onConfigChange) {
-                      onConfigChange({
-                        name: apiName,
-                        description: apiDescription,
-                        inputs,
-                        outputs,
-                        enableCaching,
-                        requireToken: value
-                      });
-                    }
-                  }}
-                  onTokenCountChange={(count) => {
-                    setTokenCount(count);
-                  }}
+                  onRequireTokenChange={handleRequireTokenChange}
+                  onTokenCountChange={handleTokenCountChange}
                 />
-              </Space>
+              </div>
             )}
 
           </div>
@@ -959,8 +994,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         ref={buttonAreaRef}
         style={{
           padding: '12px',
+          paddingTop: 0,
           background: 'white',
-          borderTop: '1px solid #f0f0f0',
+          // borderTop: '1px solid #f0f0f0',
           // boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
           flex: '0 0 auto'
         }}>

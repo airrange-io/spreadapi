@@ -47,7 +47,7 @@ export default function ApiEndpointPreview({
           <Text 
             strong
             style={{ 
-              color: isPublished ? '#52c41a' : '#8c8c8c',
+              color: isPublished ? '#389E0E' : '#8c8c8c',
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'help',
@@ -62,7 +62,7 @@ export default function ApiEndpointPreview({
         <div style={{ flex: 1 }}>
           <Text 
             style={{ 
-              fontSize: '14px',
+              fontSize: '12px',
               fontFamily: 'monospace',
               color: isPublished ? '#389E0E' : '#262626',
               wordBreak: 'break-all'

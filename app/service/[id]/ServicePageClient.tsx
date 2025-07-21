@@ -59,7 +59,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     requireToken: false
   });
   const [hasChanges, setHasChanges] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(100);
+  const [zoomLevel, setZoomLevel] = useState(80);
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
@@ -189,7 +189,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Parallel load all data for optimal performance
       setLoadingMessage('Loading service data...');
-      
+
       try {
         // Start all requests in parallel
         const [fullDataResponse, workbookResponse] = await Promise.all([
@@ -201,21 +201,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               'X-Expected-404': 'true',
               'If-None-Match': localStorage.getItem(`workbook-etag-${serviceId}`) || ''
             }
-          }).catch(err => ({ 
-            ok: false, 
-            error: err 
+          }).catch(err => ({
+            ok: false,
+            error: err
           }))
         ]);
-        
+
         if (!mounted) return;
-        
+
         // Process combined service data
         if (fullDataResponse.ok && fullDataResponse.status !== 204) {
           const fullData = await fullDataResponse.json();
-          
+
           // Set service status
           setServiceStatus(fullData.status);
-          
+
           // Set service configuration
           const loadedConfig = {
             name: fullData.service.name || '',
@@ -227,7 +227,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           };
           setApiConfig(loadedConfig);
           setSavedConfig(loadedConfig);
-          
+
           // Process workbook data if available
           if (workbookResponse.status === 304) {
             // Workbook hasn't changed, use cached version
@@ -242,7 +242,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             setLoadingMessage('Processing workbook...');
             try {
               const workbookResult = await workbookResponse.json();
-              
+
               // Store ETag and data for future requests
               const etag = workbookResponse.headers.get('etag');
               if (etag) {
@@ -299,7 +299,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     // Helper function to process workbook data
     const processWorkbookData = (workbookResult: any) => {
       console.log('Processing workbook data:', workbookResult);
-      
+
       if (workbookResult.format === 'sjs' && workbookResult.workbookBlob) {
         // Handle SJS format
         const base64 = workbookResult.workbookBlob;
@@ -321,44 +321,44 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setSpreadsheetData(workbookResult.workbookData);
         console.log('JSON workbook loaded');
       }
-      
+
       setInitialLoading(false);
       setLoadingMessage('');
     };
 
-  // Check for pre-uploaded file from drag & drop
-  if (typeof window !== 'undefined' && (window as any).__draggedFile) {
-    const file = (window as any).__draggedFile;
+    // Check for pre-uploaded file from drag & drop
+    if (typeof window !== 'undefined' && (window as any).__draggedFile) {
+      const file = (window as any).__draggedFile;
 
-    // Process the dragged file
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const arrayBuffer = e.target?.result;
-      if (arrayBuffer) {
-        setSpreadsheetData({
-          type: 'excel',
-          data: arrayBuffer,
-          fileName: file.name
-        });
-      }
+      // Process the dragged file
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target?.result;
+        if (arrayBuffer) {
+          setSpreadsheetData({
+            type: 'excel',
+            data: arrayBuffer,
+            fileName: file.name
+          });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+
+      delete (window as any).__draggedFile;
+    }
+
+    // Initial loading will be handled in a separate effect
+
+    // Show drawer on mobile after initial load
+    if (isMobile) {
+      setDrawerVisible(true);
+    }
+
+    loadWorkbook();
+
+    return () => {
+      mounted = false;
     };
-    reader.readAsArrayBuffer(file);
-
-    delete (window as any).__draggedFile;
-  }
-
-  // Initial loading will be handled in a separate effect
-
-  // Show drawer on mobile after initial load
-  if (isMobile) {
-    setDrawerVisible(true);
-  }
-
-  loadWorkbook();
-
-  return () => {
-    mounted = false;
-  };
   }, [serviceId, isMobile]);
 
   // Handle initial loading state based on spreadsheet data
@@ -469,7 +469,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       message.success('Service published successfully!');
       console.log('Publish result:', result);
-      
+
       // Update the service status
       setServiceStatus({
         published: true,
@@ -495,7 +495,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       setLoading(true);
-      
+
       // Call unpublish API endpoint
       const response = await fetch(`/api/services/${serviceId}/unpublish`, {
         method: 'POST',
@@ -507,7 +507,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       message.success('Service unpublished successfully!');
-      
+
       // Update the service status
       setServiceStatus({
         published: false,
@@ -534,21 +534,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       let workbookBlob = null;
       let workbookHasChanges = false;
       let shouldSaveWorkbook = false;
-      
+
       if (workbookRef.current) {
         // Check if workbook has changes using the hasChanges method
         workbookHasChanges = workbookRef.current.hasChanges && workbookRef.current.hasChanges();
-        
+
         // For services without a workbook URL, always save the workbook
         const hasNoWorkbook = !serviceStatus?.urlData && !savedConfig.workbookUrl;
         shouldSaveWorkbook = workbookHasChanges || hasNoWorkbook;
-        
+
         console.log('Workbook save decision:', {
           hasChanges: workbookHasChanges,
           hasNoWorkbook,
           shouldSave: shouldSaveWorkbook
         });
-        
+
         // Save workbook if needed
         if (shouldSaveWorkbook && workbookRef.current.saveWorkbookSJS) {
           console.log('WorkbookRef exists and has changes, getting SJS blob...');
@@ -903,10 +903,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
             </Button>
           )}
+          {!hasChanges && <Button
+            // color="purple"
+            // variant="filled"
+            onClick={() => {
+              window.open(`/api-tester?service=${serviceId}${apiConfig.name ? `&name=${encodeURIComponent(apiConfig.name)}` : ''}`, '_blank');
+            }}
+          >
+            API Tester & Docs
+          </Button>}
           {serviceStatus?.published ? (
             <Button
-              type="default"
               danger
+              color="danger"
+              variant="filled"
               onClick={handleUnpublish}
               loading={loading}
               disabled={hasChanges}
@@ -933,20 +943,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             style={{ height: '100%' }}
             onResize={handlePanelResize}
           >
-            <Splitter.Panel defaultSize={panelSizes[0] + '%'}>
-              {renderSpreadsheet}
-            </Splitter.Panel>
-            <Splitter.Panel defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
+            <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} style={{ backgroundColor: '#ffffff' }}>
               <div style={{
                 height: '100%',
                 background: 'white',
-                // borderLeft: `1px solid ${COLORS.border}`,
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column'
               }}>
                 {configPanel}
               </div>
+            </Splitter.Panel>
+            <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
+              {renderSpreadsheet}
             </Splitter.Panel>
           </Splitter>
         ) : (
@@ -964,12 +973,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         placement="right"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
-        width="100%"
+        // width={400}
         styles={{
           body: { padding: 0 },
           wrapper: {
             width: '90%',
-            maxWidth: '400px'
+            maxWidth: '500px'
           }
         }}
       >

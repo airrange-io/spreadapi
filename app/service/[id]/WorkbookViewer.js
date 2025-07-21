@@ -35,7 +35,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [spread, setSpread] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [selectedCellCount, setSelectedCellCount] = useState(0);
-  const [zoomLevel, setZoomLevel] = useState(100);
+  const [zoomLevel, setZoomLevel] = useState(80);
   const [recordCount, setRecordCount] = useState(0);
   const [changeCount, setChangeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,7 +103,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       const workbook = designerInstance.getWorkbook();
       setSpread(workbook);
       // Don't set isLoading to false here - wait for data to load
-
       // Configure workbook options
       workbook.options.allowDynamicArray = true;
       workbook.options.scrollbarMaxAlign = true;

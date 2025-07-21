@@ -10,31 +10,55 @@ export async function GET(request, { params }) {
   const { id } = await params;
   
   try {
-    // Check if service exists and user owns it
-    const service = await redis.hGetAll(`service:${id}`);
+    console.time(`[TOKENS] Total time for service ${id}`);
     
-    if (!service || Object.keys(service).length === 0) {
+    // Check if service exists and user owns it - fetch only userId field
+    console.time(`[TOKENS] Check service ownership`);
+    const userId = await redis.hGet(`service:${id}`, 'userId');
+    console.timeEnd(`[TOKENS] Check service ownership`);
+    
+    if (!userId) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    if (service.userId !== TEST_USER_ID) {
+    if (userId !== TEST_USER_ID) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
     // Get all token IDs for this service
+    console.time(`[TOKENS] Get token IDs`);
     const tokenIds = await redis.sMembers(`service:${id}:tokens`);
+    console.timeEnd(`[TOKENS] Get token IDs`);
     
-    // Get token details for each ID
-    const tokens = await Promise.all(
-      tokenIds.map(async (tokenId) => {
-        const tokenData = await redis.hGetAll(`token:${tokenId}`);
+    // Early return if no tokens
+    if (tokenIds.length === 0) {
+      console.timeEnd(`[TOKENS] Total time for service ${id}`);
+      return NextResponse.json({ tokens: [] });
+    }
+    
+    // Use pipeline for better performance
+    console.time(`[TOKENS] Fetch all token data`);
+    const pipeline = redis.pipeline();
+    
+    tokenIds.forEach(tokenId => {
+      pipeline.hGetAll(`token:${tokenId}`);
+    });
+    
+    const results = await pipeline.exec();
+    console.timeEnd(`[TOKENS] Fetch all token data`);
+    
+    // Process token data
+    console.time(`[TOKENS] Process token data`);
+    const tokens = results
+      .map((result, index) => {
+        const tokenData = result[1]; // Pipeline returns [error, data] tuples
         if (!tokenData || Object.keys(tokenData).length === 0) return null;
         
         // Don't return the actual token hash
         const { tokenHash, ...safeData } = tokenData;
         
         return {
-          id: tokenId,
+          id: tokenIds[index],
           ...safeData,
           scopes: safeData.scopes ? JSON.parse(safeData.scopes) : [],
           createdAt: safeData.createdAt || null,
@@ -43,12 +67,11 @@ export async function GET(request, { params }) {
           usageCount: parseInt(safeData.usageCount || '0'),
         };
       })
-    );
+      .filter(token => token !== null);
+    console.timeEnd(`[TOKENS] Process token data`);
     
-    // Filter out any null values
-    const validTokens = tokens.filter(token => token !== null);
-    
-    return NextResponse.json({ tokens: validTokens });
+    console.timeEnd(`[TOKENS] Total time for service ${id}`);
+    return NextResponse.json({ tokens });
     
   } catch (error) {
     console.error('Error listing tokens:', error);

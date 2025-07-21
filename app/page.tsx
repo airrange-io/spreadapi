@@ -233,7 +233,7 @@ const ListsPage: React.FC = observer(() => {
           </div>
 
           {/* Main content */}
-          <div style={{ flex: 1, background: '#ffffff', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Page Title and Search */}
             <div style={{ marginTop: '10px', marginBottom: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
 
