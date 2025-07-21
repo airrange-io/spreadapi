@@ -64,7 +64,7 @@ export default function ApiTesterClient() {
         if (data.inputs && Array.isArray(data.inputs)) {
           data.inputs.forEach((input: any) => {
             // Set a default value based on type
-            let defaultValue = '';
+            let defaultValue: any = '';
             if (input.type === 'number') {
               defaultValue = input.min || 0;
             } else if (input.type === 'boolean') {
