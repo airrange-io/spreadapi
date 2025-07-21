@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App } from 'antd';
-import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 
@@ -102,6 +102,11 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
     router.push(`/api-tester?service=${serviceId}`);
   };
 
+  const handleUsage = (serviceId: string) => {
+    // Navigate to usage/analytics page
+    router.push(`/analytics/${serviceId}`);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -183,33 +188,44 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                   </Button>
                 </div>,
                 <div onClick={(e) => e.stopPropagation()}>
-                  <Popconfirm
-                    title="Delete this API?"
-                    description="This action cannot be undone."
-                    onConfirm={() => handleDelete(service.id, service.name)}
-                    okText="Yes"
-                    cancelText="No"
-                    okButtonProps={{ danger: true }}
+                  <Button
+                    type="text"
+                    icon={<LineChartOutlined />}
+                    onClick={() => handleUsage(service.id)}
+                    disabled={service.status === 'draft'}
                   >
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                    >
-                      Delete
-                    </Button>
-                  </Popconfirm>
+                    Usage
+                  </Button>
                 </div>
               ]}
             >
               <Card.Meta
                 title={
-                  <Space>
-                    <Text strong>{service.name}</Text>
-                    <Tag color={service.status === 'published' ? 'green' : 'orange'}>
-                      {service.status}
-                    </Tag>
-                  </Space>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Space>
+                      <Text strong>{service.name}</Text>
+                      <Tag color={service.status === 'published' ? 'green' : 'orange'}>
+                        {service.status}
+                      </Tag>
+                    </Space>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Popconfirm
+                        title="Delete this service?"
+                        description="This action cannot be undone."
+                        onConfirm={() => handleDelete(service.id, service.name)}
+                        okText="Yes"
+                        cancelText="No"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          size="small"
+                        />
+                      </Popconfirm>
+                    </div>
+                  </div>
                 }
                 description={
                   <Space direction="vertical" style={{ width: '100%' }}>

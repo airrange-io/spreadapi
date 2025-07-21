@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App } from 'antd';
-import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 
@@ -30,6 +30,7 @@ interface InputDefinition {
   address: string; // Full address like "Savings!D4"
   name: string;
   alias: string; // URL-safe name
+  title?: string; // Original title from spreadsheet
   row: number;
   col: number;
   type: 'number' | 'string' | 'boolean';
@@ -46,6 +47,7 @@ interface OutputDefinition {
   address: string; // Full address like "Savings!D9"
   name: string;
   alias: string; // URL-safe name
+  title?: string; // Original title from spreadsheet
   row: number;
   col: number;
   type: 'number' | 'string' | 'boolean';
@@ -87,8 +89,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [selectedCellInfo, setSelectedCellInfo] = useState<any>(null);
   const [currentSelection, setCurrentSelection] = useState<any>(null);
   const [suggestedParamName, setSuggestedParamName] = useState<string>('');
+  const [originalTitle, setOriginalTitle] = useState<string>('');
   const [enableCaching, setEnableCaching] = useState<boolean>(initialConfig?.enableCaching !== false);
   const [requireToken, setRequireToken] = useState<boolean>(initialConfig?.requireToken === true);
+  const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
+  const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
 
   // Handle card activation
   const handleCardClick = (cardType: ActiveCard) => {
@@ -162,6 +167,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               
               // Try to guess parameter name from adjacent cells
               let suggestedName = '';
+              let titleText = '';
               try {
                 if (isSingleCell) {
                   // Check cell to the left (same row, col-1)
@@ -169,16 +175,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     const leftCell = sheet.getCell(selection.row, selection.col - 1);
                     const leftValue = leftCell.value();
                     if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
-                      suggestedName = leftValue.trim();
+                      titleText = leftValue.trim();
                     }
                   }
                   
                   // If no name found on left, check cell above (row-1, same col)
-                  if (!suggestedName && selection.row > 0) {
+                  if (!titleText && selection.row > 0) {
                     const aboveCell = sheet.getCell(selection.row - 1, selection.col);
                     const aboveValue = aboveCell.value();
                     if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
-                      suggestedName = aboveValue.trim();
+                      titleText = aboveValue.trim();
                     }
                   }
                 } else {
@@ -187,23 +193,23 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     const leftCell = sheet.getCell(selection.row, selection.col - 1);
                     const leftValue = leftCell.value();
                     if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
-                      suggestedName = leftValue.trim();
+                      titleText = leftValue.trim();
                     }
                   }
                   
                   // If no name found, check above the first cell
-                  if (!suggestedName && selection.row > 0) {
+                  if (!titleText && selection.row > 0) {
                     const aboveCell = sheet.getCell(selection.row - 1, selection.col);
                     const aboveValue = aboveCell.value();
                     if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
-                      suggestedName = aboveValue.trim();
+                      titleText = aboveValue.trim();
                     }
                   }
                 }
                 
                 // Clean the suggested name to be URL parameter safe
-                if (suggestedName) {
-                  suggestedName = suggestedName.toLowerCase()
+                if (titleText) {
+                  suggestedName = titleText.toLowerCase()
                     .replace(/[\s-]+/g, '_')
                     .replace(/[^a-z0-9_]/g, '')
                     .replace(/^_+|_+$/g, '')
@@ -228,6 +234,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 sheetName: sheet.name()
               });
               setSuggestedParamName(suggestedName);
+              setOriginalTitle(titleText);
             }
           }
         } catch (e) {
@@ -421,6 +428,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     
     // Use the pre-calculated suggested name from the selection monitoring
     const suggestedName = suggestedParamName;
+    const suggestedTitle = originalTitle;
     
     setSelectedCellInfo({
       address: cellAddress,
@@ -432,7 +440,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       value: cellValue,
       isSingleCell,
       detectedDataType,
-      suggestedName
+      suggestedName,
+      suggestedTitle
     });
     
     setParameterType(suggestedType);
@@ -441,6 +450,42 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Handle modal form submission
   const handleAddParameter = (values: any) => {
+    if (editingParameter) {
+      // Update existing parameter
+      const alias = values.name.toLowerCase()
+        .replace(/[\s-]+/g, '')
+        .replace(/[^a-z0-9]/g, '');
+
+      if (editingParameterType === 'input') {
+        const updatedParam: InputDefinition = {
+          ...editingParameter as InputDefinition,
+          name: values.name,
+          alias: alias || values.name.toLowerCase(),
+          title: values.title || undefined,
+          type: values.dataType || 'string',
+          mandatory: values.mandatory !== false,
+          ...(values.description ? { description: values.description } : { description: undefined }),
+          ...(values.min !== undefined && values.min !== '' ? { min: parseFloat(values.min) } : { min: undefined }),
+          ...(values.max !== undefined && values.max !== '' ? { max: parseFloat(values.max) } : { max: undefined })
+        };
+        setInputs(inputs.map(input => input.id === editingParameter.id ? updatedParam : input));
+      } else {
+        const updatedParam: OutputDefinition = {
+          ...editingParameter as OutputDefinition,
+          name: values.name,
+          alias: alias || values.name.toLowerCase(),
+          title: values.title || undefined,
+          type: values.dataType || 'string',
+          ...(values.description ? { description: values.description } : { description: undefined })
+        };
+        setOutputs(outputs.map(output => output.id === editingParameter.id ? updatedParam : output));
+      }
+
+      setShowAddParameterModal(false);
+      setEditingParameter(null);
+      message.success(`${editingParameterType === 'input' ? 'Input' : 'Output'} parameter updated`);
+      return;
+    }
 
     // Get sheet name from spread instance
     let sheetName = 'Sheet1';
@@ -472,6 +517,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         address: fullAddress,
         name: values.name,
         alias: alias || values.name.toLowerCase(),
+        title: values.title || selectedCellInfo.suggestedTitle || undefined,
         row: selectedCellInfo.row,
         col: selectedCellInfo.col,
         type: values.dataType || 'string',
@@ -489,6 +535,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         address: fullAddress,
         name: values.name,
         alias: alias || values.name.toLowerCase(),
+        title: values.title || selectedCellInfo.suggestedTitle || undefined,
         row: selectedCellInfo.row,
         col: selectedCellInfo.col,
         type: values.dataType || 'string',
@@ -511,6 +558,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       setOutputs(outputs.filter(output => output.id !== id));
     }
     message.success('Parameter deleted');
+  };
+
+  // Handle parameter edit
+  const handleEditParameter = (type: 'input' | 'output', parameter: InputDefinition | OutputDefinition) => {
+    setEditingParameter(parameter);
+    setEditingParameterType(type);
+    setParameterType(type);
+    setSelectedCellInfo({
+      address: parameter.address,
+      value: parameter.value,
+      detectedDataType: parameter.type,
+      suggestedTitle: parameter.title
+    });
+    setShowAddParameterModal(true);
   };
 
 
@@ -770,6 +831,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong>{input.name}</strong> ({input.type})
+                                {input.title && input.title !== input.name && (
+                                  <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({input.title})</span>
+                                )}
                                 {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
                                 {(input.min !== undefined || input.max !== undefined) && (
                                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
@@ -778,14 +842,27 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                     {input.max !== undefined && `Max: ${input.max}`}
                                   </div>
                                 )}
+                                {input.description && (
+                                  <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                    {input.description}
+                                  </div>
+                                )}
                               </div>
-                              <Button 
-                                size="small" 
-                                type="text" 
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteParameter('input', input.id)}
-                              />
+                              <Space size="small">
+                                <Button 
+                                  size="small" 
+                                  type="text" 
+                                  icon={<EditOutlined />}
+                                  onClick={() => handleEditParameter('input', input)}
+                                />
+                                <Button 
+                                  size="small" 
+                                  type="text" 
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteParameter('input', input.id)}
+                                />
+                              </Space>
                             </div>
                           </div>
                         ))}
@@ -816,15 +893,31 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <strong>{output.name}</strong> ({output.type})
+                                {output.title && output.title !== output.name && (
+                                  <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({output.title})</span>
+                                )}
                                 {output.address && <span style={{ marginLeft: '8px', color: '#666' }}>← {output.address}</span>}
+                                {output.description && (
+                                  <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                    {output.description}
+                                  </div>
+                                )}
                               </div>
-                              <Button 
-                                size="small" 
-                                type="text" 
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteParameter('output', output.id)}
-                              />
+                              <Space size="small">
+                                <Button 
+                                  size="small" 
+                                  type="text" 
+                                  icon={<EditOutlined />}
+                                  onClick={() => handleEditParameter('output', output)}
+                                />
+                                <Button 
+                                  size="small" 
+                                  type="text" 
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteParameter('output', output.id)}
+                                />
+                              </Space>
                             </div>
                           </div>
                         ))}
@@ -1014,20 +1107,28 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         })()}
       </div>
 
-      {/* Add Parameter Modal */}
+      {/* Add/Edit Parameter Modal */}
       <Modal
-        title={`Add ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
+        title={`${editingParameter ? 'Edit' : 'Add'} ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
         open={showAddParameterModal}
-        onCancel={() => setShowAddParameterModal(false)}
+        onCancel={() => {
+          setShowAddParameterModal(false);
+          setEditingParameter(null);
+        }}
         footer={null}
       >
         <Form
-          key={`${selectedCellInfo?.address}-${Date.now()}`} // Force form to reinitialize
+          key={`${selectedCellInfo?.address}-${Date.now()}-${editingParameter?.id || ''}`} // Force form to reinitialize
           layout="vertical"
           onFinish={handleAddParameter}
           initialValues={{
-            name: suggestedParamName || '',
-            dataType: selectedCellInfo?.detectedDataType || 'string'
+            name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
+            title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
+            dataType: editingParameter ? editingParameter.type : (selectedCellInfo?.detectedDataType || 'string'),
+            description: editingParameter?.description || '',
+            mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
+            min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
+            max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined
           }}
         >
           <Form.Item
@@ -1036,6 +1137,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             rules={[{ required: true, message: 'Please enter a parameter name' }]}
           >
             <Input placeholder="e.g., amount, rate, result" />
+          </Form.Item>
+
+          <Form.Item
+            label="Original Title"
+            name="title"
+            help="The original title from the spreadsheet (optional)"
+          >
+            <Input placeholder="e.g., Interest Rate, Total Amount" />
           </Form.Item>
 
           <Form.Item
@@ -1123,9 +1232,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
-                Add Parameter
+                {editingParameter ? 'Update' : 'Add'} Parameter
               </Button>
-              <Button onClick={() => setShowAddParameterModal(false)}>
+              <Button onClick={() => {
+                setShowAddParameterModal(false);
+                setEditingParameter(null);
+              }}>
                 Cancel
               </Button>
             </Space>

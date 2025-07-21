@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Space, Typography, Alert, Spin, message, Statistic, Row, Col, Divider, Tag, App } from 'antd';
-import { SubPageLayout } from '@/components/SubPageLayout';
+import { Form, Input, Button, Card, Space, Typography, Alert, Spin, message, Statistic, Row, Col, Divider, Tag, App, Layout, Breadcrumb } from 'antd';
 import { SendOutlined, ClearOutlined, ThunderboltOutlined, DatabaseOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
@@ -16,6 +15,7 @@ export default function ApiTesterPage() {
   const [error, setError] = useState<string | null>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { message: messageApi } = App.useApp();
 
   // Default demo data
@@ -34,7 +34,7 @@ export default function ApiTesterPage() {
     // Get service ID from URL parameter, fallback to demo
     const serviceIdFromUrl = searchParams.get('service');
     const apiId = serviceIdFromUrl || demoData.apiId;
-    
+
     if (serviceIdFromUrl) {
       // Fetch service details to get input parameters
       fetchServiceDetails(serviceIdFromUrl);
@@ -55,7 +55,7 @@ export default function ApiTesterPage() {
       if (response.ok) {
         const service = await response.json();
         setServiceInfo(service);
-        
+
         // Build inputs object from service input definitions
         const inputsObj: Record<string, any> = {};
         if (service.inputs && Array.isArray(service.inputs)) {
@@ -63,7 +63,7 @@ export default function ApiTesterPage() {
             inputsObj[input.name] = input.value || (input.type === 'number' ? 0 : '');
           });
         }
-        
+
         form.setFieldsValue({
           apiId: serviceId,
           token: '', // User needs to provide token
@@ -85,7 +85,7 @@ export default function ApiTesterPage() {
     setLoading(true);
     setError(null);
     setResponse(null);
-    
+
     const startTime = Date.now();
 
     try {
@@ -93,7 +93,7 @@ export default function ApiTesterPage() {
       const params = new URLSearchParams();
       params.append('api', values.apiId);
       if (values.token) params.append('token', values.token);
-      
+
       // Parse and add input values
       if (values.inputs) {
         const inputData = JSON.parse(values.inputs);
@@ -106,7 +106,7 @@ export default function ApiTesterPage() {
 
       const res = await fetch(`/api/getresults?${params.toString()}`);
       const data = await res.json();
-      
+
       const endTime = Date.now();
 
       if (!res.ok) {
@@ -143,9 +143,22 @@ export default function ApiTesterPage() {
   };
 
   return (
-    <SubPageLayout
-      title="API Service Tester"
-      extra={
+    <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+      <div style={{ 
+        background: 'white', 
+        height: '56px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        borderBottom: '1px solid #f0f0f0'
+      }}>
+        <Breadcrumb items={[
+          { title: <a onClick={() => router.push('/')}>Services</a> },
+          ...(serviceInfo ? [{ title: <a onClick={() => router.push(`/service/${serviceInfo.id}`)}>{serviceInfo.name}</a> }] : []),
+          { title: 'API Tester' }
+        ]} />
+        
         <Space>
           <Button
             onClick={loadDemoData}
@@ -161,39 +174,11 @@ export default function ApiTesterPage() {
             Clear
           </Button>
         </Space>
-      }
-    >
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        {serviceInfo && (
-          <Alert
-            message={
-              <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                <Text strong>{serviceInfo.name}</Text>
-                {serviceInfo.description && <Text type="secondary">{serviceInfo.description}</Text>}
-                <Space direction="vertical" size={0}>
-                  <Text type="secondary">
-                    <strong>Expected Outputs:</strong>
-                  </Text>
-                  {serviceInfo.outputs && serviceInfo.outputs.map((output: any) => (
-                    <Text key={output.id} type="secondary" style={{ marginLeft: 16 }}>
-                      • <strong>{output.name}</strong>: {output.type}
-                      {output.value !== undefined && ` (example: ${output.value})`}
-                    </Text>
-                  ))}
-                </Space>
-              </Space>
-            }
-            type="info"
-            closable
-            style={{ marginBottom: 16 }}
-          />
-        )}
+      </div>
+      
+      <div style={{ padding: 24 }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Card>
-          <Title level={4}>Test API Endpoint</Title>
-          <Paragraph type="secondary">
-            Test the SpreadAPI calculation endpoint with your API credentials and input parameters
-          </Paragraph>
-
           <Form
             form={form}
             layout="vertical"
@@ -254,6 +239,30 @@ export default function ApiTesterPage() {
             </Form.Item>
           </Form>
         </Card>
+        {serviceInfo && (
+          <Alert
+            message={
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Text strong>{serviceInfo.name}</Text>
+                {serviceInfo.description && <Text type="secondary">{serviceInfo.description}</Text>}
+                <Space direction="vertical" size={0}>
+                  <Text type="secondary">
+                    <strong>Expected Outputs:</strong>
+                  </Text>
+                  {serviceInfo.outputs && serviceInfo.outputs.map((output: any) => (
+                    <Text key={output.id} type="secondary" style={{ marginLeft: 16 }}>
+                      • <strong>{output.name}</strong>: {output.type}
+                      {output.value !== undefined && ` (example: ${output.value})`}
+                    </Text>
+                  ))}
+                </Space>
+              </Space>
+            }
+            type="info"
+            closable
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         {error && (
           <Alert
@@ -341,7 +350,7 @@ export default function ApiTesterPage() {
                         <Col xs={24} sm={12} key={index}>
                           <Text strong>{output.alias || output.name}: </Text>
                           <Text code style={{ fontSize: '16px' }}>
-                            {typeof output.value === 'number' 
+                            {typeof output.value === 'number'
                               ? output.value.toLocaleString(undefined, { maximumFractionDigits: 2 })
                               : output.value}
                           </Text>
@@ -354,8 +363,8 @@ export default function ApiTesterPage() {
             </Card>
 
             {/* Raw Response */}
-            <Card 
-              title="Raw Response" 
+            <Card
+              title="Raw Response"
               extra={
                 <Button
                   size="small"
@@ -381,7 +390,8 @@ export default function ApiTesterPage() {
             </Card>
           </>
         )}
-      </Space>
-    </SubPageLayout>
+        </Space>
+      </div>
+    </Layout>
   );
 }
