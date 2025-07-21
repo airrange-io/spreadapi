@@ -229,7 +229,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setSavedConfig(loadedConfig);
 
           // Process workbook data if available
-          if (workbookResponse.status === 304) {
+          if ('status' in workbookResponse && workbookResponse.status === 304) {
             // Workbook hasn't changed, use cached version
             console.log('Workbook unchanged (304), using cached version');
             const cachedWorkbook = localStorage.getItem(`workbook-data-${serviceId}`);
@@ -238,22 +238,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               const workbookResult = JSON.parse(cachedWorkbook);
               processWorkbookData(workbookResult);
             }
-          } else if (workbookResponse.ok && workbookResponse.status !== 204) {
+          } else if (workbookResponse.ok && 'status' in workbookResponse && workbookResponse.status !== 204) {
             setLoadingMessage('Processing workbook...');
             try {
               const workbookResult = await workbookResponse.json();
 
               // Store ETag and data for future requests
-              const etag = workbookResponse.headers.get('etag');
-              if (etag) {
-                localStorage.setItem(`workbook-etag-${serviceId}`, etag);
-                // Cache the workbook data too
-                localStorage.setItem(`workbook-data-${serviceId}`, JSON.stringify(workbookResult));
+              if ('headers' in workbookResponse) {
+                const etag = workbookResponse.headers.get('etag');
+                if (etag) {
+                  localStorage.setItem(`workbook-etag-${serviceId}`, etag);
+                  // Cache the workbook data too
+                  localStorage.setItem(`workbook-data-${serviceId}`, JSON.stringify(workbookResult));
+                }
               }
               processWorkbookData(workbookResult);
             } catch (error) {
               console.error('Error processing workbook response:', error);
-              setWorkbookLoadingState('error');
             }
           } else {
             // No workbook or empty response
@@ -286,12 +287,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setLoadingMessage('');
         } else {
           // Other errors
-          setShowEmptyState(true);
           setInitialLoading(false);
         }
       } catch (error) {
         console.error('Failed to load service:', error);
-        setShowEmptyState(true);
         setInitialLoading(false);
       }
     };
