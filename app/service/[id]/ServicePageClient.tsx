@@ -539,7 +539,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         workbookHasChanges = workbookRef.current.hasChanges && workbookRef.current.hasChanges();
 
         // For services without a workbook URL, always save the workbook
-        const hasNoWorkbook = !serviceStatus?.urlData && !savedConfig.workbookUrl;
+        const hasNoWorkbook = !serviceStatus?.urlData;
         shouldSaveWorkbook = workbookHasChanges || hasNoWorkbook;
 
         console.log('Workbook save decision:', {
@@ -658,8 +658,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Update saved state to match current state
       setSavedConfig({
-        ...apiConfig,
-        workbookUrl: workbookBlob ? 'saved' : savedConfig.workbookUrl
+        ...apiConfig
       });
       setHasChanges(false);
 
