@@ -187,106 +187,80 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Skip if component unmounted (prevents double fetch in StrictMode)
       if (!mounted) return;
 
-      // Check service status first
+      // Parallel load all data for optimal performance
+      setLoadingMessage('Loading service data...');
+      
       try {
-        const statusResponse = await fetch(`/api/services/${serviceId}/status`);
-        if (statusResponse.ok) {
-          const status = await statusResponse.json();
-          setServiceStatus(status);
-        }
-      } catch (error) {
-        console.error('Error checking service status:', error);
-      }
-
-      // Check if this is an existing workbook
-      try {
-        setLoadingMessage('Loading service configuration...');
-        const response = await fetch(`/api/services/${serviceId}`);
+        // Start all requests in parallel
+        const [fullDataResponse, workbookResponse] = await Promise.all([
+          // Get all service data in one call (service + status)
+          fetch(`/api/services/${serviceId}/full`),
+          // Workbook data (with error handling for 404s)
+          fetch(`/api/workbook/${serviceId}`, {
+            headers: {
+              'X-Expected-404': 'true',
+              'If-None-Match': localStorage.getItem(`workbook-etag-${serviceId}`) || ''
+            }
+          }).catch(err => ({ 
+            ok: false, 
+            error: err 
+          }))
+        ]);
+        
         if (!mounted) return;
-
-        if (response.ok && response.status !== 204) {
-          const data = await response.json();
-
-          // Load the configuration data
+        
+        // Process combined service data
+        if (fullDataResponse.ok && fullDataResponse.status !== 204) {
+          const fullData = await fullDataResponse.json();
+          
+          // Set service status
+          setServiceStatus(fullData.status);
+          
+          // Set service configuration
           const loadedConfig = {
-            name: data.name || '',
-            description: data.description || '',
-            inputs: data.inputs || [],
-            outputs: data.outputs || [],
-            enableCaching: data.enableCaching !== false,
-            requireToken: data.requireToken === true
+            name: fullData.service.name || '',
+            description: fullData.service.description || '',
+            inputs: fullData.service.inputs || [],
+            outputs: fullData.service.outputs || [],
+            enableCaching: fullData.service.enableCaching !== false,
+            requireToken: fullData.service.requireToken === true
           };
           setApiConfig(loadedConfig);
-          setSavedConfig(loadedConfig); // Track the saved state
-
-          // Load workbook from blob storage
-          try {
-            setLoadingMessage('Loading workbook data...');
-            const workbookResponse = await fetch(`/api/workbook/${serviceId}?t=${Date.now()}`, {
-              cache: 'no-store',
-              // Add custom header to suppress console errors for expected 404s
-              headers: {
-                'X-Expected-404': 'true'
-              }
-            });
-            if (workbookResponse.ok && workbookResponse.status !== 204) {
+          setSavedConfig(loadedConfig);
+          
+          // Process workbook data if available
+          if (workbookResponse.status === 304) {
+            // Workbook hasn't changed, use cached version
+            console.log('Workbook unchanged (304), using cached version');
+            const cachedWorkbook = localStorage.getItem(`workbook-data-${serviceId}`);
+            if (cachedWorkbook) {
+              setLoadingMessage('Loading cached workbook...');
+              const workbookResult = JSON.parse(cachedWorkbook);
+              processWorkbookData(workbookResult);
+            }
+          } else if (workbookResponse.ok && workbookResponse.status !== 204) {
+            setLoadingMessage('Processing workbook...');
+            try {
               const workbookResult = await workbookResponse.json();
-              console.log('Workbook API response:', workbookResult);
-
-              if (workbookResult.format === 'sjs' && workbookResult.workbookBlob) {
-                // Handle SJS format
-                const base64 = workbookResult.workbookBlob;
-                const binaryString = atob(base64);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
-                const blob = new Blob([bytes], { type: 'application/octet-stream' });
-
-                setSpreadsheetData({
-                  type: 'sjs',
-                  blob: blob,
-                  format: 'sjs'
-                });
-                console.log('SJS workbook loaded from blob storage');
-              } else if (workbookResult.workbookData) {
-                // Handle JSON format
-                setSpreadsheetData(workbookResult.workbookData);
-                console.log('JSON workbook loaded from blob storage', {
-                  hasData: !!workbookResult.workbookData,
-                  type: typeof workbookResult.workbookData
-                });
+              
+              // Store ETag and data for future requests
+              const etag = workbookResponse.headers.get('etag');
+              if (etag) {
+                localStorage.setItem(`workbook-etag-${serviceId}`, etag);
+                // Cache the workbook data too
+                localStorage.setItem(`workbook-data-${serviceId}`, JSON.stringify(workbookResult));
               }
-            } else if (workbookResponse.status === 204) {
-              // 204 No Content - no workbook exists yet
-              console.log('No workbook exists yet, checking legacy storage');
-              if (data.file) {
-                setSpreadsheetData(data.file);
-                console.log('Workbook loaded from legacy storage');
-              } else {
-                setDefaultSpreadsheetData();
-                console.log('No workbook found, using default');
-              }
-            } else {
-              // Other error
-              console.error('Error loading workbook:', workbookResponse.status);
-              if (data.file) {
-                setSpreadsheetData(data.file);
-              } else {
-                setDefaultSpreadsheetData();
-              }
+              processWorkbookData(workbookResult);
+            } catch (error) {
+              console.error('Error processing workbook response:', error);
+              setWorkbookLoadingState('error');
             }
-          } catch (error) {
-            console.error('Error loading workbook from blob:', error);
-            // Fallback to legacy file data if available
-            if (data.file) {
-              setSpreadsheetData(data.file);
-            } else {
-              // Only set default data if no workbook exists anywhere
-              setDefaultSpreadsheetData();
-            }
+          } else {
+            // No workbook or empty response
+            setInitialLoading(false);
+            setLoadingMessage('');
           }
-        } else if (response.status === 404 || response.status === 204) {
+        } else if (fullDataResponse.status === 404 || fullDataResponse.status === 204) {
           // 204 No Content is expected for new services
           console.log('Creating new service');
 
@@ -308,50 +282,83 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setHasChanges(true); // Mark as having changes so user can save
 
           setDefaultSpreadsheetData();
+          setInitialLoading(false);
+          setLoadingMessage('');
+        } else {
+          // Other errors
+          setShowEmptyState(true);
+          setInitialLoading(false);
         }
       } catch (error) {
-        // Only log actual errors, not expected 404s
-        if (error instanceof Error && !error.message.includes('404')) {
-          console.error('Error loading service:', error);
+        console.error('Failed to load service:', error);
+        setShowEmptyState(true);
+        setInitialLoading(false);
+      }
+    };
+
+    // Helper function to process workbook data
+    const processWorkbookData = (workbookResult: any) => {
+      console.log('Processing workbook data:', workbookResult);
+      
+      if (workbookResult.format === 'sjs' && workbookResult.workbookBlob) {
+        // Handle SJS format
+        const base64 = workbookResult.workbookBlob;
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
         }
-        // If all else fails, set default data
-        setDefaultSpreadsheetData();
+        const blob = new Blob([bytes], { type: 'application/octet-stream' });
+
+        setSpreadsheetData({
+          type: 'sjs',
+          blob: blob,
+          format: 'sjs'
+        });
+        console.log('SJS workbook loaded');
+      } else if (workbookResult.workbookData) {
+        // Handle JSON format
+        setSpreadsheetData(workbookResult.workbookData);
+        console.log('JSON workbook loaded');
       }
-
-      // Check for pre-uploaded file from drag & drop
-      if (typeof window !== 'undefined' && (window as any).__draggedFile) {
-        const file = (window as any).__draggedFile;
-
-        // Process the dragged file
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const arrayBuffer = e.target?.result;
-          if (arrayBuffer) {
-            setSpreadsheetData({
-              type: 'excel',
-              data: arrayBuffer,
-              fileName: file.name
-            });
-          }
-        };
-        reader.readAsArrayBuffer(file);
-
-        delete (window as any).__draggedFile;
-      }
-
-      // Initial loading will be handled in a separate effect
-
-      // Show drawer on mobile after initial load
-      if (isMobile) {
-        setDrawerVisible(true);
-      }
+      
+      setInitialLoading(false);
+      setLoadingMessage('');
     };
 
-    loadWorkbook();
+  // Check for pre-uploaded file from drag & drop
+  if (typeof window !== 'undefined' && (window as any).__draggedFile) {
+    const file = (window as any).__draggedFile;
 
-    return () => {
-      mounted = false;
+    // Process the dragged file
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target?.result;
+      if (arrayBuffer) {
+        setSpreadsheetData({
+          type: 'excel',
+          data: arrayBuffer,
+          fileName: file.name
+        });
+      }
     };
+    reader.readAsArrayBuffer(file);
+
+    delete (window as any).__draggedFile;
+  }
+
+  // Initial loading will be handled in a separate effect
+
+  // Show drawer on mobile after initial load
+  if (isMobile) {
+    setDrawerVisible(true);
+  }
+
+  loadWorkbook();
+
+  return () => {
+    mounted = false;
+  };
   }, [serviceId, isMobile]);
 
   // Handle initial loading state based on spreadsheet data
@@ -610,6 +617,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           file: null, // Don't store workbook in Redis anymore
           inputs: apiConfig.inputs,
           outputs: apiConfig.outputs,
+          enableCaching: apiConfig.enableCaching,
+          requireToken: apiConfig.requireToken,
           status: 'draft'
         })
       });

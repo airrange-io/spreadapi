@@ -152,6 +152,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
   const publishData = {
     apiJson: {
       title: service.name || "Untitled Service",
+      name: service.name || "Untitled Service", // Include both for compatibility
       description: service.description || "",
       input: transformedInputs,
       output: transformedOutputs,

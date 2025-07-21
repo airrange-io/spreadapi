@@ -58,9 +58,16 @@ export async function getApiDefinition(apiId, apiToken) {
       return getError("database error");
     }
 
-    if (!serviceInfo) {
-      console.error(`No service info found for ${apiId}`);
-      return getError("service not found");
+    if (!serviceInfo || !serviceInfo[0]) {
+      // Check if service exists at all (not just published)
+      const serviceExists = await redis.exists(`service:${apiId}`);
+      if (serviceExists) {
+        console.error(`Service ${apiId} exists but is not published`);
+        return getError("Service not published. Please publish the service before making API calls.");
+      } else {
+        console.error(`No service found for ${apiId}`);
+        return getError("Service not found. Please check the service ID.");
+      }
     }
 
     let apiUrl = serviceInfo[0];
@@ -71,18 +78,18 @@ export async function getApiDefinition(apiId, apiToken) {
 
     // check the tokens and flags
     if (!apiUrl) {
-      console.error(`No API URL found for service:${apiId}`);
-      return getError("no api info found");
+      console.error(`No API URL found for service:${apiId} - service may not be published`);
+      return getError("Service not published. Please publish the service before making API calls.");
     }
 
     if (needsToken && !apiToken) {
       console.error(`Token required but not provided for service:${apiId}`);
-      return getError("no token found");
+      return getError("Authentication required. Please provide a valid token using the 'token' parameter.");
     }
 
     if (needsToken && tokens && !tokens.includes(apiToken)) {
       console.error(`Invalid token provided for service:${apiId}`);
-      return getError("api token is not correct");
+      return getError("Invalid token. Please check your authentication token.");
     }
 
     console.timeEnd("getRedisData");
@@ -134,6 +141,92 @@ export async function getApiDefinition(apiId, apiToken) {
           console.error(
             `API fetch failed for ${fetchUrl} with status: ${response.status}`
           );
+          
+          // If blob fetch fails (404), try to get service info for documentation
+          if (response.status === 404) {
+            try {
+              // First try to get published service data, then fall back to draft
+              let serviceData = await redis.hGetAll(`service:${apiId}:published`);
+              if (!serviceData || Object.keys(serviceData).length === 0) {
+                serviceData = await redis.hGetAll(`service:${apiId}`);
+              }
+              
+              if (serviceData && Object.keys(serviceData).length > 0) {
+                // Try to get cached API definition for inputs/outputs
+                let inputs = [];
+                let outputs = [];
+                let description = serviceData.description || "No description available";
+                
+                try {
+                  // Try to get from Redis cache first
+                  const cacheKey = CACHE_KEYS.apiCache(apiId);
+                  const cachedData = await redis.json.get(cacheKey);
+                  
+                  if (cachedData && cachedData.apiJson) {
+                    inputs = cachedData.apiJson.input || [];
+                    outputs = cachedData.apiJson.output || [];
+                    description = cachedData.apiJson.description || description;
+                  } else if (serviceData.inputs) {
+                    // Fall back to parsing from service data if available
+                    inputs = JSON.parse(serviceData.inputs);
+                  }
+                } catch (e) {
+                  console.error('Error getting inputs/outputs:', e);
+                  // Try parsing from serviceData as fallback
+                  try {
+                    if (serviceData.inputs) inputs = JSON.parse(serviceData.inputs);
+                    if (serviceData.outputs) outputs = JSON.parse(serviceData.outputs);
+                  } catch (e2) {
+                    console.error('Error parsing inputs/outputs from service data:', e2);
+                  }
+                }
+                
+                // Return error with helpful documentation
+                return {
+                  error: "Missing required parameters",
+                  message: "This API requires parameters to function. See the documentation below for usage instructions.",
+                  service: {
+                    id: apiId,
+                    name: serviceData.title || serviceData.name || "Unnamed Service",
+                    description: description
+                  },
+                  parameters: {
+                    required: inputs.filter(i => i.mandatory !== false).map(i => ({
+                      name: i.alias || i.name,
+                      type: i.type || "string",
+                      description: i.description || "",
+                      min: i.min,
+                      max: i.max
+                    })),
+                    optional: inputs.filter(i => i.mandatory === false).map(i => ({
+                      name: i.alias || i.name,
+                      type: i.type || "string",
+                      description: i.description || "",
+                      min: i.min,
+                      max: i.max
+                    }))
+                  },
+                  outputs: outputs.map(o => ({
+                    name: o.alias || o.name,
+                    type: o.type || "any",
+                    description: o.description || ""
+                  })),
+                  example: {
+                    url: `https://spreadapi.io/api/getresults?service=${apiId}${
+                      inputs.filter(i => i.mandatory !== false)
+                        .map(i => `&${i.alias || i.name}={value}`)
+                        .join('')
+                    }`,
+                    description: "Replace {value} with your actual parameter values"
+                  },
+                  suggestion: "Try republishing the service from the service editor."
+                };
+              }
+            } catch (err) {
+              console.error('Error fetching service info after 404:', err);
+            }
+          }
+          
           return getError(`api fetch failed: ${response.status}`);
         }
 

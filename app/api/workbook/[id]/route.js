@@ -34,6 +34,21 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
+    // Check if client has cached version
+    const clientEtag = request.headers.get('if-none-match');
+    const currentEtag = `"${service.workbookModified || service.updatedAt || 'no-workbook'}"`;
+    
+    if (clientEtag && clientEtag === currentEtag && service.workbookUrl) {
+      console.log('[Workbook GET] Client has up-to-date version (304)');
+      return new NextResponse(null, { 
+        status: 304,
+        headers: {
+          'ETag': currentEtag,
+          'Cache-Control': 'private, must-revalidate'
+        }
+      });
+    }
+    
     console.log('[Workbook GET] Service data:', { 
       hasService: !!service, 
       hasWorkbookUrl: !!service.workbookUrl,
@@ -82,6 +97,12 @@ export async function GET(request, { params }) {
           format: 'sjs',
           lastModified: service.updatedAt || service.createdAt,
           success: true
+        }, {
+          headers: {
+            'Cache-Control': 'private, must-revalidate',
+            'ETag': currentEtag,
+            'Content-Type': 'application/json'
+          }
         });
       } else {
         // Return JSON data for JSON files
@@ -94,6 +115,12 @@ export async function GET(request, { params }) {
           format: 'json',
           lastModified: service.updatedAt || service.createdAt,
           success: true
+        }, {
+          headers: {
+            'Cache-Control': 'private, must-revalidate',
+            'ETag': currentEtag,
+            'Content-Type': 'application/json'
+          }
         });
       }
       

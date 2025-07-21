@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App } from 'antd';
-import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App, Tooltip } from 'antd';
+import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
+import TokenManagement from './TokenManagement';
+import ApiEndpointPreview from './ApiEndpointPreview';
 
 const { Title, Text } = Typography;
 
@@ -23,7 +25,7 @@ declare global {
   }
 }
 
-type ActiveCard = 'detail' | 'parameters' | 'endpoint' | null;
+type ActiveCard = 'detail' | 'parameters' | 'endpoint' | 'tokens' | null;
 
 interface InputDefinition {
   id: string;
@@ -134,7 +136,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     measureButtonArea();
     window.addEventListener('resize', measureButtonArea);
-    
+
     // Observe for content changes
     const observer = new ResizeObserver(measureButtonArea);
     if (buttonAreaRef.current) {
@@ -160,11 +162,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               const selection = selections[0];
               const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
               let hasFormula = false;
-              
+
               if (isSingleCell) {
                 hasFormula = sheet.hasFormula(selection.row, selection.col);
               }
-              
+
               // Try to guess parameter name from adjacent cells
               let suggestedName = '';
               let titleText = '';
@@ -178,7 +180,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       titleText = leftValue.trim();
                     }
                   }
-                  
+
                   // If no name found on left, check cell above (row-1, same col)
                   if (!titleText && selection.row > 0) {
                     const aboveCell = sheet.getCell(selection.row - 1, selection.col);
@@ -196,7 +198,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       titleText = leftValue.trim();
                     }
                   }
-                  
+
                   // If no name found, check above the first cell
                   if (!titleText && selection.row > 0) {
                     const aboveCell = sheet.getCell(selection.row - 1, selection.col);
@@ -206,7 +208,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     }
                   }
                 }
-                
+
                 // Clean the suggested name to be URL parameter safe
                 if (titleText) {
                   suggestedName = titleText.toLowerCase()
@@ -214,7 +216,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     .replace(/[^a-z0-9_]/g, '')
                     .replace(/^_+|_+$/g, '')
                     .replace(/^(\d)/, '_$1');
-                  
+
                   if (!suggestedName || suggestedName.match(/^_*$/)) {
                     suggestedName = '';
                   }
@@ -222,7 +224,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               } catch (e) {
                 console.error('Error getting adjacent cell values:', e);
               }
-              
+
               setCurrentSelection({
                 row: selection.row,
                 col: selection.col,
@@ -249,7 +251,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       // Since SpreadJS might be minified and events are not accessible,
       // we'll use a polling approach to detect selection changes
       let lastSelection = '';
-      
+
       const checkInterval = setInterval(() => {
         try {
           const sheet = spreadInstance.getActiveSheet();
@@ -263,7 +265,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 rowCount: sel.rowCount,
                 colCount: sel.colCount
               });
-              
+
               if (currentSelection !== lastSelection) {
                 lastSelection = currentSelection;
                 handleSelectionChanged();
@@ -274,7 +276,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           // Silently ignore errors during polling
         }
       }, 100); // Check every 100ms
-      
+
       // Cleanup
       return () => {
         clearInterval(checkInterval);
@@ -287,12 +289,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     // Handle columns beyond Z (AA, AB, etc.)
     let columnLetter = '';
     let tempCol = col;
-    
+
     while (tempCol >= 0) {
       columnLetter = String.fromCharCode(65 + (tempCol % 26)) + columnLetter;
       tempCol = Math.floor(tempCol / 26) - 1;
     }
-    
+
     return `${columnLetter}${row + 1}`; // Convert 0-based to 1-based
   };
 
@@ -301,13 +303,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     if (!currentSelection) {
       return { text: 'Add Selection as Parameter', disabled: true };
     }
-    
+
     const { isSingleCell, hasFormula, isRange, row, col, rowCount, colCount } = currentSelection;
     const cellRef = getCellAddress(row, col);
-    
+
     // Get the sheet name (default to Sheet1 if not found)
     const sheetName = currentSelection.sheetName || 'Sheet1';
-    
+
     // Check if this cell/range is already in parameters
     const isAlreadyInParameters = () => {
       if (isRange) {
@@ -319,25 +321,25 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         return [...inputs, ...outputs].some(param => param.address === cellAddress);
       }
     };
-    
+
     const alreadyExists = isAlreadyInParameters();
-    
+
     if (isRange) {
       const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
-      return { 
-        text: alreadyExists ? `${cellRef}:${endCellRef} already added` : `Add ${cellRef}:${endCellRef} as Output`, 
+      return {
+        text: alreadyExists ? `${cellRef}:${endCellRef} already added` : `Add ${cellRef}:${endCellRef} as Output`,
         type: 'output' as const,
         disabled: alreadyExists
       };
     } else if (hasFormula) {
-      return { 
-        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Output`, 
+      return {
+        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Output`,
         type: 'output' as const,
         disabled: alreadyExists
       };
     } else {
-      return { 
-        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Input`, 
+      return {
+        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Input`,
         type: 'input' as const,
         disabled: alreadyExists
       };
@@ -347,7 +349,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Handle adding parameter from selection
   const handleAddFromSelection = () => {
     console.log('handleAddFromSelection called, spreadInstance:', spreadInstance);
-    
+
     if (!spreadInstance) {
       message.warning('Spreadsheet not initialized');
       return;
@@ -366,7 +368,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       console.log('Got active sheet:', sheet);
     } catch (e) {
       console.error('Error calling getActiveSheet:', e);
-      
+
       // Fallback: try to get sheet by index
       try {
         sheet = spreadInstance.getSheet(0);
@@ -377,7 +379,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         return;
       }
     }
-    
+
     if (!sheet) {
       message.warning('No active sheet found');
       return;
@@ -392,13 +394,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     // Get the first selection
     const selection = selections[0];
     const cellAddress = getCellAddress(selection.row, selection.col);
-    
+
     // Check if it's a single cell
     const isSingleCell = selection.rowCount === 1 && selection.colCount === 1;
-    
+
     let hasFormula = false;
     let cellValue = null;
-    
+
     if (isSingleCell) {
       // Check if cell has formula
       hasFormula = sheet.hasFormula(selection.row, selection.col);
@@ -409,7 +411,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     // Auto-detect parameter type based on selection
     const isRange = selection.rowCount > 1 || selection.colCount > 1;
     const suggestedType = (hasFormula || isRange) ? 'output' : 'input';
-    
+
     // Auto-detect data type based on cell value
     let detectedDataType = 'string';
     if (cellValue !== null && cellValue !== undefined) {
@@ -425,11 +427,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         }
       }
     }
-    
+
     // Use the pre-calculated suggested name from the selection monitoring
     const suggestedName = suggestedParamName;
     const suggestedTitle = originalTitle;
-    
+
     setSelectedCellInfo({
       address: cellAddress,
       row: selection.row,
@@ -443,7 +445,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       suggestedName,
       suggestedTitle
     });
-    
+
     setParameterType(suggestedType);
     setShowAddParameterModal(true);
   };
@@ -502,9 +504,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     const fullAddress = selectedCellInfo.isSingleCell
       ? `${sheetName}!${selectedCellInfo.address}`
       : `${sheetName}!${selectedCellInfo.address}:${getCellAddress(
-          selectedCellInfo.row + selectedCellInfo.rowCount - 1,
-          selectedCellInfo.col + selectedCellInfo.colCount - 1
-        )}`;
+        selectedCellInfo.row + selectedCellInfo.rowCount - 1,
+        selectedCellInfo.col + selectedCellInfo.colCount - 1
+      )}`;
 
     // Generate alias from name
     const alias = values.name.toLowerCase()
@@ -619,7 +621,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       overflow: 'hidden'
     }}>
       {/* Fixed header with cards */}
-      <div style={{ 
+      <div style={{
         padding: '12px',
         flex: '0 0 auto'
       }}>
@@ -629,8 +631,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             size="small"
             style={{
               ...getCardStyle('detail'),
-              //flex: '0 0 calc(25% - 6px)' 
-              flex: '0 0 calc(33.33% - 5.33px)',
+              flex: '0 0 calc(25% - 6px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
@@ -648,8 +649,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             size="small"
             style={{
               ...getCardStyle('parameters'),
-              //flex: '0 0 calc(25% - 6px)' 
-              flex: '0 0 calc(33.33% - 5.33px)',
+              flex: '0 0 calc(25% - 6px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
@@ -672,8 +672,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             size="small"
             style={{
               ...getCardStyle('endpoint'),
-              //flex: '0 0 calc(25% - 6px)' 
-              flex: '0 0 calc(33.33% - 5.33px)',
+              flex: '0 0 calc(25% - 6px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
@@ -684,6 +683,24 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               value={"---"}
               prefix={<BarChartOutlined />}
               valueStyle={getStatisticValueStyle('endpoint', '#4F2D7F')}
+            />
+          </Card>
+
+          <Card
+            size="small"
+            style={{
+              ...getCardStyle('tokens'),
+              flex: '0 0 calc(25% - 6px)',
+            }}
+            styles={{ body: getCardBodyStyle() }}
+            hoverable
+            onClick={() => handleCardClick('tokens')}
+          >
+            <Statistic
+              title="Tokens"
+              value={requireToken ? "ON" : "OFF"}
+              prefix={<KeyOutlined />}
+              valueStyle={getStatisticValueStyle('tokens', '#1890ff')}
             />
           </Card>
         </div>
@@ -724,6 +741,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {activeCard === 'detail' && (
               <Space direction="vertical" style={{ width: '100%' }} >
                 <div>
+                  <div style={{ marginBottom: '12px' }}><strong>Service Endpoint</strong></div>
+                  <ApiEndpointPreview
+                    serviceId={serviceId || ''}
+                    isPublished={serviceStatus?.published || false}
+                    requireToken={requireToken}
+                  />
+                </div>
+
+                <div>
                   <div style={{ marginBottom: '8px' }}><strong>Service Name</strong></div>
                   <Input
                     placeholder="Enter service name"
@@ -741,42 +767,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     rows={2} />
                 </div>
 
-                <div>
-                  <div style={{ marginBottom: '8px' }}><strong>Status</strong></div>
-                  <Space>
-                    <Tag color={serviceStatus?.published ? 'green' : 'orange'}>
-                      {serviceStatus?.published ? 'Published' : 'Draft'}
-                    </Tag>
-                    {serviceStatus?.published && serviceStatus?.publishedAt && (
-                      <Text style={{ fontSize: '12px', color: '#666' }}>
-                        Published {new Date(serviceStatus.publishedAt).toLocaleDateString()}
-                      </Text>
-                    )}
-                  </Space>
-                </div>
-
-                <div style={{ marginTop: '16px' }}>
-                  <div style={{ marginBottom: '8px' }}><strong>API Configuration</strong></div>
+                <div style={{ marginTop: '0px' }}>
+                  <div style={{ marginBottom: '8px' }}><strong>Options</strong></div>
                   <Space direction="vertical" style={{ width: '100%' }}>
-                    <Checkbox 
-                      checked={enableCaching}
-                      onChange={(e) => setEnableCaching(e.target.checked)}
-                    >
-                      Enable response caching
-                    </Checkbox>
-                    <div style={{ marginLeft: '24px', fontSize: '12px', color: '#666', marginTop: '-8px' }}>
-                      Cache API responses for improved performance
-                    </div>
-                    
-                    <Checkbox 
-                      checked={requireToken}
-                      onChange={(e) => setRequireToken(e.target.checked)}
-                    >
-                      Require authentication token
-                    </Checkbox>
-                    <div style={{ marginLeft: '24px', fontSize: '12px', color: '#666', marginTop: '-8px' }}>
-                      API calls must include a valid token parameter
-                    </div>
+                    <Space align="center">
+                      <Checkbox
+                        checked={enableCaching}
+                        onChange={(e) => setEnableCaching(e.target.checked)}
+                      >
+                        Enable response caching
+                      </Checkbox>
+                      <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
+                        <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
+                      </Tooltip>
+                    </Space>
                   </Space>
                 </div>
 
@@ -811,9 +815,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Input Parameters</strong></div>
-                  <div style={{ 
-                    padding: '12px', 
-                    background: '#f5f5f5', 
+                  <div style={{
+                    padding: '12px',
+                    background: '#f5f5f5',
                     borderRadius: '4px',
                     fontSize: '12px'
                   }}>
@@ -822,11 +826,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     ) : (
                       <Space direction="vertical" style={{ width: '100%' }}>
                         {inputs.map((input, index) => (
-                          <div key={input.id} style={{ 
-                            padding: '8px', 
-                            background: 'white', 
+                          <div key={input.id} style={{
+                            padding: '8px',
+                            background: 'white',
                             borderRadius: '4px',
-                            border: '1px solid #e8e8e8' 
+                            border: '1px solid #e8e8e8'
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
@@ -849,15 +853,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                 )}
                               </div>
                               <Space size="small">
-                                <Button 
-                                  size="small" 
-                                  type="text" 
+                                <Button
+                                  size="small"
+                                  type="text"
                                   icon={<EditOutlined />}
                                   onClick={() => handleEditParameter('input', input)}
                                 />
-                                <Button 
-                                  size="small" 
-                                  type="text" 
+                                <Button
+                                  size="small"
+                                  type="text"
                                   danger
                                   icon={<DeleteOutlined />}
                                   onClick={() => handleDeleteParameter('input', input.id)}
@@ -873,9 +877,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
                 <div>
                   <div style={{ marginBottom: '8px' }}><strong>Output Parameters</strong></div>
-                  <div style={{ 
-                    padding: '12px', 
-                    background: '#f5f5f5', 
+                  <div style={{
+                    padding: '12px',
+                    background: '#f5f5f5',
                     borderRadius: '4px',
                     fontSize: '12px'
                   }}>
@@ -884,11 +888,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     ) : (
                       <Space direction="vertical" style={{ width: '100%' }}>
                         {outputs.map((output, index) => (
-                          <div key={output.id} style={{ 
-                            padding: '8px', 
-                            background: 'white', 
+                          <div key={output.id} style={{
+                            padding: '8px',
+                            background: 'white',
                             borderRadius: '4px',
-                            border: '1px solid #e8e8e8' 
+                            border: '1px solid #e8e8e8'
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
@@ -904,15 +908,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                 )}
                               </div>
                               <Space size="small">
-                                <Button 
-                                  size="small" 
-                                  type="text" 
+                                <Button
+                                  size="small"
+                                  type="text"
                                   icon={<EditOutlined />}
                                   onClick={() => handleEditParameter('output', output)}
                                 />
-                                <Button 
-                                  size="small" 
-                                  type="text" 
+                                <Button
+                                  size="small"
+                                  type="text"
                                   danger
                                   icon={<DeleteOutlined />}
                                   onClick={() => handleDeleteParameter('output', output.id)}
@@ -952,11 +956,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   <div style={{ marginBottom: '12px' }}>
                     <Title level={5} style={{ margin: 0 }}>Service Endpoint</Title>
                   </div>
-                  <Typography.Paragraph 
-                    copyable 
-                    style={{ 
-                      background: '#f5f5f5', 
-                      padding: '12px', 
+                  <Typography.Paragraph
+                    copyable
+                    style={{
+                      background: '#f5f5f5',
+                      padding: '12px',
                       borderRadius: '4px',
                       margin: 0,
                       wordBreak: 'break-all',
@@ -978,16 +982,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     </div>
                   )}
                 </div>
-                
+
                 <div style={{ marginTop: '20px' }}>
                   <div style={{ marginBottom: '12px' }}>
                     <Title level={5} style={{ margin: 0 }}>Example Request</Title>
                   </div>
-                  <Typography.Paragraph 
-                    copyable 
-                    style={{ 
-                      background: '#f5f5f5', 
-                      padding: '12px', 
+                  <Typography.Paragraph
+                    copyable
+                    style={{
+                      background: '#f5f5f5',
+                      padding: '12px',
                       borderRadius: '4px',
                       margin: 0,
                       wordBreak: 'break-all',
@@ -1003,12 +1007,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   <div style={{ marginBottom: '12px' }}>
                     <Title level={5} style={{ margin: 0 }}>cURL Example</Title>
                   </div>
-                  <Typography.Paragraph 
-                    copyable 
-                    style={{ 
-                      background: '#1e1e1e', 
+                  <Typography.Paragraph
+                    copyable
+                    style={{
+                      background: '#1e1e1e',
                       color: '#d4d4d4',
-                      padding: '12px', 
+                      padding: '12px',
                       borderRadius: '4px',
                       margin: 0,
                       wordBreak: 'break-all',
@@ -1020,7 +1024,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     {`curl -X GET "https://spreadapi.io/api/getresults?api=${serviceId || '{serviceId}'}${requireToken ? '&token=your-actual-token' : ''}${inputs.map(i => `&${i.alias}=${i.value || '1000'}`).join('')}"`}
                   </Typography.Paragraph>
                 </div>
-                
+
                 <div style={{ marginTop: '20px' }}>
                   <div style={{ marginBottom: '12px' }}>
                     <Title level={5} style={{ margin: 0 }}>Response Format</Title>
@@ -1038,7 +1042,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     )}
                   </div>
                 </div>
-                
+
                 <div style={{ marginTop: '16px' }}>
                   <div style={{ marginBottom: '8px' }}><strong>Optional Parameters</strong></div>
                   <div style={{ fontSize: '12px', color: '#666' }}>
@@ -1047,6 +1051,27 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   </div>
                 </div>
               </Space>
+            )}
+
+            {/* Tokens Detail */}
+            {activeCard === 'tokens' && (
+              <TokenManagement
+                serviceId={serviceId || ''}
+                requireToken={requireToken}
+                onRequireTokenChange={(value) => {
+                  setRequireToken(value);
+                  if (onConfigChange) {
+                    onConfigChange({
+                      name: apiName,
+                      description: apiDescription,
+                      inputs,
+                      outputs,
+                      enableCaching,
+                      requireToken: value
+                    });
+                  }
+                }}
+              />
             )}
 
           </div>
@@ -1070,7 +1095,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       </div>
 
       {/* Fixed button at bottom */}
-      <div 
+      <div
         ref={buttonAreaRef}
         style={{
           padding: '12px',
@@ -1083,7 +1108,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           const buttonInfo = getAddButtonInfo();
           return (
             <>
-              <Button 
+              <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 style={{ width: '100%' }}
@@ -1204,9 +1229,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           )}
 
           <Form.Item style={{ marginBottom: 8 }}>
-            <div style={{ 
-              padding: '12px', 
-              background: '#f5f5f5', 
+            <div style={{
+              padding: '12px',
+              background: '#f5f5f5',
               borderRadius: '4px',
               fontSize: '12px'
             }}>

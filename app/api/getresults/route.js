@@ -10,6 +10,7 @@ import {
   getDateForCallsLog,
 } from '../../../utils/helper';
 import { getApiDefinition } from '../../../utils/helperApi';
+import { validateServiceToken } from '../../../utils/tokenAuth';
 const { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } = require('../../../lib/cacheHelpers');
 
 // Server-only import
@@ -156,7 +157,8 @@ async function getResults(requestInfo) {
   if (!requestInfo.apiId) return getError("missing service id");
 
   let options = requestInfo.options ?? [];
-  const useCaching = true && options.includes("nocache") === false;
+  // Note: We'll determine useCaching after loading the API definition
+  let useCaching = true; // Default, will be updated based on service settings
   const timeAll = Date.now();
   let timeEnd;
 
@@ -165,30 +167,6 @@ async function getResults(requestInfo) {
   // =====================================
 
   logCalls(requestInfo.apiId, requestInfo.apiToken);
-
-  // =====================================
-  // check the cache
-  // =====================================
-  let cacheResult = null;
-  const inputHash = generateResultCacheHash(requestInfo.inputs || {});
-  const cacheKey = CACHE_KEYS.resultCache(requestInfo.apiId, inputHash);
-
-  if (useCaching) {
-    try {
-      const cacheExists = await redis.exists(cacheKey);
-      if (cacheExists > 0) {
-        cacheResult = await redis.json.get(cacheKey);
-        if (cacheResult) {
-          // Track cache hit
-          redis.hIncrBy(`service:${requestInfo.apiId}:analytics`, 'cache:hits', 1).catch(() => {});
-          return cacheResult;
-        }
-      }
-    } catch (cacheError) {
-      console.error(`Cache check error for ${sanitizedApiId}:`, cacheError);
-      // Continue execution if cache check fails
-    }
-  }
 
   // =====================================
   // calculate the inputs
@@ -223,7 +201,134 @@ async function getResults(requestInfo) {
     }
 
     if (apiDefinition.error) {
+      // If service is not published, try to get basic info to show documentation
+      if (apiDefinition.error.includes("not published")) {
+        try {
+          // Get basic service info from unpublished service
+          const serviceData = await redis.hGetAll(`service:${requestInfo.apiId}`);
+          
+          if (serviceData && Object.keys(serviceData).length > 0) {
+            // Parse inputs/outputs
+            let inputs = [];
+            let outputs = [];
+            
+            try {
+              inputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
+            } catch (e) {
+              console.error('Error parsing inputs:', e);
+            }
+            
+            try {
+              outputs = serviceData.outputs ? JSON.parse(serviceData.outputs) : [];
+            } catch (e) {
+              console.error('Error parsing outputs:', e);
+            }
+            
+            // Return helpful API documentation
+            return {
+              error: "Service not published",
+              message: "This service exists but is not yet published. Here's how to use it once published:",
+              service: {
+                id: requestInfo.apiId,
+                name: serviceData.name || "Unnamed Service",
+                description: serviceData.description || "No description available",
+                status: "draft"
+              },
+              parameters: {
+                required: inputs.filter(i => i.mandatory !== false).map(i => ({
+                  name: i.alias || i.name,
+                  type: i.type || "string",
+                  description: i.description || "",
+                  min: i.min,
+                  max: i.max
+                })),
+                optional: inputs.filter(i => i.mandatory === false).map(i => ({
+                  name: i.alias || i.name,
+                  type: i.type || "string", 
+                  description: i.description || "",
+                  min: i.min,
+                  max: i.max
+                }))
+              },
+              outputs: outputs.map(o => ({
+                name: o.alias || o.name,
+                type: o.type || "any",
+                description: o.description || ""
+              })),
+              example: {
+                url: `https://spreadapi.io/api/getresults?service=${requestInfo.apiId}${
+                  inputs.filter(i => i.mandatory !== false)
+                    .map(i => `&${i.alias || i.name}={value}`)
+                    .join('')
+                }`,
+                description: "Replace {value} with your actual parameter values"
+              },
+              authentication: {
+                required: serviceData.requireToken === 'true',
+                method: serviceData.requireToken === 'true' ? "Add 'token' parameter with your API token" : "No authentication required"
+              }
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching unpublished service info:', err);
+        }
+      }
+      
       return getError(apiDefinition.error);
+    }
+
+    // =====================================
+    // check token authentication if required
+    // =====================================
+    if (apiDefinition.needsToken || apiDefinition.requireToken) {
+      // Create a mock request object for token validation
+      const mockRequest = {
+        headers: {
+          get: (name) => {
+            if (name.toLowerCase() === 'authorization' && requestInfo.apiToken) {
+              return `Bearer ${requestInfo.apiToken}`;
+            }
+            return null;
+          }
+        },
+        url: `http://localhost?token=${requestInfo.apiToken || ''}`
+      };
+      
+      const tokenValidation = await validateServiceToken(mockRequest, requestInfo.apiId);
+      
+      if (!tokenValidation.valid) {
+        return getError(tokenValidation.error || 'Authentication required');
+      }
+    }
+    
+    // =====================================
+    // respect service caching settings
+    // =====================================
+    // Update useCaching based on service settings and nocache parameter
+    useCaching = apiDefinition.useCaching !== false && !options.includes("nocache");
+    
+    // =====================================
+    // check the cache (after we know if caching is enabled)
+    // =====================================
+    let cacheResult = null;
+    const inputHash = generateResultCacheHash(requestInfo.inputs || {});
+    const cacheKey = CACHE_KEYS.resultCache(requestInfo.apiId, inputHash);
+
+    if (useCaching) {
+      try {
+        const cacheExists = await redis.exists(cacheKey);
+        if (cacheExists > 0) {
+          cacheResult = await redis.json.get(cacheKey);
+          if (cacheResult) {
+            // Track cache hit
+            redis.hIncrBy(`service:${requestInfo.apiId}:analytics`, 'cache:hits', 1).catch(() => {});
+            return cacheResult;
+          }
+        }
+      } catch (cacheError) {
+        console.error(`Cache check error for ${requestInfo.apiId}:`, cacheError);
+        // Continue execution if cache check fails
+      }
     }
 
     // =====================================
@@ -240,7 +345,58 @@ async function getResults(requestInfo) {
     // check inputs properties (min, max, ...)
     // =====================================
     const inputErrors = checkInputValues(apiInputs, inputList);
-    if (inputErrors?.length > 0) return getError(inputErrors);
+    if (inputErrors?.length > 0) {
+      // If there are missing mandatory inputs, return helpful API documentation
+      const hasMissingInputs = inputErrors.some(err => err.includes('missing mandatory input'));
+      if (hasMissingInputs) {
+        return {
+          error: "Missing required parameters",
+          message: "This API requires certain parameters to function. See the documentation below.",
+          service: {
+            id: requestInfo.apiId,
+            name: apiJson.name || apiJson.title || "Unnamed Service",
+            description: apiJson.description || "No description available"
+          },
+          parameters: {
+            required: apiInputs.filter(i => i.mandatory !== false).map(i => ({
+              name: i.alias || i.name,
+              type: i.type || "string",
+              description: i.description || "",
+              min: i.min,
+              max: i.max
+            })),
+            optional: apiInputs.filter(i => i.mandatory === false).map(i => ({
+              name: i.alias || i.name,
+              type: i.type || "string",
+              description: i.description || "",
+              min: i.min,
+              max: i.max
+            }))
+          },
+          outputs: apiOutputs.map(o => ({
+            name: o.alias || o.name,
+            type: o.type || "any",
+            description: o.description || ""
+          })),
+          example: {
+            url: `https://spreadapi.io/api/getresults?service=${requestInfo.apiId}${
+              apiInputs.filter(i => i.mandatory !== false)
+                .map(i => `&${i.alias || i.name}={value}`)
+                .join('')
+            }`,
+            description: "Replace {value} with your actual parameter values"
+          },
+          authentication: apiDefinition.needsToken ? {
+            required: true,
+            method: "Add 'token' parameter with your API token"
+          } : {
+            required: false
+          }
+        };
+      }
+      // For other errors, return them as-is
+      return getError(inputErrors);
+    }
 
     // =====================================
     // get the file info
