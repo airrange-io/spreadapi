@@ -415,6 +415,8 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             file,
             () => {
               console.log("Excel file imported successfully");
+              // Mark workbook as changed after import
+              setChangeCount((prev) => prev + 1);
               if (props.actionHandlerProc) {
                 props.actionHandlerProc("workbook-loaded", spread);
               }

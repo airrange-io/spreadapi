@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App } from 'antd';
+import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Tag } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
@@ -480,38 +480,97 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
+  const handleUnpublish = async () => {
+    try {
+      if (hasChanges) {
+        message.warning('Please save your changes before unpublishing');
+        return;
+      }
+
+      setLoading(true);
+      
+      // Call unpublish API endpoint
+      const response = await fetch(`/api/services/${serviceId}/unpublish`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to unpublish service');
+      }
+
+      message.success('Service unpublished successfully!');
+      
+      // Update the service status
+      setServiceStatus({
+        published: false,
+        status: 'draft',
+        publishedAt: null,
+        useCaching: false,
+        needsToken: false
+      });
+
+    } catch (error) {
+      console.error('Error unpublishing service:', error);
+      message.error('Failed to unpublish: ' + (error.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       setLoading(true);
       setSavingWorkbook(true);
 
-      // Get current workbook state from designer
+      // Check if workbook has changes before saving
       let workbookBlob = null;
-      if (workbookRef.current && workbookRef.current.saveWorkbookSJS) {
-        console.log('WorkbookRef exists, getting SJS blob...');
-        try {
-          workbookBlob = await workbookRef.current.saveWorkbookSJS();
-          if (!workbookBlob) {
-            console.warn('No workbook blob available');
-          } else {
-            console.log('Got workbook blob:', {
-              hasData: !!workbookBlob,
-              size: workbookBlob.size,
-              type: workbookBlob.type
-            });
+      let workbookHasChanges = false;
+      let shouldSaveWorkbook = false;
+      
+      if (workbookRef.current) {
+        // Check if workbook has changes using the hasChanges method
+        workbookHasChanges = workbookRef.current.hasChanges && workbookRef.current.hasChanges();
+        
+        // For services without a workbook URL, always save the workbook
+        const hasNoWorkbook = !serviceStatus?.urlData && !savedConfig.workbookUrl;
+        shouldSaveWorkbook = workbookHasChanges || hasNoWorkbook;
+        
+        console.log('Workbook save decision:', {
+          hasChanges: workbookHasChanges,
+          hasNoWorkbook,
+          shouldSave: shouldSaveWorkbook
+        });
+        
+        // Save workbook if needed
+        if (shouldSaveWorkbook && workbookRef.current.saveWorkbookSJS) {
+          console.log('WorkbookRef exists and has changes, getting SJS blob...');
+          try {
+            workbookBlob = await workbookRef.current.saveWorkbookSJS();
+            if (!workbookBlob) {
+              console.warn('No workbook blob available');
+            } else {
+              console.log('Got workbook blob:', {
+                hasData: !!workbookBlob,
+                size: workbookBlob.size,
+                type: workbookBlob.type
+              });
+            }
+          } catch (error) {
+            console.error('Error getting workbook SJS:', error);
+            // Fallback to JSON if SJS fails
+            const workbookData = workbookRef.current.getWorkbookJSON();
+            if (workbookData) {
+              // Convert JSON to blob
+              const jsonString = JSON.stringify(workbookData);
+              workbookBlob = new Blob([jsonString], { type: 'application/json' });
+            }
           }
-        } catch (error) {
-          console.error('Error getting workbook SJS:', error);
-          // Fallback to JSON if SJS fails
-          const workbookData = workbookRef.current.getWorkbookJSON();
-          if (workbookData) {
-            // Convert JSON to blob
-            const jsonString = JSON.stringify(workbookData);
-            workbookBlob = new Blob([jsonString], { type: 'application/json' });
-          }
+        } else if (!shouldSaveWorkbook) {
+          console.log('Workbook has no changes and already exists, skipping workbook save');
         }
       } else {
-        console.error('WorkbookRef.current is null or SJS not supported - cannot save workbook data');
+        console.error('WorkbookRef.current is null - cannot check workbook changes');
       }
 
       // Check if service exists first
@@ -582,14 +641,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         });
       }
 
-      message.success('Service and workbook saved successfully!');
+      // Show appropriate success message based on what was saved
+      if (workbookBlob) {
+        message.success('Service configuration and workbook saved successfully!');
+      } else {
+        message.success('Service configuration saved successfully!');
+      }
 
       // Update saved state to match current state
-      setSavedConfig(apiConfig);
+      setSavedConfig({
+        ...apiConfig,
+        workbookUrl: workbookBlob ? 'saved' : savedConfig.workbookUrl
+      });
       setHasChanges(false);
 
-      // Reset change count in workbook
-      if (workbookRef.current) {
+      // Reset change count in workbook only if we saved the workbook
+      if (workbookRef.current && workbookBlob) {
         workbookRef.current.resetChangeCount();
       }
     } catch (error) {
@@ -629,6 +696,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } else if (action === 'workbook-loaded') {
       console.log('Workbook loaded successfully');
+      // Don't mark as changed when loading existing workbook
+      // Only user actions should set hasChanges to true
     }
   }, []);
 
@@ -801,6 +870,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               },
             ]}
           />
+          <Tag color={serviceStatus?.published ? 'green' : 'orange'} style={{ marginLeft: 8 }}>
+            {serviceStatus?.published ? 'Published' : 'Draft'}
+          </Tag>
         </Space>
 
         <Space>
@@ -821,14 +893,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           >
             {savingWorkbook ? 'Saving Workbook...' : 'Save API'}
           </Button>
-          <Button
-            type="default"
-            onClick={handlePublish}
-            loading={loading}
-            disabled={hasChanges || apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0}
-          >
-            Publish API
-          </Button>
+          {serviceStatus?.published ? (
+            <Button
+              type="default"
+              danger
+              onClick={handleUnpublish}
+              loading={loading}
+              disabled={hasChanges}
+            >
+              Unpublish Service
+            </Button>
+          ) : (
+            <Button
+              type="default"
+              onClick={handlePublish}
+              loading={loading}
+              disabled={hasChanges || apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0}
+            >
+              Publish API
+            </Button>
+          )}
         </Space>
       </div>
 

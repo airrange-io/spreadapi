@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Empty, Button, Space, Typography, Tag, Spin, message, Popconfirm, Row, Col } from 'antd';
+import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App } from 'antd';
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { generateServiceId } from '@/lib/generateServiceId';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -24,6 +25,7 @@ interface ServiceListProps {
 
 export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
   const router = useRouter();
+  const { message } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
@@ -132,10 +134,11 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
         style={{ marginTop: 180 }}
       >
         <Button type="primary" onClick={() => {
-          const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+          const newId = generateServiceId();
+          console.log('[ServiceList] Generated service ID:', newId);
           router.push(`/service/${newId}`);
         }}>
-          Create Your First API
+          Create Your First Service
         </Button>
       </Empty>
     );

@@ -1,5 +1,5 @@
-// Import the direct service management functions
-import { createOrUpdateService } from '../lib/publishService';
+// Client-safe publish service utilities
+// NOTE: This file must not import any server-side modules like Redis
 
 // Helper function to get object size in bytes
 function getObjectSize(obj) {
@@ -151,6 +151,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
   // Prepare the data structure for manageapi
   const publishData = {
     apiJson: {
+      title: service.name || "Untitled Service",
+      description: service.description || "",
       input: transformedInputs,
       output: transformedOutputs,
       tokens: flags.tokens || [],
@@ -168,11 +170,28 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
   return publishData;
 }
 
-// Call service management directly (no HTTP needed)
+// Call service management via API route (client-safe)
 export async function publishService(serviceId, publishData, tenant = 'test1234') {
   try {
-    // Use the direct function instead of HTTP API
-    const result = await createOrUpdateService(serviceId, publishData, tenant);
+    // Use API route instead of direct function call
+    const response = await fetch('/api/services/publish', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        serviceId,
+        publishData,
+        tenant
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to publish service');
+    }
+    
+    const result = await response.json();
     
     console.log(`Service ${result.status} successfully:`, {
       apiId: result.apiId,

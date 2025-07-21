@@ -12,6 +12,7 @@ import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import Sidebar from '@/components/Sidebar';
 import ServiceList from '@/components/ServiceList';
 import type { MenuProps } from 'antd';
+import { generateServiceId } from '@/lib/generateServiceId';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -127,7 +128,8 @@ const ListsPage: React.FC = observer(() => {
         (window as any).__draggedFile = file;
 
         // Generate a new service ID and navigate with file flag
-        const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        const newId = generateServiceId();
+        console.log('[HomePage] Generated service ID from drag & drop:', newId);
         router.push(`/service/${newId}?fileDropped=true`);
       } catch (error) {
         console.error('Error processing dropped file:', error);
@@ -218,7 +220,8 @@ const ListsPage: React.FC = observer(() => {
                   // }
 
                   // Generate a new service ID and navigate
-                  const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                  const newId = generateServiceId();
+                  console.log('[HomePage Button] Generated service ID:', newId);
                   router.push(`/service/${newId}`);
                 }}
                 className="new-list-button"

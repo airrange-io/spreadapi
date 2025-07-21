@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { delBlob } from '@/lib/blob-client';
 
 // For now, use a fixed test user
@@ -8,20 +9,46 @@ const TEST_USER_ID = 'test1234';
 // GET /api/services - List all services for user
 export async function GET(request) {
   try {
+    // Get user's service index
+    const serviceIndex = await redis.hGetAll(`user:${TEST_USER_ID}:services`);
     
-    // Get all service summaries for the user
-    const summaries = await redis.hGetAll(`user:${TEST_USER_ID}:services`);
+    // Get details for each service
+    const services = await Promise.all(
+      Object.entries(serviceIndex).map(async ([id, statusFromIndex]) => {
+        const serviceData = await redis.hGetAll(`service:${id}`);
+        
+        // Skip if service doesn't exist
+        if (!serviceData || Object.keys(serviceData).length === 0) {
+          return null;
+        }
+        
+        // Check if published
+        const isPublished = await redis.exists(`service:${id}:published`);
+        let publishedData = {};
+        if (isPublished) {
+          publishedData = await redis.hGetAll(`service:${id}:published`);
+        }
+        
+        return {
+          id: serviceData.id,
+          name: serviceData.name,
+          description: serviceData.description,
+          status: isPublished ? 'published' : 'draft',
+          createdAt: serviceData.createdAt,
+          updatedAt: serviceData.updatedAt,
+          publishedAt: publishedData.created || null,
+          calls: parseInt(publishedData.calls || '0'),
+          lastUsed: publishedData.lastUsed || null,
+          workbookUrl: serviceData.workbookUrl
+        };
+      })
+    );
     
-    // Parse each summary and convert to array
-    const services = Object.entries(summaries).map(([id, data]) => ({
-      id,
-      ...JSON.parse(data)
-    }));
+    // Filter out nulls and sort by updatedAt descending
+    const validServices = services.filter(s => s !== null);
+    validServices.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     
-    // Sort by updatedAt descending
-    services.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    
-    return NextResponse.json({ services });
+    return NextResponse.json({ services: validServices });
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json(
@@ -38,6 +65,8 @@ export async function POST(request) {
     
     const { id, name, description } = body;
     
+    console.log('[Services API] Creating service with ID:', id);
+    
     if (!id) {
       return NextResponse.json(
         { error: 'Service ID is required' },
@@ -46,7 +75,7 @@ export async function POST(request) {
     }
     
     // Check if service already exists
-    const exists = await redis.hExists(`user:${TEST_USER_ID}:services`, id);
+    const exists = await redis.exists(`service:${id}`);
     if (exists) {
       return NextResponse.json(
         { error: 'Service already exists' },
@@ -54,44 +83,52 @@ export async function POST(request) {
       );
     }
     
+    // Get user's tenant ID
+    const user = await redis.hGetAll(`user:${TEST_USER_ID}`);
+    const tenantId = user.tenantId || 'tenant1234';
+    
     const now = new Date().toISOString();
     
-    // Create service summary for list view
-    const summary = {
-      name: name || 'Untitled API',
+    // Create service hash with all fields (no status field!)
+    const serviceData = {
+      id: id,
+      userId: TEST_USER_ID,
+      name: name || 'Untitled Service',
       description: description || '',
-      status: 'draft',
+      workbookUrl: '',
+      workbookSize: '0',
+      workbookModified: '',
       createdAt: now,
       updatedAt: now,
-      calls: 0,
-      lastUsed: null
+      
+      // Empty inputs/outputs as JSON strings
+      inputs: '[]',
+      outputs: '[]',
+      
+      // Default settings
+      cacheEnabled: 'true',
+      cacheDuration: '300',
+      requireToken: 'false',
+      rateLimitRequests: '100',
+      rateLimitWindow: '60',
+      
+      // Empty tags
+      tags: ''
     };
     
-    // Create full service data
-    const fullData = {
-      userId: TEST_USER_ID,
-      file: null,
-      inputs: [],
-      outputs: [],
-      metadata: {}
-    };
+    // Store service
+    await redis.hSet(`service:${id}`, serviceData);
     
-    // Store in Redis (2 operations)
-    await redis.hSet(
-      `user:${TEST_USER_ID}:services`,
-      id,
-      JSON.stringify(summary)
-    );
-    
-    await redis.set(
-      `service:${id}`,
-      JSON.stringify(fullData)
-    );
+    // Add to user's services index
+    await redis.hSet(`user:${TEST_USER_ID}:services`, id, 'draft');
     
     return NextResponse.json({ 
-      id,
-      ...summary,
-      success: true 
+      success: true,
+      service: {
+        ...serviceData,
+        inputs: JSON.parse(serviceData.inputs),
+        outputs: JSON.parse(serviceData.outputs)
+      }
     });
   } catch (error) {
     console.error('Error creating service:', error);
@@ -108,6 +145,8 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const serviceId = searchParams.get('id');
     
+    console.log(`DELETE request for service: ${serviceId}`);
+    
     if (!serviceId) {
       return NextResponse.json(
         { error: 'Service ID is required' },
@@ -115,29 +154,50 @@ export async function DELETE(request) {
       );
     }
     
-    // Check if service exists and belongs to user
-    const exists = await redis.hExists(`user:${TEST_USER_ID}:services`, serviceId);
-    if (!exists) {
+    // Check if service exists
+    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    if (!serviceData || Object.keys(serviceData).length === 0) {
+      console.log(`Service ${serviceId} not found`);
       return NextResponse.json(
         { error: 'Service not found' },
         { status: 404 }
       );
     }
     
-    // Get service data to find workbook URL
-    const serviceData = await redis.get(`service:${serviceId}`);
-    let workbookDeleted = false;
+    // Verify ownership
+    if (serviceData.userId !== TEST_USER_ID) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
     
-    if (serviceData) {
+    // Check if published
+    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    if (isPublished) {
+      return NextResponse.json(
+        { error: 'Cannot delete published service. Unpublish first.' },
+        { status: 400 }
+      );
+    }
+    
+    // Delete workbook from blob storage if it exists
+    let workbookDeleted = false;
+    if (serviceData.workbookUrl) {
       try {
-        const service = JSON.parse(serviceData);
+        console.log(`Attempting to delete workbook blob: ${serviceData.workbookUrl}`);
         
-        // Delete workbook from blob storage if it exists
-        if (service.workbookUrl) {
-          const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
-          await delBlob(blobUrl);
+        // Check if we have the blob token
+        const token = process.env.VERCEL_BLOB_READ_WRITE_TOKEN || 
+                     process.env.VERCELBLOB_READ_WRITE_TOKEN || 
+                     process.env.BLOB_READ_WRITE_TOKEN;
+        
+        if (!token) {
+          console.warn('Blob storage token not found, skipping workbook deletion');
+        } else {
+          await delBlob(serviceData.workbookUrl);
           workbookDeleted = true;
-          console.log(`Deleted workbook blob: ${blobUrl}`);
+          console.log(`Successfully deleted workbook blob`);
         }
       } catch (error) {
         console.error('Error deleting workbook blob:', error);
@@ -145,9 +205,18 @@ export async function DELETE(request) {
       }
     }
     
-    // Delete from both Redis locations
-    await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
+    // Delete service hash
     await redis.del(`service:${serviceId}`);
+    
+    // Delete all caches for this service
+    await redis.del(CACHE_KEYS.apiCache(serviceId));
+    const resultKeys = await redis.keys(`service:${serviceId}:cache:result:*`);
+    if (resultKeys.length > 0) {
+      await redis.del(...resultKeys);
+    }
+    
+    // Remove from user's services index
+    await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
     
     return NextResponse.json({ 
       success: true,

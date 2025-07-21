@@ -1,5 +1,6 @@
 import redis from "../lib/redis";
 import { getError } from "../utils/helper";
+const { CACHE_KEYS, CACHE_TTL } = require("../lib/cacheHelpers");
 
 // Process-level cache for API definitions
 const apiDefinitionCache = new Map();
@@ -89,9 +90,10 @@ export async function getApiDefinition(apiId, apiToken) {
     // try to get data from redis first
     if (useCaching) {
       try {
-        const cacheExists = await redis.exists("cache:blob:" + apiId);
+        const cacheKey = CACHE_KEYS.apiCache(apiId);
+        const cacheExists = await redis.exists(cacheKey);
         if (cacheExists) {
-          result = await redis.json.get("cache:blob:" + apiId);
+          result = await redis.json.get(cacheKey);
           if (result) {
             console.timeEnd("fetchData");
             // Store in process-level cache before returning
@@ -137,8 +139,9 @@ export async function getApiDefinition(apiId, apiToken) {
 
         if (useCaching && responseJson) {
           try {
-            await redis.json.set("cache:blob:" + apiId, "$", responseJson);
-            await redis.expire("cache:blob:" + apiId, 60 * 30); // cache for 30 minutes
+            const cacheKey = CACHE_KEYS.apiCache(apiId);
+            await redis.json.set(cacheKey, "$", responseJson);
+            await redis.expire(cacheKey, CACHE_TTL.api);
           } catch (setCacheError) {
             console.error(
               `Failed to set cache for service:${apiId}:`,

@@ -11,6 +11,7 @@ import { runInAction } from 'mobx';
 import { useIsClient } from '@/shared/hooks/useIsClient';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
 import type { MenuProps } from 'antd';
+import { generateServiceId } from '@/lib/generateServiceId';
 
 const { Text } = Typography;
 
@@ -324,7 +325,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 //   return;
                 // }
                 // Generate a new service ID and navigate
-                const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                const newId = generateServiceId();
+                console.log('[SidebarContent] Generated service ID:', newId);
                 router.push(`/service/${newId}`);
               }}
               size="small"
@@ -350,7 +352,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               //   return;
               // }
               // Generate a new service ID and navigate
-              const newId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+              const newId = generateServiceId();
+              console.log('[SidebarContent] Generated service ID:', newId);
               router.push(`/service/${newId}`);
             }}
             style={{

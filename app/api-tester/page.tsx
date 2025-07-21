@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Space, Typography, Alert, Spin, message, Statistic, Row, Col, Divider, Tag } from 'antd';
 import { SubPageLayout } from '@/components/SubPageLayout';
 import { SendOutlined, ClearOutlined, ThunderboltOutlined, DatabaseOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'next/navigation';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
@@ -13,6 +14,7 @@ export default function ApiTesterPage() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   // Default demo data
   const demoData = {
@@ -27,13 +29,17 @@ export default function ApiTesterPage() {
   };
 
   useEffect(() => {
-    // Set initial demo values
+    // Get service ID from URL parameter, fallback to demo
+    const serviceIdFromUrl = searchParams.get('service');
+    const apiId = serviceIdFromUrl || demoData.apiId;
+    
+    // Set initial values
     form.setFieldsValue({
-      apiId: demoData.apiId,
-      token: demoData.token,
-      inputs: JSON.stringify(demoData.inputs, null, 2)
+      apiId: apiId,
+      token: serviceIdFromUrl ? "" : demoData.token, // Only use demo token if using demo service
+      inputs: serviceIdFromUrl ? "{}" : JSON.stringify(demoData.inputs, null, 2)
     });
-  }, []);
+  }, [searchParams]);
 
   const handleSubmit = async (values: any) => {
     setLoading(true);

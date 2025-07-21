@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App } from 'antd';
 import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
+import { generateParameterId } from '@/lib/generateParameterId';
 
 const { Title, Text } = Typography;
 
@@ -223,7 +224,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 colCount: selection.colCount,
                 isSingleCell,
                 hasFormula,
-                isRange: !isSingleCell
+                isRange: !isSingleCell,
+                sheetName: sheet.name()
               });
               setSuggestedParamName(suggestedName);
             }
@@ -296,24 +298,41 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     const { isSingleCell, hasFormula, isRange, row, col, rowCount, colCount } = currentSelection;
     const cellRef = getCellAddress(row, col);
     
+    // Get the sheet name (default to Sheet1 if not found)
+    const sheetName = currentSelection.sheetName || 'Sheet1';
+    
+    // Check if this cell/range is already in parameters
+    const isAlreadyInParameters = () => {
+      if (isRange) {
+        const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
+        const rangeAddress = `${sheetName}!${cellRef}:${endCellRef}`;
+        return [...inputs, ...outputs].some(param => param.address === rangeAddress);
+      } else {
+        const cellAddress = `${sheetName}!${cellRef}`;
+        return [...inputs, ...outputs].some(param => param.address === cellAddress);
+      }
+    };
+    
+    const alreadyExists = isAlreadyInParameters();
+    
     if (isRange) {
       const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
       return { 
-        text: `Add ${cellRef}:${endCellRef} as Output`, 
+        text: alreadyExists ? `${cellRef}:${endCellRef} already added` : `Add ${cellRef}:${endCellRef} as Output`, 
         type: 'output' as const,
-        disabled: false 
+        disabled: alreadyExists
       };
     } else if (hasFormula) {
       return { 
-        text: `Add ${cellRef} as Output`, 
+        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Output`, 
         type: 'output' as const,
-        disabled: false 
+        disabled: alreadyExists
       };
     } else {
       return { 
-        text: `Add ${cellRef} as Input`, 
+        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Input`, 
         type: 'input' as const,
-        disabled: false 
+        disabled: alreadyExists
       };
     }
   };
@@ -422,15 +441,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Handle modal form submission
   const handleAddParameter = (values: any) => {
-    // Generate a unique ID
-    const generateId = () => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-      let id = '';
-      for (let i = 0; i < 21; i++) {
-        id += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return id;
-    };
 
     // Get sheet name from spread instance
     let sheetName = 'Sheet1';
@@ -458,7 +468,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     if (parameterType === 'input') {
       const newParam: InputDefinition = {
-        id: generateId(),
+        id: generateParameterId(),
         address: fullAddress,
         name: values.name,
         alias: alias || values.name.toLowerCase(),
@@ -475,7 +485,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       setInputs([...inputs, newParam]);
     } else {
       const newParam: OutputDefinition = {
-        id: generateId(),
+        id: generateParameterId(),
         address: fullAddress,
         name: values.name,
         alias: alias || values.name.toLowerCase(),
@@ -667,7 +677,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     placeholder="Describe what this API does"
                     value={apiDescription}
                     onChange={(e) => setApiDescription(e.target.value)}
-                    rows={4} />
+                    rows={2} />
                 </div>
 
                 <div>

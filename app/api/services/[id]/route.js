@@ -8,30 +8,40 @@ export async function GET(request, { params }) {
   try {
     const { id: serviceId } = await params;
     
-    // Check if user has access to this service
-    const summary = await redis.hGet(`user:${TEST_USER_ID}:services`, serviceId);
-    if (!summary) {
+    // Get service data
+    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    
+    if (!serviceData || Object.keys(serviceData).length === 0) {
       // Return 204 No Content for non-existent services (expected for new services)
       return new NextResponse(null, { status: 204 });
     }
     
-    // Get full service data
-    const fullData = await redis.get(`service:${serviceId}`);
-    if (!fullData) {
+    // Verify ownership
+    if (serviceData.userId !== TEST_USER_ID) {
       return NextResponse.json(
-        { error: 'Service data not found' },
-        { status: 404 }
+        { error: 'Unauthorized' },
+        { status: 403 }
       );
     }
     
-    // Combine summary and full data
-    const service = {
-      id: serviceId,
-      ...JSON.parse(summary),
-      ...JSON.parse(fullData)
+    // Check if published
+    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    let publishedData = null;
+    if (isPublished) {
+      publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+    }
+    
+    // Parse JSON fields
+    const response = {
+      ...serviceData,
+      inputs: JSON.parse(serviceData.inputs || '[]'),
+      outputs: JSON.parse(serviceData.outputs || '[]'),
+      tags: serviceData.tags ? serviceData.tags.split(',').filter(t => t) : [],
+      status: isPublished ? 'published' : 'draft',
+      published: publishedData
     };
     
-    return NextResponse.json(service);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching service:', error);
     return NextResponse.json(
@@ -47,53 +57,56 @@ export async function PUT(request, { params }) {
     const { id: serviceId } = await params;
     const body = await request.json();
     
-    // Check if user has access to this service
-    const existingSummary = await redis.hGet(`user:${TEST_USER_ID}:services`, serviceId);
-    if (!existingSummary) {
+    // Get existing service
+    const existingService = await redis.hGetAll(`service:${serviceId}`);
+    if (!existingService || Object.keys(existingService).length === 0) {
       return NextResponse.json(
         { error: 'Service not found' },
         { status: 404 }
       );
     }
     
+    // Verify ownership
+    if (existingService.userId !== TEST_USER_ID) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
+    
     const now = new Date().toISOString();
-    const parsedSummary = JSON.parse(existingSummary);
     
-    // Update summary data if provided
-    if (body.name !== undefined || body.description !== undefined || body.status !== undefined) {
-      const updatedSummary = {
-        ...parsedSummary,
-        name: body.name !== undefined ? body.name : parsedSummary.name,
-        description: body.description !== undefined ? body.description : parsedSummary.description,
-        status: body.status !== undefined ? body.status : parsedSummary.status,
-        updatedAt: now
-      };
-      
-      await redis.hSet(
-        `user:${TEST_USER_ID}:services`,
-        serviceId,
-        JSON.stringify(updatedSummary)
-      );
+    // Prepare update data
+    const updateData = {
+      updatedAt: now
+    };
+    
+    // Update simple fields
+    const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration', 
+                         'requireToken', 'rateLimitRequests', 'rateLimitWindow'];
+    simpleFields.forEach(field => {
+      if (body[field] !== undefined) {
+        updateData[field] = body[field].toString();
+      }
+    });
+    
+    // Update JSON fields
+    if (body.inputs !== undefined) {
+      updateData.inputs = JSON.stringify(body.inputs);
+    }
+    if (body.outputs !== undefined) {
+      updateData.outputs = JSON.stringify(body.outputs);
     }
     
-    // Update full data if provided
-    if (body.file !== undefined || body.inputs !== undefined || body.outputs !== undefined) {
-      const existingFullData = await redis.get(`service:${serviceId}`);
-      const parsedFullData = existingFullData ? JSON.parse(existingFullData) : {};
-      
-      const updatedFullData = {
-        ...parsedFullData,
-        file: body.file !== undefined ? body.file : parsedFullData.file,
-        inputs: body.inputs !== undefined ? body.inputs : parsedFullData.inputs,
-        outputs: body.outputs !== undefined ? body.outputs : parsedFullData.outputs,
-        metadata: body.metadata !== undefined ? body.metadata : parsedFullData.metadata
-      };
-      
-      await redis.set(
-        `service:${serviceId}`,
-        JSON.stringify(updatedFullData)
-      );
+    // Update tags
+    if (body.tags !== undefined) {
+      updateData.tags = Array.isArray(body.tags) ? body.tags.join(',') : '';
     }
+    
+    // Update service
+    await redis.hSet(`service:${serviceId}`, updateData);
+    
+    // Note: We don't update the published data - it remains as a snapshot
     
     return NextResponse.json({ 
       success: true,

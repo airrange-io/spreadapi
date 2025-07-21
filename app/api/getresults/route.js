@@ -10,6 +10,7 @@ import {
   getDateForCallsLog,
 } from '../../../utils/helper';
 import { getApiDefinition } from '../../../utils/helperApi';
+const { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } = require('../../../lib/cacheHelpers');
 
 // Server-only import
 const { createWorkbook, getCachedWorkbook, loadTablesheetModule, getCacheStats } = require('../../../lib/spreadjs-server');
@@ -30,6 +31,10 @@ async function logCalls(apiId, apiToken) {
       .HGET(`service:${apiId}`, "tenantId")
       .catch(() => null);
     const dateString = getDateForCallsLog();
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentHour = now.getUTCHours();
+    
     const multi = redis.multi();
 
     if (tenantId) {
@@ -44,6 +49,11 @@ async function logCalls(apiId, apiToken) {
 
     multi.hIncrBy(`service:${apiId}`, "calls", 1);
     multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
+    
+    // New analytics tracking
+    multi.incr(`analytics:${apiId}:total`);
+    multi.incr(`analytics:${apiId}:${today}:${currentHour}`);
+    multi.incr(`analytics:${apiId}:${today}:calls`);
 
     if (apiToken) {
       multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
@@ -160,16 +170,19 @@ async function getResults(requestInfo) {
   // check the cache
   // =====================================
   let cacheResult = null;
-  const sanitizedApiId = sanitizeRedisKey(requestInfo.apiId);
-  const cacheKey =
-    "cache:" + sanitizedApiId + ":" + JSON.stringify(requestInfo.inputs);
+  const inputHash = generateResultCacheHash(requestInfo.inputs || {});
+  const cacheKey = CACHE_KEYS.resultCache(requestInfo.apiId, inputHash);
 
   if (useCaching) {
     try {
       const cacheExists = await redis.exists(cacheKey);
       if (cacheExists > 0) {
         cacheResult = await redis.json.get(cacheKey);
-        if (cacheResult) return cacheResult;
+        if (cacheResult) {
+          // Track cache hit
+          redis.incr(`analytics:${apiId}:cache:hits`).catch(() => {});
+          return cacheResult;
+        }
       }
     } catch (cacheError) {
       console.error(`Cache check error for ${sanitizedApiId}:`, cacheError);
@@ -187,6 +200,11 @@ async function getResults(requestInfo) {
   let answerInputs = [];
   let answerOutputs = [];
   let inputList = requestInfo.inputs || [];
+  
+  // Track cache miss (we're here because cache didn't return)
+  if (useCaching) {
+    redis.incr(`analytics:${apiId}:cache:misses`).catch(() => {});
+  }
 
   try {
     // =====================================
@@ -477,6 +495,9 @@ async function getResults(requestInfo) {
       inputs: answerInputs,
       outputs: answerOutputs,
     };
+    
+    // Track response time
+    redis.set(`analytics:${requestInfo.apiId}:avg_response_time`, timeAll).catch(() => {});
 
     // write to cache (non-blocking for better performance)
     if (useCaching && cacheKey) {
@@ -493,7 +514,7 @@ async function getResults(requestInfo) {
           // Use multi for atomic operation
           const multi = redis.multi();
           multi.json.set(cacheKey, "$", cacheResult);
-          multi.expire(cacheKey, 60 * 5); // cache for 5 minutes
+          multi.expire(cacheKey, CACHE_TTL.result);
           await multi.exec();
         } catch (cacheError) {
           console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
@@ -507,6 +528,11 @@ async function getResults(requestInfo) {
     redis.incr(errorUrl).catch((err) => {
       console.error(`Failed to increment error count for ${errorUrl}:`, err);
     });
+    
+    // Track error in analytics
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    redis.incr(`analytics:${requestInfo.apiId}:${today}:errors`).catch(() => {});
 
     return getError(
       "calculation failed: " + (error.message || "unknown error")

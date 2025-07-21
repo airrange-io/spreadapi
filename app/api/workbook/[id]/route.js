@@ -12,40 +12,45 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
     
+    console.log(`[Workbook GET] Service ID: ${id}`);
+    
     if (!id) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
     }
 
-    // Get service data from Redis (stored as JSON string)
-    const serviceData = await redis.get(`service:${id}`);
+    // Get service data from hash structure
+    console.log(`[Workbook GET] Loading service hash`);
+    const service = await redis.hGetAll(`service:${id}`);
     
-    if (!serviceData) {
-      // Return 204 No Content for non-existent services (expected for new services)
+    if (!service || Object.keys(service).length === 0) {
+      console.log(`[Workbook GET] Service not found`);
       return new NextResponse(null, { status: 204 });
     }
-
-    const service = JSON.parse(serviceData);
     
-    // TODO: Add proper user authentication here
-    // For now, we're using TEST_USER_ID, but in production you should:
-    // 1. Get the authenticated user from session/JWT
-    // 2. Verify service.userId === authenticatedUserId
-    // Example:
-    // const authenticatedUserId = await getAuthenticatedUser(request);
-    // if (service.userId !== authenticatedUserId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    console.log(`[Workbook GET] Service loaded, has workbookUrl: ${!!service.workbookUrl}`);
+    
+    // Verify ownership
+    if (service.userId !== TEST_USER_ID) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
+    console.log('[Workbook GET] Service data:', { 
+      hasService: !!service, 
+      hasWorkbookUrl: !!service.workbookUrl,
+      workbookUrl: service.workbookUrl
+    });
     
     // Get workbook URL from service data
     const workbookUrl = service.workbookUrl;
     
     if (!workbookUrl) {
       // Return 204 No Content when no workbook exists yet (expected for new services)
+      console.log(`[Workbook GET] No workbook URL found`);
       return new NextResponse(null, { status: 204 });
     }
 
     // Fetch the workbook from blob storage
-    console.log(`Fetching workbook from blob storage`);
+    console.log(`[Workbook GET] Fetching workbook from blob storage: ${workbookUrl}`);
     
     try {
       // Fetch the blob content
@@ -75,7 +80,7 @@ export async function GET(request, { params }) {
           workbookData: null, // No JSON data
           workbookBlob: base64, // Base64 encoded SJS data
           format: 'sjs',
-          lastModified: service.workbookModified || service.modified,
+          lastModified: service.updatedAt || service.createdAt,
           success: true
         });
       } else {
@@ -87,7 +92,7 @@ export async function GET(request, { params }) {
           workbookData,
           workbookBlob: null,
           format: 'json',
-          lastModified: service.workbookModified || service.modified,
+          lastModified: service.updatedAt || service.createdAt,
           success: true
         });
       }
@@ -152,39 +157,24 @@ export async function PUT(request, { params }) {
       contentType = 'application/json';
     }
 
-    // Get service data from Redis (stored as JSON string)
-    console.log(`Looking for service with ID: ${id}`);
-    const serviceData = await redis.get(`service:${id}`);
+    // Get service data from new hash structure
+    console.log(`[Workbook PUT] Looking for service with ID: ${id}`);
+    const service = await redis.hGetAll(`service:${id}`);
     
-    if (!serviceData) {
-      console.error(`Service not found in Redis: service:${id}`);
-      // Try to check if service exists in user's services list
-      const userService = await redis.hGet(`user:${TEST_USER_ID}:services`, id);
-      if (userService) {
-        console.log('Service exists in user list but not in service data - creating default service data');
-        // Create default service data
-        const defaultService = {
-          userId: TEST_USER_ID,
-          file: null,
-          inputs: [],
-          outputs: [],
-          metadata: {}
-        };
-        await redis.set(`service:${id}`, JSON.stringify(defaultService));
-        var service = defaultService;
-      } else {
-        return NextResponse.json({ error: 'Service not found' }, { status: 404 });
-      }
-    } else {
-      var service = JSON.parse(serviceData);
+    if (!service || Object.keys(service).length === 0) {
+      return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    // TODO: Add proper user authentication here
-    // Verify the user has permission to update this workbook
-    // const authenticatedUserId = await getAuthenticatedUser(request);
-    // if (service.userId !== authenticatedUserId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    // Verify ownership
+    if (service.userId !== TEST_USER_ID) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
+    console.log(`[Workbook PUT] Service found:`, { 
+      id, 
+      hasWorkbookUrl: !!service.workbookUrl,
+      userId: service.userId 
+    });
 
     // Check size (Vercel Blob limit is 512MB)
     const sizeMB = workbookBuffer.length / (1024 * 1024);
@@ -197,10 +187,11 @@ export async function PUT(request, { params }) {
     // Delete old workbook if exists
     if (service.workbookUrl) {
       try {
+        console.log(`[Workbook PUT] Deleting old workbook: ${service.workbookUrl}`);
         const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
         await delBlob(blobUrl);
       } catch (error) {
-        console.warn('Failed to delete old workbook:', error);
+        console.warn('[Workbook PUT] Failed to delete old workbook:', error);
       }
     }
 
@@ -209,24 +200,26 @@ export async function PUT(request, { params }) {
     const uploadPath = `users/${userId}/workbooks/${id}.${fileExtension}`;
     const timestamp = new Date().toISOString();
     
-    console.log(`Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB, type: ${contentType}`);
+    console.log(`[Workbook PUT] Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB, type: ${contentType}`);
     const blob = await putBlob(uploadPath, workbookBuffer, {
       access: 'public', // Required when using custom token
       contentType: contentType,
       addRandomSuffix: true, // Add random suffix for security
       cacheControlMaxAge: 0, // No cache - always fetch fresh data
     });
-    console.log(`Workbook uploaded successfully`);
+    console.log(`[Workbook PUT] Workbook uploaded successfully to: ${blob.url}`);
 
-    // Update service with new workbook URL
-    const updatedService = {
-      ...service,
+    // Update service hash with new workbook URL and size
+    const updateData = {
       workbookUrl: blob.url,
-      workbookModified: timestamp,
-      modified: timestamp,
+      workbookSize: workbookBuffer.length.toString(), // Store size in bytes as string
+      updatedAt: timestamp
     };
     
-    await redis.set(`service:${id}`, JSON.stringify(updatedService));
+    console.log(`[Workbook PUT] Updating service hash with:`, updateData);
+    await redis.hSet(`service:${id}`, updateData);
+    
+    console.log(`[Workbook PUT] Service updated successfully`);
 
     return NextResponse.json({
       success: true,
@@ -255,14 +248,25 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
     }
 
-    // Get service data from Redis (stored as JSON string)
-    const serviceData = await redis.get(`service:${id}`);
+    // Get service data from hash structure
+    const service = await redis.hGetAll(`service:${id}`);
     
-    if (!serviceData) {
+    if (!service || Object.keys(service).length === 0) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    const service = JSON.parse(serviceData);
+    // Check if service is published
+    const isPublished = await redis.exists(`service:${id}:published`);
+    if (isPublished) {
+      return NextResponse.json({ 
+        error: 'Cannot delete workbook from published service. Unpublish first.' 
+      }, { status: 400 });
+    }
+    
+    // Verify ownership
+    if (service.userId !== TEST_USER_ID) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
     // Delete workbook from blob storage if exists
     if (service.workbookUrl) {
@@ -270,12 +274,9 @@ export async function DELETE(request, { params }) {
         const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
         await delBlob(blobUrl);
         
-        // Remove workbook URL from service
-        const updatedService = { ...service };
-        delete updatedService.workbookUrl;
-        delete updatedService.workbookModified;
-        
-        await redis.set(`service:${id}`, JSON.stringify(updatedService));
+        // Remove workbook URL from service hash
+        await redis.hDel(`service:${id}`, 'workbookUrl');
+        await redis.hSet(`service:${id}`, 'updatedAt', new Date().toISOString());
         
         return NextResponse.json({
           success: true,
