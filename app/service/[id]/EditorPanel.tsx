@@ -943,111 +943,45 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {/* Endpoint Detail */}
             {activeCard === 'endpoint' && (
               <Space direction="vertical" style={{ width: '100%' }}>
-                {/* Service Status - Only show warning if not published */}
-                {serviceStatus && !serviceStatus.published && (
-                  <div style={{ marginBottom: '16px' }}>
-                    <Text type="warning" style={{ fontSize: '12px' }}>
-                      This service must be published before it can be accessed via the API endpoint.
-                    </Text>
-                  </div>
-                )}
-
                 <div>
                   <div style={{ marginBottom: '12px' }}>
-                    <Title level={5} style={{ margin: 0 }}>Service Endpoint</Title>
+                    <Title level={5} style={{ margin: 0 }}>API Endpoint</Title>
                   </div>
-                  <Typography.Paragraph
-                    copyable
-                    style={{
-                      background: '#f5f5f5',
-                      padding: '12px',
-                      borderRadius: '4px',
-                      margin: 0,
-                      wordBreak: 'break-all',
-                      fontFamily: 'monospace'
-                    }}
-                  >
-                    {`https://spreadapi.io/api/getresults?api=${serviceId || '{serviceId}'}${requireToken ? '&token={your-token}' : ''}${inputs.map(i => `&${i.alias}={value}`).join('')}`}
-                  </Typography.Paragraph>
-                  {inputs.length > 0 && (
-                    <div style={{ marginTop: '8px' }}>
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        Parameters: {inputs.map((i, idx) => (
-                          <span key={i.id}>
-                            <Tag color="blue" style={{ fontSize: '11px' }}>{i.alias}</Tag>
-                            {idx < inputs.length - 1 && ', '}
-                          </span>
-                        ))}
-                      </Text>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ marginTop: '20px' }}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Title level={5} style={{ margin: 0 }}>Example Request</Title>
+                  
+                  <ApiEndpointPreview
+                    serviceId={serviceId || ''}
+                    isPublished={serviceStatus?.published || false}
+                    requireToken={requireToken}
+                  />
+                  
+                  <div style={{ marginTop: '16px' }}>
+                    <Button 
+                      type="primary"
+                      icon={<BarChartOutlined />}
+                      onClick={() => {
+                        if (serviceId) {
+                          window.open(`/api-tester?service=${serviceId}${apiName ? `&name=${encodeURIComponent(apiName)}` : ''}`, '_blank');
+                        }
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      Open API Tester & Documentation
+                    </Button>
                   </div>
-                  <Typography.Paragraph
-                    copyable
-                    style={{
-                      background: '#f5f5f5',
-                      padding: '12px',
-                      borderRadius: '4px',
-                      margin: 0,
-                      wordBreak: 'break-all',
-                      fontFamily: 'monospace',
-                      fontSize: '13px'
-                    }}
-                  >
-                    {`GET https://spreadapi.io/api/getresults?api=${serviceId || '{serviceId}'}${requireToken ? '&token=your-actual-token' : ''}${inputs.map(i => `&${i.alias}=${i.value || '1000'}`).join('')}`}
-                  </Typography.Paragraph>
-                </div>
-
-                <div style={{ marginTop: '20px' }}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Title level={5} style={{ margin: 0 }}>cURL Example</Title>
-                  </div>
-                  <Typography.Paragraph
-                    copyable
-                    style={{
-                      background: '#1e1e1e',
-                      color: '#d4d4d4',
-                      padding: '12px',
-                      borderRadius: '4px',
-                      margin: 0,
-                      wordBreak: 'break-all',
-                      fontFamily: 'monospace',
-                      fontSize: '12px',
-                      lineHeight: '1.5'
-                    }}
-                  >
-                    {`curl -X GET "https://spreadapi.io/api/getresults?api=${serviceId || '{serviceId}'}${requireToken ? '&token=your-actual-token' : ''}${inputs.map(i => `&${i.alias}=${i.value || '1000'}`).join('')}"`}
-                  </Typography.Paragraph>
-                </div>
-
-                <div style={{ marginTop: '20px' }}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Title level={5} style={{ margin: 0 }}>Response Format</Title>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    {outputs.length > 0 ? (
-                      <>
-                        The API will return the following outputs:<br />
-                        {outputs.map(o => (
-                          <div key={o.id}>• <code>{o.alias}</code> - {o.name}</div>
-                        ))}
-                      </>
-                    ) : (
-                      'No outputs defined yet'
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '16px' }}>
-                  <div style={{ marginBottom: '8px' }}><strong>Optional Parameters</strong></div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    • <code>token</code> - API token for authentication<br />
-                    • <code>nocache=true</code> - Bypass result caching
+                  
+                  <div style={{ 
+                    marginTop: '16px', 
+                    padding: '12px',
+                    background: '#f5f5f5',
+                    borderRadius: '4px',
+                    fontSize: '12px'
+                  }}>
+                    <strong>Quick Info:</strong><br />
+                    • Full API documentation with code examples<br />
+                    • Interactive testing interface<br />
+                    • Examples for JavaScript, Python, cURL, Node.js, Postman, and Excel<br />
+                    • Response format documentation<br />
+                    {requireToken && '• Token authentication required'}
                   </div>
                 </div>
               </Space>

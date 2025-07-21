@@ -15,9 +15,11 @@ export default function ApiEndpointPreview({
   serviceId, 
   isPublished,
   requireToken = false,
-  baseUrl = 'https://spreadapi.io'
+  baseUrl
 }: ApiEndpointPreviewProps) {
-  const endpoint = `${baseUrl}/api/getresults?service=${serviceId}`;
+  // Use current origin for local development if baseUrl not provided
+  const apiBaseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io');
+  const endpoint = `${apiBaseUrl}/api/getresults?service=${serviceId}`;
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(endpoint);
