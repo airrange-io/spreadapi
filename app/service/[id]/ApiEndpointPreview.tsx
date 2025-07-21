@@ -1,5 +1,5 @@
 import React from 'react';
-import { Space, Typography, Tooltip, Button, message } from 'antd';
+import { Space, Typography, Tooltip, Button, App } from 'antd';
 import { CopyOutlined, LinkOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -17,6 +17,8 @@ export default function ApiEndpointPreview({
   requireToken = false,
   baseUrl
 }: ApiEndpointPreviewProps) {
+  const { message } = App.useApp();
+  
   // Use current origin for local development if baseUrl not provided
   const apiBaseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io');
   const endpoint = `${apiBaseUrl}/api/getresults?service=${serviceId}`;
@@ -28,10 +30,10 @@ export default function ApiEndpointPreview({
 
   return (
     <div style={{
-      background: isPublished ? '#f6ffed' : '#f5f5f5',
-      border: `1px solid ${isPublished ? '#b7eb8f' : '#d9d9d9'}`,
+      background: isPublished ? '#E4F2D4' : '#f5f5f5',
+      // border: `1px solid ${isPublished ? '#f0f0f0' : '#d9d9d9'}`, //#b7eb8f
       borderRadius: '8px',
-      padding: '5px 10px',
+      padding: '5px 14px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -62,8 +64,9 @@ export default function ApiEndpointPreview({
             style={{ 
               fontSize: '14px',
               fontFamily: 'monospace',
-              color: '#262626',
+              color: isPublished ? '#389E0E' : '#262626',
               wordBreak: 'break-all'
+
             }}
           >
             {endpoint}

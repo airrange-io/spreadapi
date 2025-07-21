@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Tag, Upload, Modal, Form, Select, Checkbox, App, Tooltip } from 'antd';
-import { FileTextOutlined, CloseOutlined, BarChartOutlined, NodeIndexOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Card, Statistic, Typography, Space, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip } from 'antd';
+import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import TokenManagement from './TokenManagement';
@@ -25,7 +25,7 @@ declare global {
   }
 }
 
-type ActiveCard = 'detail' | 'parameters' | 'endpoint' | 'tokens' | null;
+type ActiveCard = 'detail' | 'parameters' | 'tokens' | null;
 
 interface InputDefinition {
   id: string;
@@ -96,6 +96,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [requireToken, setRequireToken] = useState<boolean>(initialConfig?.requireToken === true);
   const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
+  const [tokenCount, setTokenCount] = useState<number>(0);
 
   // Handle card activation
   const handleCardClick = (cardType: ActiveCard) => {
@@ -582,16 +583,19 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     const baseStyle = {
       flex: 1,
       cursor: 'pointer',
+      padding: 6,
       borderRadius: '8px',
+      borderColor: 'transparent',
+      backgroundColor: activeCard === cardType ?  '#E2E3E1' : '#f2f2f2',
       transition: 'all 0.2s'
     };
 
     if (activeCard === cardType) {
       return {
         ...baseStyle,
-        borderColor: '#8A64C0',
-        boxShadow: '0 0 0 1px rgba(24, 144, 255, 0.2)',
-        backgroundColor: '#fafafa'
+        // borderColor: '#8A64C0',
+        // boxShadow: '0 0 0 1px rgba(24, 144, 255, 0.2)',
+        backgroundColor: '#E2E3E1' // '#f2f2f2'
       };
     }
 
@@ -601,7 +605,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Get card body style for consistent padding
   const getCardBodyStyle = () => ({
     padding: '6px 12px',
-    backgroundColor: '#fafafa',
+    // backgroundColor: '#f2f2f2',
     borderRadius: '8px',
   });
 
@@ -631,7 +635,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             size="small"
             style={{
               ...getCardStyle('detail'),
-              flex: '0 0 calc(25% - 6px)',
+              flex: '0 0 calc(33.33% - 5.33px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
@@ -649,7 +653,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             size="small"
             style={{
               ...getCardStyle('parameters'),
-              flex: '0 0 calc(25% - 6px)',
+              flex: '0 0 calc(33.33% - 5.33px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
@@ -658,7 +662,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             <Statistic
               title="Parameters"
               value={inputs.length + outputs.length}
-              prefix={<NodeIndexOutlined />}
+              prefix={<SwapOutlined />}
               valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
               suffix={
                 <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
@@ -671,36 +675,23 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           <Card
             size="small"
             style={{
-              ...getCardStyle('endpoint'),
-              flex: '0 0 calc(25% - 6px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('endpoint')}
-          >
-            <Statistic
-              title="Endpoint"
-              value={"---"}
-              prefix={<BarChartOutlined />}
-              valueStyle={getStatisticValueStyle('endpoint', '#4F2D7F')}
-            />
-          </Card>
-
-          <Card
-            size="small"
-            style={{
               ...getCardStyle('tokens'),
-              flex: '0 0 calc(25% - 6px)',
+              flex: '0 0 calc(33.33% - 5.33px)',
             }}
             styles={{ body: getCardBodyStyle() }}
             hoverable
             onClick={() => handleCardClick('tokens')}
           >
             <Statistic
-              title="Tokens"
-              value={requireToken ? "ON" : "OFF"}
-              prefix={<KeyOutlined />}
-              valueStyle={getStatisticValueStyle('tokens', '#1890ff')}
+              title="API Tokens"
+              value={tokenCount}
+              prefix={<SafetyOutlined />}
+              valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
+              suffix={
+                <span style={{ fontSize: '12px', fontWeight: 'normal' }}>
+                  {requireToken ? 'Required' : 'Optional'}
+                </span>
+              }
             />
           </Card>
         </div>
@@ -720,310 +711,245 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             display: 'flex',
             flexDirection: 'column'
           }}>
-            {/* Header with close button and optional actions */}
-            {/* <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px'
-            }}>
-              <Space size={4}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => setActiveCard(null)}
-                />
-              </Space>
-            </div> */}
-
             {/* Columns Detail */}
             {activeCard === 'detail' && (
-              <Space direction="vertical" style={{ width: '100%' }} >
-                <div>
-                  <div style={{ marginBottom: '12px' }}><strong>Service Endpoint</strong></div>
-                  <ApiEndpointPreview
-                    serviceId={serviceId || ''}
-                    isPublished={serviceStatus?.published || false}
-                    requireToken={requireToken}
-                  />
-                </div>
+              <Space direction='vertical' size={12} style={{ width: '100%', marginTop: '8px' }}>
+                <ApiEndpointPreview
+                  serviceId={serviceId || ''}
+                  isPublished={serviceStatus?.published || false}
+                  requireToken={requireToken}
+                />
+                <Space direction="vertical" style={{ width: '100%', padding: 14, backgroundColor: "#f2f2f2", border: `1px solid #ffffff`, borderRadius: 8 }} >
 
-                <div>
-                  <div style={{ marginBottom: '8px' }}><strong>Service Name</strong></div>
-                  <Input
-                    placeholder="Enter service name"
-                    value={apiName}
-                    onChange={(e) => setApiName(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <div style={{ marginBottom: '8px' }}><strong>Description</strong></div>
-                  <Input.TextArea
-                    placeholder="Describe what this API does"
-                    value={apiDescription}
-                    onChange={(e) => setApiDescription(e.target.value)}
-                    rows={2} />
-                </div>
-
-                <div style={{ marginTop: '0px' }}>
-                  <div style={{ marginBottom: '8px' }}><strong>Options</strong></div>
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Space align="center">
-                      <Checkbox
-                        checked={enableCaching}
-                        onChange={(e) => setEnableCaching(e.target.checked)}
-                      >
-                        Enable response caching
-                      </Checkbox>
-                      <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
-                        <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
-                      </Tooltip>
-                    </Space>
-                  </Space>
-                </div>
-
-                <div style={{ marginTop: '16px' }}>
-                  <div style={{ marginBottom: '8px' }}><strong>Import Data</strong></div>
-                  <Upload
-                    accept=".xlsx,.xls"
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                      if (onImportExcel) {
-                        onImportExcel(file);
-                      } else {
-                        message.error('Import handler not configured');
-                      }
-                      return false; // Prevent default upload behavior
-                    }}
-                  >
-                    <Button icon={<UploadOutlined />}>
-                      Import Excel File
-                    </Button>
-                  </Upload>
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                    Supports .xlsx and .xls formats
+                  <div>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
+                    <Input
+                      placeholder="Enter service name"
+                      value={apiName}
+                      onChange={(e) => setApiName(e.target.value)}
+                    />
                   </div>
-                </div>
+
+                  <div>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
+                    <Input.TextArea
+                      placeholder="Describe what this API does"
+                      value={apiDescription}
+                      onChange={(e) => setApiDescription(e.target.value)}
+                      rows={2} />
+                  </div>
+
+                  <div style={{ marginTop: '0px' }}>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Options</strong></div>
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Space align="center">
+                        <Checkbox
+                          checked={enableCaching}
+                          onChange={(e) => setEnableCaching(e.target.checked)}
+                        >
+                          Enable response caching
+                        </Checkbox>
+                        <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
+                          <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
+                        </Tooltip>
+                      </Space>
+                    </Space>
+                  </div>
+
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
+                    <Upload
+                      accept=".xlsx,.xls"
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        if (onImportExcel) {
+                          onImportExcel(file);
+                        } else {
+                          message.error('Import handler not configured');
+                        }
+                        return false; // Prevent default upload behavior
+                      }}
+                    >
+                      <Button icon={<UploadOutlined />}>
+                        Import Excel File
+                      </Button>
+                    </Upload>
+                    {/* <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                    Supports .xlsx and .xls formats
+                  </div> */}
+                  </div>
+                </Space>
+                <Button
+                  type="link"
+                  // icon={<BarChartOutlined />}
+                  onClick={() => {
+                    if (serviceId) {
+                      window.open(`/api-tester?service=${serviceId}${apiName ? `&name=${encodeURIComponent(apiName)}` : ''}`, '_blank');
+                    }
+                  }}
+                  style={{ padding: '4px 0', marginTop: '8px' }}
+                >
+                  Open API Tester & Documentation
+                </Button>
+
               </Space>
             )}
 
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
-              <Space direction="vertical" style={{ width: '100%' }}>
-
-                <div>
-                  <div style={{ marginBottom: '8px' }}><strong>Input Parameters</strong></div>
-                  <div style={{
-                    padding: '12px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}>
-                    {inputs.length === 0 ? (
-                      <div style={{ color: '#999' }}>No input parameters defined yet</div>
-                    ) : (
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        {inputs.map((input, index) => (
-                          <div key={input.id} style={{
-                            padding: '8px',
-                            background: 'white',
-                            borderRadius: '4px',
-                            border: '1px solid #e8e8e8'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <strong>{input.name}</strong> ({input.type})
-                                {input.title && input.title !== input.name && (
-                                  <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({input.title})</span>
-                                )}
-                                {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
-                                {(input.min !== undefined || input.max !== undefined) && (
-                                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                                    {input.min !== undefined && `Min: ${input.min}`}
-                                    {input.min !== undefined && input.max !== undefined && ' • '}
-                                    {input.max !== undefined && `Max: ${input.max}`}
-                                  </div>
-                                )}
-                                {input.description && (
-                                  <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                    {input.description}
-                                  </div>
-                                )}
+              <Space direction="vertical" style={{ width: '100%', marginTop: '8px' }}>
+                <Space direction="vertical" style={{ width: '100%', padding: 14, backgroundColor: "#f2f2f2", border: `1px solid #ffffff`, borderRadius: 8 }} >
+                  <div>
+                    <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Input Parameters</strong></div>
+                    <div style={{
+                      fontSize: '12px'
+                    }}>
+                      {inputs.length === 0 ? (
+                        <div style={{ color: '#999' }}>No input parameters defined yet</div>
+                      ) : (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          {inputs.map((input, index) => (
+                            <div key={input.id} style={{
+                              padding: '8px',
+                              background: 'white',
+                              borderRadius: '4px',
+                              border: '1px solid #e8e8e8'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <strong>{input.name}</strong> ({input.type})
+                                  {input.title && input.title !== input.name && (
+                                    <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({input.title})</span>
+                                  )}
+                                  {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
+                                  {(input.min !== undefined || input.max !== undefined) && (
+                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                      {input.min !== undefined && `Min: ${input.min}`}
+                                      {input.min !== undefined && input.max !== undefined && ' • '}
+                                      {input.max !== undefined && `Max: ${input.max}`}
+                                    </div>
+                                  )}
+                                  {input.description && (
+                                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                      {input.description}
+                                    </div>
+                                  )}
+                                </div>
+                                <Space size="small">
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleEditParameter('input', input)}
+                                  />
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleDeleteParameter('input', input.id)}
+                                  />
+                                </Space>
                               </div>
-                              <Space size="small">
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  icon={<EditOutlined />}
-                                  onClick={() => handleEditParameter('input', input)}
-                                />
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  danger
-                                  icon={<DeleteOutlined />}
-                                  onClick={() => handleDeleteParameter('input', input.id)}
-                                />
-                              </Space>
                             </div>
-                          </div>
-                        ))}
-                      </Space>
-                    )}
+                          ))}
+                        </Space>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <div style={{ marginBottom: '8px' }}><strong>Output Parameters</strong></div>
-                  <div style={{
-                    padding: '12px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}>
-                    {outputs.length === 0 ? (
-                      <div style={{ color: '#999' }}>No output parameters defined yet</div>
-                    ) : (
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        {outputs.map((output, index) => (
-                          <div key={output.id} style={{
-                            padding: '8px',
-                            background: 'white',
-                            borderRadius: '4px',
-                            border: '1px solid #e8e8e8'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <strong>{output.name}</strong> ({output.type})
-                                {output.title && output.title !== output.name && (
-                                  <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({output.title})</span>
-                                )}
-                                {output.address && <span style={{ marginLeft: '8px', color: '#666' }}>← {output.address}</span>}
-                                {output.description && (
-                                  <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                    {output.description}
-                                  </div>
-                                )}
+                  <div>
+                    <div style={{ marginTop: '16px', marginBottom: '8px', color: '#898989' }}><strong>Output Parameters</strong></div>
+                    <div style={{
+                      fontSize: '12px'
+                    }}>
+                      {outputs.length === 0 ? (
+                        <div style={{ color: '#999' }}>No output parameters defined yet</div>
+                      ) : (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          {outputs.map((output, index) => (
+                            <div key={output.id} style={{
+                              padding: '8px',
+                              background: 'white',
+                              borderRadius: '4px',
+                              border: '1px solid #e8e8e8'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <strong>{output.name}</strong> ({output.type})
+                                  {output.title && output.title !== output.name && (
+                                    <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({output.title})</span>
+                                  )}
+                                  {output.address && <span style={{ marginLeft: '8px', color: '#666' }}>← {output.address}</span>}
+                                  {output.description && (
+                                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                      {output.description}
+                                    </div>
+                                  )}
+                                </div>
+                                <Space size="small">
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleEditParameter('output', output)}
+                                  />
+                                  <Button
+                                    size="small"
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleDeleteParameter('output', output.id)}
+                                  />
+                                </Space>
                               </div>
-                              <Space size="small">
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  icon={<EditOutlined />}
-                                  onClick={() => handleEditParameter('output', output)}
-                                />
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  danger
-                                  icon={<DeleteOutlined />}
-                                  onClick={() => handleDeleteParameter('output', output.id)}
-                                />
-                              </Space>
                             </div>
-                          </div>
-                        ))}
-                      </Space>
-                    )}
+                          ))}
+                        </Space>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div style={{ marginTop: '16px', fontSize: '12px', color: '#666' }}>
-                  <strong>How it works:</strong><br />
-                  • Input parameters are values users provide when calling your service<br />
-                  • These values are placed into the specified spreadsheet cells<br />
-                  • Output parameters are calculated results read from spreadsheet cells<br />
-                  • The service returns these output values as the API response
-                </div>
-              </Space>
-            )}
-
-            {/* Endpoint Detail */}
-            {activeCard === 'endpoint' && (
-              <Space direction="vertical" style={{ width: '100%' }}>
-                <div>
-                  <div style={{ marginBottom: '12px' }}>
-                    <Title level={5} style={{ margin: 0 }}>API Endpoint</Title>
+                  <div style={{ marginTop: '16px', fontSize: '12px', color: '#666' }}>
+                    <strong>How it works:</strong><br />
+                    • Input parameters are values users provide when calling your service<br />
+                    • These values are placed into the specified spreadsheet cells<br />
+                    • Output parameters are calculated results read from spreadsheet cells<br />
+                    • The service returns these output values as the API response
                   </div>
-                  
-                  <ApiEndpointPreview
-                    serviceId={serviceId || ''}
-                    isPublished={serviceStatus?.published || false}
-                    requireToken={requireToken}
-                  />
-                  
-                  <div style={{ marginTop: '16px' }}>
-                    <Button 
-                      type="primary"
-                      icon={<BarChartOutlined />}
-                      onClick={() => {
-                        if (serviceId) {
-                          window.open(`/api-tester?service=${serviceId}${apiName ? `&name=${encodeURIComponent(apiName)}` : ''}`, '_blank');
-                        }
-                      }}
-                      style={{ width: '100%' }}
-                    >
-                      Open API Tester & Documentation
-                    </Button>
-                  </div>
-                  
-                  <div style={{ 
-                    marginTop: '16px', 
-                    padding: '12px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    fontSize: '12px'
-                  }}>
-                    <strong>Quick Info:</strong><br />
-                    • Full API documentation with code examples<br />
-                    • Interactive testing interface<br />
-                    • Examples for JavaScript, Python, cURL, Node.js, Postman, and Excel<br />
-                    • Response format documentation<br />
-                    {requireToken && '• Token authentication required'}
-                  </div>
-                </div>
+                </Space>
               </Space>
             )}
 
             {/* Tokens Detail */}
             {activeCard === 'tokens' && (
-              <TokenManagement
-                serviceId={serviceId || ''}
-                requireToken={requireToken}
-                onRequireTokenChange={(value) => {
-                  setRequireToken(value);
-                  if (onConfigChange) {
-                    onConfigChange({
-                      name: apiName,
-                      description: apiDescription,
-                      inputs,
-                      outputs,
-                      enableCaching,
-                      requireToken: value
-                    });
-                  }
-                }}
-              />
+              <Space direction='vertical' size={16} style={{ width: '100%', marginTop: '8px' }}>
+                <TokenManagement
+                  serviceId={serviceId || ''}
+                  requireToken={requireToken}
+                  onRequireTokenChange={(value) => {
+                    setRequireToken(value);
+                    if (onConfigChange) {
+                      onConfigChange({
+                        name: apiName,
+                        description: apiDescription,
+                        inputs,
+                        outputs,
+                        enableCaching,
+                        requireToken: value
+                      });
+                    }
+                  }}
+                  onTokenCountChange={(count) => {
+                    setTokenCount(count);
+                  }}
+                />
+              </Space>
             )}
 
           </div>
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* <AIDetailAreaNew
-              messages={aiMessages || []}
-              isLoading={isAILoading}
-              onSendMessage={onAISendMessage || (() => {})}
-              onClearMessages={onAIClearMessages || (() => {})}
-              onConfigClick={() => setShowAIConfigModal(true)}
-              data={data}
-              schema={schema}
-              allColumns={allColumns}
-              hasConfig={!!aiConfig}
-              defaultPrompts={typeSpecificPrompts}
-              userId={userId}
-            /> */}
           </div>
         )}
       </div>
@@ -1035,7 +961,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           padding: '12px',
           background: 'white',
           borderTop: '1px solid #f0f0f0',
-          boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
+          // boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
           flex: '0 0 auto'
         }}>
         {(() => {
@@ -1045,7 +971,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                style={{ width: '100%' }}
+                style={{ width: '100%', height: 48 }}
                 onClick={handleAddFromSelection}
                 disabled={buttonInfo.disabled || !spreadInstance}
               >

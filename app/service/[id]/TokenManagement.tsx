@@ -49,9 +49,10 @@ interface TokenManagementProps {
   serviceId: string;
   requireToken: boolean;
   onRequireTokenChange: (require: boolean) => void;
+  onTokenCountChange?: (count: number) => void;
 }
 
-export default function TokenManagement({ serviceId, requireToken, onRequireTokenChange }: TokenManagementProps) {
+export default function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange }: TokenManagementProps) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -74,6 +75,11 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
         const tokenList = data.tokens || [];
         setTokens(tokenList);
         
+        // Update token count
+        if (onTokenCountChange) {
+          onTokenCountChange(tokenList.length);
+        }
+        
         // Auto-enable token requirement if tokens exist
         if (tokenList.length > 0 && !requireToken) {
           onRequireTokenChange(true);
@@ -81,6 +87,10 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
       } else {
         console.error('Failed to load tokens');
         message.error('Failed to load tokens');
+        // Still update count to 0 on error
+        if (onTokenCountChange) {
+          onTokenCountChange(0);
+        }
       }
     } catch (error) {
       console.error('Error loading tokens:', error);
@@ -257,14 +267,15 @@ export default function TokenManagement({ serviceId, requireToken, onRequireToke
   ];
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }}>
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
       {/* Token requirement toggle */}
       {tokens.length === 0 ? (
         <Alert
           message="No tokens created yet"
           description="Create your first API token to enable authentication. Token authentication will be automatically enabled when you create your first token."
           type="info"
-          showIcon
+          style={{ padding: '14px 18px', borderColor: "#ffffff" }}
+          // showIcon
         />
       ) : (
         <Alert

@@ -20,12 +20,23 @@ export async function getApiDefinition(apiId, apiToken) {
   const perfStart = Date.now();
   try {
     // Check process-level cache first
-    const cacheKey = `${apiId}:${apiToken || 'no-token'}`;
+    // Note: We cache by apiId only since the API definition doesn't change based on token
+    // Token validation happens separately after cache retrieval
+    const cacheKey = apiId;
     const cached = apiDefinitionCache.get(cacheKey);
     
     if (cached && Date.now() - cached.timestamp < API_CACHE_TTL) {
       const perfEnd = Date.now();
       console.log(`[CACHE HIT] Process cache for ${apiId} - ${perfEnd - perfStart}ms`);
+      
+      // Still need to validate token if required
+      if (cached.data.needsToken && !apiToken) {
+        return getError("Authentication required. Please provide a valid token using the 'token' parameter.");
+      }
+      if (cached.data.needsToken && cached.data.tokens && !cached.data.tokens.includes(apiToken)) {
+        return getError("Invalid token. Please check your authentication token.");
+      }
+      
       return cached.data;
     }
     console.log(`[CACHE MISS] Process cache for ${apiId}`);
@@ -105,13 +116,20 @@ export async function getApiDefinition(apiId, apiToken) {
           if (result) {
             console.timeEnd("fetchData");
             // Store in process-level cache before returning
-            apiDefinitionCache.set(cacheKey, {
-              data: result,
+            // Include needsToken and tokens info for validation
+            const cacheData = {
+              ...result,
+              needsToken,
+              tokens,
+              useCaching
+            };
+            apiDefinitionCache.set(apiId, {
+              data: cacheData,
               timestamp: Date.now()
             });
             const perfEnd = Date.now();
             console.log(`[CACHE HIT] Redis cache for ${apiId} - ${perfEnd - perfStart}ms (stored in process cache, size: ${apiDefinitionCache.size})`);
-            return result;
+            return cacheData;
           }
         }
       } catch (cacheError) {
@@ -260,12 +278,20 @@ export async function getApiDefinition(apiId, apiToken) {
 
     // Store in process-level cache
     if (result && !result.error) {
-      apiDefinitionCache.set(cacheKey, {
-        data: result,
+      // Include needsToken and tokens info for validation
+      const cacheData = {
+        ...result,
+        needsToken,
+        tokens,
+        useCaching
+      };
+      apiDefinitionCache.set(apiId, {
+        data: cacheData,
         timestamp: Date.now()
       });
       const perfEnd = Date.now();
       console.log(`[CACHE MISS] Fetched from blob for ${apiId} - ${perfEnd - perfStart}ms (cached in process & Redis, size: ${apiDefinitionCache.size})`);
+      return cacheData;
     }
 
     return result;

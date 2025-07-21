@@ -9,7 +9,6 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 export default function ApiTesterPage() {
   const [form] = Form.useForm();
@@ -144,10 +143,10 @@ export default function ApiTesterPage() {
         ...data,
         totalTime: endTime - startTime
       });
-      message.success('API request successful!');
+      messageApi.success('API request successful!');
     } catch (err: any) {
       setError(err.message);
-      message.error('API request failed');
+      messageApi.error('API request failed');
     } finally {
       setLoading(false);
     }
@@ -210,16 +209,17 @@ export default function ApiTesterPage() {
           activeKey={activeTab} 
           onChange={(key) => setActiveTab(key as 'test' | 'docs')}
           style={{ marginBottom: 24 }}
-        >
-          <TabPane 
-            tab={<span><ApiOutlined /> Test API</span>} 
-            key="test"
-          />
-          <TabPane 
-            tab={<span><CodeOutlined /> API Documentation</span>} 
-            key="docs"
-          />
-        </Tabs>
+          items={[
+            {
+              key: 'test',
+              label: <span><ApiOutlined /> Test API</span>
+            },
+            {
+              key: 'docs',
+              label: <span><CodeOutlined /> API Documentation</span>
+            }
+          ]}
+        />
         
         {activeTab === 'test' ? (
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -358,7 +358,9 @@ export default function ApiTesterPage() {
                     // Invalid JSON, ignore
                   }
                   
-                  const fullUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${previewUrl}`;
+                  // Use relative URL to avoid hydration mismatch
+                  const displayUrl = previewUrl;
+                  const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${previewUrl}` : previewUrl;
                   
                   return (
                     <div style={{ 
@@ -384,7 +386,7 @@ export default function ApiTesterPage() {
                           margin: 0
                         }}
                       >
-                        {fullUrl}
+                        {displayUrl}
                       </Typography.Paragraph>
                     </div>
                   );
@@ -543,7 +545,7 @@ export default function ApiTesterPage() {
                   size="small"
                   onClick={() => {
                     navigator.clipboard.writeText(JSON.stringify(response, null, 2));
-                    message.success('Copied to clipboard');
+                    messageApi.success('Copied to clipboard');
                   }}
                 >
                   Copy
@@ -851,17 +853,15 @@ ${endpoint}${requireToken ? '&token=your-api-token' : ''}${getParamString()}
           activeKey={activeCodeTab} 
           onChange={setActiveCodeTab}
           tabBarStyle={{ marginBottom: 0 }}
-        >
-          {Object.entries(codeExamples).map(([key, example]) => (
-            <TabPane 
-              tab={
-                <span style={{ padding: '0 8px' }}>
-                  {example.label}
-                  {key === 'excel' && <Tooltip title="Windows only"><Tag style={{ marginLeft: 4 }} color="orange">Win</Tag></Tooltip>}
-                </span>
-              } 
-              key={key}
-            >
+          items={Object.entries(codeExamples).map(([key, example]) => ({
+            key,
+            label: (
+              <span style={{ padding: '0 8px' }}>
+                {example.label}
+                {key === 'excel' && <Tooltip title="Windows only"><Tag style={{ marginLeft: 4 }} color="orange">Win</Tag></Tooltip>}
+              </span>
+            ),
+            children: (
               <div style={{ position: 'relative', paddingTop: '24px' }}>
                 <div style={{ 
                   position: 'absolute', 
@@ -927,9 +927,9 @@ ${endpoint}${requireToken ? '&token=your-api-token' : ''}${getParamString()}
                   </SyntaxHighlighter>
                 )}
               </div>
-            </TabPane>
-          ))}
-        </Tabs>
+            )
+          }))}
+        />
       </Card>
       
       {/* Response Format */}
