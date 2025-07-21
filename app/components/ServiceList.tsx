@@ -29,8 +29,18 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [lastFetch, setLastFetch] = useState<number>(0);
 
   useEffect(() => {
+    // Check if we have cached data that's less than 30 seconds old
+    const now = Date.now();
+    const cacheExpiry = 30000; // 30 seconds
+    
+    if (lastFetch && (now - lastFetch) < cacheExpiry && services.length > 0) {
+      setLoading(false);
+      return; // Use cached data
+    }
+    
     loadServices();
   }, []);
 
@@ -60,6 +70,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
       if (response.ok) {
         const loadedServices = data.services || [];
         setServices(loadedServices);
+        setLastFetch(Date.now()); // Track when we fetched
         // Initialize filtered services with all services if no search query
         if (!searchQuery.trim()) {
           setFilteredServices(loadedServices);

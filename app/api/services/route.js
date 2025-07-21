@@ -11,44 +11,70 @@ export async function GET(request) {
   try {
     // Get user's service index
     const serviceIndex = await redis.hGetAll(`user:${TEST_USER_ID}:services`);
+    const serviceIds = Object.keys(serviceIndex);
     
-    // Get details for each service
-    const services = await Promise.all(
-      Object.entries(serviceIndex).map(async ([id, statusFromIndex]) => {
-        const serviceData = await redis.hGetAll(`service:${id}`);
-        
-        // Skip if service doesn't exist
-        if (!serviceData || Object.keys(serviceData).length === 0) {
-          return null;
-        }
-        
-        // Check if published
-        const isPublished = await redis.exists(`service:${id}:published`);
-        let publishedData = {};
-        if (isPublished) {
-          publishedData = await redis.hGetAll(`service:${id}:published`);
-        }
-        
-        return {
-          id: serviceData.id,
-          name: serviceData.name,
-          description: serviceData.description,
-          status: isPublished ? 'published' : 'draft',
-          createdAt: serviceData.createdAt,
-          updatedAt: serviceData.updatedAt,
-          publishedAt: publishedData.created || null,
-          calls: parseInt(publishedData.calls || '0'),
-          lastUsed: publishedData.lastUsed || null,
-          workbookUrl: serviceData.workbookUrl
-        };
-      })
-    );
+    if (serviceIds.length === 0) {
+      return NextResponse.json({ services: [] });
+    }
+    
+    // Use Redis multi to fetch all data in one round trip
+    const multi = redis.multi();
+    
+    // Queue all operations
+    serviceIds.forEach(id => {
+      multi.hGetAll(`service:${id}`);
+      multi.exists(`service:${id}:published`);
+      multi.hGetAll(`service:${id}:published`);
+    });
+    
+    // Execute multi - single network round trip!
+    const results = await multi.exec();
+    
+    // Process results (3 results per service)
+    const services = [];
+    for (let i = 0; i < serviceIds.length; i++) {
+      const serviceData = results[i * 3];
+      const isPublished = results[i * 3 + 1];
+      const publishedData = results[i * 3 + 2] || {};
+      
+      // Skip if service doesn't exist
+      if (!serviceData || Object.keys(serviceData).length === 0) {
+        continue;
+      }
+      
+      services.push({
+        id: serviceData.id || serviceIds[i],
+        name: serviceData.name || 'Untitled Service',
+        description: serviceData.description || '',
+        status: isPublished ? 'published' : 'draft',
+        createdAt: serviceData.createdAt || new Date().toISOString(),
+        updatedAt: serviceData.updatedAt || serviceData.createdAt || new Date().toISOString(),
+        publishedAt: publishedData.created || null,
+        calls: parseInt(publishedData.calls || '0'),
+        lastUsed: publishedData.lastUsed || null,
+        workbookUrl: serviceData.workbookUrl
+      });
+    }
     
     // Filter out nulls and sort by updatedAt descending
     const validServices = services.filter(s => s !== null);
     validServices.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     
-    return NextResponse.json({ services: validServices });
+    // Generate ETag based on content hash
+    const etag = Buffer.from(JSON.stringify(validServices)).toString('base64').substring(0, 16);
+    
+    // Check if client has matching ETag
+    const clientEtag = request.headers.get('if-none-match');
+    if (clientEtag === etag) {
+      return new NextResponse(null, { status: 304 }); // Not Modified
+    }
+    
+    return NextResponse.json({ services: validServices }, {
+      headers: {
+        'ETag': etag,
+        'Cache-Control': 'private, max-age=0, must-revalidate'
+      }
+    });
   } catch (error) {
     console.error('Error fetching services:', error);
     return NextResponse.json(
