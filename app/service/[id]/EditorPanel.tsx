@@ -42,6 +42,8 @@ interface InputDefinition {
   min?: number;
   max?: number;
   description?: string;
+  format?: 'percentage';
+  percentageDecimals?: number;
 }
 
 interface OutputDefinition {
@@ -71,6 +73,10 @@ interface EditorPanelProps {
     outputs: OutputDefinition[];
     enableCaching?: boolean;
     requireToken?: boolean;
+    aiDescription?: string;
+    aiUsageExamples?: string[];
+    aiTags?: string[];
+    category?: string;
   };
 }
 
