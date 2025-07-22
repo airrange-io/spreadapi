@@ -32,9 +32,16 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
   if (apiDefinition.inputs && Array.isArray(apiDefinition.inputs)) {
     apiDefinition.inputs.forEach(input => {
       const paramName = input.alias || input.name;
+      
+      // Build description with format hint
+      let description = input.description || `Parameter: ${input.name}`;
+      if (input.format === 'percentage') {
+        description += ' (Enter as decimal, e.g., 0.05 for 5%)';
+      }
+      
       const schema = {
         type: input.type === 'number' ? 'number' : 'string',
-        description: input.description || `Parameter: ${input.name}`
+        description: description
       };
       
       // Add constraints
@@ -391,6 +398,9 @@ async function handleJsonRpc(request, auth) {
                 if (input.alias) responseText += ` (alias: ${input.alias})`;
                 responseText += ` - ${input.type}`;
                 if (input.mandatory) responseText += ' [REQUIRED]';
+                if (input.format === 'percentage') {
+                  responseText += ' [PERCENTAGE: Enter as decimal, e.g., 0.05 for 5%]';
+                }
                 if (input.description) responseText += `\n  ${input.description}`;
                 if (input.min !== undefined || input.max !== undefined) {
                   responseText += `\n  Range: ${input.min || '*'} to ${input.max || '*'}`;

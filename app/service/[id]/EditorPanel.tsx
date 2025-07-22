@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip } from 'antd';
+import { Card, Statistic, Typography, Space, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
@@ -411,12 +411,31 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     let hasFormula = false;
     let cellValue = null;
+    let cellFormat = null;
 
     if (isSingleCell) {
       // Check if cell has formula
       hasFormula = sheet.hasFormula(selection.row, selection.col);
       const cell = sheet.getCell(selection.row, selection.col);
       cellValue = cell.value();
+      
+      // Detect cell format
+      const formatter = cell.formatter();
+      const style = sheet.getStyle(selection.row, selection.col);
+      cellFormat = {
+        formatter: formatter || (style && style.formatter) || null,
+        isPercentage: false,
+        percentageDecimals: 0
+      };
+      
+      if (cellFormat.formatter && cellFormat.formatter.includes('%')) {
+        cellFormat.isPercentage = true;
+        // Extract decimal places from format like "0.00%"
+        const match = cellFormat.formatter.match(/0\.(0+)%/);
+        if (match) {
+          cellFormat.percentageDecimals = match[1].length;
+        }
+      }
     }
 
     // Auto-detect parameter type based on selection
@@ -454,7 +473,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       isSingleCell,
       detectedDataType,
       suggestedName,
-      suggestedTitle
+      suggestedTitle,
+      format: cellFormat
     });
 
     setParameterType(suggestedType);
@@ -539,7 +559,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         mandatory: values.mandatory !== false,
         ...(values.description && { description: values.description }),
         ...(values.min !== undefined && values.min !== '' && { min: parseFloat(values.min) }),
-        ...(values.max !== undefined && values.max !== '' && { max: parseFloat(values.max) })
+        ...(values.max !== undefined && values.max !== '' && { max: parseFloat(values.max) }),
+        ...(selectedCellInfo?.format?.isPercentage && { 
+          format: 'percentage',
+          percentageDecimals: selectedCellInfo.format.percentageDecimals 
+        })
       };
       setInputs([...inputs, newParam]);
     } else {
@@ -1149,6 +1173,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               <Select.Option value="boolean">Boolean</Select.Option>
             </Select>
           </Form.Item>
+
+          {selectedCellInfo?.format?.isPercentage && (
+            <Alert 
+              message="Percentage Format Detected" 
+              description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
+              type="info" 
+              showIcon 
+              style={{ marginBottom: 16 }}
+            />
+          )}
 
           <Form.Item
             label="Description (for AI assistants)"
