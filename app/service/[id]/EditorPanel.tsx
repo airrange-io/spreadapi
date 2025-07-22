@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert } from 'antd';
+import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
@@ -108,6 +108,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
+  const [spreadsheetReady, setSpreadsheetReady] = useState<boolean>(false);
 
   // AI metadata fields
   const [aiDescription, setAiDescription] = useState<string>(initialConfig?.aiDescription || '');
@@ -171,9 +172,23 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     };
   }, [spreadInstance, currentSelection, activeCard]);
 
-  // Monitor selection changes (always active since button is always visible)
+  // Set spreadsheet ready state after a delay
   useEffect(() => {
-    if (spreadInstance) {
+    if (spreadInstance && !showEmptyState) {
+      // Wait a bit for spreadsheet to fully initialize
+      const timer = setTimeout(() => {
+        setSpreadsheetReady(true);
+      }, 1000); // 1 second delay to ensure spreadsheet is fully loaded
+
+      return () => clearTimeout(timer);
+    } else {
+      setSpreadsheetReady(false);
+    }
+  }, [spreadInstance, showEmptyState]);
+
+  // Monitor selection changes (only when spreadsheet is ready)
+  useEffect(() => {
+    if (spreadInstance && spreadsheetReady) {
       const handleSelectionChanged = () => {
         try {
           const sheet = spreadInstance.getActiveSheet();
@@ -304,7 +319,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         clearInterval(checkInterval);
       };
     }
-  }, [spreadInstance]);
+  }, [spreadInstance, spreadsheetReady]);
 
   // Helper function to get cell address from row/col
   const getCellAddress = (row: number, col: number) => {
@@ -590,6 +605,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Determine button text and parameter type based on selection
   const getAddButtonInfo = () => {
+    if (!spreadsheetReady) {
+      return { text: 'Loading spreadsheet...', disabled: true };
+    }
+
     if (!currentSelection) {
       return { text: 'Add Selection as Parameter', disabled: true };
     }
@@ -1050,12 +1069,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             {/* Columns Detail */}
             {activeCard === 'detail' && (
               <div style={{
-                display: 'flex',
+                // display: 'flex',
                 flexDirection: 'column',
                 width: '100%',
                 height: '100%',
                 marginTop: '8px',
-                gap: '12px'
+                marginBottom: '16px',
+                gap: '12px',
+                overflow: 'auto'
               }}>
                 <div style={{
                   flex: 1,
@@ -1067,10 +1088,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   borderRadius: 8,
                   minHeight: 0,
                   marginBottom: '16px',
-                  overflow: 'auto'
                 }}>
                   <Space direction="vertical" style={{ width: '100%' }} size={12}>
-
                     <div>
                       <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
                       <Input
@@ -1105,63 +1124,73 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                         </Space>
                       </Space>
                     </div>
+                  </Space>
+                </div>
+                <div style={{
+                  flex: 1,
+                  // display: 'flex',
+                  // flexDirection: 'column',
+                  padding: 14,
+                  backgroundColor: "#f8f8f8",
+                  border: `1px solid #ffffff`,
+                  borderRadius: 8,
+                  minHeight: 0,
+                }}>
+                  <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
+                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
+                        <Input.TextArea
+                          placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
+                          value={aiDescription}
+                          onChange={(e) => setAiDescription(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
 
-                    <div style={{ marginTop: '16px' }}>
-                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
-                      <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                        <div>
-                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
-                          <Input.TextArea
-                            placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
-                            value={aiDescription}
-                            onChange={(e) => setAiDescription(e.target.value)}
-                            rows={3}
-                          />
-                        </div>
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
+                        <Select
+                          mode="tags"
+                          style={{ width: '100%' }}
+                          placeholder="Add example questions or use cases (press Enter to add)"
+                          value={aiUsageExamples}
+                          onChange={setAiUsageExamples}
+                          tokenSeparators={[',']}
+                        />
+                      </div>
 
-                        <div>
-                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
-                          <Select
-                            mode="tags"
-                            style={{ width: '100%' }}
-                            placeholder="Add example questions or use cases (press Enter to add)"
-                            value={aiUsageExamples}
-                            onChange={setAiUsageExamples}
-                            tokenSeparators={[',']}
-                          />
-                        </div>
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
+                        <Select
+                          mode="tags"
+                          style={{ width: '100%' }}
+                          placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
+                          value={aiTags}
+                          onChange={setAiTags}
+                          tokenSeparators={[',']}
+                        />
+                      </div>
 
-                        <div>
-                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
-                          <Select
-                            mode="tags"
-                            style={{ width: '100%' }}
-                            placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
-                            value={aiTags}
-                            onChange={setAiTags}
-                            tokenSeparators={[',']}
-                          />
-                        </div>
-
-                        <div>
-                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
-                          <Select
-                            style={{ width: '100%' }}
-                            placeholder="Select a category"
-                            value={category}
-                            onChange={setCategory}
-                          >
-                            <Select.Option value="finance">Finance</Select.Option>
-                            <Select.Option value="math">Mathematics</Select.Option>
-                            <Select.Option value="statistics">Statistics</Select.Option>
-                            <Select.Option value="business">Business</Select.Option>
-                            <Select.Option value="science">Science</Select.Option>
-                            <Select.Option value="engineering">Engineering</Select.Option>
-                            <Select.Option value="other">Other</Select.Option>
-                          </Select>
-                        </div>
-                      </Space>
-                    </div>
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
+                        <Select
+                          style={{ width: '100%' }}
+                          placeholder="Select a category"
+                          value={category}
+                          onChange={setCategory}
+                        >
+                          <Select.Option value="finance">Finance</Select.Option>
+                          <Select.Option value="math">Mathematics</Select.Option>
+                          <Select.Option value="statistics">Statistics</Select.Option>
+                          <Select.Option value="business">Business</Select.Option>
+                          <Select.Option value="science">Science</Select.Option>
+                          <Select.Option value="engineering">Engineering</Select.Option>
+                          <Select.Option value="other">Other</Select.Option>
+                        </Select>
+                      </div>
+                    </Space>
 
                     {/* <div style={{ marginTop: '16px' }}>
                       <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
@@ -1257,20 +1286,28 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                   </Space>
                                 </div>
                                 <Space size="small">
-                                  <Tag color='purple' style={{ padding: '4px 8px' }}>{input.address}</Tag>
+                                  <Tag color='purple' onClick={() => navigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
                                   <Button
                                     size="small"
                                     type="text"
                                     icon={<EditOutlined />}
                                     onClick={() => handleEditParameter('input', input)}
                                   />
-                                  <Button
-                                    size="small"
-                                    type="text"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    onClick={() => handleDeleteParameter('input', input.id)}
-                                  />
+                                  <Popconfirm
+                                    title="Delete this parameter?"
+                                    description="This action cannot be undone."
+                                    onConfirm={() => handleDeleteParameter('input', input.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                    okButtonProps={{ danger: true }}
+                                  >
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      danger
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  </Popconfirm>
                                 </Space>
                               </div>
                             </div>
@@ -1333,20 +1370,28 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                   </Space>
                                 </div>
                                 <Space size="small">
-                                  <Tag color='geekblue' style={{ padding: '4px 8px' }}>{output.address}</Tag>
+                                  <Tag onClick={() => navigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
                                   <Button
                                     size="small"
                                     type="text"
                                     icon={<EditOutlined />}
                                     onClick={() => handleEditParameter('output', output)}
                                   />
-                                  <Button
-                                    size="small"
-                                    type="text"
-                                    danger
-                                    icon={<DeleteOutlined />}
-                                    onClick={() => handleDeleteParameter('output', output.id)}
-                                  />
+                                  <Popconfirm
+                                    title="Delete this parameter?"
+                                    description="This action cannot be undone."
+                                    onConfirm={() => handleDeleteParameter('output', output.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                    okButtonProps={{ danger: true }}
+                                  >
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      danger
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  </Popconfirm>
                                 </Space>
                               </div>
                             </div>
@@ -1428,15 +1473,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   icon={<PlusOutlined />}
                   style={{ width: '100%', height: 48 }}
                   onClick={handleAddFromSelection}
-                  disabled={buttonInfo.disabled || !spreadInstance}
+                  disabled={buttonInfo.disabled || !spreadInstance || !spreadsheetReady}
                 >
                   {buttonInfo.text}
                 </Button>
-                {spreadInstance && !currentSelection && (
+                {/* {spreadInstance && !currentSelection && (
                   <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
                     Select a cell or range in the spreadsheet
                   </div>
-                )}
+                )} */}
               </>
             );
           })()}
@@ -1452,6 +1497,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           setEditingParameter(null);
         }}
         footer={null}
+        centered
       >
         <Form
           key={`${selectedCellInfo?.address}-${Date.now()}-${editingParameter?.id || ''}`} // Force form to reinitialize

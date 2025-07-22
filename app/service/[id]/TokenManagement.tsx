@@ -78,7 +78,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       const response = await fetch(`/api/services/${serviceId}/tokens`);
       const endTime = performance.now();
       console.log(`[TokenManagement] API call took ${endTime - startTime}ms`);
-      
+
       if (response.ok) {
         const data = await response.json();
         const tokenList = data.tokens || [];
@@ -283,110 +283,59 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
   ];
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      gap: '12px'
-    }}>
-      {/* Token requirement toggle */}
-      {/* {tokens.length === 0 ? (
-        <Alert
-          description="Create your first API token to enable authentication. Token authentication will be automatically enabled when you create your first token."
-          type="info"
-          style={{ padding: '14px 18px', borderColor: "#ffffff" }}
-        />
-      ) : (
-        <Alert
-          message={
-            <Space>
-              <Text>Token authentication is</Text>
-              <Text strong type="success">ENABLED</Text>
-              <Text type="secondary">({tokens.length} active {tokens.length === 1 ? 'token' : 'tokens'})</Text>
-            </Space>
-          }
-          description={requireToken ?
-            "API calls must include a valid token. Authentication will be automatically disabled if all tokens are removed." :
-            "Authentication is disabled but tokens exist. Enable it to require tokens for API access."
-          }
-          type={requireToken ? 'success' : 'warning'}
-          showIcon
-          action={!requireToken && tokens.length > 0 ? (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => onRequireTokenChange(true)}
-            >
-              Enable Authentication
-            </Button>
-          ) : undefined}
-        />
-      )} */}
-
-      {/* Tokens table */}
+    <>
+      {/* Tokens Card */}
       <Card
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0
-        }}
-        styles={{
-          body: {
-            padding: 16,
-            backgroundColor: '#f2f2f2',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0
-          }
-        }}
+        size="small"
+        title={
+          <Space>
+            <span>API Tokens</span>
+            <Tooltip title="Secure tokens for API authentication">
+              <InfoCircleOutlined style={{ fontSize: 14, color: '#999' }} />
+            </Tooltip>
+          </Space>
+        }
+        style={{ marginBottom: 12, backgroundColor: '#f8f8f8', borderColor: '#f8f8f8' }}
       >
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={5} style={{ margin: 0, color: '#898989' }}>API Tokens</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setShowCreateModal(true)}
-          >
-            Create Token
-          </Button>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <Spin />
-          </div>
-        ) : tokens.length === 0 ? (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          {/* Tokens list */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Spin size="small" />
+            </div>
+          ) : tokens.length === 0 ? (
             <Empty
               description="No tokens created yet"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
+              style={{ padding: '20px 0' }}
             />
-          </div>
-        ) : (
-          <div style={{
-            flex: 1,
-            overflow: 'auto',
-            minHeight: 0
-          }}>
-            <Table
-              columns={columns}
-              dataSource={tokens}
-              rowKey="id"
-              size="small"
-              pagination={false}
-              scroll={{ y: 'calc(100vh - 450px)' }}
-              sticky
-            />
-          </div>
-        )}
+          ) : (
+            <div style={{
+              maxHeight: '300px',
+              overflow: 'auto',
+              border: '1px solid #e8e8e8',
+              borderRadius: 4
+            }}>
+              <Table
+                columns={columns}
+                dataSource={tokens}
+                rowKey="id"
+                size="small"
+                pagination={false}
+                scroll={{ y: 250 }}
+              />
+            </div>
+          )}
+
+          {/* Bottom Create Token button */}
+          <Button
+            type="default"
+            onClick={() => setShowCreateModal(true)}
+            block
+          >
+            Create Token
+          </Button>
+        </Space>
       </Card>
 
       {/* Create token modal */}
@@ -398,6 +347,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
           form.resetFields();
         }}
         footer={null}
+        centered
       >
         <Form
           form={form}
@@ -472,6 +422,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
           setShowTokenModal(false);
           setNewToken(null);
         }}
+        centered
         footer={[
           <Button
             key="close"
@@ -521,7 +472,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
           </Space>
         )}
       </Modal>
-    </div>
+    </>
   );
 });
 

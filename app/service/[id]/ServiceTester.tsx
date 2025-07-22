@@ -39,7 +39,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
     const baseUrl = `${window.location.origin}/api/getresults`;
     const params = new URLSearchParams();
-    
+
     // Add service ID as parameter
     params.append('id', serviceId);
 
@@ -96,18 +96,17 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   return (
     <>
-      <Card 
+      <Card
         size="small"
         title={
           <Space>
-            {/* <PlayCircleOutlined /> */}
             <span>Quick Test</span>
             <Tooltip title="Test your API with current spreadsheet values">
               <InfoCircleOutlined style={{ fontSize: 14, color: '#999' }} />
             </Tooltip>
           </Space>
         }
-        style={{ marginBottom: 12 }}
+        style={{ backgroundColor: '#f8f8f8', borderColor: '#f8f8f8' }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
           {!isPublished && (
@@ -120,25 +119,22 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           )}
 
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>Test URL:</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>Test URL (Modify the URL to test with different parameter values):</Text>
             <TextArea
               value={testUrl}
               onChange={handleUrlChange}
               rows={3}
-              style={{ 
+              style={{
                 marginTop: 4,
                 fontFamily: 'monospace',
                 fontSize: 12
               }}
               disabled={!isPublished}
             />
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
-              Modify the URL to test with different parameter values
-            </Text>
           </div>
 
           <Button
-            type="primary"
+            type="default"
             icon={<PlayCircleOutlined />}
             onClick={handleTest}
             loading={testing}

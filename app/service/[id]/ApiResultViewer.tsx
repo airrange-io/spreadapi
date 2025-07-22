@@ -55,6 +55,7 @@ const ApiResultViewer: React.FC<ApiResultViewerProps> = ({
       open={visible}
       onCancel={onClose}
       width={800}
+      centered
       footer={[
         <Button 
           key="copy" 

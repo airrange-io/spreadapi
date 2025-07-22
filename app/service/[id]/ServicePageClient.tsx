@@ -943,8 +943,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </Button>
           )}
           {!hasChanges && <Button
-            // color="purple"
-            // variant="filled"
+            color="default"
+            variant="filled"
             onClick={() => {
               window.open(`/api-tester?service=${serviceId}${apiConfig.name ? `&name=${encodeURIComponent(apiConfig.name)}` : ''}`, '_blank');
             }}
@@ -993,7 +993,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 {configPanel}
               </div>
             </Splitter.Panel>
-            <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
+            <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
               {showEmptyState && !spreadsheetData ? (
                 <EmptyWorkbookState
                   onStartFromScratch={() => {
