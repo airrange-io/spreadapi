@@ -862,6 +862,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       onConfigChange={handleConfigChange}
       onImportExcel={handleImportExcel}
       initialConfig={apiConfig}
+      showEmptyState={showEmptyState}
     />
   );
 

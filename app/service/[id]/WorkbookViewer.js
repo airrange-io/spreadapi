@@ -492,7 +492,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         flexDirection: "column",
       }}
     >
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ flex: 1, position: "relative", marginTop: 8 }}>
         <Designer
           styleInfo={{ width: "100%", height: "100%" }}
           config={getDesignerConfig}

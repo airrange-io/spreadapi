@@ -67,6 +67,7 @@ interface EditorPanelProps {
   onConfigChange?: (config: any) => void;
   onImportExcel?: (file: File) => void;
   serviceStatus?: any;
+  showEmptyState?: boolean;
   initialConfig?: {
     name: string;
     description: string;
@@ -82,7 +83,7 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig
+  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState
 }) => {
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
@@ -105,7 +106,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
-  
+
   // AI metadata fields
   const [aiDescription, setAiDescription] = useState<string>(initialConfig?.aiDescription || '');
   const [aiUsageExamples, setAiUsageExamples] = useState<string[]>(initialConfig?.aiUsageExamples || []);
@@ -320,7 +321,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Helper function to highlight parameter cells
   const highlightParameterCells = useCallback(() => {
     if (!spreadInstance || !GC?.Spread?.Sheets) return;
-    
+
     // Create styles for input and output parameters
     const parameterStyle = new GC.Spread.Sheets.Style();
     parameterStyle.backColor = "#F0E1FF"; // Slightly darker purple background for all parameters
@@ -329,7 +330,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     highlightedCells.forEach(cellKey => {
       try {
         const [sheetName, cellAddress] = cellKey.split('!');
-        
+
         // Try to get sheet by name or index
         let sheet = null;
         try {
@@ -339,7 +340,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         } catch (e) {
           // Method not available
         }
-        
+
         if (!sheet) {
           // Try to find sheet by iterating
           const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
@@ -351,7 +352,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             }
           }
         }
-        
+
         if (sheet) {
           // Parse cell address to get row and column
           const match = cellAddress.match(/^([A-Z]+)(\d+)$/);
@@ -373,7 +374,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     inputs.forEach(input => {
       try {
         const [sheetName, cellRef] = input.address.split('!');
-        
+
         // Try to get sheet by name or index
         let sheet = null;
         try {
@@ -384,7 +385,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         } catch (e) {
           // Method not available
         }
-        
+
         if (!sheet) {
           // Try to find sheet by iterating through sheets
           const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
@@ -396,20 +397,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             }
           }
         }
-        
+
         if (sheet) {
           // Get existing style first to preserve other properties
           const existingStyle = sheet.getStyle(input.row, input.col) || new GC.Spread.Sheets.Style();
           const newStyle = new GC.Spread.Sheets.Style();
-          
+
           // Copy all existing properties
           if (existingStyle) {
             Object.assign(newStyle, existingStyle);
           }
-          
+
           // Only change the background color
           newStyle.backColor = "#F0E1FF";
-          
+
           sheet.setStyle(input.row, input.col, newStyle);
           newHighlightedCells.add(input.address);
         }
@@ -422,7 +423,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     outputs.forEach(output => {
       try {
         const [sheetName, cellRef] = output.address.split('!');
-        
+
         // Try to get sheet by name or index
         let sheet = null;
         try {
@@ -433,7 +434,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         } catch (e) {
           // Method not available
         }
-        
+
         if (!sheet) {
           // Try to find sheet by iterating through sheets
           const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
@@ -451,27 +452,27 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             const [startCell, endCell] = cellRef.split(':');
             const startMatch = startCell.match(/^([A-Z]+)(\d+)$/);
             const endMatch = endCell.match(/^([A-Z]+)(\d+)$/);
-            
+
             if (startMatch && endMatch) {
               const startCol = startMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
               const startRow = parseInt(startMatch[2]) - 1;
               const endCol = endMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
               const endRow = parseInt(endMatch[2]) - 1;
-              
+
               for (let row = startRow; row <= endRow; row++) {
                 for (let col = startCol; col <= endCol; col++) {
                   // Get existing style first to preserve other properties
                   const existingStyle = sheet.getStyle(row, col) || new GC.Spread.Sheets.Style();
                   const newStyle = new GC.Spread.Sheets.Style();
-                  
+
                   // Copy all existing properties
                   if (existingStyle) {
                     Object.assign(newStyle, existingStyle);
                   }
-                  
+
                   // Only change the background color
                   newStyle.backColor = "#F9F0FF";
-                  
+
                   sheet.setStyle(row, col, newStyle);
                   newHighlightedCells.add(`${sheetName}!${getCellAddress(row, col)}`);
                 }
@@ -481,15 +482,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             // Get existing style first to preserve other properties
             const existingStyle = sheet.getStyle(output.row, output.col) || new GC.Spread.Sheets.Style();
             const newStyle = new GC.Spread.Sheets.Style();
-            
+
             // Copy all existing properties
             if (existingStyle) {
               Object.assign(newStyle, existingStyle);
             }
-            
+
             // Only change the background color
             newStyle.backColor = "#F9F0FF";
-            
+
             sheet.setStyle(output.row, output.col, newStyle);
             newHighlightedCells.add(output.address);
           }
@@ -509,7 +510,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       const timeoutId = setTimeout(() => {
         highlightParameterCells();
       }, 500); // Increased delay to ensure SpreadJS is fully loaded
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [spreadInstance, highlightParameterCells]);
@@ -517,10 +518,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Function to navigate to a parameter's cell
   const navigateToParameter = useCallback((param: InputDefinition | OutputDefinition) => {
     if (!spreadInstance) return;
-    
+
     try {
       const [sheetName, cellRef] = param.address.split('!');
-      
+
       // Try to get the sheet
       let sheet = null;
       try {
@@ -530,7 +531,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       } catch (e) {
         // Method not available
       }
-      
+
       if (!sheet) {
         // Try to find sheet by iterating
         const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
@@ -544,37 +545,37 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           }
         }
       }
-      
+
       if (sheet) {
         // Set the sheet as active (if not already)
         spreadInstance.setActiveSheet(sheet);
-        
+
         // For range parameters, select the entire range
         if (cellRef.includes(':')) {
           const [startCell, endCell] = cellRef.split(':');
           const startMatch = startCell.match(/^([A-Z]+)(\d+)$/);
           const endMatch = endCell.match(/^([A-Z]+)(\d+)$/);
-          
+
           if (startMatch && endMatch) {
             const startCol = startMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
             const startRow = parseInt(startMatch[2]) - 1;
             const endCol = endMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
             const endRow = parseInt(endMatch[2]) - 1;
-            
+
             // Select the range
             sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
-            
+
             // Scroll to make the range visible
             sheet.showCell(startRow, startCol, 3, 3); // 3 = GC.Spread.Sheets.VerticalPosition.center, 3 = GC.Spread.Sheets.HorizontalPosition.center
           }
         } else {
           // Single cell - set selection and scroll to it
           sheet.setSelection(param.row, param.col, 1, 1);
-          
+
           // Scroll to make the cell visible in the center
           sheet.showCell(param.row, param.col, 3, 3); // 3 = center position
         }
-        
+
         // Set focus to the spreadsheet
         if (spreadInstance.focus) {
           spreadInstance.focus();
@@ -694,7 +695,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       hasFormula = sheet.hasFormula(selection.row, selection.col);
       const cell = sheet.getCell(selection.row, selection.col);
       cellValue = cell.value();
-      
+
       // Detect cell format
       const formatter = cell.formatter();
       const style = sheet.getStyle(selection.row, selection.col);
@@ -703,7 +704,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         isPercentage: false,
         percentageDecimals: 0
       };
-      
+
       if (cellFormat.formatter && cellFormat.formatter.includes('%')) {
         cellFormat.isPercentage = true;
         // Extract decimal places from format like "0.00%"
@@ -836,9 +837,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         ...(values.description && { description: values.description }),
         ...(values.min !== undefined && values.min !== '' && { min: parseFloat(values.min) }),
         ...(values.max !== undefined && values.max !== '' && { max: parseFloat(values.max) }),
-        ...(selectedCellInfo?.format?.isPercentage && { 
+        ...(selectedCellInfo?.format?.isPercentage && {
           format: 'percentage',
-          percentageDecimals: selectedCellInfo.format.percentageDecimals 
+          percentageDecimals: selectedCellInfo.format.percentageDecimals
         })
       };
       setInputs([...inputs, newParam]);
@@ -896,7 +897,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       padding: 6,
       borderRadius: '8px',
       borderColor: 'transparent',
-      backgroundColor: activeCard === cardType ?  '#E2E3E1' : '#f2f2f2',
+      backgroundColor: activeCard === cardType ? '#E2E3E1' : '#f2f2f2',
       transition: 'all 0.2s'
     };
 
@@ -1020,11 +1021,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               value={tokenCount}
               prefix={<SafetyOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
-              // suffix={
-              //   <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
-              //     {requireToken ? 'Required' : 'Optional'}
-              //   </span>
-              // }
+            // suffix={
+            //   <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
+            //     {requireToken ? 'Required' : 'Optional'}
+            //   </span>
+            // }
             />
           </Card>
         </div>
@@ -1047,10 +1048,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           }}>
             {/* Columns Detail */}
             {activeCard === 'detail' && (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                width: '100%', 
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
                 height: '100%',
                 marginTop: '8px',
                 gap: '12px'
@@ -1060,133 +1061,133 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   isPublished={serviceStatus?.published || false}
                   requireToken={requireToken}
                 />
-                <div style={{ 
+                <div style={{
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
-                  padding: 14, 
-                  backgroundColor: "#f2f2f2", 
-                  border: `1px solid #ffffff`, 
+                  padding: 14,
+                  backgroundColor: "#f2f2f2",
+                  border: `1px solid #ffffff`,
                   borderRadius: 8,
                   minHeight: 0,
                   overflow: 'auto'
                 }}>
                   <Space direction="vertical" style={{ width: '100%' }} size={12}>
 
-                  <div>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
-                    <Input
-                      placeholder="Enter service name"
-                      value={apiName}
-                      onChange={(e) => setApiName(e.target.value)}
-                    />
-                  </div>
+                    <div>
+                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
+                      <Input
+                        placeholder="Enter service name"
+                        value={apiName}
+                        onChange={(e) => setApiName(e.target.value)}
+                      />
+                    </div>
 
-                  <div>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
-                    <Input.TextArea
-                      placeholder="Describe what this API does"
-                      value={apiDescription}
-                      onChange={(e) => setApiDescription(e.target.value)}
-                      rows={2} />
-                  </div>
+                    <div>
+                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
+                      <Input.TextArea
+                        placeholder="Describe what this API does"
+                        value={apiDescription}
+                        onChange={(e) => setApiDescription(e.target.value)}
+                        rows={2} />
+                    </div>
 
-                  <div style={{ marginTop: '0px' }}>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Advanced Options</strong></div>
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                      <Space align="center">
-                        <Checkbox
-                          checked={enableCaching}
-                          onChange={(e) => setEnableCaching(e.target.checked)}
-                        >
-                          Enable response caching
-                        </Checkbox>
-                        <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
-                          <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
-                        </Tooltip>
+                    <div style={{ marginTop: '0px' }}>
+                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Advanced Options</strong></div>
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <Space align="center">
+                          <Checkbox
+                            checked={enableCaching}
+                            onChange={(e) => setEnableCaching(e.target.checked)}
+                          >
+                            Enable response caching
+                          </Checkbox>
+                          <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
+                            <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
+                          </Tooltip>
+                        </Space>
                       </Space>
-                    </Space>
-                  </div>
+                    </div>
 
-                  <div style={{ marginTop: '16px' }}>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
-                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
-                        <Input.TextArea
-                          placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
-                          value={aiDescription}
-                          onChange={(e) => setAiDescription(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-                      
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
-                        <Select
-                          mode="tags"
-                          style={{ width: '100%' }}
-                          placeholder="Add example questions or use cases (press Enter to add)"
-                          value={aiUsageExamples}
-                          onChange={setAiUsageExamples}
-                          tokenSeparators={[',']}
-                        />
-                      </div>
-                      
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
-                        <Select
-                          mode="tags"
-                          style={{ width: '100%' }}
-                          placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
-                          value={aiTags}
-                          onChange={setAiTags}
-                          tokenSeparators={[',']}
-                        />
-                      </div>
-                      
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
-                        <Select
-                          style={{ width: '100%' }}
-                          placeholder="Select a category"
-                          value={category}
-                          onChange={setCategory}
-                        >
-                          <Select.Option value="finance">Finance</Select.Option>
-                          <Select.Option value="math">Mathematics</Select.Option>
-                          <Select.Option value="statistics">Statistics</Select.Option>
-                          <Select.Option value="business">Business</Select.Option>
-                          <Select.Option value="science">Science</Select.Option>
-                          <Select.Option value="engineering">Engineering</Select.Option>
-                          <Select.Option value="other">Other</Select.Option>
-                        </Select>
-                      </div>
-                    </Space>
-                  </div>
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
+                      <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                        <div>
+                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
+                          <Input.TextArea
+                            placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
+                            value={aiDescription}
+                            onChange={(e) => setAiDescription(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
 
-                  <div style={{ marginTop: '16px' }}>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
-                    <Upload
-                      accept=".xlsx,.xls"
-                      showUploadList={false}
-                      beforeUpload={(file) => {
-                        if (onImportExcel) {
-                          onImportExcel(file);
-                        } else {
-                          message.error('Import handler not configured');
-                        }
-                        return false; // Prevent default upload behavior
-                      }}
-                    >
-                      <Button icon={<UploadOutlined />}>
-                        Import Excel File
-                      </Button>
-                    </Upload>
-                    {/* <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                        <div>
+                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
+                          <Select
+                            mode="tags"
+                            style={{ width: '100%' }}
+                            placeholder="Add example questions or use cases (press Enter to add)"
+                            value={aiUsageExamples}
+                            onChange={setAiUsageExamples}
+                            tokenSeparators={[',']}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
+                          <Select
+                            mode="tags"
+                            style={{ width: '100%' }}
+                            placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
+                            value={aiTags}
+                            onChange={setAiTags}
+                            tokenSeparators={[',']}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
+                          <Select
+                            style={{ width: '100%' }}
+                            placeholder="Select a category"
+                            value={category}
+                            onChange={setCategory}
+                          >
+                            <Select.Option value="finance">Finance</Select.Option>
+                            <Select.Option value="math">Mathematics</Select.Option>
+                            <Select.Option value="statistics">Statistics</Select.Option>
+                            <Select.Option value="business">Business</Select.Option>
+                            <Select.Option value="science">Science</Select.Option>
+                            <Select.Option value="engineering">Engineering</Select.Option>
+                            <Select.Option value="other">Other</Select.Option>
+                          </Select>
+                        </div>
+                      </Space>
+                    </div>
+
+                    <div style={{ marginTop: '16px' }}>
+                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
+                      <Upload
+                        accept=".xlsx,.xls"
+                        showUploadList={false}
+                        beforeUpload={(file) => {
+                          if (onImportExcel) {
+                            onImportExcel(file);
+                          } else {
+                            message.error('Import handler not configured');
+                          }
+                          return false; // Prevent default upload behavior
+                        }}
+                      >
+                        <Button icon={<UploadOutlined />}>
+                          Import Excel File
+                        </Button>
+                      </Upload>
+                      {/* <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
                     Supports .xlsx and .xls formats
                   </div> */}
-                  </div>
+                    </div>
                   </Space>
                 </div>
               </div>
@@ -1194,20 +1195,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                width: '100%', 
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
                 marginTop: '8px',
                 height: '100%',
                 minHeight: 0
               }}>
-                <div style={{ 
+                <div style={{
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
-                  padding: 14, 
-                  backgroundColor: "#f2f2f2", 
+                  padding: 14,
+                  backgroundColor: "#f2f2f2",
                   // border: `1px solid #ffffff`, 
                   borderRadius: 8,
                   overflow: 'auto'
@@ -1229,7 +1230,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div 
+                                <div
                                   style={{ cursor: 'pointer', flex: 1 }}
                                   onClick={() => navigateToParameter(input)}
                                   onMouseEnter={(e) => {
@@ -1297,7 +1298,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div 
+                                <div
                                   style={{ cursor: 'pointer', flex: 1 }}
                                   onClick={() => navigateToParameter(output)}
                                   onMouseEnter={(e) => {
@@ -1354,11 +1355,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
             {/* Tokens Detail */}
             {activeCard === 'tokens' && (
-              <div style={{ 
+              <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                width: '100%', 
-                height: '100%', 
+                width: '100%',
+                height: '100%',
                 marginTop: '8px',
                 minHeight: 0
               }}>
@@ -1402,11 +1403,11 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               >
                 {buttonInfo.text}
               </Button>
-              {!spreadInstance && (
+              {/* {!spreadInstance && !showEmptyState && (
                 <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
                   Waiting for spreadsheet to load...
                 </div>
-              )}
+              )} */}
               {spreadInstance && !currentSelection && (
                 <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
                   Select a cell or range in the spreadsheet
@@ -1430,6 +1431,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         <Form
           key={`${selectedCellInfo?.address}-${Date.now()}-${editingParameter?.id || ''}`} // Force form to reinitialize
           layout="vertical"
+          variant={'filled'}
           onFinish={handleAddParameter}
           initialValues={{
             name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
@@ -1441,39 +1443,43 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined
           }}
         >
-          <Form.Item
-            label="Parameter Name"
-            name="name"
-            rules={[{ required: true, message: 'Please enter a parameter name' }]}
-          >
-            <Input placeholder="e.g., amount, rate, result" />
-          </Form.Item>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Form.Item
+              label="Parameter Name"
+              name="name"
+              rules={[{ required: true, message: 'Please enter a parameter name' }]}
+              style={{ flex: 1 }}
+            >
+              <Input placeholder="e.g., amount, rate, result" />
+            </Form.Item>
+
+            <Form.Item
+              label="Data Type"
+              name="dataType"
+              style={{ width: '150px' }}
+            >
+              <Select>
+                <Select.Option value="string">String</Select.Option>
+                <Select.Option value="number">Number</Select.Option>
+                <Select.Option value="boolean">Boolean</Select.Option>
+              </Select>
+            </Form.Item>
+          </div>
 
           <Form.Item
             label="Original Title"
             name="title"
-            help="The original title from the spreadsheet (optional)"
+          // help="The original title from the spreadsheet (optional)"
           >
             <Input placeholder="e.g., Interest Rate, Total Amount" />
           </Form.Item>
 
-          <Form.Item
-            label="Data Type"
-            name="dataType"
-          >
-            <Select>
-              <Select.Option value="string">String</Select.Option>
-              <Select.Option value="number">Number</Select.Option>
-              <Select.Option value="boolean">Boolean</Select.Option>
-            </Select>
-          </Form.Item>
-
           {selectedCellInfo?.format?.isPercentage && (
-            <Alert 
-              message="Percentage Format Detected" 
+            <Alert
+              message="Percentage Format Detected"
               description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
-              type="info" 
-              showIcon 
+              type="info"
+              showIcon
               style={{ marginBottom: 16 }}
             />
           )}
@@ -1481,10 +1487,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           <Form.Item
             label="Description (for AI assistants)"
             name="description"
-            help="This helps AI assistants understand what this parameter represents and how to use it"
+          // help="This helps AI assistants understand how to use this parameter"
           >
-            <Input.TextArea 
-              rows={2} 
+            <Input.TextArea
+              rows={2}
               placeholder="Describe what this parameter represents and how it should be used..."
               maxLength={500}
               showCount
@@ -1493,14 +1499,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
           {parameterType === 'input' && (
             <>
-              <Form.Item
-                name="mandatory"
-                valuePropName="checked"
-                initialValue={true}
-              >
-                <Checkbox>Mandatory parameter</Checkbox>
-              </Form.Item>
-
               <Form.Item
                 noStyle
                 shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
@@ -1547,16 +1545,26 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   Current value: {selectedCellInfo.value}
                 </div>
               )}
-              {!selectedCellInfo?.isSingleCell && (
+              {/* {!selectedCellInfo?.isSingleCell && (
                 <div style={{ marginTop: '4px', color: '#1890ff' }}>
                   Range: {selectedCellInfo?.rowCount} rows × {selectedCellInfo?.colCount} columns
                 </div>
-              )}
+              )} */}
             </div>
           </Form.Item>
-
-          <Form.Item>
-            <Space>
+          {parameterType === 'input' && (
+            <>
+              <Form.Item
+                name="mandatory"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Checkbox>Mandatory parameter</Checkbox>
+              </Form.Item>
+            </>
+          )}
+          <Form.Item style={{ marginBottom: 0, paddingBottom: 0 }}>
+            <Space style={{ marginTop: 8 }}>
               <Button type="primary" htmlType="submit">
                 {editingParameter ? 'Update' : 'Add'} Parameter
               </Button>

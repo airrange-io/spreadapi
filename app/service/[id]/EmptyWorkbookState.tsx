@@ -73,7 +73,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
           <Button
             type="primary"
             size="large"
-            icon={<FileAddOutlined />}
+            // icon={<FileAddOutlined />}
             onClick={onStartFromScratch}
             loading={isLoading}
             style={{
@@ -84,7 +84,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
             }}
           >
-            Start from scratch
+            Create a new spreadsheet
           </Button>
 
           <div style={{
