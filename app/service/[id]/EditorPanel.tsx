@@ -167,7 +167,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       window.removeEventListener('resize', measureButtonArea);
       observer.disconnect();
     };
-  }, [spreadInstance, currentSelection]);
+  }, [spreadInstance, currentSelection, activeCard]);
 
   // Monitor selection changes (always active since button is always visible)
   useEffect(() => {
@@ -1017,7 +1017,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             onClick={() => handleCardClick('tokens')}
           >
             <Statistic
-              title="Calls & Tokens"
+              title="How to Use"
               value={tokenCount}
               prefix={<SafetyOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
@@ -1031,7 +1031,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         flex: 1,
         overflow: 'auto',
         padding: '0 12px',
-        paddingBottom: 12, //buttonAreaHeight + 12,
+        paddingBottom: 12, // activeCard === 'parameters' ? buttonAreaHeight + 12 : 12,
         minHeight: 0
       }}>
         {/* Active Card Detail Areas or Default AI Area */}
@@ -1394,37 +1394,39 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         )}
       </div>
 
-      {/* Fixed button at bottom */}
-      <div
-        ref={buttonAreaRef}
-        style={{
-          padding: '12px',
-          paddingTop: 0,
-          background: 'white',
-          flex: '0 0 auto'
-        }}>
-        {(() => {
-          const buttonInfo = getAddButtonInfo();
-          return (
-            <>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                style={{ width: '100%', height: 48 }}
-                onClick={handleAddFromSelection}
-                disabled={buttonInfo.disabled || !spreadInstance}
-              >
-                {buttonInfo.text}
-              </Button>
-              {spreadInstance && !currentSelection && (
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
-                  Select a cell or range in the spreadsheet
-                </div>
-              )}
-            </>
-          );
-        })()}
-      </div>
+      {/* Fixed button at bottom - only show in parameters mode */}
+      {activeCard === 'parameters' && (
+        <div
+          ref={buttonAreaRef}
+          style={{
+            padding: '12px',
+            paddingTop: 0,
+            background: 'white',
+            flex: '0 0 auto'
+          }}>
+          {(() => {
+            const buttonInfo = getAddButtonInfo();
+            return (
+              <>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  style={{ width: '100%', height: 48 }}
+                  onClick={handleAddFromSelection}
+                  disabled={buttonInfo.disabled || !spreadInstance}
+                >
+                  {buttonInfo.text}
+                </Button>
+                {spreadInstance && !currentSelection && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                    Select a cell or range in the spreadsheet
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Add/Edit Parameter Modal */}
       <Modal
