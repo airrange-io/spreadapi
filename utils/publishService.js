@@ -154,8 +154,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       title: service.name || "Untitled Service",
       name: service.name || "Untitled Service", // Include both for compatibility
       description: service.description || "",
-      input: transformedInputs,
-      output: transformedOutputs,
+      inputs: transformedInputs,  // Changed from 'input' to 'inputs'
+      outputs: transformedOutputs,  // Changed from 'output' to 'outputs'
       tokens: flags.tokens || [],
       flags: {
         useCaching: flags.enableCaching !== false ? "true" : "false",

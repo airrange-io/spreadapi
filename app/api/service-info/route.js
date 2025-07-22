@@ -22,8 +22,9 @@ export async function GET(request) {
     
     // Extract input and output configurations
     const apiJson = apiDefinition.apiJson || {};
-    const inputs = apiJson.input || [];
-    const outputs = apiJson.output || [];
+    // Handle both plural (new) and singular (old) formats
+    const inputs = apiJson.inputs || apiJson.input || [];
+    const outputs = apiJson.outputs || apiJson.output || [];
     
     // Format the response
     const serviceInfo = {

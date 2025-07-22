@@ -181,8 +181,9 @@ export async function getApiDefinition(apiId, apiToken) {
                   const cachedData = await redis.json.get(cacheKey);
                   
                   if (cachedData && cachedData.apiJson) {
-                    inputs = cachedData.apiJson.input || [];
-                    outputs = cachedData.apiJson.output || [];
+                    // Handle both plural (new) and singular (old) formats
+                    inputs = cachedData.apiJson.inputs || cachedData.apiJson.input || [];
+                    outputs = cachedData.apiJson.outputs || cachedData.apiJson.output || [];
                     description = cachedData.apiJson.description || description;
                   } else if (serviceData.inputs) {
                     // Fall back to parsing from service data if available

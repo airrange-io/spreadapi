@@ -20,7 +20,7 @@ function getGetResultTool(apiId, apiDefinition) {
       required: true,
       description: "API token for authentication"
     } : null,
-    exampleRequest: `https://services.airrange.io/api/getresults?service=${apiId}&${apiDefinition.apiJson.input[0]?.name || "param1"}=value1`,
+    exampleRequest: `https://services.airrange.io/api/getresults?service=${apiId}&${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
     errorCodes: [
       { code: 400, message: "Bad request", description: "Invalid parameters or missing required parameters" },
       { code: 401, message: "Unauthorized", description: "Authentication required or invalid token" },
@@ -74,7 +74,7 @@ function getGetResultTool(apiId, apiDefinition) {
   // =====================================
   // optimize input parameters
   // =====================================
-  const inputs = apiDefinition.apiJson.input;
+  const inputs = apiDefinition.apiJson.inputs || apiDefinition.apiJson.input || [];
   for (const input of inputs) {
     if (input?.hasOwnProperty("row")) delete input.row;
     if (input?.hasOwnProperty("col")) delete input.col;
@@ -100,7 +100,7 @@ function getGetResultTool(apiId, apiDefinition) {
   // =====================================
   // optimize output parameters
   // =====================================
-  const outputs = apiDefinition.apiJson.output;
+  const outputs = apiDefinition.apiJson.outputs || apiDefinition.apiJson.output || [];
   for (const output of outputs) {
     if (output?.hasOwnProperty("row")) delete output.row;
     if (output?.hasOwnProperty("col")) delete output.col;
@@ -205,7 +205,7 @@ async function getServiceSchema(apiId, apiToken) {
         steps: [
           {
             action: "Make GET request to getResults endpoint with custom parameters",
-            url: `https://services.airrange.io/api/getresults?service=${apiId}&${apiDefinition.apiJson.input[0]?.name || "param1"}=value1`,
+            url: `https://services.airrange.io/api/getresults?service=${apiId}&${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
             parameters: ["Custom parameters as needed"]
           }
         ]
@@ -236,7 +236,7 @@ async function getServiceSchema(apiId, apiToken) {
                 description: "Service identifier",
                 schema: { type: "string" }
               },
-              ...(apiDefinition.apiJson.input || []).map(input => ({
+              ...(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input || []).map(input => ({
                 name: input.name || input.alias,
                 in: "query",
                 required: input.mandatory || false,

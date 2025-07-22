@@ -336,8 +336,9 @@ async function getResults(requestInfo) {
     // =====================================
     const apiJson = apiDefinition?.apiJson ?? {};
     if (!apiJson) return getError("no service definition");
-    const apiInputs = apiJson?.input ?? [];
-    const apiOutputs = apiJson?.output ?? [];
+    // Handle both old (input/output) and new (inputs/outputs) formats
+    const apiInputs = apiJson?.inputs || apiJson?.input || [];
+    const apiOutputs = apiJson?.outputs || apiJson?.output || [];
     if (!apiOutputs || apiOutputs.length === 0)
       return getError("no api outputs found");
 

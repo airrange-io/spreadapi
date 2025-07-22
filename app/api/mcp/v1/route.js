@@ -50,14 +50,17 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
     });
   }
   
-  // Build tool description
-  let description = publishedData.aiDescription || 
+  // Build tool description - prefer regular description, fallback to AI description
+  let description = publishedData.description || 
+                   publishedData.aiDescription || 
+                   apiDefinition.description ||
                    apiDefinition.aiDescription || 
                    `Service ${serviceId}`;
   
-  // If we have a name in published data, use it
-  if (publishedData.name) {
-    description = `${publishedData.name}: ${description}`;
+  // If we have a title/name in published data, prepend it
+  const serviceName = publishedData.title || publishedData.name;
+  if (serviceName && !description.startsWith(serviceName)) {
+    description = `${serviceName}: ${description}`;
   }
   
   const tool = {
@@ -138,8 +141,18 @@ async function executeService(serviceId, inputs) {
       const outputs = data.outputs || data.result;
       resultText = 'Calculation Results:\n';
       
-      for (const [key, value] of Object.entries(outputs)) {
-        resultText += `${key}: ${value}\n`;
+      // Handle array format (from API response)
+      if (Array.isArray(outputs)) {
+        outputs.forEach(output => {
+          if (output.type === 'output') {
+            resultText += `${output.alias || output.name}: ${output.value}\n`;
+          }
+        });
+      } else {
+        // Handle object format (legacy)
+        for (const [key, value] of Object.entries(outputs)) {
+          resultText += `${key}: ${value}\n`;
+        }
       }
     }
     
