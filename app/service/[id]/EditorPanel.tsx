@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import TokenManagement from './TokenManagement';
 import ApiEndpointPreview from './ApiEndpointPreview';
+import * as GC from '@mescius/spread-sheets';
 
 const { Title, Text } = Typography;
 
@@ -103,6 +104,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
   const [tokenCount, setTokenCount] = useState<number>(0);
+  const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
   
   // AI metadata fields
   const [aiDescription, setAiDescription] = useState<string>(initialConfig?.aiDescription || '');
@@ -314,6 +316,274 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     return `${columnLetter}${row + 1}`; // Convert 0-based to 1-based
   };
+
+  // Helper function to highlight parameter cells
+  const highlightParameterCells = useCallback(() => {
+    if (!spreadInstance || !GC?.Spread?.Sheets) return;
+    
+    // Create styles for input and output parameters
+    const parameterStyle = new GC.Spread.Sheets.Style();
+    parameterStyle.backColor = "#F0E1FF"; // Slightly darker purple background for all parameters
+
+    // Clear existing highlights
+    highlightedCells.forEach(cellKey => {
+      try {
+        const [sheetName, cellAddress] = cellKey.split('!');
+        
+        // Try to get sheet by name or index
+        let sheet = null;
+        try {
+          if (spreadInstance.getSheetFromName) {
+            sheet = spreadInstance.getSheetFromName(sheetName);
+          }
+        } catch (e) {
+          // Method not available
+        }
+        
+        if (!sheet) {
+          // Try to find sheet by iterating
+          const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
+          for (let i = 0; i < sheetCount; i++) {
+            const s = spreadInstance.getSheet(i);
+            if (s && s.name && s.name() === sheetName) {
+              sheet = s;
+              break;
+            }
+          }
+        }
+        
+        if (sheet) {
+          // Parse cell address to get row and column
+          const match = cellAddress.match(/^([A-Z]+)(\d+)$/);
+          if (match) {
+            const col = match[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
+            const row = parseInt(match[2]) - 1;
+            sheet.setStyle(row, col, null);
+          }
+        }
+      } catch (e) {
+        console.error('Error clearing highlight:', e);
+      }
+    });
+
+    // Create new highlighted cells set
+    const newHighlightedCells = new Set<string>();
+
+    // Highlight input cells
+    inputs.forEach(input => {
+      try {
+        const [sheetName, cellRef] = input.address.split('!');
+        
+        // Try to get sheet by name or index
+        let sheet = null;
+        try {
+          // First try getSheetFromName
+          if (spreadInstance.getSheetFromName) {
+            sheet = spreadInstance.getSheetFromName(sheetName);
+          }
+        } catch (e) {
+          // Method not available
+        }
+        
+        if (!sheet) {
+          // Try to find sheet by iterating through sheets
+          const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
+          for (let i = 0; i < sheetCount; i++) {
+            const s = spreadInstance.getSheet(i);
+            if (s && s.name && s.name() === sheetName) {
+              sheet = s;
+              break;
+            }
+          }
+        }
+        
+        if (sheet) {
+          // Get existing style first to preserve other properties
+          const existingStyle = sheet.getStyle(input.row, input.col) || new GC.Spread.Sheets.Style();
+          const newStyle = new GC.Spread.Sheets.Style();
+          
+          // Copy all existing properties
+          if (existingStyle) {
+            Object.assign(newStyle, existingStyle);
+          }
+          
+          // Only change the background color
+          newStyle.backColor = "#F0E1FF";
+          
+          sheet.setStyle(input.row, input.col, newStyle);
+          newHighlightedCells.add(input.address);
+        }
+      } catch (e) {
+        console.error('Error highlighting input:', e);
+      }
+    });
+
+    // Highlight output cells
+    outputs.forEach(output => {
+      try {
+        const [sheetName, cellRef] = output.address.split('!');
+        
+        // Try to get sheet by name or index
+        let sheet = null;
+        try {
+          // First try getSheetFromName
+          if (spreadInstance.getSheetFromName) {
+            sheet = spreadInstance.getSheetFromName(sheetName);
+          }
+        } catch (e) {
+          // Method not available
+        }
+        
+        if (!sheet) {
+          // Try to find sheet by iterating through sheets
+          const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
+          for (let i = 0; i < sheetCount; i++) {
+            const s = spreadInstance.getSheet(i);
+            if (s && s.name && s.name() === sheetName) {
+              sheet = s;
+              break;
+            }
+          }
+        }
+        if (sheet) {
+          // Handle range outputs
+          if (cellRef.includes(':')) {
+            const [startCell, endCell] = cellRef.split(':');
+            const startMatch = startCell.match(/^([A-Z]+)(\d+)$/);
+            const endMatch = endCell.match(/^([A-Z]+)(\d+)$/);
+            
+            if (startMatch && endMatch) {
+              const startCol = startMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
+              const startRow = parseInt(startMatch[2]) - 1;
+              const endCol = endMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
+              const endRow = parseInt(endMatch[2]) - 1;
+              
+              for (let row = startRow; row <= endRow; row++) {
+                for (let col = startCol; col <= endCol; col++) {
+                  // Get existing style first to preserve other properties
+                  const existingStyle = sheet.getStyle(row, col) || new GC.Spread.Sheets.Style();
+                  const newStyle = new GC.Spread.Sheets.Style();
+                  
+                  // Copy all existing properties
+                  if (existingStyle) {
+                    Object.assign(newStyle, existingStyle);
+                  }
+                  
+                  // Only change the background color
+                  newStyle.backColor = "#F9F0FF";
+                  
+                  sheet.setStyle(row, col, newStyle);
+                  newHighlightedCells.add(`${sheetName}!${getCellAddress(row, col)}`);
+                }
+              }
+            }
+          } else {
+            // Get existing style first to preserve other properties
+            const existingStyle = sheet.getStyle(output.row, output.col) || new GC.Spread.Sheets.Style();
+            const newStyle = new GC.Spread.Sheets.Style();
+            
+            // Copy all existing properties
+            if (existingStyle) {
+              Object.assign(newStyle, existingStyle);
+            }
+            
+            // Only change the background color
+            newStyle.backColor = "#F9F0FF";
+            
+            sheet.setStyle(output.row, output.col, newStyle);
+            newHighlightedCells.add(output.address);
+          }
+        }
+      } catch (e) {
+        console.error('Error highlighting output:', e);
+      }
+    });
+
+    setHighlightedCells(newHighlightedCells);
+  }, [spreadInstance, inputs, outputs]);
+
+  // Apply highlights when spreadsheet instance or parameters change
+  useEffect(() => {
+    if (spreadInstance) {
+      // Add a small delay to ensure spreadsheet is fully loaded
+      const timeoutId = setTimeout(() => {
+        highlightParameterCells();
+      }, 500); // Increased delay to ensure SpreadJS is fully loaded
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [spreadInstance, highlightParameterCells]);
+
+  // Function to navigate to a parameter's cell
+  const navigateToParameter = useCallback((param: InputDefinition | OutputDefinition) => {
+    if (!spreadInstance) return;
+    
+    try {
+      const [sheetName, cellRef] = param.address.split('!');
+      
+      // Try to get the sheet
+      let sheet = null;
+      try {
+        if (spreadInstance.getSheetFromName) {
+          sheet = spreadInstance.getSheetFromName(sheetName);
+        }
+      } catch (e) {
+        // Method not available
+      }
+      
+      if (!sheet) {
+        // Try to find sheet by iterating
+        const sheetCount = spreadInstance.getSheetCount ? spreadInstance.getSheetCount() : 1;
+        for (let i = 0; i < sheetCount; i++) {
+          const s = spreadInstance.getSheet(i);
+          if (s && s.name && s.name() === sheetName) {
+            sheet = s;
+            // Also set this sheet as active
+            spreadInstance.setActiveSheet(s);
+            break;
+          }
+        }
+      }
+      
+      if (sheet) {
+        // Set the sheet as active (if not already)
+        spreadInstance.setActiveSheet(sheet);
+        
+        // For range parameters, select the entire range
+        if (cellRef.includes(':')) {
+          const [startCell, endCell] = cellRef.split(':');
+          const startMatch = startCell.match(/^([A-Z]+)(\d+)$/);
+          const endMatch = endCell.match(/^([A-Z]+)(\d+)$/);
+          
+          if (startMatch && endMatch) {
+            const startCol = startMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
+            const startRow = parseInt(startMatch[2]) - 1;
+            const endCol = endMatch[1].split('').reduce((acc, char) => acc * 26 + char.charCodeAt(0) - 64, 0) - 1;
+            const endRow = parseInt(endMatch[2]) - 1;
+            
+            // Select the range
+            sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
+            
+            // Scroll to make the range visible
+            sheet.showCell(startRow, startCol, 3, 3); // 3 = GC.Spread.Sheets.VerticalPosition.center, 3 = GC.Spread.Sheets.HorizontalPosition.center
+          }
+        } else {
+          // Single cell - set selection and scroll to it
+          sheet.setSelection(param.row, param.col, 1, 1);
+          
+          // Scroll to make the cell visible in the center
+          sheet.showCell(param.row, param.col, 3, 3); // 3 = center position
+        }
+        
+        // Set focus to the spreadsheet
+        if (spreadInstance.focus) {
+          spreadInstance.focus();
+        }
+      }
+    } catch (e) {
+      console.error('Error navigating to parameter:', e);
+    }
+  }, [spreadInstance]);
 
   // Determine button text and parameter type based on selection
   const getAddButtonInfo = () => {
@@ -959,7 +1229,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
+                                <div 
+                                  style={{ cursor: 'pointer', flex: 1 }}
+                                  onClick={() => navigateToParameter(input)}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '0.8';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                  }}
+                                >
                                   <strong>{input.name}</strong> ({input.type})
                                   {input.title && input.title !== input.name && (
                                     <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({input.title})</span>
@@ -1018,7 +1297,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
+                                <div 
+                                  style={{ cursor: 'pointer', flex: 1 }}
+                                  onClick={() => navigateToParameter(output)}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '0.8';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '1';
+                                  }}
+                                >
                                   <strong>{output.name}</strong> ({output.type})
                                   {output.title && output.title !== output.name && (
                                     <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({output.title})</span>
