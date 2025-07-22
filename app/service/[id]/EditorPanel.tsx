@@ -7,6 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import TokenManagement from './TokenManagement';
 import ApiEndpointPreview from './ApiEndpointPreview';
+import ServiceTester from './ServiceTester';
 import * as GC from '@mescius/spread-sheets';
 
 const { Title, Text } = Typography;
@@ -106,6 +107,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
+  const [availableTokens, setAvailableTokens] = useState<any[]>([]);
 
   // AI metadata fields
   const [aiDescription, setAiDescription] = useState<string>(initialConfig?.aiDescription || '');
@@ -943,6 +945,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     setTokenCount(count);
   }, []);
 
+  const handleTokensChange = useCallback((tokens: any[]) => {
+    setAvailableTokens(tokens);
+  }, []);
+
   // Get statistic value style based on active state
   const getStatisticValueStyle = (cardType: ActiveCard, originalColor: string) => {
     if (activeCard === cardType) {
@@ -1377,11 +1383,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     isPublished={serviceStatus?.published || false}
                     requireToken={requireToken}
                   />
+                  <ServiceTester
+                    serviceId={serviceId || ''}
+                    isPublished={serviceStatus?.published || false}
+                    inputs={inputs}
+                    outputs={outputs}
+                    requireToken={requireToken}
+                    existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
+                  />
                   <TokenManagement
                     serviceId={serviceId || ''}
                     requireToken={requireToken}
                     onRequireTokenChange={handleRequireTokenChange}
                     onTokenCountChange={handleTokenCountChange}
+                    onTokensChange={handleTokensChange}
                   />
                 </Space>
               </div>

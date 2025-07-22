@@ -807,12 +807,17 @@ export async function GET(request) {
         return NextResponse.json(result, { status: 400 });
       }
 
-      // Add request timing to result
+      // Add request timing to result only on localhost
       if (result && !result.error) {
-        result.requestTimings = {
-          totalRequestTime: Date.now() - requestStart,
-          steps: timingSteps
-        };
+        const url = new URL(request.url);
+        const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname.startsWith('192.168.');
+        
+        if (isLocalhost) {
+          result.requestTimings = {
+            totalRequestTime: Date.now() - requestStart,
+            steps: timingSteps
+          };
+        }
       }
       
       logTiming('before_response_creation');

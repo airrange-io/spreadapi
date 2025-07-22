@@ -50,9 +50,10 @@ interface TokenManagementProps {
   requireToken: boolean;
   onRequireTokenChange: (require: boolean) => void;
   onTokenCountChange?: (count: number) => void;
+  onTokensChange?: (tokens: Token[]) => void;
 }
 
-const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange }: TokenManagementProps) {
+const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange, onTokensChange }: TokenManagementProps) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,6 +84,9 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
         const tokenList = data.tokens || [];
         setTokens(tokenList);
         setHasLoadedOnce(true);
+        if (onTokensChange) {
+          onTokensChange(tokenList);
+        }
 
         // Update token count
         if (onTokenCountChange) {
