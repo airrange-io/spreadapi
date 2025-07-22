@@ -4,8 +4,8 @@ import { getUserTokens } from '../../../../lib/mcp-auth';
 export async function GET(request) {
   try {
     // TODO: Add proper authentication with Hanko
-    // For now, using a fixed temporary user ID for consistency
-    const tempUserId = 'temp-user-default';
+    // For now, using a fixed test user ID for consistency
+    const tempUserId = 'test1234';
 
     // Get user's tokens
     const tokens = await getUserTokens(tempUserId);

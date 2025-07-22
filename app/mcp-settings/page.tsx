@@ -33,11 +33,11 @@ const MCPSettingsPage = observer(() => {
   const { message: messageApi } = App.useApp();
 
   useEffect(() => {
-    if (appStore.authChecked && appStore.user.isRegistered) {
-      loadTokens();
-      loadServices();
-    }
-  }, [appStore.authChecked, appStore.user.isRegistered]);
+    // TODO: Re-enable auth check once Hanko integration is complete
+    // For now, load data immediately since we're using test user
+    loadTokens();
+    loadServices();
+  }, []); // Run once on mount
 
   const loadTokens = async () => {
     setLoadingTokens(true);
@@ -60,13 +60,16 @@ const MCPSettingsPage = observer(() => {
       const res = await fetch('/api/services');
       if (res.ok) {
         const data = await res.json();
+        console.log('Loaded services:', data.services);
         // Only show published services
         const publishedServices = (data.services || []).filter(s => s.status === 'published');
+        console.log('Published services:', publishedServices);
         setAvailableServices(publishedServices);
         // By default, select all services
         setSelectedServiceIds(publishedServices.map(s => s.id));
       }
     } catch (error) {
+      console.error('Error loading services:', error);
       messageApi.error('Failed to load services');
     } finally {
       setLoadingServices(false);

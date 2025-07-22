@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '../../../lib/redis';
 import { getApiDefinition } from '../../../utils/helperApi';
+import { mcpAuthMiddleware } from '../../../lib/mcp-auth';
 
 /**
  * MCP (Model Context Protocol) Server Implementation
@@ -107,6 +108,24 @@ export async function POST(request) {
       });
     }
 
+    // Skip authentication for initialize method
+    let authResult = null;
+    if (method !== 'initialize') {
+      // Validate authentication
+      authResult = await mcpAuthMiddleware(request);
+      
+      if (!authResult.valid) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32001,
+            message: `Authentication failed: ${authResult.error}. Please ensure you have a valid MCP token configured.`
+          },
+          id
+        });
+      }
+    }
+
     // Handle different MCP methods
     switch (method) {
       case 'initialize': {
@@ -133,50 +152,87 @@ export async function POST(request) {
       case 'tools/list': {
         // List all available services as MCP tools
         try {
-          // Get all services from Redis
-          const serviceKeys = await redis.keys('service:*');
           const tools = [];
-
-          // Filter and process service keys
-          for (const key of serviceKeys) {
-            // Skip special keys like service:*:analytics, service:*:published, etc.
-            if (key.includes(':analytics') || 
-                key.includes(':published') || 
-                key.includes(':tokens') ||
-                key.includes(':cache')) {
-              continue;
-            }
-
-            const serviceId = key.replace('service:', '');
-            
-            try {
-              // Get service details
-              const service = await redis.hGetAll(key);
-              
-              // Skip if no name (might be invalid service)
-              if (!service.name) continue;
-
-              // Check if service is published
-              const isPublished = await redis.exists(`service:${serviceId}:published`);
-              if (!isPublished) continue;
-
-              // Get published API definition
-              const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
-              const apiDefinition = publishedData.api ? JSON.parse(publishedData.api) : null;
-
-              if (apiDefinition) {
-                const tool = serviceToMcpTool(
-                  {
-                    id: serviceId,
-                    name: service.name,
-                    description: apiDefinition.description || service.description
-                  },
-                  apiDefinition
-                );
-                tools.push(tool);
+          
+          // Check if token has specific service restrictions
+          const hasServiceRestrictions = authResult && authResult.serviceIds && authResult.serviceIds.length > 0;
+          
+          if (hasServiceRestrictions) {
+            // Only list allowed services
+            for (const serviceId of authResult.serviceIds) {
+              try {
+                // Check if service exists and is published
+                const serviceExists = await redis.exists(`service:${serviceId}`);
+                const isPublished = await redis.exists(`service:${serviceId}:published`);
+                
+                if (!serviceExists || !isPublished) continue;
+                
+                // Get service details
+                const service = await redis.hGetAll(`service:${serviceId}`);
+                const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+                const apiDefinition = publishedData.api ? JSON.parse(publishedData.api) : null;
+                
+                if (apiDefinition && service.name) {
+                  const tool = serviceToMcpTool(
+                    {
+                      id: serviceId,
+                      name: service.name,
+                      description: apiDefinition.description || service.description
+                    },
+                    apiDefinition
+                  );
+                  tools.push(tool);
+                }
+              } catch (error) {
+                console.error(`Error processing service ${serviceId}:`, error);
               }
-            } catch (error) {
-              console.error(`Error processing service ${serviceId}:`, error);
+            }
+          } else {
+            // List all published services for the user
+            const userServicesIndex = await redis.hGetAll(`user:${authResult.userId}:services`);
+            
+            for (const [serviceId, serviceIndexData] of Object.entries(userServicesIndex)) {
+              try {
+                // Parse service index data
+                const indexData = typeof serviceIndexData === 'string' ? JSON.parse(serviceIndexData) : serviceIndexData;
+                
+                // Only process published services
+                if (indexData.status !== 'published') continue;
+                
+                // Check if service is published (double check)
+                const isPublished = await redis.exists(`service:${serviceId}:published`);
+                if (!isPublished) continue;
+                
+                // Get service details
+                const service = await redis.hGetAll(`service:${serviceId}`);
+                const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+                
+                // Parse the stored API definition
+                const apiDefinition = {
+                  title: publishedData.title || service.name,
+                  description: publishedData.description || service.description,
+                  inputs: publishedData.inputs ? JSON.parse(publishedData.inputs) : [],
+                  outputs: publishedData.outputs ? JSON.parse(publishedData.outputs) : [],
+                  aiDescription: publishedData.aiDescription,
+                  aiUsageExamples: publishedData.aiUsageExamples ? JSON.parse(publishedData.aiUsageExamples) : [],
+                  aiTags: publishedData.aiTags ? JSON.parse(publishedData.aiTags) : [],
+                  category: publishedData.category
+                };
+                
+                if (service.name) {
+                  const tool = serviceToMcpTool(
+                    {
+                      id: serviceId,
+                      name: service.name,
+                      description: apiDefinition.description || service.description
+                    },
+                    apiDefinition
+                  );
+                  tools.push(tool);
+                }
+              } catch (error) {
+                console.error(`Error processing service ${serviceId}:`, error);
+              }
             }
           }
 
@@ -215,6 +271,34 @@ export async function POST(request) {
         // Extract service ID
         const serviceId = name.replace('spreadapi_', '');
         
+        // Check if user has access to this service
+        const hasServiceRestrictions = authResult && authResult.serviceIds && authResult.serviceIds.length > 0;
+        if (hasServiceRestrictions && !authResult.serviceIds.includes(serviceId)) {
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            error: {
+              code: -32602,
+              message: `Access denied: Your token does not have permission to use service ${serviceId}`
+            },
+            id
+          });
+        }
+        
+        // Check if service belongs to the user (if no service restrictions)
+        if (!hasServiceRestrictions) {
+          const userServicesIndex = await redis.hGetAll(`user:${authResult.userId}:services`);
+          if (!userServicesIndex.hasOwnProperty(serviceId)) {
+            return NextResponse.json({
+              jsonrpc: '2.0',
+              error: {
+                code: -32602,
+                message: `Access denied: Service ${serviceId} not found in your services`
+              },
+              id
+            });
+          }
+        }
+        
         // Extract token if provided in arguments
         const { _token, ...inputs } = args;
 
@@ -232,26 +316,44 @@ export async function POST(request) {
         // List available resources (services metadata)
         try {
           const resources = [];
-          const serviceKeys = await redis.keys('service:*');
-
-          for (const key of serviceKeys) {
-            if (key.includes(':analytics') || 
-                key.includes(':published') || 
-                key.includes(':tokens') ||
-                key.includes(':cache')) {
-              continue;
+          
+          // Check if token has specific service restrictions
+          const hasServiceRestrictions = authResult && authResult.serviceIds && authResult.serviceIds.length > 0;
+          
+          if (hasServiceRestrictions) {
+            // Only list allowed services
+            for (const serviceId of authResult.serviceIds) {
+              const service = await redis.hGetAll(`service:${serviceId}`);
+              if (service && service.name) {
+                resources.push({
+                  uri: `spreadapi://service/${serviceId}`,
+                  name: service.name,
+                  description: service.description || 'Spreadsheet calculation service',
+                  mimeType: 'application/json'
+                });
+              }
             }
-
-            const serviceId = key.replace('service:', '');
-            const service = await redis.hGetAll(key);
+          } else {
+            // List all user's services
+            const userServicesIndex = await redis.hGetAll(`user:${authResult.userId}:services`);
             
-            if (service.name) {
-              resources.push({
-                uri: `spreadapi://service/${serviceId}`,
-                name: service.name,
-                description: service.description || 'Spreadsheet calculation service',
-                mimeType: 'application/json'
-              });
+            for (const [serviceId, serviceIndexData] of Object.entries(userServicesIndex)) {
+              try {
+                // Parse service index data
+                const indexData = typeof serviceIndexData === 'string' ? JSON.parse(serviceIndexData) : serviceIndexData;
+                
+                // Only include published services in resources
+                if (indexData.status === 'published') {
+                  resources.push({
+                    uri: `spreadapi://service/${serviceId}`,
+                    name: indexData.name,
+                    description: indexData.description || 'Spreadsheet calculation service',
+                    mimeType: 'application/json'
+                  });
+                }
+              } catch (error) {
+                console.error(`Error processing service ${serviceId}:`, error);
+              }
             }
           }
 

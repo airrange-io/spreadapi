@@ -4,8 +4,8 @@ import { createToken } from '../../../../../lib/mcp-auth';
 export async function POST(request) {
   try {
     // TODO: Add proper authentication with Hanko
-    // For now, using a fixed temporary user ID for consistency
-    const tempUserId = 'temp-user-default';
+    // For now, using a fixed test user ID for consistency
+    const tempUserId = 'test1234';
 
     // Parse request body
     const body = await request.json();
