@@ -9,7 +9,7 @@ export async function POST(request) {
 
     // Parse request body
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, serviceIds } = body;
 
     // Validate input
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -25,12 +25,21 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    
+    // Validate serviceIds if provided
+    if (serviceIds && !Array.isArray(serviceIds)) {
+      return NextResponse.json(
+        { error: 'Service IDs must be an array' },
+        { status: 400 }
+      );
+    }
 
     // Create token
     const tokenData = await createToken(
       tempUserId,
       name.trim(),
-      description?.trim() || ''
+      description?.trim() || '',
+      serviceIds || []
     );
 
     return NextResponse.json(tokenData, { status: 201 });

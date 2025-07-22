@@ -277,51 +277,52 @@ async function handleJsonRpc(request, auth) {
           }
         ];
         
-        // Get all published services
-        const publishedKeys = await redis.keys('service:*:published');
+        // Get user's services first (for proper isolation)
+        const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+        const userServiceIds = Object.keys(userServiceIndex);
         
-        for (const key of publishedKeys) {
-          // Extract service ID from key
-          const serviceId = key.replace('service:', '').replace(':published', '');
+        // Get allowed service IDs from auth
+        const allowedServiceIds = auth.serviceIds || [];
+        const hasServiceRestrictions = allowedServiceIds.length > 0;
+        
+        // Only check published status for user's services
+        for (const serviceId of userServiceIds) {
+          // Skip if this service isn't published
+          const isPublished = await redis.exists(`service:${serviceId}:published`);
+          if (!isPublished) continue;
+          
+          // Check if this service is allowed for this token
+          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+            continue; // Skip services not in the allowed list
+          }
           
           try {
             // Get published service data
-            const publishedData = await redis.hGetAll(key);
+            const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
             
             // Skip if no urlData (means not published)
             if (!publishedData.urlData) continue;
             
-            // Check if we have API definition directly in Redis (new format)
+            // API definition must be in Redis (no backwards compatibility)
+            if (!publishedData.inputs || !publishedData.outputs) {
+              console.error(`Service ${serviceId} missing inputs/outputs in published data`);
+              continue;
+            }
+            
             let apiDefinition;
-            if (publishedData.inputs && publishedData.outputs) {
-              // Use data directly from Redis (efficient!)
-              try {
-                apiDefinition = {
-                  inputs: JSON.parse(publishedData.inputs),
-                  outputs: JSON.parse(publishedData.outputs),
-                  title: publishedData.title,
-                  aiDescription: publishedData.aiDescription,
-                  aiUsageExamples: publishedData.aiUsageExamples ? JSON.parse(publishedData.aiUsageExamples) : [],
-                  aiTags: publishedData.aiTags ? JSON.parse(publishedData.aiTags) : [],
-                  category: publishedData.category
-                };
-              } catch (parseError) {
-                console.error(`Error parsing API definition for ${serviceId}:`, parseError);
-                continue;
-              }
-            } else {
-              // Fallback to fetching from blob (old format)
-              try {
-                const apiData = await getApiDefinition(serviceId, null);
-                if (apiData.error) {
-                  console.error(`Error getting API definition for ${serviceId}:`, apiData.error);
-                  continue;
-                }
-                apiDefinition = apiData.apiJson || apiData;
-              } catch (fetchError) {
-                console.error(`Error fetching API definition for ${serviceId}:`, fetchError);
-                continue;
-              }
+            try {
+              apiDefinition = {
+                inputs: JSON.parse(publishedData.inputs),
+                outputs: JSON.parse(publishedData.outputs),
+                title: publishedData.title,
+                aiDescription: publishedData.aiDescription,
+                aiUsageExamples: publishedData.aiUsageExamples ? JSON.parse(publishedData.aiUsageExamples) : [],
+                aiTags: publishedData.aiTags ? JSON.parse(publishedData.aiTags) : [],
+                category: publishedData.category
+              };
+            } catch (parseError) {
+              console.error(`Error parsing API definition for ${serviceId}:`, parseError);
+              continue;
             }
             
             // Skip if no inputs/outputs defined
@@ -373,6 +374,20 @@ async function handleJsonRpc(request, auth) {
             
             if (!serviceId) {
               throw new Error('serviceId is required');
+            }
+            
+            // First check if this service belongs to the user
+            const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+            if (!userServiceIndex[serviceId]) {
+              throw new Error('Service not found');
+            }
+            
+            // Then check if this service is allowed for this token
+            const allowedServiceIds = auth.serviceIds || [];
+            const hasServiceRestrictions = allowedServiceIds.length > 0;
+            
+            if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+              throw new Error('Access denied to this service');
             }
             
             // Use the cached getApiDefinition function
@@ -449,12 +464,26 @@ async function handleJsonRpc(request, auth) {
             const includeMetadata = args.includeMetadata || false;
             const services = [];
             
-            // Get all published services
-            const publishedKeys = await redis.keys('service:*:published');
+            // Get user's services first (for proper isolation)
+            const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+            const userServiceIds = Object.keys(userServiceIndex);
             
-            for (const key of publishedKeys) {
-              const serviceId = key.replace('service:', '').replace(':published', '');
-              const publishedData = await redis.hGetAll(key);
+            // Get allowed service IDs from auth
+            const allowedServiceIds = auth.serviceIds || [];
+            const hasServiceRestrictions = allowedServiceIds.length > 0;
+            
+            // Only check published status for user's services
+            for (const serviceId of userServiceIds) {
+              // Skip if this service isn't published
+              const isPublished = await redis.exists(`service:${serviceId}:published`);
+              if (!isPublished) continue;
+              
+              // Check if this service is allowed for this token
+              if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+                continue; // Skip services not in the allowed list
+              }
+              
+              const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
               
               const serviceInfo = {
                 id: serviceId,
@@ -513,6 +542,34 @@ async function handleJsonRpc(request, auth) {
         
         // Extract service ID
         const serviceId = name.replace('spreadapi_calc_', '');
+        
+        // First check if this service belongs to the user
+        const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+        if (!userServiceIndex[serviceId]) {
+          return {
+            jsonrpc: '2.0',
+            error: {
+              code: INVALID_PARAMS,
+              message: 'Service not found'
+            },
+            id
+          };
+        }
+        
+        // Then check if this service is allowed for this token
+        const allowedServiceIds = auth.serviceIds || [];
+        const hasServiceRestrictions = allowedServiceIds.length > 0;
+        
+        if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+          return {
+            jsonrpc: '2.0',
+            error: {
+              code: INVALID_PARAMS,
+              message: 'Access denied to this service'
+            },
+            id
+          };
+        }
         
         // Execute the service
         const result = await executeService(serviceId, args);

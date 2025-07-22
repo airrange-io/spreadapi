@@ -246,6 +246,24 @@ export async function PUT(request, { params }) {
     console.log(`[Workbook PUT] Updating service hash with:`, updateData);
     await redis.hSet(`service:${id}`, updateData);
     
+    // Update user's service index with the new workbook URL
+    const isPublished = await redis.exists(`service:${id}:published`);
+    const publishedData = isPublished ? await redis.hGetAll(`service:${id}:published`) : null;
+    
+    const indexData = {
+      id: id,
+      name: service.name || 'Untitled Service',
+      description: service.description || '',
+      status: isPublished ? 'published' : 'draft',
+      createdAt: service.createdAt,
+      updatedAt: timestamp,
+      publishedAt: publishedData?.created || null,
+      calls: parseInt(publishedData?.calls || '0'),
+      lastUsed: publishedData?.lastUsed || null,
+      workbookUrl: blob.url
+    };
+    await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
+    
     console.log(`[Workbook PUT] Service updated successfully`);
 
     return NextResponse.json({
@@ -302,8 +320,24 @@ export async function DELETE(request, { params }) {
         await delBlob(blobUrl);
         
         // Remove workbook URL from service hash
+        const timestamp = new Date().toISOString();
         await redis.hDel(`service:${id}`, 'workbookUrl');
-        await redis.hSet(`service:${id}`, 'updatedAt', new Date().toISOString());
+        await redis.hSet(`service:${id}`, 'updatedAt', timestamp);
+        
+        // Update user's service index to remove workbook URL
+        const indexData = {
+          id: id,
+          name: service.name || 'Untitled Service',
+          description: service.description || '',
+          status: 'draft', // Cannot be published without workbook
+          createdAt: service.createdAt,
+          updatedAt: timestamp,
+          publishedAt: null,
+          calls: 0,
+          lastUsed: null,
+          workbookUrl: ''
+        };
+        await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
         
         return NextResponse.json({
           success: true,

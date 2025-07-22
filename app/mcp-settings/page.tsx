@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Button, Input, Card, Alert, Typography, Space, message, 
-  Tag, Divider, Tooltip, List, Modal, Spin, App
+  Tag, Divider, Tooltip, List, Modal, Spin, App, Checkbox
 } from 'antd';
 import { 
   CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined, 
@@ -24,6 +24,9 @@ const MCPSettingsPage = observer(() => {
   const [existingTokens, setExistingTokens] = useState<any[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
   
   const router = useRouter();
   const appStore = useAppStore();
@@ -32,6 +35,7 @@ const MCPSettingsPage = observer(() => {
   useEffect(() => {
     if (appStore.authChecked && appStore.user.isRegistered) {
       loadTokens();
+      loadServices();
     }
   }, [appStore.authChecked, appStore.user.isRegistered]);
 
@@ -50,6 +54,25 @@ const MCPSettingsPage = observer(() => {
     }
   };
 
+  const loadServices = async () => {
+    setLoadingServices(true);
+    try {
+      const res = await fetch('/api/services');
+      if (res.ok) {
+        const data = await res.json();
+        // Only show published services
+        const publishedServices = (data.services || []).filter(s => s.status === 'published');
+        setAvailableServices(publishedServices);
+        // By default, select all services
+        setSelectedServiceIds(publishedServices.map(s => s.id));
+      }
+    } catch (error) {
+      messageApi.error('Failed to load services');
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+
   const generateToken = async () => {
     if (!tokenName.trim()) {
       messageApi.warning('Please enter a token name');
@@ -64,7 +87,8 @@ const MCPSettingsPage = observer(() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           name: tokenName.trim(),
-          description: tokenDescription.trim()
+          description: tokenDescription.trim(),
+          serviceIds: selectedServiceIds.length === availableServices.length ? [] : selectedServiceIds
         })
       });
       
@@ -187,6 +211,74 @@ const MCPSettingsPage = observer(() => {
                 />
               </div>
 
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Service Access</Text>
+                {loadingServices ? (
+                  <div style={{ padding: 20, textAlign: 'center' }}>
+                    <Spin size="small" />
+                  </div>
+                ) : availableServices.length === 0 ? (
+                  <Alert
+                    message="No published services"
+                    description="You need to publish at least one service before creating tokens"
+                    type="warning"
+                    showIcon
+                  />
+                ) : (
+                  <div style={{ 
+                    border: '1px solid #d9d9d9', 
+                    borderRadius: 4, 
+                    padding: 12,
+                    maxHeight: 200,
+                    overflowY: 'auto'
+                  }}>
+                    <Checkbox
+                      checked={selectedServiceIds.length === availableServices.length}
+                      indeterminate={selectedServiceIds.length > 0 && selectedServiceIds.length < availableServices.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedServiceIds(availableServices.map(s => s.id));
+                        } else {
+                          setSelectedServiceIds([]);
+                        }
+                      }}
+                      style={{ marginBottom: 8 }}
+                    >
+                      <Text strong>All Services</Text>
+                    </Checkbox>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {availableServices.map(service => (
+                        <Checkbox
+                          key={service.id}
+                          checked={selectedServiceIds.includes(service.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedServiceIds([...selectedServiceIds, service.id]);
+                            } else {
+                              setSelectedServiceIds(selectedServiceIds.filter(id => id !== service.id));
+                            }
+                          }}
+                        >
+                          <Space>
+                            <Text>{service.name}</Text>
+                            <Text type="secondary" style={{ fontSize: 12 }}>({service.id})</Text>
+                          </Space>
+                        </Checkbox>
+                      ))}
+                    </Space>
+                  </div>
+                )}
+                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+                  {selectedServiceIds.length === 0 
+                    ? 'No services selected - token will have no access'
+                    : selectedServiceIds.length === availableServices.length 
+                    ? 'Token will have access to all current and future services'
+                    : `Token will have access to ${selectedServiceIds.length} selected service${selectedServiceIds.length > 1 ? 's' : ''}`
+                  }
+                </Text>
+              </div>
+
               <Button 
                 type="primary"
                 icon={<PlusOutlined />}
@@ -301,6 +393,13 @@ const MCPSettingsPage = observer(() => {
                             <BarChartOutlined /> {token.requests} requests
                           </Text>
                         </Space>
+                        {token.serviceIds && token.serviceIds.length > 0 && (
+                          <div style={{ marginTop: 4 }}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              <LockOutlined /> Access limited to {token.serviceIds.length} service{token.serviceIds.length > 1 ? 's' : ''}
+                            </Text>
+                          </div>
+                        )}
                       </Space>
                     }
                   />

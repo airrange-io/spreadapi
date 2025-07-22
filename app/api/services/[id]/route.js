@@ -106,6 +106,24 @@ export async function PUT(request, { params }) {
     // Update service
     await redis.hSet(`service:${serviceId}`, updateData);
     
+    // Update user's service index with the latest data
+    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    const publishedData = isPublished ? await redis.hGetAll(`service:${serviceId}:published`) : null;
+    
+    const indexData = {
+      id: serviceId,
+      name: updateData.name || existingService.name,
+      description: updateData.description || existingService.description,
+      status: isPublished ? 'published' : 'draft',
+      createdAt: existingService.createdAt,
+      updatedAt: now,
+      publishedAt: publishedData?.created || null,
+      calls: parseInt(publishedData?.calls || '0'),
+      lastUsed: publishedData?.lastUsed || null,
+      workbookUrl: existingService.workbookUrl
+    };
+    await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
+    
     // Note: We don't update the published data - it remains as a snapshot
     
     return NextResponse.json({ 

@@ -42,8 +42,21 @@ export async function POST(request, { params }) {
       await redis.del(...resultKeys);
     }
     
-    // Update the user's service index
-    await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, 'draft');
+    // Update the user's service index with updated status
+    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    const indexData = {
+      id: serviceId,
+      name: serviceData.name || 'Untitled Service',
+      description: serviceData.description || '',
+      status: 'draft',
+      createdAt: serviceData.createdAt,
+      updatedAt: new Date().toISOString(),
+      publishedAt: null,
+      calls: 0,
+      lastUsed: null,
+      workbookUrl: serviceData.workbookUrl || ''
+    };
+    await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
     
     return NextResponse.json({ 
       success: true,

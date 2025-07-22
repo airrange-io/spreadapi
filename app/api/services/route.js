@@ -17,52 +17,19 @@ export async function GET(request) {
       return NextResponse.json({ services: [] });
     }
     
-    // Use Redis multi to fetch all data in one round trip
-    const multi = redis.multi();
-    
-    // Queue all operations
-    serviceIds.forEach(id => {
-      multi.hGetAll(`service:${id}`);
-      multi.exists(`service:${id}:published`);
-      multi.hGetAll(`service:${id}:published`);
-    });
-    
-    // Execute multi - single network round trip!
-    const results = await multi.exec();
-    
-    // Debug specific service
-    const testIndex = serviceIds.indexOf('test1234_mdctzfumgsds0');
-    if (testIndex !== -1) {
-      console.log('[API] test1234 Redis results:');
-      console.log('- exists result:', results[testIndex * 3 + 1]);
-      console.log('- type:', typeof results[testIndex * 3 + 1]);
-    }
-    
-    // Process results (3 results per service)
+    // Parse service index data and build service list
     const services = [];
-    for (let i = 0; i < serviceIds.length; i++) {
-      const serviceData = results[i * 3];
-      const isPublished = results[i * 3 + 1];
-      const publishedData = results[i * 3 + 2] || {};
-      
-      
-      // Skip if service doesn't exist
-      if (!serviceData || Object.keys(serviceData).length === 0) {
+    
+    for (const [serviceId, indexData] of Object.entries(serviceIndex)) {
+      try {
+        // Parse JSON data from index
+        const serviceInfo = typeof indexData === 'string' ? JSON.parse(indexData) : indexData;
+        services.push(serviceInfo);
+      } catch (error) {
+        console.error(`Error processing service ${serviceId}:`, error);
+        // Skip this service if there's an error
         continue;
       }
-      
-      services.push({
-        id: serviceData.id || serviceIds[i],
-        name: serviceData.name || 'Untitled Service',
-        description: serviceData.description || '',
-        status: isPublished === 1 ? 'published' : 'draft',
-        createdAt: serviceData.createdAt || new Date().toISOString(),
-        updatedAt: serviceData.updatedAt || serviceData.createdAt || new Date().toISOString(),
-        publishedAt: publishedData.created || null,
-        calls: parseInt(publishedData.calls || '0'),
-        lastUsed: publishedData.lastUsed || null,
-        workbookUrl: serviceData.workbookUrl
-      });
     }
     
     // Filter out nulls and sort by updatedAt descending
@@ -153,8 +120,20 @@ export async function POST(request) {
     // Store service
     await redis.hSet(`service:${id}`, serviceData);
     
-    // Add to user's services index
-    await redis.hSet(`user:${TEST_USER_ID}:services`, id, 'draft');
+    // Add to user's services index with full overview data
+    const indexData = {
+      id: id,
+      name: serviceData.name,
+      description: serviceData.description,
+      status: 'draft',
+      createdAt: serviceData.createdAt,
+      updatedAt: serviceData.updatedAt,
+      publishedAt: null,
+      calls: 0,
+      lastUsed: null,
+      workbookUrl: serviceData.workbookUrl
+    };
+    await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
     
     return NextResponse.json({ 
       success: true,
