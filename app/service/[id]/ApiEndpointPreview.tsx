@@ -33,7 +33,7 @@ export default function ApiEndpointPreview({
       background: isPublished ? '#E4F2D4' : '#f5f5f5',
       // border: `1px solid ${isPublished ? '#f0f0f0' : '#d9d9d9'}`, //#b7eb8f
       borderRadius: '8px',
-      padding: '5px 14px',
+      padding: '8px 16px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',

@@ -11,6 +11,13 @@ import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import Sidebar from '@/components/Sidebar';
 import ServiceList from '@/components/ServiceList';
+import dynamic from 'next/dynamic';
+
+// Lazy load the MCP Settings Modal
+const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), {
+  ssr: false,
+  loading: () => null
+});
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
 
@@ -26,6 +33,7 @@ const ListsPage: React.FC = observer(() => {
   const [isContentScrollable, setIsContentScrollable] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
+  const [showMCPModal, setShowMCPModal] = useState(false);
 
   // Mark when we're on the client
   useEffect(() => {
@@ -208,7 +216,7 @@ const ListsPage: React.FC = observer(() => {
               {/* MCP Settings Button */}
               <Button
                 icon={<AppstoreOutlined />}
-                onClick={() => router.push('/mcp-settings')}
+                onClick={() => setShowMCPModal(true)}
                 title="MCP Integration"
               >
                 <span className="desktop-text">MCP</span>
@@ -308,6 +316,12 @@ const ListsPage: React.FC = observer(() => {
           </div>
         </Content>
       </Layout>
+      
+      {/* MCP Settings Modal */}
+      <MCPSettingsModal
+        visible={showMCPModal}
+        onClose={() => setShowMCPModal(false)}
+      />
     </Layout>
   );
 });

@@ -195,6 +195,7 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
               hoverable
               onClick={() => handleEdit(service.id)}
               style={{ cursor: 'pointer' }}
+              styles={{ body: { padding: 24, paddingRight: 16 } }}
               actions={[
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button
@@ -205,16 +206,16 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                     Edit
                   </Button>
                 </div>,
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    type="text"
-                    icon={<PlayCircleOutlined />}
-                    onClick={() => handleTest(service.id, service.name)}
-                    disabled={service.status === 'draft'}
-                  >
-                    Test
-                  </Button>
-                </div>,
+                // <div onClick={(e) => e.stopPropagation()}>
+                //   <Button
+                //     type="text"
+                //     icon={<PlayCircleOutlined />}
+                //     onClick={() => handleTest(service.id, service.name)}
+                //     disabled={service.status === 'draft'}
+                //   >
+                //     Test
+                //   </Button>
+                // </div>,
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button
                     type="text"
@@ -229,12 +230,12 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
             >
               <Card.Meta
                 title={
-                  <Space>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text strong>{service.name}</Text>
-                    <Tag color={service.status === 'published' ? 'green' : 'orange'}>
+                    <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4}}>
                       {service.status}
                     </Tag>
-                  </Space>
+                  </div>
                 }
                 description={
                   <Space direction="vertical" style={{ width: '100%' }}>

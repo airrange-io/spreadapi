@@ -1001,7 +1001,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             onClick={() => handleCardClick('parameters')}
           >
             <Statistic
-              title="Parameters"
+              title="API Parameters"
               value={inputs.length + outputs.length}
               prefix={<SwapOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
@@ -1010,6 +1010,24 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   {inputs.length > 0 || outputs.length > 0 ? `(${inputs.length}/${outputs.length})` : ''}
                 </span>
               }
+            />
+          </Card>
+
+          <Card
+            size="small"
+            style={{
+              ...getCardStyle('tokens'),
+              flex: '0 0 calc(33.33% - 5.33px)',
+            }}
+            styles={{ body: getCardBodyStyle() }}
+            hoverable
+            onClick={() => handleCardClick('tokens')}
+          >
+            <Statistic
+              title="Call the Service"
+              value={tokenCount}
+              prefix={<SafetyOutlined style={{ color: '#858585' }} />}
+              valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
             />
           </Card>
 
@@ -1031,23 +1049,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             />
           </Card>
 
-          <Card
-            size="small"
-            style={{
-              ...getCardStyle('tokens'),
-              flex: '0 0 calc(33.33% - 5.33px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('tokens')}
-          >
-            <Statistic
-              title="How to Use"
-              value={tokenCount}
-              prefix={<SafetyOutlined style={{ color: '#858585' }} />}
-              valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
-            />
-          </Card>
         </div>
       </div>
 

@@ -47,9 +47,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       case 'manage-account':
         appStore.setShowProfileModal(true);
         break;
-      case 'mcp-settings':
-        router.push('/settings/mcp');
-        break;
       case 'login':
       case 'register':
         // Both login and register use the same modal/component since Hanko handles both
@@ -96,11 +93,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       key: 'manage-account',
       label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>Manage Account</span>,
       icon: <UserOutlined />
-    },
-    {
-      key: 'mcp-settings',
-      label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>MCP Settings</span>,
-      icon: <ApiOutlined />
     },
     {
       key: 'signout',
