@@ -468,6 +468,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       message.success('Service published successfully!');
       console.log('Publish result:', result);
+      
+      // Set a flag to refresh the service list
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('refreshServiceList', Date.now().toString());
+      }
 
       // Update the service status
       setServiceStatus({

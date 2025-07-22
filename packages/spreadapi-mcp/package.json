@@ -1,0 +1,36 @@
+{
+  "name": "spreadapi-mcp",
+  "version": "1.0.2",
+  "description": "MCP bridge for SpreadAPI - Access spreadsheet calculations from Claude Desktop",
+  "main": "index.js",
+  "bin": {
+    "spreadapi-mcp": "./index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "spreadapi",
+    "spreadsheet",
+    "calculations",
+    "ai"
+  ],
+  "author": "SpreadAPI",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spreadapi/spreadapi-mcp"
+  }
+}

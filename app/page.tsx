@@ -205,7 +205,16 @@ const ListsPage: React.FC = observer(() => {
 
             {/* Right side - Action Buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 8 }}>
-              {/* Token Usage Indicator - only show after lists have loaded */}
+              {/* MCP Settings Button */}
+              <Button
+                icon={<AppstoreOutlined />}
+                onClick={() => router.push('/mcp-settings')}
+                title="MCP Integration"
+              >
+                <span className="desktop-text">MCP</span>
+              </Button>
+              
+              {/* New Service Button */}
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

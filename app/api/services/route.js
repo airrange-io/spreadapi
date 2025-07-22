@@ -30,12 +30,21 @@ export async function GET(request) {
     // Execute multi - single network round trip!
     const results = await multi.exec();
     
+    // Debug specific service
+    const testIndex = serviceIds.indexOf('test1234_mdctzfumgsds0');
+    if (testIndex !== -1) {
+      console.log('[API] test1234 Redis results:');
+      console.log('- exists result:', results[testIndex * 3 + 1]);
+      console.log('- type:', typeof results[testIndex * 3 + 1]);
+    }
+    
     // Process results (3 results per service)
     const services = [];
     for (let i = 0; i < serviceIds.length; i++) {
       const serviceData = results[i * 3];
       const isPublished = results[i * 3 + 1];
       const publishedData = results[i * 3 + 2] || {};
+      
       
       // Skip if service doesn't exist
       if (!serviceData || Object.keys(serviceData).length === 0) {
@@ -46,7 +55,7 @@ export async function GET(request) {
         id: serviceData.id || serviceIds[i],
         name: serviceData.name || 'Untitled Service',
         description: serviceData.description || '',
-        status: isPublished ? 'published' : 'draft',
+        status: isPublished === 1 ? 'published' : 'draft',
         createdAt: serviceData.createdAt || new Date().toISOString(),
         updatedAt: serviceData.updatedAt || serviceData.createdAt || new Date().toISOString(),
         publishedAt: publishedData.created || null,
@@ -60,19 +69,18 @@ export async function GET(request) {
     const validServices = services.filter(s => s !== null);
     validServices.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     
-    // Generate ETag based on content hash
-    const etag = Buffer.from(JSON.stringify(validServices)).toString('base64').substring(0, 16);
-    
-    // Check if client has matching ETag
-    const clientEtag = request.headers.get('if-none-match');
-    if (clientEtag === etag) {
-      return new NextResponse(null, { status: 304 }); // Not Modified
-    }
-    
-    return NextResponse.json({ services: validServices }, {
+    // TEMPORARY: Disable all caching
+    return NextResponse.json({ 
+      services: validServices,
+      _debug: {
+        timestamp: Date.now(),
+        count: validServices.length
+      }
+    }, {
       headers: {
-        'ETag': etag,
-        'Cache-Control': 'private, max-age=0, must-revalidate'
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     });
   } catch (error) {

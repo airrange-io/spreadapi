@@ -393,8 +393,12 @@ console.log(response.data);`;
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <div style={{
-        background: 'white',
-        padding: '16px 24px',
+        background: 'white', 
+        height: '56px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 18px',
         borderBottom: '1px solid #f0f0f0'
       }}>
         {(!searchParams.get('service') || !serviceLoading) && (

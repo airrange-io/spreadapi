@@ -220,7 +220,7 @@ export default function AnalyticsPageClient({ serviceId }: { serviceId: string }
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 24px',
+        padding: '0 18px',
         borderBottom: '1px solid #f0f0f0'
       }}>
         <Space>

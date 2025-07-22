@@ -25,7 +25,7 @@ declare global {
   }
 }
 
-type ActiveCard = 'detail' | 'parameters' | 'tokens' | null;
+type ActiveCard = 'parameters' | 'detail' | 'tokens' | null;
 
 interface InputDefinition {
   id: string;
@@ -80,7 +80,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
   const [buttonAreaHeight, setButtonAreaHeight] = useState(0);
-  const [activeCard, setActiveCard] = useState<ActiveCard>('detail');
+  const [activeCard, setActiveCard] = useState<ActiveCard>('parameters');
   const [apiName, setApiName] = useState(initialConfig?.name || '');
   const [apiDescription, setApiDescription] = useState(initialConfig?.description || '');
   const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
@@ -97,6 +97,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
   const [tokenCount, setTokenCount] = useState<number>(0);
+  
+  // AI metadata fields
+  const [aiDescription, setAiDescription] = useState<string>(initialConfig?.aiDescription || '');
+  const [aiUsageExamples, setAiUsageExamples] = useState<string[]>(initialConfig?.aiUsageExamples || []);
+  const [aiTags, setAiTags] = useState<string[]>(initialConfig?.aiTags || []);
+  const [category, setCategory] = useState<string>(initialConfig?.category || '');
 
   // Handle card activation
   const handleCardClick = useCallback((cardType: ActiveCard) => {
@@ -118,14 +124,18 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           inputs,
           outputs,
           enableCaching,
-          requireToken
+          requireToken,
+          aiDescription,
+          aiUsageExamples,
+          aiTags,
+          category
         });
       }
       setSaveStatus('saved');
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [apiName, apiDescription, inputs, outputs, enableCaching, requireToken]);
+  }, [apiName, apiDescription, inputs, outputs, enableCaching, requireToken, aiDescription, aiUsageExamples, aiTags, category]);
 
   // Measure button area height
   useEffect(() => {
@@ -619,10 +629,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         inputs,
         outputs,
         enableCaching,
-        requireToken: value
+        requireToken: value,
+        aiDescription,
+        aiUsageExamples,
+        aiTags,
+        category
       });
     }
-  }, [apiName, apiDescription, inputs, outputs, enableCaching, onConfigChange]);
+  }, [apiName, apiDescription, inputs, outputs, enableCaching, aiDescription, aiUsageExamples, aiTags, category, onConfigChange]);
 
   const handleTokenCountChange = useCallback((count: number) => {
     setTokenCount(count);
@@ -653,24 +667,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           <Card
             size="small"
             style={{
-              ...getCardStyle('detail'),
-              flex: '0 0 calc(33.33% - 5.33px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('detail')}
-          >
-            <Statistic
-              title="Service"
-              value={'---'}
-              prefix={<FileTextOutlined style={{ color: '#858585' }} />}
-              valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
-            />
-          </Card>
-
-          <Card
-            size="small"
-            style={{
               ...getCardStyle('parameters'),
               flex: '0 0 calc(33.33% - 5.33px)',
             }}
@@ -688,6 +684,24 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   {inputs.length > 0 || outputs.length > 0 ? `(${inputs.length}/${outputs.length})` : ''}
                 </span>
               }
+            />
+          </Card>
+
+          <Card
+            size="small"
+            style={{
+              ...getCardStyle('detail'),
+              flex: '0 0 calc(33.33% - 5.33px)',
+            }}
+            styles={{ body: getCardBodyStyle() }}
+            hoverable
+            onClick={() => handleCardClick('detail')}
+          >
+            <Statistic
+              title="Settings"
+              value={'---'}
+              prefix={<FileTextOutlined style={{ color: '#858585' }} />}
+              valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
             />
           </Card>
 
@@ -791,6 +805,63 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                           <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
                         </Tooltip>
                       </Space>
+                    </Space>
+                  </div>
+
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
+                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
+                        <Input.TextArea
+                          placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
+                          value={aiDescription}
+                          onChange={(e) => setAiDescription(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
+                        <Select
+                          mode="tags"
+                          style={{ width: '100%' }}
+                          placeholder="Add example questions or use cases (press Enter to add)"
+                          value={aiUsageExamples}
+                          onChange={setAiUsageExamples}
+                          tokenSeparators={[',']}
+                        />
+                      </div>
+                      
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
+                        <Select
+                          mode="tags"
+                          style={{ width: '100%' }}
+                          placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
+                          value={aiTags}
+                          onChange={setAiTags}
+                          tokenSeparators={[',']}
+                        />
+                      </div>
+                      
+                      <div>
+                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
+                        <Select
+                          style={{ width: '100%' }}
+                          placeholder="Select a category"
+                          value={category}
+                          onChange={setCategory}
+                        >
+                          <Select.Option value="finance">Finance</Select.Option>
+                          <Select.Option value="math">Mathematics</Select.Option>
+                          <Select.Option value="statistics">Statistics</Select.Option>
+                          <Select.Option value="business">Business</Select.Option>
+                          <Select.Option value="science">Science</Select.Option>
+                          <Select.Option value="engineering">Engineering</Select.Option>
+                          <Select.Option value="other">Other</Select.Option>
+                        </Select>
+                      </div>
                     </Space>
                   </div>
 
@@ -1080,10 +1151,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           </Form.Item>
 
           <Form.Item
-            label="Description"
+            label="Description (for AI assistants)"
             name="description"
+            help="This helps AI assistants understand what this parameter represents and how to use it"
           >
-            <Input.TextArea rows={2} placeholder="Optional description" />
+            <Input.TextArea 
+              rows={2} 
+              placeholder="Describe what this parameter represents and how it should be used..."
+              maxLength={500}
+              showCount
+            />
           </Form.Item>
 
           {parameterType === 'input' && (

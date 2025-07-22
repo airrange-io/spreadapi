@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App } from 'antd';
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 
 const { Title, Text, Paragraph } = Typography;
@@ -25,23 +25,41 @@ interface ServiceListProps {
 
 export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { message } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
-  const [lastFetch, setLastFetch] = useState<number>(0);
 
   useEffect(() => {
-    // Check if we have cached data that's less than 30 seconds old
-    const now = Date.now();
-    const cacheExpiry = 30000; // 30 seconds
-    
-    if (lastFetch && (now - lastFetch) < cacheExpiry && services.length > 0) {
-      setLoading(false);
-      return; // Use cached data
-    }
-    
+    // Always load fresh data when component mounts
     loadServices();
+  }, []);
+
+  // Listen for storage events to refresh when services are published/unpublished
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'refreshServiceList') {
+        loadServices();
+      }
+    };
+
+    // Check on focus if we need to refresh
+    const handleFocus = () => {
+      const lastRefresh = window.localStorage.getItem('refreshServiceList');
+      if (lastRefresh) {
+        window.localStorage.removeItem('refreshServiceList');
+        loadServices();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   // Filter services based on search query
@@ -70,7 +88,6 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
       if (response.ok) {
         const loadedServices = data.services || [];
         setServices(loadedServices);
-        setLastFetch(Date.now()); // Track when we fetched
         // Initialize filtered services with all services if no search query
         if (!searchQuery.trim()) {
           setFilteredServices(loadedServices);
