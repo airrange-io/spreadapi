@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
+import { revalidateServicesCache } from '@/lib/revalidateServices';
 
 // For now, use a fixed test user
 const TEST_USER_ID = 'test1234';
@@ -57,6 +58,9 @@ export async function POST(request, { params }) {
       workbookUrl: serviceData.workbookUrl || ''
     };
     await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
+    
+    // Revalidate services cache
+    await revalidateServicesCache();
     
     return NextResponse.json({ 
       success: true,

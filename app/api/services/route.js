@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { delBlob } from '@/lib/blob-client';
+import { revalidateServicesCache } from '@/lib/revalidateServices';
 
 // For now, use a fixed test user
 const TEST_USER_ID = 'test1234';
@@ -230,6 +231,9 @@ export async function DELETE(request) {
     
     // Remove from user's services index
     await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
+    
+    // Revalidate services cache
+    await revalidateServicesCache();
     
     return NextResponse.json({ 
       success: true,

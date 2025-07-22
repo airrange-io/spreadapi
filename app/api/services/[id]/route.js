@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { revalidateServicesCache } from '@/lib/revalidateServices';
 
 const TEST_USER_ID = 'test1234';
 
@@ -125,6 +126,9 @@ export async function PUT(request, { params }) {
     await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
     
     // Note: We don't update the published data - it remains as a snapshot
+    
+    // Revalidate services cache
+    await revalidateServicesCache();
     
     return NextResponse.json({ 
       success: true,
