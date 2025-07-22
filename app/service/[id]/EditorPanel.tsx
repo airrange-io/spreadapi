@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Statistic, Typography, Space, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert } from 'antd';
+import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
@@ -116,7 +116,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   // Handle card activation
   const handleCardClick = useCallback((cardType: ActiveCard) => {
     if (activeCard === cardType) {
-      setActiveCard(null); // Deactivate if already active
+      // setActiveCard(null); // Deactivate if already active
     } else {
       setActiveCard(cardType);
     }
@@ -1017,15 +1017,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             onClick={() => handleCardClick('tokens')}
           >
             <Statistic
-              title="API Tokens"
+              title="Calls & Tokens"
               value={tokenCount}
               prefix={<SafetyOutlined style={{ color: '#858585' }} />}
               valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
-            // suffix={
-            //   <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
-            //     {requireToken ? 'Required' : 'Optional'}
-            //   </span>
-            // }
             />
           </Card>
         </div>
@@ -1056,20 +1051,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 marginTop: '8px',
                 gap: '12px'
               }}>
-                <ApiEndpointPreview
-                  serviceId={serviceId || ''}
-                  isPublished={serviceStatus?.published || false}
-                  requireToken={requireToken}
-                />
                 <div style={{
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   padding: 14,
-                  backgroundColor: "#f2f2f2",
+                  backgroundColor: "#f8f8f8",
                   border: `1px solid #ffffff`,
                   borderRadius: 8,
                   minHeight: 0,
+                  marginBottom: '16px',
                   overflow: 'auto'
                 }}>
                   <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -1166,7 +1157,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       </Space>
                     </div>
 
-                    <div style={{ marginTop: '16px' }}>
+                    {/* <div style={{ marginTop: '16px' }}>
                       <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
                       <Upload
                         accept=".xlsx,.xls"
@@ -1184,10 +1175,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                           Import Excel File
                         </Button>
                       </Upload>
-                      {/* <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                    Supports .xlsx and .xls formats
-                  </div> */}
-                    </div>
+                    </div> */}
                   </Space>
                 </div>
               </div>
@@ -1201,17 +1189,16 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 width: '100%',
                 marginTop: '8px',
                 height: '100%',
-                minHeight: 0
+                minHeight: 0,
+                overflow: 'auto'
               }}>
                 <div style={{
                   flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   padding: 14,
-                  backgroundColor: "#f2f2f2",
-                  // border: `1px solid #ffffff`, 
+                  backgroundColor: "#f8f8f8",
                   borderRadius: 8,
-                  overflow: 'auto'
                 }}>
                   <div>
                     <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Input Parameters</strong></div>
@@ -1224,9 +1211,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                         <Space direction="vertical" style={{ width: '100%' }}>
                           {inputs.map((input, index) => (
                             <div key={input.id} style={{
-                              padding: '8px',
+                              padding: '8px 12px',
                               background: 'white',
-                              borderRadius: '4px',
+                              borderRadius: '8px',
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1240,25 +1227,31 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                     e.currentTarget.style.opacity = '1';
                                   }}
                                 >
-                                  <strong>{input.name}</strong> ({input.type})
-                                  {input.title && input.title !== input.name && (
-                                    <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({input.title})</span>
-                                  )}
-                                  {input.address && <span style={{ marginLeft: '8px', color: '#666' }}>→ {input.address}</span>}
-                                  {(input.min !== undefined || input.max !== undefined) && (
-                                    <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                                      {input.min !== undefined && `Min: ${input.min}`}
-                                      {input.min !== undefined && input.max !== undefined && ' • '}
-                                      {input.max !== undefined && `Max: ${input.max}`}
-                                    </div>
-                                  )}
-                                  {input.description && (
-                                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                      {input.description}
-                                    </div>
-                                  )}
+                                  <Space direction="vertical" size={0}>
+                                    <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
+                                      <strong>{input.name}</strong>
+                                    </Space>
+                                    <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
+                                      {input.title && input.title !== input.name && (
+                                        <div style={{ color: '#888', fontSize: '11px' }}>{input.title}, {input.type}</div>
+                                      )}
+                                      {(input.min !== undefined || input.max !== undefined) && (
+                                        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
+                                          {input.min !== undefined && `Min: ${input.min}`}
+                                          {input.min !== undefined && input.max !== undefined && ' • '}
+                                          {input.max !== undefined && `Max: ${input.max}`}
+                                        </div>
+                                      )}
+                                      {input.description && (
+                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                          {input.description}
+                                        </div>
+                                      )}
+                                    </Space>
+                                  </Space>
                                 </div>
                                 <Space size="small">
+                                  <Tag color='purple' style={{ padding: '4px 8px' }}>{input.address}</Tag>
                                   <Button
                                     size="small"
                                     type="text"
@@ -1280,9 +1273,18 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       )}
                     </div>
                   </div>
-
+                </div>
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 14,
+                  backgroundColor: "#f8f8f8",
+                  borderRadius: 8,
+                  marginTop: '16px',
+                }}>
                   <div>
-                    <div style={{ marginTop: '16px', marginBottom: '8px', color: '#898989' }}><strong>Output Parameters</strong></div>
+                    <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Output Parameters</strong></div>
                     <div style={{
                       fontSize: '12px'
                     }}>
@@ -1292,9 +1294,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                         <Space direction="vertical" style={{ width: '100%' }}>
                           {outputs.map((output, index) => (
                             <div key={output.id} style={{
-                              padding: '8px',
+                              padding: '8px 12px',
                               background: 'white',
-                              borderRadius: '4px',
+                              borderRadius: '8px',
                               border: '1px solid #e8e8e8'
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1308,18 +1310,24 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                     e.currentTarget.style.opacity = '1';
                                   }}
                                 >
-                                  <strong>{output.name}</strong> ({output.type})
-                                  {output.title && output.title !== output.name && (
-                                    <span style={{ marginLeft: '8px', color: '#888', fontSize: '11px' }}>({output.title})</span>
-                                  )}
-                                  {output.address && <span style={{ marginLeft: '8px', color: '#666' }}>← {output.address}</span>}
-                                  {output.description && (
-                                    <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                      {output.description}
-                                    </div>
-                                  )}
+                                  <Space direction="vertical" size={0}>
+                                    <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
+                                      <strong>{output.name}</strong>
+                                    </Space>
+                                    <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
+                                      {output.title && output.title !== output.name && (
+                                        <div style={{ color: '#888', fontSize: '11px' }}>{output.title}, {output.type}</div>
+                                      )}
+                                      {output.description && (
+                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                                          {output.description}
+                                        </div>
+                                      )}
+                                    </Space>
+                                  </Space>
                                 </div>
                                 <Space size="small">
+                                  <Tag color='geekblue' style={{ padding: '4px 8px' }}>{output.address}</Tag>
                                   <Button
                                     size="small"
                                     type="text"
@@ -1363,12 +1371,19 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 marginTop: '8px',
                 minHeight: 0
               }}>
-                <TokenManagement
-                  serviceId={serviceId || ''}
-                  requireToken={requireToken}
-                  onRequireTokenChange={handleRequireTokenChange}
-                  onTokenCountChange={handleTokenCountChange}
-                />
+                <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                  <ApiEndpointPreview
+                    serviceId={serviceId || ''}
+                    isPublished={serviceStatus?.published || false}
+                    requireToken={requireToken}
+                  />
+                  <TokenManagement
+                    serviceId={serviceId || ''}
+                    requireToken={requireToken}
+                    onRequireTokenChange={handleRequireTokenChange}
+                    onTokenCountChange={handleTokenCountChange}
+                  />
+                </Space>
               </div>
             )}
 
@@ -1386,8 +1401,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           padding: '12px',
           paddingTop: 0,
           background: 'white',
-          // borderTop: '1px solid #f0f0f0',
-          // boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
           flex: '0 0 auto'
         }}>
         {(() => {
@@ -1403,11 +1416,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
               >
                 {buttonInfo.text}
               </Button>
-              {/* {!spreadInstance && !showEmptyState && (
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
-                  Waiting for spreadsheet to load...
-                </div>
-              )} */}
               {spreadInstance && !currentSelection && (
                 <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
                   Select a cell or range in the spreadsheet

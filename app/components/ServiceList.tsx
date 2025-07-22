@@ -229,31 +229,12 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
             >
               <Card.Meta
                 title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Space>
-                      <Text strong>{service.name}</Text>
-                      <Tag color={service.status === 'published' ? 'green' : 'orange'}>
-                        {service.status}
-                      </Tag>
-                    </Space>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Popconfirm
-                        title="Delete this service?"
-                        description="This action cannot be undone."
-                        onConfirm={() => handleDelete(service.id, service.name)}
-                        okText="Yes"
-                        cancelText="No"
-                        okButtonProps={{ danger: true }}
-                      >
-                        <Button
-                          type="text"
-                          danger
-                          icon={<DeleteOutlined />}
-                          size="small"
-                        />
-                      </Popconfirm>
-                    </div>
-                  </div>
+                  <Space>
+                    <Text strong>{service.name}</Text>
+                    <Tag color={service.status === 'published' ? 'green' : 'orange'}>
+                      {service.status}
+                    </Tag>
+                  </Space>
                 }
                 description={
                   <Space direction="vertical" style={{ width: '100%' }}>
@@ -264,12 +245,32 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
                       {service.description || 'No description'}
                     </Paragraph>
 
-                    <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
-                      <CalendarOutlined />
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {formatDate(service.updatedAt)}
-                      </Text>
-                    </Space>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
+                        <CalendarOutlined />
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {formatDate(service.updatedAt)}
+                        </Text>
+                      </Space>
+
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Popconfirm
+                          title="Delete this service?"
+                          description="This action cannot be undone."
+                          onConfirm={() => handleDelete(service.id, service.name)}
+                          okText="Yes"
+                          cancelText="No"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                          />
+                        </Popconfirm>
+                      </div>
+                    </div>
 
                     {service.calls > 0 && (
                       <Space size="small" style={{ fontSize: '12px', color: '#888' }}>

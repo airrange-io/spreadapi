@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Button, Input, Card, Alert, Typography, Space, message, 
-  Tag, Divider, Tooltip, List, Modal, Spin, App, Checkbox
+  Tag, Divider, Tooltip, List, Modal, Spin, App, Checkbox, Breadcrumb
 } from 'antd';
 import { 
   CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined, 
@@ -165,14 +165,24 @@ const MCPSettingsPage = observer(() => {
     <App>
       <div style={{ padding: '40px 24px', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ marginBottom: 24 }}>
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => router.push('/')}
-            style={{ marginBottom: 16 }}
-          >
-            Back to Services
-          </Button>
+          <Space align="center" style={{ marginBottom: 16 }}>
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => router.push('/')}
+              style={{ padding: '4px 8px' }}
+            />
+            <Breadcrumb
+              items={[
+                {
+                  title: <a onClick={() => router.push('/')}>Services</a>,
+                },
+                {
+                  title: 'MCP Integration',
+                },
+              ]}
+            />
+          </Space>
           
           <Title level={2}>
             <ApiOutlined /> MCP Integration

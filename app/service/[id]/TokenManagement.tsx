@@ -287,7 +287,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       gap: '12px'
     }}>
       {/* Token requirement toggle */}
-      {tokens.length === 0 ? (
+      {/* {tokens.length === 0 ? (
         <Alert
           description="Create your first API token to enable authentication. Token authentication will be automatically enabled when you create your first token."
           type="info"
@@ -318,7 +318,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
             </Button>
           ) : undefined}
         />
-      )}
+      )} */}
 
       {/* Tokens table */}
       <Card
