@@ -272,6 +272,49 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         props.storeLocal.spread.type === "excel" &&
         props.storeLocal.spread.data
       ) {
+        // Check if Excel IO is available
+        if (!GC.Spread.Excel || !GC.Spread.Excel.IO) {
+          console.error("GC.Spread.Excel.IO is not available yet");
+          // Try again after a short delay
+          const retryTimeout = setTimeout(() => {
+            if (spread && !dataLoaded) {
+              console.log("Retrying Excel import...");
+              if (GC.Spread.Excel && GC.Spread.Excel.IO) {
+                const excelIO = new GC.Spread.Excel.IO();
+                excelIO.import(
+                  props.storeLocal.spread.data,
+                  (json) => {
+                    spread.fromJSON(json);
+                    console.log("Excel file imported successfully (retry)");
+                    setDataLoaded(true);
+                    setIsLoading(false);
+                    if (props.actionHandlerProc) {
+                      props.actionHandlerProc("file-loaded", spread);
+                      props.actionHandlerProc("workbook-loaded", spread);
+                    }
+                  },
+                  (error) => {
+                    console.error("Error importing Excel file:", error);
+                    setDataLoaded(true);
+                    setIsLoading(false);
+                  },
+                  {
+                    fileType: GC.Spread.Sheets.FileType.excel
+                  }
+                );
+              } else {
+                // If still not available, give up and show error
+                console.error("Excel IO still not available after retry");
+                setDataLoaded(true);
+                setIsLoading(false);
+              }
+            }
+          }, 1000);
+          
+          // Cleanup timeout on unmount
+          return () => clearTimeout(retryTimeout);
+        }
+        
         // Import Excel file
         const excelIO = new GC.Spread.Excel.IO();
         excelIO.import(
@@ -289,6 +332,9 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.error("Error importing Excel file:", error);
             setDataLoaded(true);
             setIsLoading(false);
+          },
+          {
+            fileType: GC.Spread.Sheets.FileType.excel
           }
         );
       } else if (
@@ -316,7 +362,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       setDataLoaded(true);
       setIsLoading(false);
     }
-  }, [designer, spread, props.storeLocal?.spread]);
+  }, [designer, spread, props.storeLocal?.spread, dataLoaded]);
 
   const getDesignerConfig = useMemo(() => {
     const showRibbon = props.workbookLayout !== "minimum";

@@ -9,6 +9,7 @@ import EditorPanel from './EditorPanel';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
+import EmptyWorkbookState from './EmptyWorkbookState';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
 const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
@@ -37,6 +38,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
+  const [showEmptyState, setShowEmptyState] = useState(false); // Show empty state for new services
+  const [importFileForEmptyState, setImportFileForEmptyState] = useState<File | null>(null); // File to import after workbook is ready
   const [loading, setLoading] = useState(false);
   const [savingWorkbook, setSavingWorkbook] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
@@ -282,7 +285,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setSavedConfig({ name: '', description: '', inputs: [], outputs: [], enableCaching: true, requireToken: false }); // Track as unsaved
           setHasChanges(true); // Mark as having changes so user can save
 
-          setDefaultSpreadsheetData();
+          // Show empty state instead of default spreadsheet
+          setShowEmptyState(true);
           setInitialLoading(false);
           setLoadingMessage('');
         } else {
@@ -710,6 +714,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       console.log('Workbook loaded successfully');
       // Don't mark as changed when loading existing workbook
       // Only user actions should set hasChanges to true
+      setSavingWorkbook(false); // Clear loading state when workbook is loaded
+    } else if (action === 'file-loaded') {
+      console.log('File loaded successfully');
+      setSavingWorkbook(false); // Clear loading state when file is loaded
     }
   }, []);
 
@@ -727,6 +735,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Spin size="default" />
         </div>
       );
+    }
+
+    // Show empty state for new services
+    if (showEmptyState && !spreadsheetData) {
+      return null; // Will be handled outside of memo
     }
 
     // Don't render WorkbookViewer until we have data
@@ -774,7 +787,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         />
       </div>
     );
-  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading]);
+  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState]);
 
   const handleConfigChange = useCallback((config: any) => {
     setApiConfig(config);
@@ -818,6 +831,28 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setSavingWorkbook(false);
     }
   }, [apiConfig.name]);
+
+  // Handle Excel import for empty state (when workbook is not initialized yet)
+  const handleEmptyStateImport = useCallback((file: File) => {
+    // Store the file for later use
+    setImportFileForEmptyState(file);
+    
+    // First create an empty spreadsheet
+    setShowEmptyState(false);
+    setDefaultSpreadsheetData();
+    
+    // The file will be imported once the workbook is initialized
+  }, []);
+
+  // Import the stored file once the workbook is ready
+  useEffect(() => {
+    if (importFileForEmptyState && spreadInstance && workbookRef.current) {
+      // Import the file using the existing handleImportExcel function
+      handleImportExcel(importFileForEmptyState);
+      // Clear the stored file
+      setImportFileForEmptyState(null);
+    }
+  }, [importFileForEmptyState, spreadInstance, handleImportExcel]);
 
   const configPanel = (
     <EditorPanel
@@ -958,13 +993,35 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </div>
             </Splitter.Panel>
             <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="20%" max="50%">
-              {renderSpreadsheet}
+              {showEmptyState && !spreadsheetData ? (
+                <EmptyWorkbookState
+                  onStartFromScratch={() => {
+                    setShowEmptyState(false);
+                    setDefaultSpreadsheetData();
+                  }}
+                  onImportFile={(file) => {
+                    setShowEmptyState(false);
+                    handleEmptyStateImport(file);
+                  }}
+                />
+              ) : renderSpreadsheet}
             </Splitter.Panel>
           </Splitter>
         ) : (
           <Layout style={{ height: '100%', overflow: 'auto' }}>
             <Content style={{ overflow: 'auto' }}>
-              {renderSpreadsheet}
+              {showEmptyState && !spreadsheetData ? (
+                <EmptyWorkbookState
+                  onStartFromScratch={() => {
+                    setShowEmptyState(false);
+                    setDefaultSpreadsheetData();
+                  }}
+                  onImportFile={(file) => {
+                    setShowEmptyState(false);
+                    handleEmptyStateImport(file);
+                  }}
+                />
+              ) : renderSpreadsheet}
             </Content>
           </Layout>
         )}
