@@ -3,8 +3,8 @@ import { ConfigProvider, App } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import '@ant-design/v5-patch-for-react-19';
 import { ErrorBoundary } from './components/ErrorBoundary';
-// import { SpeedInsights } from '@vercel/speed-insights/next';
-// import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -76,8 +76,8 @@ export default function RootLayout({
             >
               <App>
                 {children}
-                {/* <SpeedInsights /> */}
-                {/* <Analytics /> */}
+                <SpeedInsights />
+                <Analytics />
               </App>
             </ConfigProvider>
           </AntdRegistry>

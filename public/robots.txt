@@ -1,0 +1,39 @@
+# SpreadAPI robots.txt
+# Strategic crawling for app-first architecture
+
+User-agent: *
+# Block app internals but allow strategic pages
+Disallow: /api/
+Disallow: /admin/
+Disallow: /service/*/edit
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /_next/
+Disallow: /user/
+# Allow specific app pages that are good for SEO
+Allow: /service/demo
+Allow: /service/examples/
+Allow: /$
+
+# Marketing pages - fully crawlable
+Allow: /product
+Allow: /product/*
+Allow: /blog
+Allow: /docs
+Allow: /pricing
+
+# Sitemaps
+Sitemap: https://spreadapi.com/sitemap.xml
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Crawl-delay: 1

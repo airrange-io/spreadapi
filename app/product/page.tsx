@@ -29,66 +29,66 @@ const ProductPage: React.FC = () => {
   const faqItems = [
     // Security & Compliance
     {
-      question: 'Werden meine Daten an ChatGPT oder andere KI-Dienste gesendet?',
-      answer: 'Nein, niemals! Ihre Daten verlassen niemals unsere sichere Umgebung. Wir senden nur Befehle wie "E-Mail-Format validieren" an die KI, nicht Ihre tatsächlichen Daten. Die KI liefert uns die Verarbeitungsregeln, die wir dann lokal auf Ihre Daten anwenden.'
+      question: 'How secure is SpreadAPI? Can AI see my proprietary formulas?',
+      answer: 'Your Excel files stay on our secure servers and are never sent to AI providers. You control exactly what AI can access through granular permissions. Hide sensitive formulas while exposing only the inputs and outputs you choose. All data is encrypted and automatically deleted after processing.'
     },
     {
-      question: 'Wie funktioniert die KI-Verarbeitung ohne meine Daten zu sehen?',
-      answer: 'Wir analysieren die Struktur Ihrer Daten (Spalten, Muster) in unserem sicheren Speicher. Dann fragen wir die KI nach Verarbeitungsregeln (z.B. "Wie validiere ich E-Mail-Formate?"). Die KI antwortet mit Regeln, die wir auf Ihre Daten anwenden - ohne dass die KI jemals Ihre echten Daten sieht.'
+      question: 'How does SpreadAPI work with AI assistants like Claude?',
+      answer: 'SpreadAPI provides an MCP (Model Context Protocol) server that AI assistants can connect to. Once connected, the AI can call your Excel calculations as functions, read designated areas, and even modify values or formulas within the permissions you set. It\'s like giving AI a secure API to your spreadsheets.'
     },
     {
-      question: 'Werden meine Daten zum Training von KI-Modellen verwendet?',
-      answer: 'Niemals! Wir haben Enterprise-Vereinbarungen mit allen KI-Anbietern, die Training explizit verbieten. Zudem erreichen Ihre Daten die KI-Dienste gar nicht erst, da wir nur Befehle senden.'
+      question: 'Can I use my existing Excel files without modifications?',
+      answer: 'Yes! Upload your Excel file as-is. SpreadAPI works with your existing formulas, macros, and complex calculations. Simply define which cells are inputs, which are outputs, and optionally create editable areas for AI interaction. No need to rebuild your business logic.'
     },
     
     // Capabilities & Features
     {
-      question: 'Was kann List+ mit meinen Daten machen?',
-      answer: 'List+ bietet intelligente Datenverarbeitung: Automatische Bereinigung (Duplikate entfernen, Formate standardisieren), KI-gestützte Validierung (E-Mails, Telefonnummern, Adressen), Datenanreicherung (fehlende Informationen ergänzen), und vieles mehr - alles ohne Ihre Daten an externe KI-Dienste zu senden.'
+      question: 'What kind of Excel calculations can SpreadAPI handle?',
+      answer: 'SpreadAPI handles everything from simple formulas to complex financial models with thousands of calculations, pivot tables, and multi-sheet dependencies. We support XLSX files up to 5MB after optimization - we automatically remove unused data to ensure lightning-fast performance.'
     },
     {
-      question: 'Was sind Workflows und wie funktionieren sie?',
-      answer: 'Workflows sind automatisierte Datenverarbeitungsprozesse, die Sie selbst erstellen können. Zum Beispiel: "Bereinige alle E-Mail-Adressen → Entferne Duplikate → Standardisiere Firmennamen → Exportiere als CSV". Einmal erstellt, können Sie diese Workflows immer wieder auf neue Daten anwenden.'
+      question: 'What are Editable Areas and how do they work?',
+      answer: 'Editable Areas let you define specific ranges in your spreadsheet that AI can access. Set granular permissions: read-only for outputs, write access for inputs, or even allow formula modifications. For example, let AI experiment with different scenarios in a "sandbox" area while keeping your core model protected.'
     },
     {
-      question: 'Kann ich List+ mit meinen bestehenden Tools verbinden?',
-      answer: 'Ja! List+ unterstützt MCP (Model Context Protocol) Server, wodurch Sie Daten direkt aus Ihren bestehenden Systemen wie CRM, ERP oder Datenbanken verarbeiten können. Die Daten werden temporär in unserem sicheren Speicher verarbeitet und dann zurück in Ihr System geschrieben.'
+      question: 'How do I integrate SpreadAPI with my existing systems?',
+      answer: 'SpreadAPI offers multiple integration options: REST API for any programming language, MCP server for AI assistants, webhooks for real-time updates, and pre-built integrations with Zapier, Make, and n8n. Use our SDKs for Python, JavaScript, and other languages to get started in minutes.'
     },
     {
-      question: 'Welche Datenquellen kann ich verwenden?',
-      answer: 'List+ unterstützt verschiedene Formate und Quellen: CSV, Excel, JSON-Dateien, direkte API-Verbindungen zu CRM-Systemen (HubSpot, Salesforce), Datenbanken über MCP-Server, und manuelle Dateneingabe. Sie können Dateien einfach per Drag & Drop hochladen.'
+      question: 'What happens when my Excel file is updated?',
+      answer: 'Simply upload the new version, and SpreadAPI automatically updates your API. All existing integrations continue working if the inputs/outputs remain the same. You can version your APIs, test changes in staging, and roll back if needed. Perfect for evolving business logic.'
     },
     {
-      question: 'Wie groß können die Datensätze sein, die ich verarbeiten kann?',
-      answer: 'List+ ist für große Datensätze optimiert. Wir verarbeiten problemlos Tabellen mit über 100.000 Zeilen. Dank unserer Memory-Only-Architektur und optimierten Hash-Speicherung bleiben selbst große Datensätze blitzschnell bearbeitbar.'
+      question: 'How fast are the calculations?',
+      answer: 'Most calculations complete in under 100ms. Complex models with thousands of formulas typically process in 1-2 seconds. SpreadAPI uses intelligent caching and optimized calculation engines to ensure your AI assistants get instant responses, making real-time interactions smooth and natural.'
     },
     
     // Use Cases
     {
-      question: 'Welche konkreten Probleme löst List+?',
-      answer: 'Typische Anwendungsfälle: E-Mail-Listen bereinigen (ungültige Adressen entfernen), Kundendaten standardisieren (einheitliche Schreibweisen), Duplikate intelligent zusammenführen, Lead-Scoring und Kategorisierung, Compliance-Prüfungen (DSGVO-konforme Daten identifizieren), und Datenqualität verbessern.'
+      question: 'What are the most common use cases?',
+      answer: 'Popular uses include: AI-powered quote generation using pricing spreadsheets, financial advisors running client scenarios, automated reporting from Excel dashboards, resource optimization with constraint models, and letting AI assistants work with complex business rules without coding them from scratch.'
     },
     {
-      question: 'Kann ich List+ für Echtzeit-Datenverarbeitung nutzen?',
-      answer: 'Ja! Über unsere API können Sie Daten in Echtzeit verarbeiten. Zum Beispiel: Neue Leads aus Ihrem CRM werden automatisch validiert, angereichert und kategorisiert, bevor sie in Ihr System zurückgeschrieben werden - alles in wenigen Sekunden.'
+      question: 'Can SpreadAPI handle real-time calculations?',
+      answer: 'Absolutely! SpreadAPI processes requests in real-time with sub-second response times. Your AI assistant can iterate through hundreds of scenarios, update values, and get instant results. Perfect for interactive experiences like sales conversations, financial planning sessions, or optimization tasks.'
     },
     
     // Technical & Privacy
     {
-      question: 'Wo werden meine Daten während der Verarbeitung gespeichert?',
-      answer: 'Ausschließlich im Arbeitsspeicher (Redis RAM) - niemals auf Festplatten! Nach maximal 1 Stunde werden die Daten automatisch aus dem Speicher gelöscht. Für dauerhafte Listen können Sie optional unseren verschlüsselten Blob-Storage nutzen.'
+      question: 'Do you store my Excel files?',
+      answer: 'Your Excel files are encrypted and stored only for the duration of your service. Files are processed in memory, cached for performance, and automatically purged based on your retention settings. You can delete your data anytime. We never access your files except to process API requests.'
     },
     {
-      question: 'Erfüllt List+ die DSGVO/GDPR-Anforderungen?',
-      answer: 'Ja, vollständig! Recht auf Vergessenwerden (automatisches Löschen), Datenminimierung, klare Zweckbindung, Security by Design mit Verschlüsselung, und vollständige Audit-Logs sind implementiert. Wir sind SOC 2 Type II konform.'
+      question: 'Is SpreadAPI GDPR/SOC 2 compliant?',
+      answer: 'Yes! SpreadAPI is hosted in Frankfurt, Europe, ensuring compliance for European customers. All data is encrypted in transit and at rest. You maintain full control over data retention and can delete your data anytime. Your spreadsheets never leave our secure European servers.'
     },
     {
-      question: 'Kann ich List+ kostenlos testen?',
-      answer: 'Ja! Sie können List+ ohne Registrierung ausprobieren. Erstellen Sie bis zu 3 Listen und testen Sie alle Grundfunktionen. Für erweiterte Features wie KI-Verarbeitung, Workflows und API-Zugriff ist eine kostenlose Registrierung erforderlich.'
+      question: 'Can I try SpreadAPI for free?',
+      answer: 'Yes! Start with our free tier: create up to 3 APIs, 1000 calculations per month, and test all features including AI integration. No credit card required. Our paid plans start at $29/month for unlimited APIs and 100k calculations. Enterprise plans include dedicated support and custom limits.'
     },
     {
-      question: 'Was unterscheidet List+ von Excel oder Google Sheets?',
-      answer: 'List+ ist speziell für Datenverarbeitung mit KI entwickelt: Intelligente Datenbereinigung statt manueller Formeln, automatische Workflows statt Copy-Paste, sichere Verarbeitung sensibler Daten, API-Integration für automatisierte Prozesse, und Team-Kollaboration mit granularen Berechtigungen.'
+      question: 'Why not just rebuild the Excel logic in code?',
+      answer: 'Excel represents years of refined business logic that\'s constantly evolving. Rebuilding means bugs, maintenance, and keeping two systems in sync. SpreadAPI lets you use Excel as the single source of truth while making it accessible to AI and automation. Update the spreadsheet, and your API updates automatically.'
     }
   ];
 
@@ -110,7 +110,7 @@ const ProductPage: React.FC = () => {
         <nav className="navbar-component">
           <div className="navbar-container">
             <a href="/" className="navbar-logo-link">
-              <img src="/icons/logo-full.svg" alt="List+" className="navbar-logo" />
+              <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
             </a>
             
             <div className="navbar-menu">
@@ -120,7 +120,7 @@ const ProductPage: React.FC = () => {
             </div>
             
             <div className="navbar-button-wrapper">
-              <a href="#cta" className="button hide-mobile-portrait">Join waitlist</a>
+              <a href="#cta" className="button hide-mobile-portrait">Get Started</a>
               <button 
                 className="navbar-menu-button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -143,7 +143,7 @@ const ProductPage: React.FC = () => {
                 <a href="#feature" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
                 <a href="#benefits" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Benefits</a>
                 <a href="#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Faqs</a>
-                <a href="#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Join waitlist</a>
+                <a href="#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
               </nav>
             </div>
           )}
@@ -161,16 +161,16 @@ const ProductPage: React.FC = () => {
                         <div className="max-width-xlarge align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Instant Data Intelligence</div>
+                              <div>Excel as a Web Service</div>
                             </div>
                           </div>
                           <div className="margin-bottom margin-small">
                             <h1>
-                              Connect. Enrich With AI.<br />
-                              <span className="text-color-primary">Your Data, Only Better</span>
+                              Turn Excel Into APIs.<br />
+                              <span className="text-color-primary">Let AI Talk to Spreadsheets</span>
                             </h1>
                           </div>
-                          <p className="text-size-medium" style={{ maxWidth: '560px', margin: '0 auto' }}>Connect to your SaaS tools, databases, and outbound data — apply AI to analyze, enrich, and streamline every process.</p>
+                          <p className="text-size-medium" style={{ maxWidth: '560px', margin: '0 auto' }}>Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations.</p>
                           <div className="margin-top margin-medium">
                             <form onSubmit={handleEmailSubmit} className="waitlist-form-signup">
                               <input 
@@ -183,7 +183,7 @@ const ProductPage: React.FC = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required 
                               />
-                              <input type="submit" className="button" value="Join waitlist" />
+                              <input type="submit" className="button" value="Get Early Access" />
                             </form>
                           </div>
                         </div>
@@ -217,12 +217,12 @@ const ProductPage: React.FC = () => {
                     <div className="feature-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          <span className="text-color-primary">Simplify Project Management</span> with Intuitive Task Management
+                          <span className="text-color-primary">AI Sales Agents</span> Creating Complex Excel Quotes
                         </h2>
                       </div>
                       <div className="margin-bottom margin-medium">
                         <p className="text-size-medium">
-                          Effortlessly manage tasks, deadlines, and priorities with our user-friendly task management system. Assign responsibilities, track progress, and ensure every team member stays on top of their game.
+                          Your AI sales assistant can now generate accurate quotes using your actual Excel pricing models. No more approximations or hallucinations — just precise calculations from your trusted spreadsheets, accessible through a simple API.
                         </p>
                       </div>
                       <div className="feature-keypoint-list">
@@ -233,7 +233,7 @@ const ProductPage: React.FC = () => {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">Streamline Tasks Effortlessly</p>
+                          <p className="text-size-medium">100% Accurate Calculations</p>
                         </div>
                         <div className="feature-keypoint-list-item">
                           <div className="check-icon-wrapper">
@@ -242,7 +242,7 @@ const ProductPage: React.FC = () => {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">Intuitive Task Assignment</p>
+                          <p className="text-size-medium">Your Business Logic Protected</p>
                         </div>
                         <div className="feature-keypoint-list-item">
                           <div className="check-icon-wrapper">
@@ -251,7 +251,7 @@ const ProductPage: React.FC = () => {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">Track Progress Seamlessly</p>
+                          <p className="text-size-medium">Works with Any AI Assistant</p>
                         </div>
                       </div>
                     </div>
@@ -299,12 +299,12 @@ const ProductPage: React.FC = () => {
                     <div className="feature-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          <span className="text-color-primary">Revolutionize</span> Team Communication and Collaboration
+                          <span className="text-color-primary">Editable Areas</span> Give AI Controlled Access
                         </h2>
                       </div>
                       <div className="margin-bottom margin-medium">
                         <p className="text-size-medium">
-                          Our software brings your team together in one unified platform, enabling seamless collaboration, real-time updates, and effortless file sharing.
+                          Define exactly what parts of your spreadsheet AI can access. Grant read-only access to outputs, or let AI modify specific input cells or even formulas within designated areas. You stay in control while AI does the work.
                         </p>
                       </div>
                       <div className="feature-list">
@@ -317,9 +317,9 @@ const ProductPage: React.FC = () => {
                           </div>
                           <div className="feature-item-content-wrapper">
                             <div className="margin-bottom margin-xsmall">
-                              <h3 className="heading-style-h5">Real-time Collaboration</h3>
+                              <h3 className="heading-style-h5">Granular Permissions</h3>
                             </div>
-                            <p className="text-size-medium">Empower your team to work together in real-time, facilitating instant communication and fostering collaboration.</p>
+                            <p className="text-size-medium">Control exactly what AI can see and modify. Set permissions for values, formulas, formatting, and structure — keeping your core business logic secure.</p>
                           </div>
                         </div>
                         <div className="feature-item">
@@ -331,9 +331,9 @@ const ProductPage: React.FC = () => {
                           </div>
                           <div className="feature-item-content-wrapper">
                             <div className="margin-bottom margin-xsmall">
-                              <h3 className="heading-style-h5">Seamless Communication</h3>
+                              <h3 className="heading-style-h5">Formula Intelligence</h3>
                             </div>
-                            <p className="text-size-medium">Break down communication barriers and create a seamless flow of information, ensuring everyone stays connected and aligned.</p>
+                            <p className="text-size-medium">AI can not only read values but understand and even optimize your Excel formulas. Enable what-if scenarios and let AI experiment within safe boundaries.</p>
                           </div>
                         </div>
                       </div>
@@ -352,45 +352,45 @@ const ProductPage: React.FC = () => {
                   <div className="tools-component">
                     <div className="tools-list">
                       <div className="tools-item">
-                        <div className="tools-logo">Slack</div>
+                        <div className="tools-logo">Claude</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Google Drive</div>
+                        <div className="tools-logo">ChatGPT</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Dropbox</div>
+                        <div className="tools-logo">Copilot</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Figma</div>
+                        <div className="tools-logo">Gemini</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">List+</div>
+                        <div className="tools-logo">Excel</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Notion</div>
+                        <div className="tools-logo">Zapier</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Teams</div>
+                        <div className="tools-logo">n8n</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Google</div>
+                        <div className="tools-logo">Make</div>
                       </div>
                       <div className="tools-item">
-                        <div className="tools-logo">Meta</div>
+                        <div className="tools-logo">API</div>
                       </div>
                     </div>
                     <div className="tools-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          Connect <span className="text-color-primary">Your Favorite Tools</span> for Effortless Workflow
+                          Works With <span className="text-color-primary">Every AI Platform</span> and Automation Tool
                         </h2>
                       </div>
                       <div className="margin-bottom margin-medium">
                         <p className="text-size-medium">
-                          Seamlessly integrate with popular tools like Slack, Trello, and Google Drive to streamline your workflow. Eliminate data silos and enjoy a cohesive project management ecosystem that works harmoniously.
+                          SpreadAPI works with Claude, ChatGPT, and any AI assistant through our MCP server. Connect via REST API, webhooks, or integrate with Zapier, Make, and n8n. Your Excel calculations become accessible everywhere.
                         </p>
                       </div>
-                      <a href="#cta" className="button">Join waitlist</a>
+                      <a href="#cta" className="button">Start Building</a>
                     </div>
                   </div>
                 </div>
@@ -408,12 +408,12 @@ const ProductPage: React.FC = () => {
                       <div className="max-width-large">
                         <div className="margin-bottom margin-xsmall">
                           <div className="subheading">
-                            <div>Benefits</div>
+                            <div>Use Cases</div>
                           </div>
                         </div>
                         <div className="text-align-center">
                           <h2>
-                            Unlock the <span className="text-color-primary">Power of Project </span>Management Reinvented
+                            What <span className="text-color-primary">Game-Changing Technology</span> Enables
                           </h2>
                         </div>
                       </div>
@@ -432,9 +432,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Boost Productivity</h3>
+                        <h3>Financial Advisors</h3>
                       </div>
-                      <p>Unleash your team's potential and skyrocket productivity.</p>
+                      <p>Run complex what-if scenarios using actual Excel models. AI analyzes options without errors.</p>
                     </div>
                     <div className="benefits-item">
                       <div className="margin-bottom margin-medium">
@@ -450,9 +450,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Enhance Collaboration</h3>
+                        <h3>Business Analysts</h3>
                       </div>
-                      <p>Break down communication barriers and foster a culture of collaboration.</p>
+                      <p>Automate report generation from spreadsheet data. AI extracts insights from your calculations.</p>
                     </div>
                     <div className="benefits-item">
                       <div className="margin-bottom margin-medium">
@@ -465,9 +465,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Meet Deadlines</h3>
+                        <h3>AI Assistants</h3>
                       </div>
-                      <p>Say goodbye to missed deadlines and late deliveries.</p>
+                      <p>Optimize spreadsheet formulas automatically. AI suggests improvements while preserving logic.</p>
                     </div>
                     <div className="benefits-item">
                       <div className="margin-bottom margin-medium">
@@ -481,9 +481,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Gain Insights</h3>
+                        <h3>Sales Teams</h3>
                       </div>
-                      <p>Harness the power of data analytics to gain valuable insights into your projects.</p>
+                      <p>Generate accurate quotes instantly. AI uses your pricing models to create perfect proposals.</p>
                     </div>
                     <div className="benefits-item">
                       <div className="margin-bottom margin-medium">
@@ -497,9 +497,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Scale Your Success</h3>
+                        <h3>Operations</h3>
                       </div>
-                      <p>Seamlessly manage multiple projects, accommodate a growing team.</p>
+                      <p>Complex resource planning with Excel. AI optimizes allocation using your business rules.</p>
                     </div>
                     <div className="benefits-item">
                       <div className="margin-bottom margin-medium">
@@ -512,9 +512,9 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-xsmall">
-                        <h3>Grow with Confidence</h3>
+                        <h3>Developers</h3>
                       </div>
-                      <p>Confidently scale your operations while maintaining efficiency.</p>
+                      <p>Skip rebuilding Excel logic in code. Use spreadsheets as calculation engines via API.</p>
                     </div>
                   </div>
                 </div>
@@ -537,10 +537,10 @@ const ProductPage: React.FC = () => {
                         </div>
                         <div className="margin-bottom margin-small">
                           <h2>
-                            Hear What <span className="text-color-primary">Our Customers</span> Have to Say
+                            Real Results from <span className="text-color-primary">Early Adopters</span>
                           </h2>
                         </div>
-                        <p className="text-size-medium">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        <p className="text-size-medium">See how companies are transforming their Excel-based processes with AI integration.</p>
                       </div>
                     </div>
                   </div>
@@ -548,7 +548,7 @@ const ProductPage: React.FC = () => {
                     <div className="testimonials-item">
                       <div className="testimonial-content">
                         <div className="margin-bottom margin-medium">
-                          <div className="heading-style-h5">"Our team has been using various project management tools for years, but List+ has truly revolutionized our workflow. The intuitive interface, seamless collaboration features, and robust task management capabilities have elevated our productivity to new heights."</div>
+                          <div className="heading-style-h5">"We turned our complex pricing spreadsheet into an API that our AI sales bot uses. Quote accuracy went from 70% to 100%, and quote generation time dropped from 2 hours to 30 seconds. Game-changing doesn't even begin to describe it."</div>
                         </div>
                       </div>
                       <div className="testimonial-author-wrapper">
@@ -556,15 +556,15 @@ const ProductPage: React.FC = () => {
                           <div className="testimonial-author-image"></div>
                         </div>
                         <div className="testimonial-author-content-wrapper">
-                          <p className="heading-style-h6">Michael Brown</p>
-                          <p>Company</p>
+                          <p className="heading-style-h6">Sarah Chen</p>
+                          <p>VP Sales, TechCorp</p>
                         </div>
                       </div>
                     </div>
                     <div className="testimonials-item">
                       <div className="testimonial-content">
                         <div className="margin-bottom margin-medium">
-                          <div className="heading-style-h5">"I've tried numerous project management tools in the past, but none have come close to the efficiency and simplicity of List+. The clean and intuitive design, combined with powerful features like Gantt charts and resource allocation, have made a significant impact on our project success. I highly recommend it!"</div>
+                          <div className="heading-style-h5">"Our financial advisors now use Claude to run scenarios on client portfolios. The AI accesses our Excel models through SpreadAPI, ensuring calculations are always accurate. Compliance loves it because the core logic stays protected in Excel."</div>
                         </div>
                       </div>
                       <div className="testimonial-author-wrapper">
@@ -572,8 +572,8 @@ const ProductPage: React.FC = () => {
                           <div className="testimonial-author-image"></div>
                         </div>
                         <div className="testimonial-author-content-wrapper">
-                          <p className="heading-style-h6">Lisa Rodriguez</p>
-                          <p>Company</p>
+                          <p className="heading-style-h6">Marcus Johnson</p>
+                          <p>CTO, WealthTech Solutions</p>
                         </div>
                       </div>
                     </div>
@@ -599,7 +599,7 @@ const ProductPage: React.FC = () => {
                         <div className="margin-bottom margin-small">
                           <h2>Your Questions Answered</h2>
                         </div>
-                        <p className="text-size-medium">Find answers to commonly asked questions about our project management tool below. If you have any additional inquiries, please feel free to reach out to our support team for further assistance.</p>
+                        <p className="text-size-medium">Everything you need to know about turning Excel into AI-powered APIs. Can't find what you're looking for? Reach out to our team for personalized assistance.</p>
                       </div>
                     </div>
                   </div>
@@ -645,9 +645,9 @@ const ProductPage: React.FC = () => {
                     <div className="text-align-center">
                       <div className="max-width-xlarge">
                         <div className="margin-bottom margin-small">
-                          <h2 className="text-color-white">Join the Waitlist for Exclusive Early Access!</h2>
+                          <h2 className="text-color-white">Ready to Turn Your Spreadsheets Into AI-Powered APIs?</h2>
                         </div>
-                        <p className="text-size-medium text-color-white">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. </p>
+                        <p className="text-size-medium text-color-white">Join forward-thinking companies using SpreadAPI to bridge Excel and AI. Start with our free tier and transform your spreadsheets in minutes.</p>
                       </div>
                     </div>
                     <div className="margin-top margin-medium">
@@ -664,7 +664,7 @@ const ProductPage: React.FC = () => {
                               onChange={(e) => setCtaEmail(e.target.value)}
                               required 
                             />
-                            <input type="submit" className="button button-white" value="Sign up" />
+                            <input type="submit" className="button button-white" value="Get Started Free" />
                           </div>
                           <div className="margin-top margin-xsmall">
                             <div className="text-size-tiny text-color-white">
@@ -694,7 +694,7 @@ const ProductPage: React.FC = () => {
                           </div>
                         </div>
                         <h2>
-                          <span className="text-color-primary">Stay Informed</span> with Insider Updates and Sneak Peeks
+                          <span className="text-color-primary">Get Started</span> in Minutes
                         </h2>
                       </div>
                     </div>
@@ -712,7 +712,7 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <p>
-                        If you have any questions, please feel free to contact us at <a href="mailto:hello@listplus.ai">hello@listplus.ai</a>.
+                        Questions about SpreadAPI? We're here to help at <a href="mailto:hello@spreadapi.com">hello@spreadapi.com</a>.
                       </p>
                     </div>
                     {/* <div className="home-contact-item">
@@ -752,7 +752,7 @@ const ProductPage: React.FC = () => {
                         <a href="/contact" className="footer-link">Contact</a>
                       </div>
                       <a href="/" className="footer-logo-link">
-                        <img src="/logo-text.svg" alt="List+" className="footer-logo" />
+                        <img src="/logo-text.svg" alt="SpreadAPI" className="footer-logo" />
                       </a>
                       <div className="footer-social-list">
                         <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
