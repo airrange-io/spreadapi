@@ -165,7 +165,9 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       ...(service.aiDescription && { aiDescription: service.aiDescription }),
       ...(service.aiUsageExamples && service.aiUsageExamples.length > 0 && { aiUsageExamples: service.aiUsageExamples }),
       ...(service.aiTags && service.aiTags.length > 0 && { aiTags: service.aiTags }),
-      ...(service.category && { category: service.category })
+      ...(service.category && { category: service.category }),
+      // Editable areas for AI
+      ...(service.areas && service.areas.length > 0 && { areas: service.areas })
     },
     fileJson: optimizedWorkbook // The optimized spreadsheet data
   };

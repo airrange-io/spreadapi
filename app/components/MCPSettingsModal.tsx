@@ -252,22 +252,80 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
 
           {generatedToken && (
             <Alert
-              message="Token Generated"
+              message="Token Generated Successfully!"
               description={
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Text>Copy this token now - it won't be shown again:</Text>
-                  <Input.Search
-                    value={generatedToken}
-                    readOnly
-                    enterButton={<CopyOutlined />}
-                    onSearch={() => copyToClipboard(generatedToken)}
-                  />
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  <div>
+                    <Text strong>Your API Token:</Text>
+                    <Input.Search
+                      value={generatedToken}
+                      readOnly
+                      enterButton={<CopyOutlined />}
+                      onSearch={() => copyToClipboard(generatedToken)}
+                      style={{ marginTop: 8 }}
+                    />
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                      Save this token - it won't be shown again!
+                    </Text>
+                  </div>
+                  
+                  <Divider style={{ margin: '12px 0' }} />
+                  
+                  <div>
+                    <Text strong>Quick Setup for Claude Desktop:</Text>
+                    <Text style={{ display: 'block', marginTop: 8, marginBottom: 8 }}>
+                      Add this to your Claude Desktop config file:
+                    </Text>
+                    <pre style={{ 
+                      background: '#f5f5f5', 
+                      padding: 12, 
+                      borderRadius: 4,
+                      overflow: 'auto',
+                      position: 'relative'
+                    }}>
+                      <Button
+                        size="small"
+                        icon={<CopyOutlined />}
+                        onClick={() => copyToClipboard(JSON.stringify({
+                          mcpServers: {
+                            spreadapi: {
+                              command: "npx",
+                              args: ["spreadapi-mcp"],
+                              env: {
+                                SPREADAPI_URL: `${mcpUrl}/v1`,
+                                SPREADAPI_TOKEN: generatedToken
+                              }
+                            }
+                          }
+                        }, null, 2))}
+                        style={{ position: 'absolute', top: 8, right: 8 }}
+                      >
+                        Copy
+                      </Button>
+{`{
+  "mcpServers": {
+    "spreadapi": {
+      "command": "npx",
+      "args": ["spreadapi-mcp"],
+      "env": {
+        "SPREADAPI_URL": "${mcpUrl}/v1",
+        "SPREADAPI_TOKEN": "${generatedToken}"
+      }
+    }
+  }
+}`}
+                    </pre>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      Config location: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+                    </Text>
+                  </div>
                 </Space>
               }
               type="success"
               showIcon
               closable
               onClose={() => setGeneratedToken(null)}
+              style={{ marginTop: 16 }}
             />
           )}
         </Space>
@@ -386,7 +444,15 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             {/* Step 2 */}
             <div>
               <Title level={5}>Step 2: Configure Claude Desktop</Title>
-              <Text>Add your SpreadAPI server to Claude Desktop using the command line:</Text>
+              <Text>Choose one of the following methods:</Text>
+            </div>
+
+            {/* Method 1: Bridge/stdio */}
+            <div style={{ marginTop: 16 }}>
+              <Title level={5} style={{ marginBottom: 8 }}>Method 1: Bridge Package (Recommended)</Title>
+              <Text>Install and configure the SpreadAPI MCP bridge:</Text>
+              
+              <Text strong style={{ display: 'block', marginTop: 12 }}>First, install the bridge package:</Text>
               <pre style={{ 
                 background: '#f5f5f5', 
                 padding: 12, 
@@ -394,36 +460,10 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                 marginTop: 8,
                 overflow: 'auto'
               }}>
-{`claude mcp add --transport http spreadapi ${mcpUrl} --header "Authorization: Bearer YOUR_TOKEN_HERE"`}
+{`npm install -g spreadapi-mcp`}
               </pre>
               
-              <Space style={{ marginTop: 12 }} wrap>
-                <Button
-                  icon={<CopyOutlined />}
-                  onClick={() => copyToClipboard(`claude mcp add --transport http spreadapi ${mcpUrl} --header "Authorization: Bearer YOUR_TOKEN_HERE"`)}
-                >
-                  Copy Command
-                </Button>
-                <Button
-                  icon={<CopyOutlined />}
-                  onClick={() => copyToClipboard(mcpUrl)}
-                >
-                  Copy URL
-                </Button>
-              </Space>
-              
-              <Alert
-                style={{ marginTop: 12 }}
-                message="Important"
-                description="Replace YOUR_TOKEN_HERE with the actual token you generated in Step 1"
-                type="warning"
-              />
-            </div>
-
-            {/* Alternative Method */}
-            <div>
-              <Title level={5}>Alternative: Manual Configuration</Title>
-              <Text>You can also manually edit the Claude Desktop config file:</Text>
+              <Text strong style={{ display: 'block', marginTop: 16 }}>Then add this to your Claude Desktop config:</Text>
               
               <Alert
                 style={{ marginTop: 12, marginBottom: 12 }}
@@ -438,7 +478,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                 type="info"
               />
 
-              <Text>Add this to your config file (merge with existing content if any):</Text>
+              <Text>Add this to your config file (merge with existing mcpServers if any):</Text>
               <pre style={{ 
                 background: '#f5f5f5', 
                 padding: 12, 
@@ -449,10 +489,11 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
 {`{
   "mcpServers": {
     "spreadapi": {
-      "transport": "http",
-      "url": "${mcpUrl}",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      "command": "npx",
+      "args": ["spreadapi-mcp"],
+      "env": {
+        "SPREADAPI_URL": "${mcpUrl}/v1",
+        "SPREADAPI_TOKEN": "YOUR_TOKEN_HERE"
       }
     }
   }
@@ -465,10 +506,11 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                   onClick={() => copyToClipboard(JSON.stringify({
                     mcpServers: {
                       spreadapi: {
-                        transport: "http",
-                        url: mcpUrl,
-                        headers: {
-                          Authorization: "Bearer YOUR_TOKEN_HERE"
+                        command: "npx",
+                        args: ["spreadapi-mcp"],
+                        env: {
+                          SPREADAPI_URL: `${mcpUrl}/v1`,
+                          SPREADAPI_TOKEN: "YOUR_TOKEN_HERE"
                         }
                       }
                     }
@@ -483,6 +525,18 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                 message="Important"
                 description="Replace YOUR_TOKEN_HERE with the actual token you generated in Step 1"
                 type="warning"
+              />
+            </div>
+
+            {/* Method 2: Direct HTTP (Currently not supported) */}
+            <div style={{ marginTop: 24 }}>
+              <Title level={5} style={{ marginBottom: 8 }}>Method 2: Direct HTTP Connection</Title>
+              <Alert
+                message="Not Currently Supported"
+                description="Direct HTTP connections require server-side CORS and MCP protocol support. Please use the bridge method above."
+                type="info"
+                showIcon
+                style={{ marginBottom: 12 }}
               />
             </div>
 

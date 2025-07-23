@@ -24,9 +24,10 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Parse inputs/outputs
+    // Parse inputs/outputs/areas
     let inputs = [];
     let outputs = [];
+    let areas = [];
     
     try {
       inputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
@@ -40,6 +41,12 @@ export async function GET(request, { params }) {
       console.error('Error parsing outputs:', e);
     }
     
+    try {
+      areas = serviceData.areas ? JSON.parse(serviceData.areas) : [];
+    } catch (e) {
+      console.error('Error parsing areas:', e);
+    }
+    
     // Build combined response
     const response = {
       // Service configuration
@@ -49,13 +56,31 @@ export async function GET(request, { params }) {
         description: serviceData.description || '',
         inputs,
         outputs,
+        areas,
         enableCaching: serviceData.cacheEnabled !== 'false',
         requireToken: serviceData.requireToken === 'true',
         workbookUrl: serviceData.workbookUrl,
         workbookSize: serviceData.workbookSize,
         workbookModified: serviceData.workbookModified,
         createdAt: serviceData.createdAt,
-        updatedAt: serviceData.updatedAt
+        updatedAt: serviceData.updatedAt,
+        // AI metadata
+        aiDescription: serviceData.aiDescription || '',
+        aiUsageExamples: (() => {
+          try {
+            return serviceData.aiUsageExamples ? JSON.parse(serviceData.aiUsageExamples) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
+        aiTags: (() => {
+          try {
+            return serviceData.aiTags ? JSON.parse(serviceData.aiTags) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
+        category: serviceData.category || ''
       },
       
       // Status information

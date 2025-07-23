@@ -50,16 +50,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     description: '',
     inputs: [],
     outputs: [],
+    areas: [],
     enableCaching: true,
-    requireToken: false
+    requireToken: false,
+    aiDescription: '',
+    aiUsageExamples: [],
+    aiTags: [],
+    category: ''
   });
   const [savedConfig, setSavedConfig] = useState({
     name: '',
     description: '',
     inputs: [],
     outputs: [],
+    areas: [],
     enableCaching: true,
-    requireToken: false
+    requireToken: false,
+    aiDescription: '',
+    aiUsageExamples: [],
+    aiTags: [],
+    category: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(80);
@@ -182,8 +192,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       apiConfig.description !== savedConfig.description ||
       JSON.stringify(apiConfig.inputs) !== JSON.stringify(savedConfig.inputs) ||
       JSON.stringify(apiConfig.outputs) !== JSON.stringify(savedConfig.outputs) ||
+      JSON.stringify(apiConfig.areas || []) !== JSON.stringify(savedConfig.areas || []) ||
       apiConfig.enableCaching !== savedConfig.enableCaching ||
-      apiConfig.requireToken !== savedConfig.requireToken;
+      apiConfig.requireToken !== savedConfig.requireToken ||
+      apiConfig.aiDescription !== savedConfig.aiDescription ||
+      JSON.stringify(apiConfig.aiUsageExamples) !== JSON.stringify(savedConfig.aiUsageExamples) ||
+      JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
+      apiConfig.category !== savedConfig.category;
 
     setHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
@@ -248,8 +263,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               description: data.service.description || '',
               inputs: data.service.inputs || [],
               outputs: data.service.outputs || [],
+              areas: data.service.areas || [],
               enableCaching: data.service.enableCaching !== false,
-              requireToken: data.service.requireToken === true
+              requireToken: data.service.requireToken === true,
+              aiDescription: data.service.aiDescription || '',
+              aiUsageExamples: data.service.aiUsageExamples || [],
+              aiTags: data.service.aiTags || [],
+              category: data.service.category || ''
             };
             console.log('Loaded config from full endpoint:', loadedConfig);
             setApiConfig(loadedConfig);
@@ -267,8 +287,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               description: data.description || '',
               inputs: data.inputs || [],
               outputs: data.outputs || [],
+              areas: data.areas || [],
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
-              requireToken: data.requireToken === 'true' // Redis stores as string
+              requireToken: data.requireToken === 'true', // Redis stores as string
+              aiDescription: data.aiDescription || '',
+              aiUsageExamples: data.aiUsageExamples || [],
+              aiTags: data.aiTags || [],
+              category: data.category || ''
             };
             console.log('Loaded config from regular endpoint:', loadedConfig);
             setApiConfig(loadedConfig);
@@ -323,8 +348,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             description: '',
             inputs: [],
             outputs: [],
+            areas: [],
             enableCaching: true,
-            requireToken: false
+            requireToken: false,
+            aiDescription: '',
+            aiUsageExamples: [],
+            aiTags: [],
+            category: ''
           };
           setApiConfig(newConfig);
           setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
@@ -491,8 +521,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
-      if (apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0) {
-        message.error('Please define at least one input and one output parameter');
+      if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
+        message.error('Please define at least one input, output, or editable area');
         return;
       }
 
@@ -668,13 +698,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: apiConfig.name || 'Untitled API',
+          name: apiConfig.name || 'Untitled Service',
           description: apiConfig.description || '',
           file: null, // Don't store workbook in Redis anymore
           inputs: apiConfig.inputs,
           outputs: apiConfig.outputs,
+          areas: apiConfig.areas || [],
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          aiDescription: apiConfig.aiDescription,
+          aiUsageExamples: apiConfig.aiUsageExamples,
+          aiTags: apiConfig.aiTags,
+          category: apiConfig.category,
           status: 'draft'
         })
       });
@@ -1028,7 +1063,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               type="primary"
               onClick={handlePublish}
               loading={loading}
-              disabled={hasChanges || apiConfig.inputs.length === 0 || apiConfig.outputs.length === 0}
+              disabled={hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
             >
               Publish Service
             </Button>

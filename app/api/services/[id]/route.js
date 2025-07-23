@@ -37,9 +37,25 @@ export async function GET(request, { params }) {
       ...serviceData,
       inputs: JSON.parse(serviceData.inputs || '[]'),
       outputs: JSON.parse(serviceData.outputs || '[]'),
+      areas: JSON.parse(serviceData.areas || '[]'),
       tags: serviceData.tags ? serviceData.tags.split(',').filter(t => t) : [],
       status: isPublished ? 'published' : 'draft',
-      published: publishedData
+      published: publishedData,
+      // Parse AI metadata
+      aiUsageExamples: (() => {
+        try {
+          return serviceData.aiUsageExamples ? JSON.parse(serviceData.aiUsageExamples) : [];
+        } catch (e) {
+          return [];
+        }
+      })(),
+      aiTags: (() => {
+        try {
+          return serviceData.aiTags ? JSON.parse(serviceData.aiTags) : [];
+        } catch (e) {
+          return [];
+        }
+      })()
     };
     
     return NextResponse.json(response);
@@ -84,7 +100,8 @@ export async function PUT(request, { params }) {
     
     // Update simple fields
     const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration', 
-                         'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching'];
+                         'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching',
+                         'aiDescription', 'category'];
     simpleFields.forEach(field => {
       if (body[field] !== undefined) {
         updateData[field] = body[field].toString();
@@ -97,6 +114,15 @@ export async function PUT(request, { params }) {
     }
     if (body.outputs !== undefined) {
       updateData.outputs = JSON.stringify(body.outputs);
+    }
+    if (body.areas !== undefined) {
+      updateData.areas = JSON.stringify(body.areas);
+    }
+    if (body.aiUsageExamples !== undefined) {
+      updateData.aiUsageExamples = JSON.stringify(body.aiUsageExamples);
+    }
+    if (body.aiTags !== undefined) {
+      updateData.aiTags = JSON.stringify(body.aiTags);
     }
     
     // Update tags

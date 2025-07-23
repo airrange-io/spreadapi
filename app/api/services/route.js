@@ -103,9 +103,10 @@ export async function POST(request) {
       createdAt: now,
       updatedAt: now,
       
-      // Empty inputs/outputs as JSON strings
+      // Empty inputs/outputs/areas as JSON strings
       inputs: '[]',
       outputs: '[]',
+      areas: '[]',
       
       // Default settings
       cacheEnabled: 'true',
@@ -115,7 +116,13 @@ export async function POST(request) {
       rateLimitWindow: '60',
       
       // Empty tags
-      tags: ''
+      tags: '',
+      
+      // AI metadata
+      aiDescription: '',
+      aiUsageExamples: '[]',
+      aiTags: '[]',
+      category: ''
     };
     
     // Store service

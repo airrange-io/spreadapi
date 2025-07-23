@@ -3,6 +3,7 @@ import redis from '../../../../lib/redis';
 import { mcpAuthMiddleware } from '../../../../lib/mcp-auth';
 import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
+import { executeAreaRead, executeAreaUpdate } from './areaExecutors.js';
 
 /**
  * MCP (Model Context Protocol) Server v1
@@ -137,6 +138,48 @@ async function executeService(serviceId, inputs) {
     const data = await response.json();
     
     if (!response.ok) {
+      // Check if this is a missing parameters error with documentation
+      if (response.status === 400 && data.parameters) {
+        // Format helpful response with parameter documentation
+        let helpText = `Service: ${data.service.name}\n${data.service.description}\n\n`;
+        
+        if (data.parameters.required.length > 0) {
+          helpText += 'Required parameters:\n';
+          data.parameters.required.forEach(p => {
+            helpText += `- ${p.name} (${p.type}): ${p.description}`;
+            if (p.min !== undefined || p.max !== undefined) {
+              helpText += ` [${p.min || ''}-${p.max || ''}]`;
+            }
+            helpText += '\n';
+          });
+        }
+        
+        if (data.parameters.optional.length > 0) {
+          helpText += '\nOptional parameters:\n';
+          data.parameters.optional.forEach(p => {
+            helpText += `- ${p.name} (${p.type}): ${p.description}`;
+            if (p.min !== undefined || p.max !== undefined) {
+              helpText += ` [${p.min || ''}-${p.max || ''}]`;
+            }
+            helpText += '\n';
+          });
+        }
+        
+        if (data.outputs.length > 0) {
+          helpText += '\nOutputs:\n';
+          data.outputs.forEach(o => {
+            helpText += `- ${o.name}: ${o.description}\n`;
+          });
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: helpText
+          }]
+        };
+      }
+      
       throw new Error(data.error || `Calculation failed with status ${response.status}`);
     }
     
@@ -325,18 +368,132 @@ async function handleJsonRpc(request, auth) {
               continue;
             }
             
-            // Skip if no inputs/outputs defined
-            if (!apiDefinition.inputs || !apiDefinition.outputs || 
-                apiDefinition.inputs.length === 0 || apiDefinition.outputs.length === 0) continue;
+            // Parse areas if available
+            let areas = [];
+            if (publishedData.areas) {
+              try {
+                areas = JSON.parse(publishedData.areas);
+              } catch (e) {
+                console.error('Error parsing areas:', e);
+              }
+            }
+            
+            // Skip if no inputs/outputs AND no areas defined
+            const hasInputsOutputs = apiDefinition.inputs && apiDefinition.outputs && 
+                                   (apiDefinition.inputs.length > 0 || apiDefinition.outputs.length > 0);
+            const hasAreas = areas.length > 0;
+            
+            if (!hasInputsOutputs && !hasAreas) continue;
             
             // Add metadata from published data
             if (publishedData.title) {
               publishedData.name = publishedData.title;
             }
             
-            // Transform to MCP tool
-            const tool = serviceToMcpTool(serviceId, publishedData, apiDefinition);
-            tools.push(tool);
+            // Transform to MCP tool only if we have inputs/outputs
+            if (hasInputsOutputs) {
+              const tool = serviceToMcpTool(serviceId, publishedData, apiDefinition);
+              tools.push(tool);
+            }
+            
+            // Add area-specific tools if service has areas defined
+            if (hasAreas) {
+              // Add read area tool
+              tools.push({
+                  name: `spreadapi_read_area_${serviceId}`,
+                  description: `Read data from editable areas in ${publishedData.title || serviceId}`,
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      areaName: {
+                        type: 'string',
+                        description: 'The name of the area to read',
+                        enum: areas.map(a => a.name)
+                      },
+                      includeFormulas: {
+                        type: 'boolean',
+                        description: 'Include cell formulas in the response',
+                        default: false
+                      },
+                      includeFormatting: {
+                        type: 'boolean',
+                        description: 'Include cell formatting in the response',
+                        default: false
+                      }
+                    },
+                    required: ['areaName']
+                  }
+                });
+                
+                // Add write area tool if any areas allow writing
+                const writableAreas = areas.filter(a => a.mode !== 'readonly');
+                if (writableAreas.length > 0) {
+                  tools.push({
+                    name: `spreadapi_update_area_${serviceId}`,
+                    description: `Update values and formulas in editable areas of ${publishedData.title || serviceId}`,
+                    inputSchema: {
+                      type: 'object',
+                      properties: {
+                        updates: {
+                          type: 'array',
+                          description: 'Array of area updates to apply',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              areaName: {
+                                type: 'string',
+                                description: 'The area to update',
+                                enum: writableAreas.map(a => a.name)
+                              },
+                              changes: {
+                                type: 'array',
+                                description: 'Cell changes to apply',
+                                items: {
+                                  type: 'object',
+                                  properties: {
+                                    row: { type: 'number', description: 'Row index within area (0-based)' },
+                                    col: { type: 'number', description: 'Column index within area (0-based)' },
+                                    value: { description: 'New cell value' },
+                                    formula: { type: 'string', description: 'New cell formula' }
+                                  }
+                                }
+                              }
+                            },
+                            required: ['areaName', 'changes']
+                          }
+                        },
+                        returnOptions: {
+                          type: 'object',
+                          description: 'Control what data is returned after updates',
+                          properties: {
+                            includeValues: { 
+                              type: 'boolean', 
+                              description: 'Return calculated cell values',
+                              default: true 
+                            },
+                            includeFormulas: { 
+                              type: 'boolean', 
+                              description: 'Return cell formulas',
+                              default: false 
+                            },
+                            includeFormatting: { 
+                              type: 'boolean', 
+                              description: 'Return cell formatting',
+                              default: false 
+                            },
+                            includeRelatedOutputs: { 
+                              type: 'boolean', 
+                              description: 'Return any defined output parameters that may have changed',
+                              default: false 
+                            }
+                          }
+                        }
+                      },
+                      required: ['updates']
+                    }
+                  });
+                }
+            }
             
           } catch (error) {
             console.error(`Error processing service ${serviceId}:`, error);
@@ -526,6 +683,37 @@ async function handleJsonRpc(request, auth) {
               id
             };
           }
+        }
+        
+        // Handle area read tool
+        if (name.startsWith('spreadapi_read_area_')) {
+          const serviceId = name.replace('spreadapi_read_area_', '');
+          const { areaName, includeFormulas, includeFormatting } = args;
+          
+          const result = await executeAreaRead(serviceId, areaName, {
+            includeFormulas,
+            includeFormatting
+          }, auth);
+          
+          return {
+            jsonrpc: '2.0',
+            result,
+            id
+          };
+        }
+        
+        // Handle area update tool
+        if (name.startsWith('spreadapi_update_area_')) {
+          const serviceId = name.replace('spreadapi_update_area_', '');
+          const { updates, returnOptions = {} } = args;
+          
+          const result = await executeAreaUpdate(serviceId, updates, auth, returnOptions);
+          
+          return {
+            jsonrpc: '2.0',
+            result,
+            id
+          };
         }
         
         // Handle spreadsheet calculation tools

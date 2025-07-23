@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm, Skeleton } from 'antd';
-import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
+import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm, Skeleton, Radio, Collapse, Row, Col } from 'antd';
+import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined, TableOutlined, LockOutlined, EyeOutlined, FunctionOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import TokenManagement from './TokenManagement';
@@ -10,7 +10,8 @@ import ApiEndpointPreview from './ApiEndpointPreview';
 import ServiceTester from './ServiceTester';
 import * as GC from '@mescius/spread-sheets';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;
 
 // Declare GC namespace for TypeScript
 declare global {
@@ -62,6 +63,39 @@ interface OutputDefinition {
   description?: string;
 }
 
+// Area-related interfaces
+interface AreaPermissions {
+  canReadValues: boolean;
+  canWriteValues: boolean;
+  canReadFormulas: boolean;
+  canWriteFormulas: boolean;
+  canReadFormatting: boolean;
+  canWriteFormatting: boolean;
+  canAddRows: boolean;
+  canDeleteRows: boolean;
+  canModifyStructure: boolean;
+  allowedFormulas?: string[];
+}
+
+interface AreaParameter {
+  id?: string;
+  name: string;
+  alias: string;
+  address: string;
+  description?: string;
+  mode: 'readonly' | 'editable' | 'interactive';
+  permissions: AreaPermissions;
+  validation?: {
+    protectedCells?: string[];
+    editableColumns?: number[];
+    formulaComplexityLimit?: number;
+  };
+  aiContext?: {
+    purpose: string;
+    expectedBehavior: string;
+  };
+}
+
 interface EditorPanelProps {
   spreadInstance: any;
   serviceId?: string;
@@ -81,8 +115,46 @@ interface EditorPanelProps {
     aiUsageExamples?: string[];
     aiTags?: string[];
     category?: string;
+    areas?: AreaParameter[];
   };
 }
+
+// Permission presets for areas
+const PERMISSION_PRESETS = {
+  readonly: {
+    canReadValues: true,
+    canWriteValues: false,
+    canReadFormulas: false,
+    canWriteFormulas: false,
+    canReadFormatting: true,
+    canWriteFormatting: false,
+    canAddRows: false,
+    canDeleteRows: false,
+    canModifyStructure: false
+  },
+  valueOnly: {
+    canReadValues: true,
+    canWriteValues: true,
+    canReadFormulas: true,
+    canWriteFormulas: false,
+    canReadFormatting: true,
+    canWriteFormatting: false,
+    canAddRows: false,
+    canDeleteRows: false,
+    canModifyStructure: false
+  },
+  interactive: {
+    canReadValues: true,
+    canWriteValues: true,
+    canReadFormulas: true,
+    canWriteFormulas: true,
+    canReadFormatting: true,
+    canWriteFormatting: true,
+    canAddRows: true,
+    canDeleteRows: true,
+    canModifyStructure: true
+  }
+};
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
   spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState, isLoading
@@ -95,6 +167,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [apiDescription, setApiDescription] = useState(initialConfig?.description || '');
   const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
   const [outputs, setOutputs] = useState<OutputDefinition[]>(initialConfig?.outputs || []);
+  const [areas, setAreas] = useState<AreaParameter[]>(initialConfig?.areas || []);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const [showAddParameterModal, setShowAddParameterModal] = useState(false);
   const [parameterType, setParameterType] = useState<'input' | 'output'>('input');
@@ -106,6 +179,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [requireToken, setRequireToken] = useState<boolean>(initialConfig?.requireToken === true);
   const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
+  const [showAreaModal, setShowAreaModal] = useState(false);
+  const [editingArea, setEditingArea] = useState<AreaParameter | null>(null);
+  const [editingAreaIndex, setEditingAreaIndex] = useState<number>(-1);
+  const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
   const [tokenCount, setTokenCount] = useState<number>(0);
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
   const [availableTokens, setAvailableTokens] = useState<any[]>([]);
@@ -128,6 +205,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       setApiDescription(initialConfig.description || '');
       setInputs(initialConfig.inputs || []);
       setOutputs(initialConfig.outputs || []);
+      setAreas(initialConfig.areas || []);
       setEnableCaching(initialConfig.enableCaching !== false);
       setRequireToken(initialConfig.requireToken === true);
       setAiDescription(initialConfig.aiDescription || '');
@@ -157,6 +235,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           description: apiDescription,
           inputs,
           outputs,
+          areas,
           enableCaching,
           requireToken,
           aiDescription,
@@ -169,7 +248,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [apiName, apiDescription, inputs, outputs, enableCaching, requireToken, aiDescription, aiUsageExamples, aiTags, category]);
+  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, requireToken, aiDescription, aiUsageExamples, aiTags, category]);
 
   // Measure button area height
   useEffect(() => {
@@ -972,6 +1051,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         description: apiDescription,
         inputs,
         outputs,
+        areas,
         enableCaching,
         requireToken: value,
         aiDescription,
@@ -980,7 +1060,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         category
       });
     }
-  }, [apiName, apiDescription, inputs, outputs, enableCaching, aiDescription, aiUsageExamples, aiTags, category, onConfigChange]);
+  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, aiDescription, aiUsageExamples, aiTags, category, onConfigChange]);
 
   const handleTokenCountChange = useCallback((count: number) => {
     setTokenCount(count);
@@ -996,6 +1076,173 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       return { color: originalColor, fontSize: 18 };
     }
     return { color: '#2B2A35', fontSize: 18 };
+  };
+
+  // Area-related handler functions
+  const handleAddAsEditableArea = () => {
+    if (!spreadInstance || !currentSelection) {
+      message.warning('Please select a range in the spreadsheet');
+      return;
+    }
+
+    const { row, col, rowCount = 1, colCount = 1 } = currentSelection;
+    
+    // Only allow ranges, not single cells
+    if (rowCount === 1 && colCount === 1) {
+      message.warning('Please select a range of cells, not a single cell');
+      return;
+    }
+
+    const sheet = spreadInstance.getActiveSheet();
+    const sheetName = sheet.name();
+    
+    // Build the address
+    const startCell = getCellAddress(row, col);
+    const endCell = getCellAddress(row + rowCount - 1, col + colCount - 1);
+    const address = `${sheetName}!${startCell}:${endCell}`;
+    
+    // Check if this range already exists as an area
+    const exists = areas.some(area => area.address === address);
+    if (exists) {
+      message.warning('This range is already defined as an area');
+      return;
+    }
+    
+    // Analyze the selected area
+    const areaInfo = analyzeSelectedArea(sheet, row, col, rowCount, colCount);
+    
+    // Create new area with defaults
+    const newArea: AreaParameter = {
+      id: `area_${Date.now()}`,
+      name: suggestAreaName(startCell, endCell),
+      alias: '',
+      address: address,
+      description: '',
+      mode: 'editable',
+      permissions: PERMISSION_PRESETS.valueOnly,
+      validation: {
+        editableColumns: areaInfo.suggestedColumns.map((_, idx) => idx)
+      },
+      aiContext: {
+        purpose: '',
+        expectedBehavior: ''
+      }
+    };
+    
+    setEditingArea(newArea);
+    setEditingAreaIndex(-1); // -1 means new area
+    setShowAreaModal(true);
+  };
+
+  // Analyze selected area
+  const analyzeSelectedArea = (sheet: any, startRow: number, startCol: number, rowCount: number, colCount: number) => {
+    const analysis = {
+      hasFormulas: false,
+      hasHeaders: false,
+      columnTypes: [] as string[],
+      suggestedColumns: [] as any[]
+    };
+    
+    // Check first row for headers
+    const firstRowValues = [];
+    for (let c = 0; c < colCount; c++) {
+      const value = sheet.getCell(startRow, startCol + c).value();
+      firstRowValues.push(value);
+      if (typeof value === 'string' && value.trim()) {
+        analysis.hasHeaders = true;
+      }
+    }
+    
+    // Analyze each column
+    for (let c = 0; c < colCount; c++) {
+      const columnAnalysis = {
+        index: c,
+        name: analysis.hasHeaders && firstRowValues[c] ? String(firstRowValues[c]) : `Column ${c + 1}`,
+        hasFormulas: false,
+        dataType: 'mixed' as string,
+        sampleValues: [] as any[]
+      };
+      
+      // Check cells in column (skip header if exists)
+      for (let r = analysis.hasHeaders ? 1 : 0; r < Math.min(10, rowCount); r++) {
+        const cell = sheet.getCell(startRow + r, startCol + c);
+        const formula = cell.formula();
+        const value = cell.value();
+        
+        if (formula) {
+          columnAnalysis.hasFormulas = true;
+          analysis.hasFormulas = true;
+        }
+        
+        if (value !== null && value !== undefined && value !== '') {
+          columnAnalysis.sampleValues.push(value);
+        }
+      }
+      
+      // Detect data type
+      if (columnAnalysis.sampleValues.length > 0) {
+        const types = columnAnalysis.sampleValues.map(v => typeof v);
+        if (types.every(t => t === 'number')) {
+          columnAnalysis.dataType = 'number';
+        } else if (types.every(t => t === 'string')) {
+          columnAnalysis.dataType = 'string';
+        }
+      }
+      
+      analysis.suggestedColumns.push(columnAnalysis);
+    }
+    
+    return analysis;
+  };
+
+  // Suggest area name
+  const suggestAreaName = (startCell: string, endCell: string) => {
+    return `area_${startCell}_${endCell}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  };
+
+  // Handle area removal
+  const handleRemoveArea = (index: number) => {
+    const newAreas = [...areas];
+    newAreas.splice(index, 1);
+    setAreas(newAreas);
+    setSaveStatus('unsaved');
+  };
+
+  // Handle area editing
+  const handleEditArea = (area: AreaParameter, index: number) => {
+    setEditingArea(area);
+    setEditingAreaIndex(index);
+    setShowAreaModal(true);
+  };
+
+  // Save area from modal
+  const handleSaveArea = (area: AreaParameter) => {
+    if (editingAreaIndex === -1) {
+      // New area
+      setAreas([...areas, area]);
+    } else {
+      // Update existing area
+      const newAreas = [...areas];
+      newAreas[editingAreaIndex] = area;
+      setAreas(newAreas);
+    }
+    
+    setSaveStatus('unsaved');
+    setShowAreaModal(false);
+    setEditingArea(null);
+    setEditingAreaIndex(-1);
+    
+    message.success('Area configuration saved');
+  };
+
+  // Get user-friendly mode label
+  const getModeLabel = (mode: string) => {
+    switch (mode) {
+      case 'readonly': return 'Read Only';
+      case 'editable': return 'Values Editable';
+      case 'interactive': return 'Fully Interactive';
+      default: return mode;
+    }
   };
 
   return (
@@ -1427,13 +1674,213 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Editable Areas for AI Section */}
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: 14,
+                  backgroundColor: "#fff7e6",
+                  borderRadius: 8,
+                  marginTop: '16px',
+                  borderLeft: '3px solid #fa8c16'
+                }}>
+                  <div>
+                    <div style={{ 
+                      marginBottom: '8px', 
+                      color: '#898989',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <strong>Editable Areas for AI</strong>
+                      <Tooltip title="Areas that AI assistants can read and optionally modify">
+                        <InfoCircleOutlined style={{ fontSize: 12 }} />
+                      </Tooltip>
+                    </div>
+                    <div style={{ fontSize: '12px' }}>
+                      {isLoading || !hasInitialized ? (
+                        <Skeleton active paragraph={{ rows: 2 }} />
+                      ) : areas.length === 0 ? (
+                        <div style={{ color: '#999' }}>
+                          No editable areas defined yet
+                          <div style={{ fontSize: '11px', marginTop: 4 }}>
+                            Select a range and click "Add as Editable Area"
+                          </div>
+                        </div>
+                      ) : (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          {areas.map((area, index) => (
+                            <div 
+                              key={area.id || index} 
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px',
+                                backgroundColor: 'white',
+                                borderRadius: '4px',
+                                border: '1px solid #e8e8e8',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => {
+                                if (!spreadInstance) return;
+                                try {
+                                  const [sheetName, rangeRef] = area.address.split('!');
+                                  const sheet = spreadInstance.getSheetFromName(sheetName);
+                                  if (sheet) {
+                                    spreadInstance.setActiveSheet(sheet);
+                                    
+                                    // Parse the range
+                                    const rangeParts = rangeRef.split(':');
+                                    if (rangeParts.length === 2) {
+                                      // It's a range - select the entire range
+                                      const startMatch = rangeParts[0].match(/^([A-Z]+)(\d+)$/);
+                                      const endMatch = rangeParts[1].match(/^([A-Z]+)(\d+)$/);
+                                      
+                                      if (startMatch && endMatch) {
+                                        // Convert column letters to column index (supports multi-letter columns)
+                                        const colToIndex = (col: string) => {
+                                          let index = 0;
+                                          for (let i = 0; i < col.length; i++) {
+                                            index = index * 26 + col.charCodeAt(i) - 64;
+                                          }
+                                          return index - 1;
+                                        };
+                                        
+                                        const startCol = colToIndex(startMatch[1]);
+                                        const startRow = parseInt(startMatch[2]) - 1;
+                                        const endCol = colToIndex(endMatch[1]);
+                                        const endRow = parseInt(endMatch[2]) - 1;
+                                        
+                                        // Select the range
+                                        sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
+                                        
+                                        // Scroll to make the range visible
+                                        const viewportInfo = sheet.getViewportInfo();
+                                        const rowViewportIndex = viewportInfo.rowViewportIndex || 0;
+                                        const colViewportIndex = viewportInfo.colViewportIndex || 0;
+                                        
+                                        // Center the range in viewport
+                                        const centerRow = Math.floor((startRow + endRow) / 2);
+                                        const centerCol = Math.floor((startCol + endCol) / 2);
+                                        
+                                        // Only scroll if needed
+                                        const topRow = sheet.getViewportTopRow(rowViewportIndex);
+                                        const bottomRow = sheet.getViewportBottomRow(rowViewportIndex);
+                                        const leftCol = sheet.getViewportLeftColumn(colViewportIndex);
+                                        const rightCol = sheet.getViewportRightColumn(colViewportIndex);
+                                        
+                                        if (centerRow < topRow || centerRow > bottomRow) {
+                                          sheet.showRow(centerRow, 3); // 3 = VerticalPosition.center
+                                        }
+                                        
+                                        if (centerCol < leftCol || centerCol > rightCol) {
+                                          sheet.showColumn(centerCol, 3); // 3 = HorizontalPosition.center
+                                        }
+                                      }
+                                    } else {
+                                      // Single cell
+                                      const match = rangeRef.match(/^([A-Z]+)(\d+)$/);
+                                      if (match) {
+                                        // Convert column letters to column index (supports multi-letter columns)
+                                        const colToIndex = (col: string) => {
+                                          let index = 0;
+                                          for (let i = 0; i < col.length; i++) {
+                                            index = index * 26 + col.charCodeAt(i) - 64;
+                                          }
+                                          return index - 1;
+                                        };
+                                        
+                                        const col = colToIndex(match[1]);
+                                        const row = parseInt(match[2]) - 1;
+                                        sheet.setSelection(row, col, 1, 1);
+                                        sheet.showCell(row, col, 3, 3); // 3 = center for both vertical and horizontal
+                                      }
+                                    }
+                                    
+                                    if (spreadInstance.focus) {
+                                      spreadInstance.focus();
+                                    }
+                                  }
+                                } catch (e) {
+                                  console.error('Error navigating to area:', e);
+                                }
+                              }}
+                            >
+                              {/* Area Icon based on mode */}
+                              {area.mode === 'readonly' ? (
+                                <LockOutlined style={{ color: '#ff4d4f' }} />
+                              ) : area.mode === 'interactive' ? (
+                                <TableOutlined style={{ color: '#52c41a' }} />
+                              ) : (
+                                <EditOutlined style={{ color: '#1890ff' }} />
+                              )}
+                              
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 500 }}>
+                                  {area.alias || area.name}
+                                </div>
+                                <div style={{ 
+                                  fontSize: '11px', 
+                                  color: '#999',
+                                  display: 'flex',
+                                  gap: '12px'
+                                }}>
+                                  <span>{area.address}</span>
+                                  <span>•</span>
+                                  <span>{getModeLabel(area.mode)}</span>
+                                  {area.permissions.canWriteFormulas && (
+                                    <>
+                                      <span>•</span>
+                                      <span style={{ color: '#fa8c16' }}>
+                                        <FunctionOutlined style={{ fontSize: 10 }} /> Formulas
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <Space size="small">
+                                <Button
+                                  size="small"
+                                  type="text"
+                                  icon={<EditOutlined />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditArea(area, index);
+                                  }}
+                                />
+                                <Button
+                                  size="small"
+                                  type="text"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveArea(index);
+                                  }}
+                                />
+                              </Space>
+                            </div>
+                          ))}
+                        </Space>
+                      )}
+                    </div>
+                  </div>
 
                   <div style={{ marginTop: '16px', fontSize: '12px', color: '#666' }}>
-                    <strong>How it works:</strong><br />
-                    • Input parameters are values users provide when calling your service<br />
-                    • These values are placed into the specified spreadsheet cells<br />
-                    • Output parameters are calculated results read from spreadsheet cells<br />
-                    • The service returns these output values as the API response
+                    <Button 
+                      type="link" 
+                      size="small" 
+                      icon={<InfoCircleOutlined />}
+                      onClick={() => setShowHowItWorksModal(true)}
+                      style={{ padding: 0, fontSize: '12px' }}
+                    >
+                      How it works
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1493,8 +1940,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           }}>
           {(() => {
             const buttonInfo = getAddButtonInfo();
+            const isRange = currentSelection && (currentSelection.rowCount > 1 || currentSelection.colCount > 1);
+            
             return (
-              <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
@@ -1504,12 +1953,20 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 >
                   {buttonInfo.text}
                 </Button>
-                {/* {spreadInstance && !currentSelection && (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#999', textAlign: 'center' }}>
-                    Select a cell or range in the spreadsheet
-                  </div>
-                )} */}
-              </>
+                
+                {/* Add as Editable Area button - only show for ranges */}
+                {isRange && !buttonInfo.disabled && (
+                  <Button
+                    type="default"
+                    icon={<TableOutlined />}
+                    style={{ width: '100%', height: 40 }}
+                    onClick={handleAddAsEditableArea}
+                    disabled={!spreadInstance || !spreadsheetReady}
+                  >
+                    Add Selection as Editable Area (for AI)
+                  </Button>
+                )}
+              </div>
             );
           })()}
         </div>
@@ -1675,6 +2132,418 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Area Configuration Modal */}
+      <Modal
+        title={
+          <Space>
+            <TableOutlined />
+            <span>{editingAreaIndex === -1 ? 'Add' : 'Edit'} Editable Area</span>
+          </Space>
+        }
+        open={showAreaModal}
+        onCancel={() => {
+          setShowAreaModal(false);
+          setEditingArea(null);
+          setEditingAreaIndex(-1);
+        }}
+        width={700}
+        footer={[
+          <Button key="cancel" onClick={() => setShowAreaModal(false)}>
+            Cancel
+          </Button>,
+          <Button 
+            key="save" 
+            type="primary" 
+            onClick={() => {
+              if (!editingArea?.name || !editingArea?.address) {
+                message.error('Area name and address are required');
+                return;
+              }
+              handleSaveArea(editingArea);
+            }}
+          >
+            {editingAreaIndex === -1 ? 'Add' : 'Save'} Area
+          </Button>
+        ]}
+        centered
+      >
+        {editingArea && (
+          <Space direction="vertical" style={{ width: '100%' }} size="large">
+            {/* Basic Info */}
+            <div>
+              <Form layout="vertical">
+                <Form.Item label="Area Name" required>
+                  <Input 
+                    value={editingArea.name}
+                    onChange={e => setEditingArea({...editingArea, name: e.target.value})}
+                    placeholder="e.g., sales_data"
+                  />
+                </Form.Item>
+                
+                <Form.Item label="Display Name">
+                  <Input 
+                    value={editingArea.alias}
+                    onChange={e => setEditingArea({...editingArea, alias: e.target.value})}
+                    placeholder="e.g., Monthly Sales Data"
+                  />
+                </Form.Item>
+                
+                <Form.Item label="Selected Range">
+                  <Input value={editingArea.address} disabled />
+                </Form.Item>
+                
+                <Form.Item label="Description">
+                  <Input.TextArea 
+                    value={editingArea.description}
+                    onChange={e => setEditingArea({...editingArea, description: e.target.value})}
+                    placeholder="Describe what this area contains..."
+                    rows={2}
+                  />
+                </Form.Item>
+              </Form>
+            </div>
+            
+            {/* Quick Permission Presets */}
+            <div>
+              <Title level={5}>Access Level</Title>
+              <Radio.Group 
+                value={editingArea.mode} 
+                onChange={e => {
+                  const mode = e.target.value;
+                  setEditingArea({
+                    ...editingArea,
+                    mode,
+                    permissions: mode === 'readonly' ? PERMISSION_PRESETS.readonly :
+                               mode === 'interactive' ? PERMISSION_PRESETS.interactive :
+                               PERMISSION_PRESETS.valueOnly
+                  });
+                }}
+              >
+                <Space direction="vertical">
+                  <Radio value="readonly">
+                    <Space>
+                      <LockOutlined />
+                      <span>Read Only</span>
+                      <Text type="secondary">- AI can see values but not modify</Text>
+                    </Space>
+                  </Radio>
+                  <Radio value="editable">
+                    <Space>
+                      <EditOutlined />
+                      <span>Editable Values</span>
+                      <Text type="secondary">- AI can modify values but not formulas</Text>
+                    </Space>
+                  </Radio>
+                  <Radio value="interactive">
+                    <Space>
+                      <TableOutlined />
+                      <span>Full Interactive</span>
+                      <Text type="secondary">- AI can modify values, formulas, and structure</Text>
+                    </Space>
+                  </Radio>
+                </Space>
+              </Radio.Group>
+            </div>
+            
+            {/* Advanced Options */}
+            <Collapse ghost>
+              <Panel header="Advanced Permissions" key="1">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Space direction="vertical">
+                      <Checkbox 
+                        checked={editingArea.permissions.canReadFormulas}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canReadFormulas: e.target.checked}
+                        })}
+                      >
+                        Show formulas to AI
+                      </Checkbox>
+                      <Checkbox 
+                        checked={editingArea.permissions.canWriteFormulas}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canWriteFormulas: e.target.checked}
+                        })}
+                        disabled={!editingArea.permissions.canReadFormulas}
+                      >
+                        Allow formula modifications
+                      </Checkbox>
+                      <Checkbox 
+                        checked={editingArea.permissions.canReadFormatting}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canReadFormatting: e.target.checked}
+                        })}
+                      >
+                        Include cell formatting
+                      </Checkbox>
+                    </Space>
+                  </Col>
+                  <Col span={12}>
+                    <Space direction="vertical">
+                      <Checkbox 
+                        checked={editingArea.permissions.canAddRows}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canAddRows: e.target.checked}
+                        })}
+                      >
+                        Allow adding rows
+                      </Checkbox>
+                      <Checkbox 
+                        checked={editingArea.permissions.canDeleteRows}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canDeleteRows: e.target.checked}
+                        })}
+                      >
+                        Allow deleting rows
+                      </Checkbox>
+                      <Checkbox 
+                        checked={editingArea.permissions.canModifyStructure}
+                        onChange={e => setEditingArea({
+                          ...editingArea,
+                          permissions: {...editingArea.permissions, canModifyStructure: e.target.checked}
+                        })}
+                      >
+                        Allow structure changes
+                      </Checkbox>
+                    </Space>
+                  </Col>
+                </Row>
+              </Panel>
+              
+              <Panel header="AI Context (Optional)" key="2">
+                <Form.Item label="Purpose">
+                  <Input.TextArea 
+                    value={editingArea.aiContext?.purpose}
+                    onChange={e => setEditingArea({
+                      ...editingArea,
+                      aiContext: {...editingArea.aiContext, purpose: e.target.value}
+                    })}
+                    placeholder="Describe what this area contains and its purpose..."
+                    rows={2}
+                  />
+                </Form.Item>
+                
+                <Form.Item label="Expected Behavior">
+                  <Input.TextArea 
+                    value={editingArea.aiContext?.expectedBehavior}
+                    onChange={e => setEditingArea({
+                      ...editingArea,
+                      aiContext: {...editingArea.aiContext, expectedBehavior: e.target.value}
+                    })}
+                    placeholder="Guide the AI on how to interact with this area..."
+                    rows={2}
+                  />
+                </Form.Item>
+              </Panel>
+            </Collapse>
+          </Space>
+        )}
+      </Modal>
+
+      {/* How It Works Modal */}
+      <Modal
+        title={
+          <Space>
+            <InfoCircleOutlined />
+            <span>How SpreadAPI Works</span>
+          </Space>
+        }
+        open={showHowItWorksModal}
+        onCancel={() => setShowHowItWorksModal(false)}
+        width={800}
+        footer={[
+          <Button key="close" onClick={() => setShowHowItWorksModal(false)}>
+            Got it!
+          </Button>
+        ]}
+        centered
+      >
+        <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          <Space direction="vertical" style={{ width: '100%' }} size="large">
+            {/* Overview */}
+            <div>
+              <Title level={4}>Overview</Title>
+              <Paragraph>
+                SpreadAPI turns your spreadsheets into powerful APIs that can be called by applications, AI assistants, 
+                or integrated into workflows. Your spreadsheet becomes a calculation engine that accepts inputs and returns outputs.
+              </Paragraph>
+            </div>
+
+            {/* Three Core Concepts */}
+            <div>
+              <Title level={4}>Three Core Concepts</Title>
+              
+              <div style={{ marginBottom: 16 }}>
+                <Title level={5}>
+                  <Space>
+                    <SwapOutlined style={{ color: '#1890ff' }} />
+                    1. Input Parameters
+                  </Space>
+                </Title>
+                <Paragraph>
+                  Input parameters are values that users or applications provide when calling your service. 
+                  Think of them as function arguments - you define which cells should receive these values.
+                </Paragraph>
+                <ul>
+                  <li>Select any cell in your spreadsheet</li>
+                  <li>Click "Add as Input" to make it a parameter</li>
+                  <li>Give it a meaningful name (e.g., "interest_rate", "loan_amount")</li>
+                  <li>Set validation rules (min/max values, required/optional)</li>
+                </ul>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <Title level={5}>
+                  <Space>
+                    <FileTextOutlined style={{ color: '#52c41a' }} />
+                    2. Output Parameters
+                  </Space>
+                </Title>
+                <Paragraph>
+                  Output parameters are the calculated results from your spreadsheet. These are the values 
+                  returned when someone calls your API.
+                </Paragraph>
+                <ul>
+                  <li>Select cells containing formulas or results</li>
+                  <li>Click "Add as Output"</li>
+                  <li>Name your outputs (e.g., "monthly_payment", "total_interest")</li>
+                  <li>Can be single cells or ranges (like tables)</li>
+                </ul>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <Title level={5}>
+                  <Space>
+                    <TableOutlined style={{ color: '#fa8c16' }} />
+                    3. Editable Areas (For AI)
+                  </Space>
+                </Title>
+                <Paragraph>
+                  Editable areas are special regions that AI assistants can interact with directly. 
+                  Unlike input/output parameters, these allow AI to read and modify multiple cells, 
+                  including formulas.
+                </Paragraph>
+                <ul>
+                  <li>Select a range of cells (e.g., A1:D10)</li>
+                  <li>Click "Add as Editable Area"</li>
+                  <li>Set permissions (read-only, edit values, edit formulas)</li>
+                  <li>AI can experiment, analyze, and transform data within these areas</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* How It Flows */}
+            <div>
+              <Title level={4}>The API Flow</Title>
+              <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
+                <ol style={{ marginBottom: 0 }}>
+                  <li><strong>API Call Received</strong>: Your service receives a request with input values</li>
+                  <li><strong>Inputs Applied</strong>: Values are placed into the designated input cells</li>
+                  <li><strong>Calculation</strong>: Spreadsheet formulas automatically recalculate</li>
+                  <li><strong>Outputs Collected</strong>: Results are read from output cells</li>
+                  <li><strong>Response Sent</strong>: Calculated values are returned as JSON</li>
+                </ol>
+              </div>
+            </div>
+
+            {/* Example */}
+            <div>
+              <Title level={4}>Example: Loan Calculator</Title>
+              <div style={{ background: '#e6f7ff', padding: 16, borderRadius: 8 }}>
+                <Paragraph style={{ marginBottom: 8 }}>
+                  <strong>Inputs:</strong>
+                </Paragraph>
+                <ul style={{ marginBottom: 12 }}>
+                  <li>Cell B2: loan_amount (e.g., 200000)</li>
+                  <li>Cell B3: interest_rate (e.g., 0.045)</li>
+                  <li>Cell B4: years (e.g., 30)</li>
+                </ul>
+                
+                <Paragraph style={{ marginBottom: 8 }}>
+                  <strong>Spreadsheet Formula:</strong>
+                </Paragraph>
+                <code style={{ display: 'block', marginBottom: 12, padding: 8, background: '#fff' }}>
+                  Cell E2: =PMT(B3/12, B4*12, -B2)
+                </code>
+                
+                <Paragraph style={{ marginBottom: 8 }}>
+                  <strong>Output:</strong>
+                </Paragraph>
+                <ul style={{ marginBottom: 12 }}>
+                  <li>Cell E2: monthly_payment (returns: 1013.37)</li>
+                </ul>
+                
+                <Paragraph style={{ marginBottom: 0 }}>
+                  <strong>API Call:</strong>
+                </Paragraph>
+                <pre style={{ marginTop: 8, marginBottom: 0 }}>
+{`GET /api/getresults?api=loan_calc&loan_amount=200000&interest_rate=0.045&years=30
+
+Response:
+{
+  "outputs": {
+    "monthly_payment": 1013.37
+  }
+}`}
+                </pre>
+              </div>
+            </div>
+
+            {/* Publishing and Using */}
+            <div>
+              <Title level={4}>Publishing Your Service</Title>
+              <Paragraph>
+                Once you've defined your parameters:
+              </Paragraph>
+              <ol>
+                <li>Click "Publish Service" to make it available</li>
+                <li>Get your unique API endpoint</li>
+                <li>Share with developers or configure for AI assistants</li>
+                <li>Enable MCP integration for Claude and other AI tools</li>
+              </ol>
+            </div>
+
+            {/* AI Integration */}
+            <div>
+              <Title level={4}>AI Assistant Integration (MCP)</Title>
+              <Paragraph>
+                When you enable MCP (Model Context Protocol), AI assistants like Claude can:
+              </Paragraph>
+              <ul>
+                <li>Discover your available services automatically</li>
+                <li>Call your API with natural language requests</li>
+                <li>Work with editable areas to experiment and analyze</li>
+                <li>Create complex workflows combining multiple services</li>
+              </ul>
+              <Alert
+                message="Pro Tip"
+                description="Editable areas are perfect for AI assistants to perform what-if analysis, data cleaning, or formula generation without affecting your main calculations."
+                type="info"
+                showIcon
+              />
+            </div>
+
+            {/* Best Practices */}
+            <div>
+              <Title level={4}>Best Practices</Title>
+              <ul>
+                <li><strong>Clear Naming</strong>: Use descriptive names for parameters (not "input1")</li>
+                <li><strong>Validation</strong>: Set min/max values to prevent errors</li>
+                <li><strong>Documentation</strong>: Add descriptions to help users understand each parameter</li>
+                <li><strong>Error Handling</strong>: Use IFERROR() in formulas for robustness</li>
+                <li><strong>Test First</strong>: Try your API before publishing</li>
+                <li><strong>AI Context</strong>: Provide clear descriptions for AI to understand your service</li>
+              </ul>
+            </div>
+          </Space>
+        </div>
       </Modal>
 
     </div>
