@@ -76,7 +76,7 @@ export async function GET(request) {
     }
 
     // Test 4: Blob fetch simulation (using API definition)
-    const apiId = 'ab3202cb-d0af-41af-88ce-7e51f5f6b6d3';
+    const apiId = 'test1234_mdejqoua8ptor'; // Warming service
     let apiDef;
     await timeOperation('apiDefinitionFetch', async () => {
       apiDef = await getApiDefinition(apiId, null);

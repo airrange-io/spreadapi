@@ -5,7 +5,7 @@ import { CACHE_KEYS } from '../../../lib/cacheHelpers';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const apiId = searchParams.get('api') || 'ab3202cb-d0af-41af-88ce-7e51f5f6b6d3';
+    const apiId = searchParams.get('api') || 'test1234_mdejqoua8ptor'; // Warming service
     
     const diagnosis = {
       apiId,

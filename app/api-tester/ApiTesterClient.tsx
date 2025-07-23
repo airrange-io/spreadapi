@@ -24,7 +24,7 @@ export default function ApiTesterClient() {
 
   // Default demo data
   const demoData = {
-    apiId: "ab3202cb-d0af-41af-88ce-7e51f5f6b6d3",
+    apiId: "test1234_mdejqoua8ptor", // Warming service
     token: "hiqelc-b-o",
     inputs: {
       "interest": 0.06,
