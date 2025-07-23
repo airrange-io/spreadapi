@@ -64,88 +64,94 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [hasChanges, setHasChanges] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(80);
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
+  const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
+  const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
   // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
-  // Initialize panel sizes from localStorage to prevent flickering
-  const getInitialPanelSizes = (): number[] => {
-    if (typeof window === 'undefined') return [70, 30];
+  // Custom hook for panel sizes
+  const usePanelSizes = () => {
+    const [sizes, setSizes] = useState<number[]>([70, 30]); // Default sizes
+    const [sizesLoaded, setSizesLoaded] = useState(false);
 
-    const savedSizes = localStorage.getItem('spreadapi-panel-sizes');
-    if (savedSizes) {
-      try {
-        const sizes = JSON.parse(savedSizes);
-        if (Array.isArray(sizes) && sizes.length === 2) {
-          return sizes;
+    // Load sizes from localStorage after mount to prevent hydration issues
+    useEffect(() => {
+      const savedSizes = localStorage.getItem('spreadapi-panel-sizes');
+      if (savedSizes) {
+        try {
+          const parsedSizes = JSON.parse(savedSizes);
+          if (Array.isArray(parsedSizes) && parsedSizes.length === 2) {
+            setSizes(parsedSizes);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved panel sizes');
         }
-      } catch (e) {
-        console.error('Failed to parse saved panel sizes');
       }
-    }
-    return [70, 30]; // Default 70% content, 30% panel
+      setSizesLoaded(true);
+    }, []);
+
+    const handleResize = useCallback((newSizes: (string | number)[]) => {
+      const numericSizes = newSizes.map(size => {
+        if (typeof size === 'string' && size.endsWith('%')) {
+          return parseFloat(size);
+        }
+        return typeof size === 'number' ? size : 50;
+      });
+      setSizes(numericSizes);
+      localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(numericSizes));
+    }, []);
+
+    return { panelSizes: sizes, handlePanelResize: handleResize, sizesLoaded };
   };
 
-  const [panelSizes, setPanelSizes] = useState<number[]>(getInitialPanelSizes);
+  const { panelSizes, handlePanelResize, sizesLoaded } = usePanelSizes();
 
-  // Save panel sizes to localStorage when they change
-  const handlePanelResize = (sizes: (string | number)[]) => {
-    // Convert sizes to numbers (they come as percentages)
-    const numericSizes = sizes.map(size => {
-      if (typeof size === 'string' && size.endsWith('%')) {
-        return parseFloat(size);
+  // Memoize the default workbook structure to prevent recreation
+  const defaultEmptyWorkbook = useMemo(() => ({
+    version: "18.0.7",
+    sheetCount: 1,
+    activeSheetIndex: 0,
+    sheets: {
+      Sheet1: {
+        name: "Sheet1",
+        isSelected: true,
+        activeRow: 0,
+        activeCol: 0,
+        rowCount: 200,
+        columnCount: 20,
+        theme: "Office",
+        data: {
+          dataTable: {}
+        },
+        rowHeaderData: {},
+        colHeaderData: {},
+        selections: {
+          0: {
+            row: 0,
+            col: 0,
+            rowCount: 1,
+            colCount: 1
+          },
+          length: 1
+        },
+        defaults: {
+          colHeaderRowHeight: 20,
+          colWidth: 64,
+          rowHeaderColWidth: 40,
+          rowHeight: 20
+        },
+        index: 0
       }
-      return typeof size === 'number' ? size : 50;
-    });
-    setPanelSizes(numericSizes);
-    localStorage.setItem('spreadapi-panel-sizes', JSON.stringify(numericSizes));
-  };
+    },
+    namedStyles: {},
+    names: {},
+    customLists: []
+  }), []); // Empty dependency array since this never changes
 
-  const setDefaultSpreadsheetData = () => {
-    // Create a proper empty workbook structure that matches SpreadJS format
-    const emptyWorkbook = {
-      version: "18.0.7",
-      sheetCount: 1,
-      activeSheetIndex: 0,
-      sheets: {
-        Sheet1: {
-          name: "Sheet1",
-          isSelected: true,
-          activeRow: 0,
-          activeCol: 0,
-          rowCount: 200,
-          columnCount: 20,
-          theme: "Office",
-          data: {
-            dataTable: {}
-          },
-          rowHeaderData: {},
-          colHeaderData: {},
-          selections: {
-            0: {
-              row: 0,
-              col: 0,
-              rowCount: 1,
-              colCount: 1
-            },
-            length: 1
-          },
-          defaults: {
-            colHeaderRowHeight: 20,
-            colWidth: 64,
-            rowHeaderColWidth: 40,
-            rowHeight: 20
-          },
-          index: 0
-        }
-      },
-      namedStyles: {},
-      names: {},
-      customLists: []
-    };
-
+  const setDefaultSpreadsheetData = useCallback(() => {
     console.log('Setting default empty workbook');
-    setSpreadsheetData(emptyWorkbook);
-  };
+    setSpreadsheetData(defaultEmptyWorkbook);
+  }, [defaultEmptyWorkbook]);
 
   // Check if mobile on mount and window resize
   useEffect(() => {
@@ -185,6 +191,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
 
     const loadWorkbook = async () => {
       // Skip if component unmounted (prevents double fetch in StrictMode)
@@ -194,12 +201,24 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setLoadingMessage('Loading service data...');
 
       try {
-        // Start all requests in parallel
+        // Start all requests in parallel with abort signal
         const [fullDataResponse, workbookResponse] = await Promise.all([
           // Get all service data in one call (service + status)
-          fetch(`/api/services/${serviceId}/full`),
+          fetch(`/api/services/${serviceId}/full`, {
+            signal: controller.signal
+          }).then(async (res) => {
+            // If full endpoint fails, try regular endpoint as fallback
+            if (!res.ok && res.status === 404) {
+              console.log('Full endpoint not found, trying regular service endpoint');
+              return fetch(`/api/services/${serviceId}`, {
+                signal: controller.signal
+              });
+            }
+            return res;
+          }),
           // Workbook data (with error handling for 404s)
           fetch(`/api/workbook/${serviceId}`, {
+            signal: controller.signal,
             headers: {
               'X-Expected-404': 'true',
               'If-None-Match': localStorage.getItem(`workbook-etag-${serviceId}`) || ''
@@ -214,22 +233,48 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         // Process combined service data
         if (fullDataResponse.ok && fullDataResponse.status !== 204) {
-          const fullData = await fullDataResponse.json();
+          const data = await fullDataResponse.json();
+          console.log('Service data loaded:', data);
 
-          // Set service status
-          setServiceStatus(fullData.status);
-
-          // Set service configuration
-          const loadedConfig = {
-            name: fullData.service.name || '',
-            description: fullData.service.description || '',
-            inputs: fullData.service.inputs || [],
-            outputs: fullData.service.outputs || [],
-            enableCaching: fullData.service.enableCaching !== false,
-            requireToken: fullData.service.requireToken === true
-          };
-          setApiConfig(loadedConfig);
-          setSavedConfig(loadedConfig);
+          // Check if this is the full endpoint response or regular endpoint
+          const isFullEndpoint = data.service && data.status;
+          
+          if (isFullEndpoint) {
+            // Full endpoint response
+            setServiceStatus(data.status);
+            
+            const loadedConfig = {
+              name: data.service.name || '',
+              description: data.service.description || '',
+              inputs: data.service.inputs || [],
+              outputs: data.service.outputs || [],
+              enableCaching: data.service.enableCaching !== false,
+              requireToken: data.service.requireToken === true
+            };
+            console.log('Loaded config from full endpoint:', loadedConfig);
+            setApiConfig(loadedConfig);
+            setSavedConfig(loadedConfig);
+            setConfigLoaded(true); // Mark config as loaded
+          } else {
+            // Regular endpoint response - data is the service directly
+            setServiceStatus({
+              published: data.status === 'published',
+              status: data.status || 'draft'
+            });
+            
+            const loadedConfig = {
+              name: data.name || '',
+              description: data.description || '',
+              inputs: data.inputs || [],
+              outputs: data.outputs || [],
+              enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
+              requireToken: data.requireToken === 'true' // Redis stores as string
+            };
+            console.log('Loaded config from regular endpoint:', loadedConfig);
+            setApiConfig(loadedConfig);
+            setSavedConfig(loadedConfig);
+            setConfigLoaded(true); // Mark config as loaded
+          }
 
           // Process workbook data if available
           if ('status' in workbookResponse && workbookResponse.status === 304) {
@@ -282,8 +327,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             requireToken: false
           };
           setApiConfig(newConfig);
-          setSavedConfig({ name: '', description: '', inputs: [], outputs: [], enableCaching: true, requireToken: false }); // Track as unsaved
-          setHasChanges(true); // Mark as having changes so user can save
+          setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
+          setHasChanges(false); // Don't mark as changed until user actually makes changes
+          setConfigLoaded(true); // Mark config as loaded for new service
 
           // Show empty state instead of default spreadsheet
           setShowEmptyState(true);
@@ -361,12 +407,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [serviceId, isMobile]);
 
   // Handle initial loading state based on spreadsheet data
   useEffect(() => {
     if (spreadsheetData !== null) {
+      // Don't reset visibility - let the workbook handle it
       // Add a small delay to ensure smooth transition
       setTimeout(() => {
         setInitialLoading(false);
@@ -698,6 +746,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     if (action === 'spread-changed') {
       // This is the workbook/spread instance
       setSpreadInstance(data);
+      // Don't set visibility here - wait for file-loaded or workbook-loaded
     } else if (action === 'designer-initialized') {
       // This is the designer instance, get the workbook from it
       if (data && typeof data.getWorkbook === 'function') {
@@ -710,16 +759,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       if (action === 'edit-ended') {
         setHasChanges(true);
       }
-    } else if (action === 'workbook-loaded') {
-      console.log('Workbook loaded successfully');
+    } else if (action === 'workbook-loaded' || action === 'file-loaded') {
+      console.log(action === 'workbook-loaded' ? 'Workbook loaded successfully' : 'File loaded successfully');
       // Don't mark as changed when loading existing workbook
       // Only user actions should set hasChanges to true
-      setSavingWorkbook(false); // Clear loading state when workbook is loaded
-    } else if (action === 'file-loaded') {
-      console.log('File loaded successfully');
-      setSavingWorkbook(false); // Clear loading state when file is loaded
+      setSavingWorkbook(false); // Clear loading state
+      // Set visibility after data is fully loaded to prevent flicker
+      if (!spreadsheetVisible) {
+        // Use requestAnimationFrame for smoother transition
+        requestAnimationFrame(() => {
+          setSpreadsheetVisible(true);
+        });
+      }
     }
-  }, []);
+  }, [spreadsheetVisible]);
 
   const renderSpreadsheet = useMemo(() => {
     // Show loading spinner during initial load
@@ -774,20 +827,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             <Spin size="default" />
           </div>
         )}
-        <WorkbookViewer
-          storeLocal={{ spread: spreadsheetData }}
-          readOnly={false}
-          ref={workbookRef}
-          workbookLayout="default"
-          initialZoom={zoomLevel}
-          actionHandlerProc={handleWorkbookAction}
-        // createNewShareProc={(selection) => {
-        //   console.log('Share selection:', selection);
-        // }}
-        />
+        <div style={{
+          height: '100%',
+          opacity: spreadsheetVisible ? 1 : 0,
+          transition: 'opacity 0.3s ease-in-out',
+          willChange: 'opacity'
+        }}>
+          <WorkbookViewer
+            storeLocal={{ spread: spreadsheetData }}
+            readOnly={false}
+            ref={workbookRef}
+            workbookLayout="default"
+            initialZoom={zoomLevel}
+            actionHandlerProc={handleWorkbookAction}
+          // createNewShareProc={(selection) => {
+          //   console.log('Share selection:', selection);
+          // }}
+          />
+        </div>
       </div>
     );
-  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState]);
+  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState, spreadsheetVisible]);
 
   const handleConfigChange = useCallback((config: any) => {
     setApiConfig(config);
@@ -863,6 +923,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       onImportExcel={handleImportExcel}
       initialConfig={apiConfig}
       showEmptyState={showEmptyState}
+      isLoading={!configLoaded}
     />
   );
 
@@ -914,7 +975,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 title: <a onClick={handleBack}>Services</a>,
               },
               {
-                title: apiConfig.name || 'New Service',
+                title: configLoaded ? (apiConfig.name || 'New Service') : '...',
               },
             ]}
           />
@@ -978,36 +1039,48 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       {/* Main Layout */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         {!isMobile ? (
-          <Splitter
-            style={{ height: '100%' }}
-            onResize={handlePanelResize}
-          >
-            <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} style={{ backgroundColor: '#ffffff' }}>
-              <div style={{
-                height: '100%',
-                background: 'white',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
-                {configPanel}
+          sizesLoaded ? (
+            <Splitter
+              style={{ height: '100%' }}
+              onResize={handlePanelResize}
+            >
+              <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} style={{ backgroundColor: '#ffffff' }}>
+                <div style={{
+                  height: '100%',
+                  background: 'white',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  {configPanel}
+                </div>
+              </Splitter.Panel>
+              <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
+                {showEmptyState && !spreadsheetData ? (
+                  <EmptyWorkbookState
+                    onStartFromScratch={() => {
+                      setShowEmptyState(false);
+                      setDefaultSpreadsheetData();
+                    }}
+                    onImportFile={(file) => {
+                      setShowEmptyState(false);
+                      handleEmptyStateImport(file);
+                    }}
+                  />
+                ) : renderSpreadsheet}
+              </Splitter.Panel>
+            </Splitter>
+          ) : (
+            // Show a loading placeholder with the same layout to prevent layout shift
+            <div style={{ height: '100%', display: 'flex' }}>
+              <div style={{ width: '70%', backgroundColor: '#ffffff' }}>
+                <Spin spinning={true} style={{ marginTop: 100 }} />
               </div>
-            </Splitter.Panel>
-            <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
-              {showEmptyState && !spreadsheetData ? (
-                <EmptyWorkbookState
-                  onStartFromScratch={() => {
-                    setShowEmptyState(false);
-                    setDefaultSpreadsheetData();
-                  }}
-                  onImportFile={(file) => {
-                    setShowEmptyState(false);
-                    handleEmptyStateImport(file);
-                  }}
-                />
-              ) : renderSpreadsheet}
-            </Splitter.Panel>
-          </Splitter>
+              <div style={{ width: '30%', paddingLeft: 10, backgroundColor: '#ffffff' }}>
+                <Spin spinning={true} style={{ marginTop: 100 }} />
+              </div>
+            </div>
+          )
         ) : (
           <Layout style={{ height: '100%', overflow: 'auto' }}>
             <Content style={{ overflow: 'auto' }}>

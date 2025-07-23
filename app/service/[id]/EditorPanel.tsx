@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm } from 'antd';
+import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm, Skeleton } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
@@ -69,6 +69,7 @@ interface EditorPanelProps {
   onImportExcel?: (file: File) => void;
   serviceStatus?: any;
   showEmptyState?: boolean;
+  isLoading?: boolean;
   initialConfig?: {
     name: string;
     description: string;
@@ -84,7 +85,7 @@ interface EditorPanelProps {
 }
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState
+  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState, isLoading
 }) => {
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
@@ -115,6 +116,27 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [aiUsageExamples, setAiUsageExamples] = useState<string[]>(initialConfig?.aiUsageExamples || []);
   const [aiTags, setAiTags] = useState<string[]>(initialConfig?.aiTags || []);
   const [category, setCategory] = useState<string>(initialConfig?.category || '');
+
+  // Track if we've initialized from config
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Update state when initialConfig changes (after data loads)
+  useEffect(() => {
+    // Only update if we're not loading and we have config
+    if (!isLoading && initialConfig) {
+      setApiName(initialConfig.name || '');
+      setApiDescription(initialConfig.description || '');
+      setInputs(initialConfig.inputs || []);
+      setOutputs(initialConfig.outputs || []);
+      setEnableCaching(initialConfig.enableCaching !== false);
+      setRequireToken(initialConfig.requireToken === true);
+      setAiDescription(initialConfig.aiDescription || '');
+      setAiUsageExamples(initialConfig.aiUsageExamples || []);
+      setAiTags(initialConfig.aiTags || []);
+      setCategory(initialConfig.category || '');
+      setHasInitialized(true);
+    }
+  }, [initialConfig, isLoading]);
 
   // Handle card activation
   const handleCardClick = useCallback((cardType: ActiveCard) => {
@@ -1241,7 +1263,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     <div style={{
                       fontSize: '12px'
                     }}>
-                      {inputs.length === 0 ? (
+                      {isLoading || !hasInitialized ? (
+                        <Skeleton active paragraph={{ rows: 2 }} />
+                      ) : inputs.length === 0 ? (
                         <div style={{ color: '#999' }}>No input parameters defined yet</div>
                       ) : (
                         <Space direction="vertical" style={{ width: '100%' }}>
@@ -1332,7 +1356,9 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     <div style={{
                       fontSize: '12px'
                     }}>
-                      {outputs.length === 0 ? (
+                      {isLoading || !hasInitialized ? (
+                        <Skeleton active paragraph={{ rows: 2 }} />
+                      ) : outputs.length === 0 ? (
                         <div style={{ color: '#999' }}>No output parameters defined yet</div>
                       ) : (
                         <Space direction="vertical" style={{ width: '100%' }}>
