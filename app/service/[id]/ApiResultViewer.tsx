@@ -61,7 +61,7 @@ const ApiResultViewer: React.FC<ApiResultViewerProps> = ({
           key="copy" 
           icon={copied ? <CheckCircleOutlined /> : <CopyOutlined />}
           onClick={handleCopy}
-          disabled={!result || error}
+          disabled={!result || !!error}
         >
           {copied ? 'Copied!' : 'Copy JSON'}
         </Button>,
