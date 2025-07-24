@@ -3,7 +3,7 @@ import redis from '../../../../lib/redis';
 import { mcpAuthMiddleware } from '../../../../lib/mcp-auth';
 import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
-import { executeAreaRead, executeAreaUpdate } from './areaExecutors.js';
+import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
 
 /**
@@ -11,9 +11,8 @@ import { executeEnhancedCalc } from './executeEnhancedCalc.js';
  * JSON-RPC 2.0 endpoint for AI assistants
  * 
  * This implementation uses a generic tool approach to reduce tool proliferation:
- * - spreadapi_calc: Generic calculation tool that accepts serviceId parameter
+ * - spreadapi_calc: Generic calculation tool that accepts serviceId parameter (with optional areaUpdates)
  * - spreadapi_read_area: Generic area reading tool that accepts serviceId parameter
- * - spreadapi_update_area: Generic area update tool that accepts serviceId parameter
  * - spreadapi_list_services: Enhanced service discovery with area information
  * - spreadapi_get_service_details: Detailed service information including areas
  * 
@@ -337,7 +336,7 @@ async function handleJsonRpc(request, auth) {
           },
           {
             name: 'spreadapi_calc',
-            description: 'Execute a calculation for any SpreadAPI service. Optionally update areas before calculation and control what data is returned.',
+            description: 'Execute calculations with optional area updates. This is the primary tool for all calculations and area updates. When updating areas, it performs the updates and calculation in a single atomic operation for optimal performance.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -434,74 +433,6 @@ async function handleJsonRpc(request, auth) {
                 }
               },
               required: ['serviceId', 'areaName'],
-              additionalProperties: false
-            }
-          },
-          {
-            name: 'spreadapi_update_area',
-            description: 'Update values and formulas in editable areas of any SpreadAPI service',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                serviceId: {
-                  type: 'string',
-                  description: 'The ID of the service containing the areas'
-                },
-                updates: {
-                  type: 'array',
-                  description: 'Array of area updates to apply',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      areaName: {
-                        type: 'string',
-                        description: 'The area to update'
-                      },
-                      changes: {
-                        type: 'array',
-                        description: 'Cell changes to apply',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            row: { type: 'number', description: 'Row index within area (0-based)' },
-                            col: { type: 'number', description: 'Column index within area (0-based)' },
-                            value: { description: 'New cell value' },
-                            formula: { type: 'string', description: 'New cell formula' }
-                          }
-                        }
-                      }
-                    },
-                    required: ['areaName', 'changes']
-                  }
-                },
-                returnOptions: {
-                  type: 'object',
-                  description: 'Control what data is returned after updates',
-                  properties: {
-                    includeValues: { 
-                      type: 'boolean', 
-                      description: 'Return calculated cell values',
-                      default: true 
-                    },
-                    includeFormulas: { 
-                      type: 'boolean', 
-                      description: 'Return cell formulas',
-                      default: false 
-                    },
-                    includeFormatting: { 
-                      type: 'boolean', 
-                      description: 'Return cell formatting',
-                      default: false 
-                    },
-                    includeRelatedOutputs: { 
-                      type: 'boolean', 
-                      description: 'Return any defined output parameters that may have changed',
-                      default: false 
-                    }
-                  }
-                }
-              },
-              required: ['serviceId', 'updates'],
               additionalProperties: false
             }
           }
@@ -615,75 +546,6 @@ async function handleJsonRpc(request, auth) {
                       required: ['areaName']
                     }
                   });
-                  
-                  // Add write area tool if any areas allow writing
-                  const writableAreas = areas.filter(a => a.mode !== 'readonly');
-                  if (writableAreas.length > 0) {
-                    tools.push({
-                      name: `spreadapi_update_area_${serviceId}`,
-                      description: `Update values and formulas in editable areas of ${publishedData.title || serviceId}`,
-                      inputSchema: {
-                        type: 'object',
-                        properties: {
-                          updates: {
-                            type: 'array',
-                            description: 'Array of area updates to apply',
-                            items: {
-                              type: 'object',
-                              properties: {
-                                areaName: {
-                                  type: 'string',
-                                  description: 'The area to update',
-                                  enum: writableAreas.map(a => a.name)
-                                },
-                                changes: {
-                                  type: 'array',
-                                  description: 'Cell changes to apply',
-                                  items: {
-                                    type: 'object',
-                                    properties: {
-                                      row: { type: 'number', description: 'Row index within area (0-based)' },
-                                      col: { type: 'number', description: 'Column index within area (0-based)' },
-                                      value: { description: 'New cell value' },
-                                      formula: { type: 'string', description: 'New cell formula' }
-                                    }
-                                  }
-                                }
-                              },
-                              required: ['areaName', 'changes']
-                            }
-                          },
-                          returnOptions: {
-                            type: 'object',
-                            description: 'Control what data is returned after updates',
-                            properties: {
-                              includeValues: { 
-                                type: 'boolean', 
-                                description: 'Return calculated cell values',
-                                default: true 
-                              },
-                              includeFormulas: { 
-                                type: 'boolean', 
-                                description: 'Return cell formulas',
-                                default: false 
-                              },
-                              includeFormatting: { 
-                                type: 'boolean', 
-                                description: 'Return cell formatting',
-                                default: false 
-                              },
-                              includeRelatedOutputs: { 
-                                type: 'boolean', 
-                                description: 'Return any defined output parameters that may have changed',
-                                default: false 
-                              }
-                            }
-                          }
-                        },
-                        required: ['updates']
-                      }
-                    });
-                  }
               }
               
             } catch (error) {
@@ -816,57 +678,6 @@ async function handleJsonRpc(request, auth) {
             includeFormulas,
             includeFormatting
           }, auth);
-          
-          return {
-            jsonrpc: '2.0',
-            result,
-            id
-          };
-        }
-        
-        // Handle generic area update tool
-        if (name === 'spreadapi_update_area') {
-          const { serviceId, updates, returnOptions = {} } = args;
-          
-          if (!serviceId || !updates) {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: INVALID_PARAMS,
-                message: 'serviceId and updates are required'
-              },
-              id
-            };
-          }
-          
-          // Check access permissions
-          const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
-          if (!userServiceIndex[serviceId]) {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: INVALID_PARAMS,
-                message: 'Service not found'
-              },
-              id
-            };
-          }
-          
-          const allowedServiceIds = auth.serviceIds || [];
-          const hasServiceRestrictions = allowedServiceIds.length > 0;
-          
-          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: INVALID_PARAMS,
-                message: 'Access denied to this service'
-              },
-              id
-            };
-          }
-          
-          const result = await executeAreaUpdate(serviceId, updates, auth, returnOptions);
           
           return {
             jsonrpc: '2.0',
@@ -1184,47 +995,6 @@ async function handleJsonRpc(request, auth) {
             includeFormulas,
             includeFormatting
           }, auth);
-          
-          return {
-            jsonrpc: '2.0',
-            result,
-            id
-          };
-        }
-        
-        // Handle backward compatibility: service-specific area update tool
-        if (name.startsWith('spreadapi_update_area_')) {
-          const serviceId = name.replace('spreadapi_update_area_', '');
-          const { updates, returnOptions = {} } = args;
-          
-          // Check access permissions
-          const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
-          if (!userServiceIndex[serviceId]) {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: INVALID_PARAMS,
-                message: 'Service not found'
-              },
-              id
-            };
-          }
-          
-          const allowedServiceIds = auth.serviceIds || [];
-          const hasServiceRestrictions = allowedServiceIds.length > 0;
-          
-          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
-            return {
-              jsonrpc: '2.0',
-              error: {
-                code: INVALID_PARAMS,
-                message: 'Access denied to this service'
-              },
-              id
-            };
-          }
-          
-          const result = await executeAreaUpdate(serviceId, updates, auth, returnOptions);
           
           return {
             jsonrpc: '2.0',
