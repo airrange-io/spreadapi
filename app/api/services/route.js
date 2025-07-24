@@ -29,17 +29,35 @@ export async function GET(request) {
     // Parse service index data and build service list
     const services = [];
     
+    // Use multi to fetch call counts efficiently
+    const multi = redis.multi();
+    const serviceIdsList = [];
+    
     for (const [serviceId, indexData] of Object.entries(serviceIndex)) {
       try {
         // Parse JSON data from index
         const serviceInfo = typeof indexData === 'string' ? JSON.parse(indexData) : indexData;
         services.push(serviceInfo);
+        serviceIdsList.push(serviceId);
+        
+        // Add call count fetch to multi
+        multi.hGet(`service:${serviceId}`, 'calls');
       } catch (error) {
         console.error(`Error processing service ${serviceId}:`, error);
         // Skip this service if there's an error
         continue;
       }
     }
+    
+    // Execute multi to get all call counts
+    const callCounts = await multi.exec();
+    
+    // Update services with actual call counts
+    services.forEach((service, index) => {
+      if (callCounts[index] && callCounts[index][1] !== null) {
+        service.calls = parseInt(callCounts[index][1]) || 0;
+      }
+    });
     
     // Filter out nulls and sort by updatedAt descending
     const validServices = services.filter(s => s !== null);

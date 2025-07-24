@@ -90,27 +90,37 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     if (loadingRef.current) {
       return;
     }
-    
+
     try {
       loadingRef.current = true;
       setLoading(true);
-      
-      // If not authenticated, show empty list (later we'll add demo services)
+
+      // If not authenticated, show demo service
       if (isAuthenticated === false) {
-        setServices([]);
-        setFilteredServices([]);
+        const demoService: Service = {
+          id: 'test1234_mdejqoua8ptor',
+          name: 'Demo: Sales Calculator',
+          description: 'Try our Excel API with this interactive sales calculator demo. Calculate totals, apply discounts, and see real-time results!',
+          status: 'published',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: new Date().toISOString(),
+          calls: 0,
+          lastUsed: null
+        };
+        setServices([demoService]);
+        setFilteredServices([demoService]);
         setLoading(false);
         loadingRef.current = false;
         return;
       }
-      
+
       // If authentication state is still being checked, wait
       if (isAuthenticated === null) {
         setLoading(false);
         loadingRef.current = false;
         return;
       }
-      
+
       // Double-check we have a hanko cookie before making the API call
       const hankoCookie = document.cookie.split('; ').find(row => row.startsWith('hanko='));
       if (!hankoCookie) {
@@ -120,7 +130,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         loadingRef.current = false;
         return;
       }
-      
+
       const response = await fetch('/api/services', {
         credentials: 'include' // Ensure cookies are sent
       });
@@ -208,7 +218,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'name',
       render: (text: string, record: Service) => (
         <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
-          {text}
+          {record.id === 'test1234_mdejqoua8ptor' ? `${text} (Try Demo)` : text}
         </Button>
       ),
       sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
@@ -218,12 +228,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
+      responsive: ['md'],
       render: (text: string) => text || 'No description',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      align: 'center',
       width: 100,
       render: (status: string) => (
         <Tag color={status === 'published' ? 'green' : 'orange'}>
@@ -240,29 +252,31 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       title: 'Calls',
       dataIndex: 'calls',
       key: 'calls',
-      width: 80,
+      align: 'center',
+      width: 100,
       render: (calls: number) => calls || 0,
       sorter: (a: Service, b: Service) => a.calls - b.calls,
     },
+    // {
+    //   title: 'Updated',
+    //   dataIndex: 'updatedAt',
+    //   key: 'updatedAt',
+    //   width: 180,
+    //   render: (date: string) => formatDate(date),
+    //   sorter: (a: Service, b: Service) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+    // },
     {
-      title: 'Updated',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      width: 180,
-      render: (date: string) => formatDate(date),
-      sorter: (a: Service, b: Service) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-    },
-    {
-      title: 'Actions',
+      title: '',
       key: 'actions',
-      width: 120,
+      width: 60,
+      align: 'left',
       render: (_: any, record: Service) => (
         <Space size="middle">
-          <Button
+          {/* <Button
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record.id)}
-          />
+          /> */}
           <Dropdown
             menu={{
               items: [
@@ -301,7 +315,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   disabled: record.status === 'draft',
                 },
                 { type: 'divider' },
-                {
+                ...(record.id !== 'test1234_mdejqoua8ptor' ? [{
                   key: 'delete',
                   icon: <DeleteOutlined />,
                   label: (
@@ -320,7 +334,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     </Popconfirm>
                   ),
                   danger: true,
-                },
+                }] : []),
               ],
             }}
             trigger={['click']}
@@ -349,9 +363,9 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     // If auth state is still loading (null), don't show anything yet
     if (isAuthenticated === null) {
       return (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
           minHeight: '400px'
         }}>
@@ -359,14 +373,15 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </div>
       );
     }
-    
-    return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={isAuthenticated === false ? "Sign in to create and manage your APIs" : "No APIs created yet"}
-        style={{ marginTop: 180 }}
-      >
-        {isAuthenticated !== false && (
+
+    // This empty state should only show if authenticated but no services
+    if (isAuthenticated === true) {
+      return (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="No APIs created yet"
+          style={{ marginTop: 180 }}
+        >
           <Button type="primary" onClick={() => {
             const newId = generateServiceId(userId || 'test1234');
             console.log('[ServiceList] Generated service ID:', newId);
@@ -374,14 +389,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           }}>
             Create Your First Service
           </Button>
-        )}
-        {isAuthenticated === false && (
-          <Button type="primary" onClick={() => router.push('/login')}>
-            Sign In
-          </Button>
-        )}
-      </Empty>
-    );
+        </Empty>
+      );
+    }
+
+    // For unauthenticated users, we should have the demo service
+    return null;
   }
 
   if (filteredServices.length === 0 && searchQuery) {
@@ -400,11 +413,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           columns={getTableColumns()}
           dataSource={filteredServices}
           rowKey="id"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} services`,
-          }}
+          pagination={false}
+          // pagination={{
+          //   pageSize: 10,
+          //   showSizeChanger: true,
+          //   showTotal: (total) => `Total ${total} services`,
+          // }}
           onRow={(record) => ({
             style: { cursor: 'pointer' },
             onClick: (e) => {
@@ -438,7 +452,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     icon={<EditOutlined />}
                     onClick={() => handleEdit(service.id)}
                   >
-                    Edit
+                    {service.id === 'test1234_mdejqoua8ptor' ? 'Try Demo' : 'Edit'}
                   </Button>
                 </div>,
                 // <div onClick={(e) => e.stopPropagation()}>
@@ -456,7 +470,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     type="text"
                     icon={<LineChartOutlined />}
                     onClick={() => handleUsage(service.id)}
-                    disabled={service.status === 'draft'}
+                    disabled={service.status === 'draft' || service.id === 'test1234_mdejqoua8ptor'}
                   >
                     Usage
                   </Button>
@@ -467,7 +481,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text strong>{service.name}</Text>
-                    <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4}}>
+                    <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4 }}>
                       {service.status}
                     </Tag>
                   </div>
@@ -489,23 +503,25 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                         </Text>
                       </Space>
 
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Popconfirm
-                          title="Delete this service?"
-                          description="This action cannot be undone."
-                          onConfirm={() => handleDelete(service.id, service.name)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            size="small"
-                          />
-                        </Popconfirm>
-                      </div>
+                      {service.id !== 'test1234_mdejqoua8ptor' && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Popconfirm
+                            title="Delete this service?"
+                            description="This action cannot be undone."
+                            onConfirm={() => handleDelete(service.id, service.name)}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                              size="small"
+                            />
+                          </Popconfirm>
+                        </div>
+                      )}
                     </div>
 
                     {service.calls > 0 && (

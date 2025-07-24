@@ -75,6 +75,7 @@ interface ParametersSectionProps {
   areas: AreaParameter[];
   isLoading: boolean;
   hasInitialized: boolean;
+  isDemoMode?: boolean;
   onNavigateToParameter: (param: InputDefinition | OutputDefinition) => void;
   onEditParameter: (type: 'input' | 'output', parameter: InputDefinition | OutputDefinition) => void;
   onDeleteParameter: (type: 'input' | 'output', id: string) => void;
@@ -90,6 +91,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   areas,
   isLoading,
   hasInitialized,
+  isDemoMode,
   onNavigateToParameter,
   onEditParameter,
   onDeleteParameter,
@@ -184,21 +186,23 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                           icon={<EditOutlined />}
                           onClick={() => onEditParameter('input', input)}
                         />
-                        <Popconfirm
-                          title="Delete this parameter?"
-                          description="This action cannot be undone."
-                          onConfirm={() => onDeleteParameter('input', input.id)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button
-                            size="small"
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                          />
-                        </Popconfirm>
+                        {!isDemoMode && (
+                          <Popconfirm
+                            title="Delete this parameter?"
+                            description="This action cannot be undone."
+                            onConfirm={() => onDeleteParameter('input', input.id)}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button
+                              size="small"
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                            />
+                          </Popconfirm>
+                        )}
                       </Space>
                     </div>
                   </div>
@@ -270,21 +274,23 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                           icon={<EditOutlined />}
                           onClick={() => onEditParameter('output', output)}
                         />
-                        <Popconfirm
-                          title="Delete this parameter?"
-                          description="This action cannot be undone."
-                          onConfirm={() => onDeleteParameter('output', output.id)}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button
-                            size="small"
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                          />
-                        </Popconfirm>
+                        {!isDemoMode && (
+                          <Popconfirm
+                            title="Delete this parameter?"
+                            description="This action cannot be undone."
+                            onConfirm={() => onDeleteParameter('output', output.id)}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button
+                              size="small"
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                            />
+                          </Popconfirm>
+                        )}
                       </Space>
                     </div>
                   </div>
@@ -384,16 +390,18 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                           onEditArea(area, index);
                         }}
                       />
-                      <Button
-                        size="small"
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveArea(index);
-                        }}
-                      />
+                      {!isDemoMode && (
+                        <Button
+                          size="small"
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveArea(index);
+                          }}
+                        />
+                      )}
                     </Space>
                   </div>
                 ))}

@@ -46,6 +46,7 @@ interface EditorPanelProps {
   serviceStatus?: any;
   showEmptyState?: boolean;
   isLoading?: boolean;
+  isDemoMode?: boolean;
   initialConfig?: {
     name: string;
     description: string;
@@ -99,7 +100,7 @@ const PERMISSION_PRESETS = {
 };
 
 const EditorPanel: React.FC<EditorPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState, isLoading
+  spreadInstance, serviceId, onConfigChange, onImportExcel, serviceStatus, initialConfig, showEmptyState, isLoading, isDemoMode
 }) => {
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
@@ -930,6 +931,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Handle parameter deletion
   const handleDeleteParameter = (type: 'input' | 'output', id: string) => {
+    if (isDemoMode) {
+      message.warning('Parameters cannot be deleted in demo mode');
+      return;
+    }
     if (type === 'input') {
       setInputs(inputs.filter(input => input.id !== id));
     } else {
@@ -1105,6 +1110,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
   // Handle area removal
   const handleRemoveArea = (index: number) => {
+    if (isDemoMode) {
+      message.warning('Areas cannot be deleted in demo mode');
+      return;
+    }
     const newAreas = [...areas];
     newAreas.splice(index, 1);
     setAreas(newAreas);
@@ -1279,6 +1288,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   areas={areas}
                   isLoading={isLoading}
                   hasInitialized={hasInitialized}
+                  isDemoMode={isDemoMode}
                   onNavigateToParameter={navigateToParameter}
                   onEditParameter={handleEditParameter}
                   onDeleteParameter={handleDeleteParameter}
@@ -1300,6 +1310,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   inputs={inputs}
                   outputs={outputs}
                   availableTokens={availableTokens}
+                  isDemoMode={isDemoMode}
                   onRequireTokenChange={handleRequireTokenChange}
                   onTokenCountChange={handleTokenCountChange}
                   onTokensChange={handleTokensChange}

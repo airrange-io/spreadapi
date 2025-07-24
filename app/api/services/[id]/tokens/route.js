@@ -2,26 +2,42 @@ import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { generateToken, generateTokenId, hashToken } from '@/utils/tokenUtils';
 
-// For now, use a fixed test user (same as services API)
-const TEST_USER_ID = 'test1234';
-
 // GET /api/services/[id]/tokens - List all tokens for a service
 export async function GET(request, { params }) {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   
   try {
     console.time(`[TOKENS] Total time for service ${id}`);
     
+    // Get user ID from headers (set by middleware)
+    const currentUserId = request.headers.get('x-user-id');
+    
+    console.log(`[TOKENS] Current user ID: ${currentUserId}, Service ID: ${id}`);
+    
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // Check if service exists and user owns it - fetch only userId field
     console.time(`[TOKENS] Check service ownership`);
-    const userId = await redis.hGet(`service:${id}`, 'userId');
+    const serviceUserId = await redis.hGet(`service:${id}`, 'userId');
     console.timeEnd(`[TOKENS] Check service ownership`);
     
-    if (!userId) {
+    if (!serviceUserId) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    if (userId !== TEST_USER_ID) {
+    console.log(`[TOKENS] Service owner: ${serviceUserId}, Current user: ${currentUserId}`);
+    
+    // Allow demo user to access demo service tokens
+    const isDemoAccess = currentUserId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    
+    if (serviceUserId !== currentUserId && !isDemoAccess) {
+      console.log(`[TOKENS] Access denied. Owner: ${serviceUserId}, User: ${currentUserId}, Demo: ${isDemoAccess}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -36,22 +52,21 @@ export async function GET(request, { params }) {
       return NextResponse.json({ tokens: [] });
     }
     
-    // Use pipeline for better performance
+    // Use multi for better performance
     console.time(`[TOKENS] Fetch all token data`);
-    const pipeline = redis.pipeline();
+    const multi = redis.multi();
     
     tokenIds.forEach(tokenId => {
-      pipeline.hGetAll(`token:${tokenId}`);
+      multi.hGetAll(`token:${tokenId}`);
     });
     
-    const results = await pipeline.exec();
+    const results = await multi.exec();
     console.timeEnd(`[TOKENS] Fetch all token data`);
     
     // Process token data
     console.time(`[TOKENS] Process token data`);
     const tokens = results
-      .map((result, index) => {
-        const tokenData = result[1]; // Pipeline returns [error, data] tuples
+      .map((tokenData, index) => {
         if (!tokenData || Object.keys(tokenData).length === 0) return null;
         
         // Don't return the actual token hash
@@ -84,9 +99,20 @@ export async function GET(request, { params }) {
 
 // POST /api/services/[id]/tokens - Create a new token
 export async function POST(request, { params }) {
-  const { id } = await params;
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
   
   try {
+    // Get user ID from headers (set by middleware)
+    const currentUserId = request.headers.get('x-user-id');
+    
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
     const { name, description, scopes = ['execute'], expiresAt } = body;
     
@@ -104,8 +130,15 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    if (service.userId !== TEST_USER_ID) {
+    // Check ownership - demo users cannot create tokens
+    const isDemoUser = currentUserId === 'demo-user';
+    
+    if (service.userId !== currentUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
+    if (isDemoUser) {
+      return NextResponse.json({ error: 'Token creation is disabled in demo mode' }, { status: 403 });
     }
     
     // Generate token and ID
@@ -122,7 +155,7 @@ export async function POST(request, { params }) {
       tokenHash,
       createdAt: new Date().toISOString(),
       usageCount: '0',
-      userId: TEST_USER_ID,
+      userId: currentUserId,
     };
     
     if (expiresAt) {

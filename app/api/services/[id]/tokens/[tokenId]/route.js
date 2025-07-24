@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 
-// For now, use a fixed test user (same as services API)
-const TEST_USER_ID = 'test1234';
-
 // DELETE /api/services/[id]/tokens/[tokenId] - Revoke a token
 export async function DELETE(request, { params }) {
   const { id, tokenId } = await params;
   
   try {
+    // Get user ID from headers (set by middleware)
+    const currentUserId = request.headers.get('x-user-id');
+    
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // Check if service exists and user owns it
     const service = await redis.hGetAll(`service:${id}`);
     
@@ -16,7 +23,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    if (service.userId !== TEST_USER_ID) {
+    if (service.userId !== currentUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -67,6 +74,16 @@ export async function GET(request, { params }) {
   const { id, tokenId } = await params;
   
   try {
+    // Get user ID from headers (set by middleware)
+    const currentUserId = request.headers.get('x-user-id');
+    
+    if (!currentUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // Check if service exists and user owns it
     const service = await redis.hGetAll(`service:${id}`);
     
@@ -74,7 +91,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    if (service.userId !== TEST_USER_ID) {
+    if (service.userId !== currentUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     

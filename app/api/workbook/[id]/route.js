@@ -36,8 +36,9 @@ export async function GET(request, { params }) {
     
     console.log(`[Workbook GET] Service loaded, has workbookUrl: ${!!service.workbookUrl}`);
     
-    // Verify ownership
-    if (service.userId !== userId) {
+    // Verify ownership (allow demo-user to access demo service)
+    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -209,8 +210,9 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    // Verify ownership
-    if (service.userId !== userId) {
+    // Verify ownership (allow demo-user to access demo service)
+    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -334,8 +336,9 @@ export async function DELETE(request, { params }) {
       }, { status: 400 });
     }
     
-    // Verify ownership
-    if (service.userId !== userId) {
+    // Verify ownership (allow demo-user to access demo service)
+    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

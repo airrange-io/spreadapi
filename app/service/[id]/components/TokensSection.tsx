@@ -14,6 +14,7 @@ interface TokensSectionProps {
   inputs: InputDefinition[];
   outputs: OutputDefinition[];
   availableTokens: any[];
+  isDemoMode?: boolean;
   onRequireTokenChange: (value: boolean) => void;
   onTokenCountChange: (count: number) => void;
   onTokensChange: (tokens: any[]) => void;
@@ -26,6 +27,7 @@ const TokensSection: React.FC<TokensSectionProps> = ({
   inputs,
   outputs,
   availableTokens,
+  isDemoMode,
   onRequireTokenChange,
   onTokenCountChange,
   onTokensChange,
@@ -56,6 +58,7 @@ const TokensSection: React.FC<TokensSectionProps> = ({
         <TokenManagement
           serviceId={serviceId}
           requireToken={requireToken}
+          isDemoMode={isDemoMode}
           onRequireTokenChange={onRequireTokenChange}
           onTokenCountChange={onTokenCountChange}
           onTokensChange={onTokensChange}

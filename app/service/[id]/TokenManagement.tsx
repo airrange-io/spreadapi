@@ -48,12 +48,13 @@ interface Token {
 interface TokenManagementProps {
   serviceId: string;
   requireToken: boolean;
+  isDemoMode?: boolean;
   onRequireTokenChange: (require: boolean) => void;
   onTokenCountChange?: (count: number) => void;
   onTokensChange?: (tokens: Token[]) => void;
 }
 
-const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, onRequireTokenChange, onTokenCountChange, onTokensChange }: TokenManagementProps) {
+const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, isDemoMode, onRequireTokenChange, onTokenCountChange, onTokensChange }: TokenManagementProps) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -268,22 +269,24 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Token) => (
-        <Popconfirm
-          title="Revoke this token?"
-          description="This action cannot be undone."
-          onConfirm={() => handleDeleteToken(record.id)}
-          okText="Revoke"
-          okButtonProps={{ danger: true }}
-        >
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            size="small"
+        isDemoMode ? null : (
+          <Popconfirm
+            title="Revoke this token?"
+            description="This action cannot be undone."
+            onConfirm={() => handleDeleteToken(record.id)}
+            okText="Revoke"
+            okButtonProps={{ danger: true }}
           >
-            Revoke
-          </Button>
-        </Popconfirm>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+            >
+              Revoke
+            </Button>
+          </Popconfirm>
+        )
       )
     }
   ];
@@ -334,13 +337,15 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
           )}
 
           {/* Bottom Create Token button */}
-          <Button
-            type="default"
-            onClick={() => setShowCreateModal(true)}
-            block
-          >
-            Create Token
-          </Button>
+          {!isDemoMode && (
+            <Button
+              type="default"
+              onClick={() => setShowCreateModal(true)}
+              block
+            >
+              Create Token
+            </Button>
+          )}
         </Space>
       </Card>
 

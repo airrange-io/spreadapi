@@ -76,6 +76,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
   const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
+  const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
   // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
@@ -250,6 +251,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         if (fullDataResponse.ok && fullDataResponse.status !== 204) {
           const data = await fullDataResponse.json();
           console.log('Service data loaded:', data);
+
+          // Check if this is the demo service
+          const isDemo = serviceId === 'test1234_mdejqoua8ptor';
+          setIsDemoMode(isDemo);
 
           // Check if this is the full endpoint response or regular endpoint
           const isFullEndpoint = data.service && data.status;
@@ -870,7 +875,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }}>
           <WorkbookViewer
             storeLocal={{ spread: spreadsheetData }}
-            readOnly={false}
+            readOnly={isDemoMode}
             ref={workbookRef}
             workbookLayout="default"
             initialZoom={zoomLevel}
@@ -959,6 +964,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       initialConfig={apiConfig}
       showEmptyState={showEmptyState}
       isLoading={!configLoaded}
+      isDemoMode={isDemoMode}
     />
   );
 
@@ -1011,22 +1017,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               },
               {
                 title: configLoaded ? (
-                  <Text 
-                    editable={{
-                      onChange: (value) => {
-                        if (value && value.trim()) {
-                          setApiConfig(prev => ({ ...prev, name: value.trim() }));
-                          setHasChanges(true);
-                        }
-                      },
-                      tooltip: 'Click to edit service name',
-                      enterIcon: null,
-                      maxLength: 100,
-                    }}
-                    style={{ margin: 0 }}
-                  >
-                    {apiConfig.name || 'New Service'}
-                  </Text>
+                  <Space>
+                    <Text 
+                      editable={!isDemoMode && {
+                        onChange: (value) => {
+                          if (value && value.trim()) {
+                            setApiConfig(prev => ({ ...prev, name: value.trim() }));
+                            setHasChanges(true);
+                          }
+                        },
+                        tooltip: 'Click to edit service name',
+                        enterIcon: null,
+                        maxLength: 100,
+                      }}
+                      style={{ margin: 0 }}
+                    >
+                      {apiConfig.name || 'New Service'}
+                    </Text>
+                    {isDemoMode && (
+                      <Tag color="blue" style={{ marginLeft: 8 }}>Demo Mode</Tag>
+                    )}
+                  </Space>
                 ) : '...',
               },
             ]}
@@ -1047,7 +1058,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               Configure
             </Button>
           )}
-          {hasChanges && (
+          {hasChanges && !isDemoMode && (
             <Button
               type="primary"
               icon={<SaveOutlined />}
@@ -1066,26 +1077,28 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           >
             API Tester & Docs
           </Button>}
-          {serviceStatus?.published ? (
-            <Button
-              danger
-              color="danger"
-              variant="filled"
-              onClick={handleUnpublish}
-              loading={loading}
-              disabled={hasChanges}
-            >
-              Unpublish Service
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              onClick={handlePublish}
-              loading={loading}
-              disabled={hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
-            >
-              Publish Service
-            </Button>
+          {!isDemoMode && (
+            serviceStatus?.published ? (
+              <Button
+                danger
+                color="danger"
+                variant="filled"
+                onClick={handleUnpublish}
+                loading={loading}
+                disabled={hasChanges}
+              >
+                Unpublish Service
+              </Button>
+            ) : (
+              <Button
+                type="primary"
+                onClick={handlePublish}
+                loading={loading}
+                disabled={hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
+              >
+                Publish Service
+              </Button>
+            )
           )}
         </Space>
       </div>
