@@ -2,17 +2,24 @@ import { NextResponse } from 'next/server';
 import { putBlob, delBlob } from '../../../../lib/blob-client';
 import redis from '../../../../lib/redis';
 
-// For now, use a fixed test user (same as services API)
-const TEST_USER_ID = 'test1234';
-
 // GET /api/workbook/[id] - Retrieve workbook from blob storage
 export async function GET(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // In Next.js 15, params might be a Promise
     const resolvedParams = await params;
     const { id } = resolvedParams;
     
-    console.log(`[Workbook GET] Service ID: ${id}`);
+    console.log(`[Workbook GET] Service ID: ${id}, User: ${userId}`);
     
     if (!id) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
@@ -30,7 +37,7 @@ export async function GET(request, { params }) {
     console.log(`[Workbook GET] Service loaded, has workbookUrl: ${!!service.workbookUrl}`);
     
     // Verify ownership
-    if (service.userId !== TEST_USER_ID) {
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -144,6 +151,16 @@ export async function GET(request, { params }) {
 // PUT /api/workbook/[id] - Save workbook to blob storage
 export async function PUT(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // In Next.js 15, params might be a Promise
     const resolvedParams = await params;
     const { id } = resolvedParams;
@@ -193,7 +210,7 @@ export async function PUT(request, { params }) {
     }
     
     // Verify ownership
-    if (service.userId !== TEST_USER_ID) {
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -223,7 +240,6 @@ export async function PUT(request, { params }) {
     }
 
     // Upload new workbook to blob storage - use userId for organization
-    const userId = service.userId || TEST_USER_ID;
     const uploadPath = `users/${userId}/workbooks/${id}.${fileExtension}`;
     const timestamp = new Date().toISOString();
     
@@ -262,7 +278,7 @@ export async function PUT(request, { params }) {
       lastUsed: publishedData?.lastUsed || null,
       workbookUrl: blob.url
     };
-    await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
+    await redis.hSet(`user:${userId}:services`, id, JSON.stringify(indexData));
     
     console.log(`[Workbook PUT] Service updated successfully`);
 
@@ -285,6 +301,16 @@ export async function PUT(request, { params }) {
 // DELETE /api/workbook/[id] - Delete workbook from blob storage
 export async function DELETE(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // In Next.js 15, params might be a Promise
     const resolvedParams = await params;
     const { id } = resolvedParams;
@@ -309,7 +335,7 @@ export async function DELETE(request, { params }) {
     }
     
     // Verify ownership
-    if (service.userId !== TEST_USER_ID) {
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -337,7 +363,7 @@ export async function DELETE(request, { params }) {
           lastUsed: null,
           workbookUrl: ''
         };
-        await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
+        await redis.hSet(`user:${userId}:services`, id, JSON.stringify(indexData));
         
         return NextResponse.json({
           success: true,

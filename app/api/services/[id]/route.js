@@ -2,11 +2,19 @@ import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { revalidateServicesCache } from '@/lib/revalidateServices';
 
-const TEST_USER_ID = 'test1234';
-
 // GET /api/services/[id] - Get full service data
 export async function GET(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id: serviceId } = await params;
     
     // Get service data
@@ -18,7 +26,7 @@ export async function GET(request, { params }) {
     }
     
     // Verify ownership
-    if (serviceData.userId !== TEST_USER_ID) {
+    if (serviceData.userId !== userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -71,6 +79,16 @@ export async function GET(request, { params }) {
 // PUT /api/services/[id] - Update service
 export async function PUT(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id: serviceId } = await params;
     const body = await request.json();
     
@@ -84,7 +102,7 @@ export async function PUT(request, { params }) {
     }
     
     // Verify ownership
-    if (existingService.userId !== TEST_USER_ID) {
+    if (existingService.userId !== userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -149,7 +167,7 @@ export async function PUT(request, { params }) {
       lastUsed: publishedData?.lastUsed || null,
       workbookUrl: existingService.workbookUrl
     };
-    await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
+    await redis.hSet(`user:${userId}:services`, serviceId, JSON.stringify(indexData));
     
     // Note: We don't update the published data - it remains as a snapshot
     

@@ -51,11 +51,5 @@
 
 /* Search input responsive width */
 .search-input {
-  max-width: 300px;
-}
-
-@media (max-width: 768px) {
-  .search-input {
-    max-width: 100% !important;
-  }
+  width: 100%;
 }

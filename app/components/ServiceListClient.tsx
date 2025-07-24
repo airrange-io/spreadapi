@@ -5,6 +5,7 @@ import { Card, Empty, Button, Space, Typography, Tag, Popconfirm, Row, Col, App 
 import { EditOutlined, DeleteOutlined, LineChartOutlined, CalendarOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const { Text, Paragraph } = Typography;
 
@@ -32,6 +33,7 @@ export default function ServiceListClient({
 }: ServiceListClientProps) {
   const router = useRouter();
   const { message } = App.useApp();
+  const { user } = useAuth();
   const [services, setServices] = useState<Service[]>(allServices);
   const [filteredServices, setFilteredServices] = useState<Service[]>(initialServices);
   const [isPending, startTransition] = useTransition();
@@ -213,7 +215,7 @@ export default function ServiceListClient({
         style={{ marginTop: 180 }}
       >
         <Button type="primary" onClick={() => {
-          const newId = generateServiceId();
+          const newId = generateServiceId(user?.id || 'test1234');
           console.log('[ServiceList] Generated service ID:', newId);
           router.push(`/service/${newId}`);
         }}>

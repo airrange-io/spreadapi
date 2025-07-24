@@ -44,7 +44,6 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      // backgroundColor: '#fafafa',
       padding: 40
     }}>
       <div style={{
@@ -52,23 +51,6 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
         width: '100%',
         textAlign: 'center'
       }}>
-        <Title level={3} style={{ 
-          fontWeight: 400,
-          color: '#262626',
-          marginBottom: 8
-        }}>
-          Create Your Service
-        </Title>
-        
-        <Text style={{ 
-          fontSize: 16,
-          color: '#8c8c8c',
-          display: 'block',
-          marginBottom: 48
-        }}>
-          Choose how you'd like to begin
-        </Text>
-
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <Button
             type="primary"
@@ -78,10 +60,14 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
             loading={isLoading}
             style={{
               width: '100%',
-              height: 56,
-              fontSize: 16,
+              height: '25vh',
+              minHeight: 160,
+              fontSize: 20,
               borderRadius: 8,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             Create a new spreadsheet
@@ -120,10 +106,15 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               border: '2px dashed #d9d9d9',
               borderRadius: 8,
               backgroundColor: '#fff',
-              transition: 'all 0.3s'
+              transition: 'all 0.3s',
+              height: '25vh',
+              minHeight: 200,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <div style={{ padding: '24px 0' }}>
+            <div style={{ padding: '0' }}>
               <p className="ant-upload-drag-icon">
                 <UploadOutlined style={{ 
                   fontSize: 48,
@@ -136,7 +127,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
                 marginBottom: 4,
                 fontWeight: 500
               }}>
-                Import existing spreadsheet
+                Import an existing spreadsheet
               </p>
               <p style={{ 
                 fontSize: 14,

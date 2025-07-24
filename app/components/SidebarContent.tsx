@@ -2,16 +2,16 @@
 
 import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Typography, Tooltip, App, Dropdown, Popconfirm, Space } from 'antd';
-import { PlusOutlined, MenuOutlined, DownOutlined, LoadingOutlined, ShareAltOutlined, AppstoreOutlined, DeleteOutlined, TableOutlined, LeftOutlined, UserOutlined, ApiOutlined, LogoutOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
+import { Button, Typography, Tooltip, App, Dropdown, Popconfirm } from 'antd';
+import { PlusOutlined, MenuOutlined, LoadingOutlined, AppstoreOutlined, DeleteOutlined, LeftOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { appStore } from '@/stores/AppStore';
 import { runInAction } from 'mobx';
 import { useIsClient } from '@/shared/hooks/useIsClient';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
-import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const { Text } = Typography;
 
@@ -37,80 +37,11 @@ interface ListWithSharing {
 export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobile }) => {
   const { message: messageApi } = App.useApp();
   const router = useRouter();
+  const { user } = useAuth();
   const { sidebarCollapsed, loading } = appStore;
   const isClient = useIsClient();
   const isCollapsed = sidebarCollapsed && !isMobile;
 
-
-  const handleUserMenuClick = useCallback(async (info: { key: string }) => {
-    switch (info.key) {
-      case 'manage-account':
-        appStore.setShowProfileModal(true);
-        break;
-      case 'login':
-      case 'register':
-        // Both login and register use the same modal/component since Hanko handles both
-        appStore.setShowRegisterModal(true);
-        break;
-      case 'signout':
-        try {
-          console.log('🔄 Starting logout process...');
-
-          // TODO: Implement authentication logout when auth is configured
-          console.log('Logout functionality not yet implemented');
-
-          // Update app state after Hanko logout
-          console.log('🔄 Updating app state...');
-          appStore.setUserRegistered(false);
-
-          // Set a flag to prevent automatic re-authentication on next load
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('logout_performed', 'true');
-          }
-
-          // Wait a bit for state to propagate
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          console.log('🏠 Redirecting to home page...');
-          // Force a full page reload to clear any remaining session state
-          window.location.replace('/');
-
-        } catch (error) {
-          console.error('❌ Logout failed:', error);
-          // Fallback: force logout anyway
-          appStore.setUserRegistered(false);
-          // Wait before redirect to ensure state update
-          setTimeout(() => {
-            window.location.replace('/');
-          }, 100);
-        }
-        break;
-    }
-  }, []);
-
-  const userMenuItems: MenuProps['items'] = useMemo(() => appStore.authChecked && appStore.user.isRegistered ? [
-    {
-      key: 'manage-account',
-      label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>Manage Account</span>,
-      icon: <UserOutlined />
-    },
-    {
-      key: 'signout',
-      label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>Sign Out</span>,
-      icon: <LogoutOutlined />
-    },
-  ] : [
-    {
-      key: 'login',
-      label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>Login</span>,
-      icon: <LoginOutlined />
-    },
-    {
-      key: 'register',
-      label: <span style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'unset', minWidth: '120px', display: 'block' }}>Register</span>,
-      icon: <UserAddOutlined />
-    },
-  ], [appStore.authChecked, appStore.user.isRegistered]);
 
   const handleListClick = useCallback((listId: string, e?: React.MouseEvent) => {
     if (e) {
@@ -176,7 +107,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
     try {
       // await appStore.deleteList(listId);
       messageApi.error('Delete functionality not yet implemented');
-      
+
       // If we were viewing this list, navigate away
       // if (appStore.activeList === listId) {
       //   router.push('/');
@@ -317,7 +248,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 //   return;
                 // }
                 // Generate a new service ID and navigate
-                const newId = generateServiceId();
+                const newId = generateServiceId(user?.id || 'test1234');
                 console.log('[SidebarContent] Generated service ID:', newId);
                 router.push(`/service/${newId}`);
               }}
@@ -344,7 +275,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               //   return;
               // }
               // Generate a new service ID and navigate
-              const newId = generateServiceId();
+              const newId = generateServiceId(user?.id || 'test1234');
               console.log('[SidebarContent] Generated service ID:', newId);
               router.push(`/service/${newId}`);
             }}
@@ -428,120 +359,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           </div>
         ) : (
           <div>
-            <Space direction="vertical" style={{ width: '100%', padding: 10, marginTop: 100 }}>
-              <Link href="/api-tester">API Service Tester</Link>
-              <Link href="/cache-stats">Cache Statistics</Link>
-              <Link href="/cache-diagnostics">Cache Diagnostics</Link>
-            </Space>
           </div>
         )}
       </div>
 
 
-      {/* User Area */}
-      <div style={{
-        padding: isCollapsed ? '8px 6px' : '16px',
-        borderTop: `1px solid ${COLORS.border}`,
-        height: isCollapsed ? '48px' : '80px',
-        boxSizing: 'border-box',
-        overflow: 'hidden'
-      }}>
-
-        {isCollapsed ? (
-          <div style={{ position: 'relative' }}>
-
-            <Dropdown
-              menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
-              trigger={['click']}
-              placement="topRight"
-              dropdownRender={(menu) => (
-                <div style={{ minWidth: '160px', maxWidth: '200px', width: 'auto' }}>
-                  {menu}
-                </div>
-              )}
-              overlayClassName="sidebar-user-dropdown"
-              getPopupContainer={() => document.body}
-            >
-              <Tooltip
-                title={appStore.user.isRegistered && appStore.user.email ? appStore.user.email : ''}
-                placement="right"
-              >
-                <div
-                  className="user-avatar-trigger"
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: COLORS.userAvatar,
-                    borderRadius: '50%',
-                    margin: '0 auto',
-                    fontSize: '14px',
-                  }}
-                >
-                  <Text style={{ fontWeight: 600, fontSize: '14px' }}>
-                    {appStore.user.isRegistered ? (appStore.user.name?.[0]?.toUpperCase() || 'U') : '?'}
-                  </Text>
-                </div>
-              </Tooltip>
-            </Dropdown>
-          </div>
-        ) : (
-          <Dropdown
-            menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
-            trigger={['click']}
-            placement="topLeft"
-            getPopupContainer={() => document.body}
-          >
-            <Button
-              type="text"
-              style={{
-                width: '100%',
-                height: 'auto',
-                padding: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Tooltip
-                  title={appStore.user.isRegistered && appStore.user.email ? appStore.user.email : ''}
-                  placement="top"
-                >
-                  <div
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: COLORS.userAvatar,
-                      borderRadius: '50%',
-                      fontSize: '14px',
-                    }}
-                  >
-                    <Text style={{ fontWeight: 600, fontSize: '14px' }}>
-                      {appStore.user.isRegistered ? (appStore.user.name?.[0]?.toUpperCase() || 'U') : '?'}
-                    </Text>
-                  </div>
-                </Tooltip>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 600 }}>
-                    {appStore.user.isRegistered ? appStore.user.name : 'Anonymous User'}
-                  </div>
-                  <div style={{ fontSize: '12px', color: COLORS.textSecondary }}>
-                    {appStore.user.isRegistered ? appStore.user.plan : 'Register for sharing'}
-                  </div>
-                </div>
-              </div>
-              <DownOutlined style={{ fontSize: '12px' }} />
-            </Button>
-          </Dropdown>
-        )}
-      </div>
     </div>
   );
 });

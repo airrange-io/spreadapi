@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { trackUserActivity } from '@/lib/userHashCache';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { delBlob } from '@/lib/blob-client';
 import { revalidateServicesCache } from '@/lib/revalidateServices';
 
-// For now, use a fixed test user
-const TEST_USER_ID = 'test1234';
-
 // GET /api/services - List all services for user
 export async function GET(request) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     // Get user's service index
-    const serviceIndex = await redis.hGetAll(`user:${TEST_USER_ID}:services`);
+    const serviceIndex = await redis.hGetAll(`user:${userId}:services`);
     const serviceIds = Object.keys(serviceIndex);
     
     if (serviceIds.length === 0) {
@@ -36,6 +44,9 @@ export async function GET(request) {
     // Filter out nulls and sort by updatedAt descending
     const validServices = services.filter(s => s !== null);
     validServices.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    
+    // Track user activity
+    await trackUserActivity(userId, 'viewed_services');
     
     // TEMPORARY: Disable all caching
     return NextResponse.json({ 
@@ -63,11 +74,21 @@ export async function GET(request) {
 // POST /api/services - Create new service
 export async function POST(request) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
     
     const { id, name, description } = body;
     
-    console.log('[Services API] Creating service with ID:', id);
+    console.log('[Services API] Creating service with ID:', id, 'for user:', userId);
     
     if (!id) {
       return NextResponse.json(
@@ -86,7 +107,7 @@ export async function POST(request) {
     }
     
     // Get user's tenant ID
-    const user = await redis.hGetAll(`user:${TEST_USER_ID}`);
+    const user = await redis.hGetAll(`user:${userId}`);
     const tenantId = user.tenantId || 'tenant1234';
     
     const now = new Date().toISOString();
@@ -94,7 +115,7 @@ export async function POST(request) {
     // Create service hash with all fields (no status field!)
     const serviceData = {
       id: id,
-      userId: TEST_USER_ID,
+      userId: userId,
       name: name || 'Untitled Service',
       description: description || '',
       workbookUrl: '',
@@ -141,7 +162,10 @@ export async function POST(request) {
       lastUsed: null,
       workbookUrl: serviceData.workbookUrl
     };
-    await redis.hSet(`user:${TEST_USER_ID}:services`, id, JSON.stringify(indexData));
+    await redis.hSet(`user:${userId}:services`, id, JSON.stringify(indexData));
+    
+    // Track user activity
+    await trackUserActivity(userId, `created_service:${id}`);
     
     return NextResponse.json({ 
       success: true,
@@ -163,10 +187,20 @@ export async function POST(request) {
 // DELETE /api/services?id=xxx - Delete service
 export async function DELETE(request) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { searchParams } = new URL(request.url);
     const serviceId = searchParams.get('id');
     
-    console.log(`DELETE request for service: ${serviceId}`);
+    console.log(`DELETE request for service: ${serviceId} by user: ${userId}`);
     
     if (!serviceId) {
       return NextResponse.json(
@@ -186,7 +220,7 @@ export async function DELETE(request) {
     }
     
     // Verify ownership
-    if (serviceData.userId !== TEST_USER_ID) {
+    if (serviceData.userId !== userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -237,7 +271,7 @@ export async function DELETE(request) {
     }
     
     // Remove from user's services index
-    await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
+    await redis.hDel(`user:${userId}:services`, serviceId);
     
     // Revalidate services cache
     await revalidateServicesCache();

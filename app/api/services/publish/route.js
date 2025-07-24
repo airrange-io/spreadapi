@@ -3,8 +3,18 @@ import { createOrUpdateService } from '@/lib/publishService';
 
 export async function POST(request) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
-    const { serviceId, publishData, tenant = 'test1234' } = body;
+    const { serviceId, publishData, tenant = userId } = body;
     
     if (!serviceId || !publishData) {
       return NextResponse.json(

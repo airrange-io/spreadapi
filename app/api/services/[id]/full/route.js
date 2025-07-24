@@ -3,6 +3,16 @@ import redis from '@/lib/redis';
 
 // GET /api/services/[id]/full - Get all service data in one call
 export async function GET(request, { params }) {
+  // Get user ID from headers (set by middleware)
+  const userId = request.headers.get('x-user-id');
+  
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+  
   const { id } = await params;
   
   try {
@@ -21,6 +31,14 @@ export async function GET(request, { params }) {
       return NextResponse.json(
         { error: 'Service not found' },
         { status: 404 }
+      );
+    }
+    
+    // Verify ownership
+    if (serviceData.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
       );
     }
     

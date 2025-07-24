@@ -132,7 +132,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
             {isLoading || !hasInitialized ? (
               <Skeleton active paragraph={{ rows: 2 }} />
             ) : inputs.length === 0 ? (
-              <div style={{ color: '#999' }}>No input parameters defined yet</div>
+              <div style={{ color: '#999' }}>Select a spreadsheet cell and click "Add as Input Parameter"</div>
             ) : (
               <Space direction="vertical" style={{ width: '100%' }}>
                 {inputs.map((input) => (
@@ -225,7 +225,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
             {isLoading || !hasInitialized ? (
               <Skeleton active paragraph={{ rows: 2 }} />
             ) : outputs.length === 0 ? (
-              <div style={{ color: '#999' }}>No output parameters defined yet</div>
+              <div style={{ color: '#999' }}>Select a spreadsheet cell or area and click "Add as Output Parameter"</div>
             ) : (
               <Space direction="vertical" style={{ width: '100%' }}>
                 {outputs.map((output) => (
@@ -323,10 +323,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
               <Skeleton active paragraph={{ rows: 2 }} />
             ) : areas.length === 0 ? (
               <div style={{ color: '#999' }}>
-                No editable areas defined yet
-                <div style={{ fontSize: '11px', marginTop: 4 }}>
-                  Select a range and click "Add as Editable Area"
-                </div>
+                Select a range and click "Add as Editable Area"
               </div>
             ) : (
               <Space direction="vertical" style={{ width: '100%' }}>

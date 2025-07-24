@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented, Dropdown } from 'antd';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -20,6 +20,7 @@ const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), 
 });
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
+import { useAuth } from '@/components/auth/AuthContext';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -28,6 +29,7 @@ const ListsPage: React.FC = observer(() => {
   const { message: messageApi } = App.useApp();
   const router = useRouter();
   const appStore = useAppStore();
+  const { user, isAuthenticated: authIsAuthenticated, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isContentScrollable, setIsContentScrollable] = useState(false);
@@ -35,6 +37,7 @@ const ListsPage: React.FC = observer(() => {
   const [isClient, setIsClient] = useState(false);
   const [showMCPModal, setShowMCPModal] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // Mark when we're on the client
   useEffect(() => {
@@ -45,6 +48,14 @@ const ListsPage: React.FC = observer(() => {
       setViewMode(savedViewMode);
     }
   }, []);
+
+  // Update authentication status when auth context changes
+  useEffect(() => {
+    // Only update if auth is not loading
+    if (!authLoading) {
+      setIsAuthenticated(authIsAuthenticated);
+    }
+  }, [authIsAuthenticated, authLoading]);
 
   // Share notifications are handled by a separate component to prevent re-renders
 
@@ -97,6 +108,13 @@ const ListsPage: React.FC = observer(() => {
     e.stopPropagation();
     setIsDragging(false);
 
+    // Check authentication
+    if (!isAuthenticated) {
+      messageApi.warning('Please sign in to create a new service');
+      router.push('/login?returnTo=/');
+      return;
+    }
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
 
@@ -142,7 +160,7 @@ const ListsPage: React.FC = observer(() => {
         (window as any).__draggedFile = file;
 
         // Generate a new service ID and navigate with file flag
-        const newId = generateServiceId();
+        const newId = generateServiceId(user?.id || 'test1234');
         console.log('[HomePage] Generated service ID from drag & drop:', newId);
         router.push(`/service/${newId}?fileDropped=true`);
       } catch (error) {
@@ -218,15 +236,17 @@ const ListsPage: React.FC = observer(() => {
             </div>
 
             {/* Right side - Action Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 8 }}>
-              {/* MCP Settings Button */}
-              <Button
-                icon={<AppstoreOutlined />}
-                onClick={() => setShowMCPModal(true)}
-                title="MCP Integration"
-              >
-                <span className="desktop-text">MCP</span>
-              </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
+              {/* MCP Settings Button - Only for authenticated users */}
+              {isAuthenticated && (
+                <Button
+                  icon={<AppstoreOutlined />}
+                  onClick={() => setShowMCPModal(true)}
+                  title="MCP Integration"
+                >
+                  <span className="desktop-text">MCP</span>
+                </Button>
+              )}
               
               {/* New Service Button */}
               <Button
@@ -236,14 +256,14 @@ const ListsPage: React.FC = observer(() => {
                   e.preventDefault();
                   e.stopPropagation();
                   
-                  // Registration check disabled for development
-                  // if (!appStore.user.isRegistered) {
-                  //   appStore.setShowRegisterModal(true);
-                  //   return;
-                  // }
+                  // Check authentication
+                  if (!isAuthenticated) {
+                    router.push('/login?returnTo=/');
+                    return;
+                  }
 
                   // Generate a new service ID and navigate
-                  const newId = generateServiceId();
+                  const newId = generateServiceId(user?.id || 'test1234');
                   console.log('[HomePage Button] Generated service ID:', newId);
                   router.push(`/service/${newId}`);
                 }}
@@ -252,16 +272,46 @@ const ListsPage: React.FC = observer(() => {
                 <span className="desktop-text">New Service</span>
                 <span className="mobile-text">New</span>
               </Button>
+              
+              {/* User Menu - Only for authenticated users */}
+              {isAuthenticated && (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: 'profile',
+                        icon: <SettingOutlined />,
+                        label: 'Profile Settings',
+                        onClick: () => router.push('/profile'),
+                      },
+                      { type: 'divider' },
+                      {
+                        key: 'logout',
+                        icon: <LogoutOutlined />,
+                        label: 'Logout',
+                        onClick: async () => {
+                          document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                          router.push('/');
+                          setIsAuthenticated(false);
+                        },
+                      },
+                    ],
+                  }}
+                  placement="bottomRight"
+                >
+                  <Button type="text" icon={<UserOutlined />} />
+                </Dropdown>
+              )}
             </div>
           </div>
 
           {/* Main content */}
           <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Page Title and Search */}
-            <div style={{ marginTop: '10px', marginBottom: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
+            <div style={{ width: '100%' }}>
 
               {/* Search Bar and View Toggle */}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
                 <Input
                   placeholder="Search Service APIs..."
                   disabled={appStore.loading}
@@ -290,9 +340,7 @@ const ListsPage: React.FC = observer(() => {
                 />
               </div>
               {/* Service List */}
-              <div style={{ marginTop: 20 }}>
-                <ServiceList searchQuery={searchQuery} viewMode={viewMode} />
-              </div>
+              <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
               {/* New here? Link - show for users with less than 5 lists */}
               {!searchQuery && appStore.list.length < 5 && (
                 <div style={{

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown, Menu } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
@@ -22,20 +22,25 @@ interface Service {
 interface ServiceListProps {
   searchQuery?: string;
   viewMode?: 'card' | 'table';
+  isAuthenticated?: boolean | null;
+  userId?: string;
 }
 
-export default function ServiceList({ searchQuery = '', viewMode = 'card' }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, userId }: ServiceListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { message } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isAuthenticated === null);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
-    // Always load fresh data when component mounts
-    loadServices();
-  }, []);
+    // Only load services once when auth state is determined
+    if (isAuthenticated !== null) {
+      loadServices();
+    }
+  }, [isAuthenticated]);
 
   // Listen for storage events to refresh when services are published/unpublished
   useEffect(() => {
@@ -81,12 +86,47 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card' }: Ser
   }, [searchQuery, services]);
 
   const loadServices = async () => {
+    // Prevent duplicate calls
+    if (loadingRef.current) {
+      return;
+    }
+    
     try {
+      loadingRef.current = true;
       setLoading(true);
-      const response = await fetch('/api/services');
-      const data = await response.json();
+      
+      // If not authenticated, show empty list (later we'll add demo services)
+      if (isAuthenticated === false) {
+        setServices([]);
+        setFilteredServices([]);
+        setLoading(false);
+        loadingRef.current = false;
+        return;
+      }
+      
+      // If authentication state is still being checked, wait
+      if (isAuthenticated === null) {
+        setLoading(false);
+        loadingRef.current = false;
+        return;
+      }
+      
+      // Double-check we have a hanko cookie before making the API call
+      const hankoCookie = document.cookie.split('; ').find(row => row.startsWith('hanko='));
+      if (!hankoCookie) {
+        setServices([]);
+        setFilteredServices([]);
+        setLoading(false);
+        loadingRef.current = false;
+        return;
+      }
+      
+      const response = await fetch('/api/services', {
+        credentials: 'include' // Ensure cookies are sent
+      });
 
       if (response.ok) {
+        const data = await response.json();
         const loadedServices = data.services || [];
         setServices(loadedServices);
         // Initialize filtered services with all services if no search query
@@ -94,13 +134,27 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card' }: Ser
           setFilteredServices(loadedServices);
         }
       } else {
+        // Handle 401 errors
+        if (response.status === 401) {
+          setServices([]);
+          setFilteredServices([]);
+          // If we thought we were authenticated but got 401, update state
+          if (isAuthenticated) {
+            window.location.href = '/login';
+          }
+        } else {
+          message.error('Failed to load services');
+        }
+      }
+    } catch (error: any) {
+      // Only log non-401 errors
+      if (error?.status !== 401) {
+        console.error('Error loading services:', error);
         message.error('Failed to load services');
       }
-    } catch (error) {
-      console.error('Error loading services:', error);
-      message.error('Failed to load services');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
@@ -292,19 +346,40 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card' }: Ser
   }
 
   if (services.length === 0 && !searchQuery) {
+    // If auth state is still loading (null), don't show anything yet
+    if (isAuthenticated === null) {
+      return (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          minHeight: '400px'
+        }}>
+          <Spin size="default" />
+        </div>
+      );
+    }
+    
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="No APIs created yet"
+        description={isAuthenticated === false ? "Sign in to create and manage your APIs" : "No APIs created yet"}
         style={{ marginTop: 180 }}
       >
-        <Button type="primary" onClick={() => {
-          const newId = generateServiceId();
-          console.log('[ServiceList] Generated service ID:', newId);
-          router.push(`/service/${newId}`);
-        }}>
-          Create Your First Service
-        </Button>
+        {isAuthenticated !== false && (
+          <Button type="primary" onClick={() => {
+            const newId = generateServiceId(userId || 'test1234');
+            console.log('[ServiceList] Generated service ID:', newId);
+            router.push(`/service/${newId}`);
+          }}>
+            Create Your First Service
+          </Button>
+        )}
+        {isAuthenticated === false && (
+          <Button type="primary" onClick={() => router.push('/login')}>
+            Sign In
+          </Button>
+        )}
       </Empty>
     );
   }

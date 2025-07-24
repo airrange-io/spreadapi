@@ -5,6 +5,7 @@ import '@ant-design/v5-patch-for-react-19';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
+import { AuthProvider } from '@/components/auth/AuthContext';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -75,7 +76,9 @@ export default function RootLayout({
               }}
             >
               <App>
-                {children}
+                <AuthProvider>
+                  {children}
+                </AuthProvider>
                 <SpeedInsights />
                 <Analytics />
               </App>

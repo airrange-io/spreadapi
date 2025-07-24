@@ -3,12 +3,37 @@ import redis from '@/lib/redis';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { revalidateServicesCache } from '@/lib/revalidateServices';
 
-// For now, use a fixed test user
-const TEST_USER_ID = 'test1234';
-
 export async function POST(request, { params }) {
   try {
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
     const { id: serviceId } = await params;
+    
+    // Get service data to verify ownership
+    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    
+    if (!serviceData || Object.keys(serviceData).length === 0) {
+      return NextResponse.json(
+        { error: 'Service not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Verify ownership
+    if (serviceData.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
     
     // Check if service is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
@@ -44,7 +69,6 @@ export async function POST(request, { params }) {
     }
     
     // Update the user's service index with updated status
-    const serviceData = await redis.hGetAll(`service:${serviceId}`);
     const indexData = {
       id: serviceId,
       name: serviceData.name || 'Untitled Service',
@@ -57,7 +81,7 @@ export async function POST(request, { params }) {
       lastUsed: null,
       workbookUrl: serviceData.workbookUrl || ''
     };
-    await redis.hSet(`user:${TEST_USER_ID}:services`, serviceId, JSON.stringify(indexData));
+    await redis.hSet(`user:${userId}:services`, serviceId, JSON.stringify(indexData));
     
     // Revalidate services cache
     await revalidateServicesCache();
