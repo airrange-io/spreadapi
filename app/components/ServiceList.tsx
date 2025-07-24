@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App } from 'antd';
-import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined } from '@ant-design/icons';
+import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown, Menu } from 'antd';
+import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 
@@ -21,9 +21,10 @@ interface Service {
 
 interface ServiceListProps {
   searchQuery?: string;
+  viewMode?: 'card' | 'table';
 }
 
-export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'card' }: ServiceListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { message } = App.useApp();
@@ -146,6 +147,137 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
     });
   };
 
+  const getTableColumns = () => [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: Service) => (
+        <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
+          {text}
+        </Button>
+      ),
+      sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+      render: (text: string) => text || 'No description',
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status: string) => (
+        <Tag color={status === 'published' ? 'green' : 'orange'}>
+          {status}
+        </Tag>
+      ),
+      filters: [
+        { text: 'Published', value: 'published' },
+        { text: 'Draft', value: 'draft' },
+      ],
+      onFilter: (value: string, record: Service) => record.status === value,
+    },
+    {
+      title: 'Calls',
+      dataIndex: 'calls',
+      key: 'calls',
+      width: 80,
+      render: (calls: number) => calls || 0,
+      sorter: (a: Service, b: Service) => a.calls - b.calls,
+    },
+    {
+      title: 'Updated',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 180,
+      render: (date: string) => formatDate(date),
+      sorter: (a: Service, b: Service) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 120,
+      render: (_: any, record: Service) => (
+        <Space size="middle">
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record.id)}
+          />
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'test',
+                  icon: <PlayCircleOutlined />,
+                  label: 'Test API',
+                  onClick: () => handleTest(record.id, record.name),
+                  disabled: record.status === 'draft',
+                },
+                {
+                  key: 'usage',
+                  icon: <LineChartOutlined />,
+                  label: 'View Usage',
+                  onClick: () => handleUsage(record.id),
+                  disabled: record.status === 'draft',
+                },
+                {
+                  key: 'copy',
+                  icon: <CopyOutlined />,
+                  label: 'Copy ID',
+                  onClick: () => {
+                    navigator.clipboard.writeText(record.id);
+                    message.success('Service ID copied to clipboard');
+                  },
+                },
+                {
+                  key: 'endpoint',
+                  icon: <ApiOutlined />,
+                  label: 'Copy Endpoint',
+                  onClick: () => {
+                    const endpoint = `${window.location.origin}/api/${record.id}`;
+                    navigator.clipboard.writeText(endpoint);
+                    message.success('API endpoint copied to clipboard');
+                  },
+                  disabled: record.status === 'draft',
+                },
+                { type: 'divider' },
+                {
+                  key: 'delete',
+                  icon: <DeleteOutlined />,
+                  label: (
+                    <Popconfirm
+                      title="Delete this service?"
+                      description="This action cannot be undone."
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleDelete(record.id, record.name);
+                      }}
+                      okText="Yes"
+                      cancelText="No"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <span style={{ color: '#ff4d4f' }}>Delete</span>
+                    </Popconfirm>
+                  ),
+                  danger: true,
+                },
+              ],
+            }}
+            trigger={['click']}
+          >
+            <Button type="text" icon={<MoreOutlined />} />
+          </Dropdown>
+        </Space>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div style={{
@@ -183,6 +315,34 @@ export default function ServiceList({ searchQuery = '' }: ServiceListProps) {
         description={`No APIs found matching "${searchQuery}"`}
         style={{ marginTop: 100 }}
       />
+    );
+  }
+
+  if (viewMode === 'table') {
+    return (
+      <div style={{ padding: '20px 0' }}>
+        <Table
+          columns={getTableColumns()}
+          dataSource={filteredServices}
+          rowKey="id"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} services`,
+          }}
+          onRow={(record) => ({
+            style: { cursor: 'pointer' },
+            onClick: (e) => {
+              // Don't navigate if clicking on buttons or links
+              const target = e.target as HTMLElement;
+              if (target.closest('button') || target.closest('a') || target.closest('.ant-dropdown')) {
+                return;
+              }
+              handleEdit(record.id);
+            },
+          })}
+        />
+      </div>
     );
   }
 

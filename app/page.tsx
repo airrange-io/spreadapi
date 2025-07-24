@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented } from 'antd';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -34,10 +34,16 @@ const ListsPage: React.FC = observer(() => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [showMCPModal, setShowMCPModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
 
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true);
+    // Load saved view mode
+    const savedViewMode = localStorage.getItem('serviceViewMode');
+    if (savedViewMode === 'table' || savedViewMode === 'card') {
+      setViewMode(savedViewMode);
+    }
   }, []);
 
   // Share notifications are handled by a separate component to prevent re-renders
@@ -254,26 +260,38 @@ const ListsPage: React.FC = observer(() => {
             {/* Page Title and Search */}
             <div style={{ marginTop: '10px', marginBottom: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
 
-              {/* Search Bar - Always show to allow searching public lists */}
-              <Input
-                placeholder="Search Service APIs..."
-                disabled={appStore.loading}
-                prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                allowClear
-                size="large"
-                style={{
-                  maxWidth: '100%',
-                  width: '100%',
-                  borderRadius: '8px',
-                  fontSize: '16px'
-                }}
-                className="search-input"
-              />
+              {/* Search Bar and View Toggle */}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 4 }}>
+                <Input
+                  placeholder="Search Service APIs..."
+                  disabled={appStore.loading}
+                  prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  allowClear
+                  size="large"
+                  style={{
+                    flex: 1,
+                    borderRadius: '8px',
+                    fontSize: '16px'
+                  }}
+                  className="search-input"
+                />
+                <Segmented
+                  options={[
+                    { label: <AppstoreAddOutlined />, value: 'card' },
+                    { label: <TableOutlined />, value: 'table' }
+                  ]}
+                  value={viewMode}
+                  onChange={(value) => {
+                    setViewMode(value as 'card' | 'table');
+                    localStorage.setItem('serviceViewMode', value);
+                  }}
+                />
+              </div>
               {/* Service List */}
               <div style={{ marginTop: 20 }}>
-                <ServiceList searchQuery={searchQuery} />
+                <ServiceList searchQuery={searchQuery} viewMode={viewMode} />
               </div>
               {/* New here? Link - show for users with less than 5 lists */}
               {!searchQuery && appStore.list.length < 5 && (
