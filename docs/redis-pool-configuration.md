@@ -94,7 +94,7 @@ To migrate from the single Redis connection to the pool:
 ## Best Practices
 
 1. **Don't Hold Connections**: The pool automatically manages connections
-2. **Use Pipelines**: For multiple operations, use `redis.pipeline()`
+2. **Use Multi/Transactions**: For multiple operations, use `redis.multi()`
 3. **Monitor Stats**: Check `/api/redis-pool-stats` regularly in production
 4. **Set Alerts**: Monitor for circuit breaker opens or high queue lengths
 

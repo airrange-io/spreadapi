@@ -21,7 +21,7 @@ interface Service {
 
 interface ServiceListProps {
   searchQuery?: string;
-  viewMode?: 'card' | 'table';
+  viewMode?: 'table' | 'card';
   isAuthenticated?: boolean | null;
   userId?: string;
 }
