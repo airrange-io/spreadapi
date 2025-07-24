@@ -91,8 +91,11 @@ export class UserStore {
       //     this.setUserRegistered(false);
       //   }
       // });
-    } catch (error) {
-      console.error('[UserStore] Auth check error:', error);
+    } catch (error: any) {
+      // Only log unexpected errors (not 401/unauthorized)
+      if (error?.status !== 401 && error?.code !== 'unauthorized') {
+        console.error('[UserStore] Auth check error:', error);
+      }
       runInAction(() => {
         this.authChecked = true;
         // Keep isRegistered as false

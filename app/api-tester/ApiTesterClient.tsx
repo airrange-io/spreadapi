@@ -76,9 +76,12 @@ export default function ApiTesterClient() {
         
         form.setFieldsValue(initialValues);
       }
-    } catch (error) {
-      console.error('Error loading service info:', error);
-      messageApi.error('Failed to load service information');
+    } catch (error: any) {
+      // Only log unexpected errors (not 401/unauthorized)
+      if (error?.status !== 401 && error?.code !== 'unauthorized') {
+        console.error('Error loading service info:', error);
+        messageApi.error('Failed to load service information');
+      }
     } finally {
       setServiceLoading(false);
     }

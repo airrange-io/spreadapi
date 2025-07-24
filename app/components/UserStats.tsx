@@ -40,15 +40,28 @@ export default function UserStats() {
         const response = await fetch(`/api/users/${user.id}/stats`);
         
         if (!response.ok) {
+          // Handle 401 as expected - user not authenticated
+          if (response.status === 401) {
+            setStats(null);
+            setError(null);
+            return;
+          }
           throw new Error('Failed to fetch user stats');
         }
         
         const data = await response.json();
         setStats(data);
         setError(null);
-      } catch (err) {
-        console.error('Error fetching user stats:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load stats');
+      } catch (err: any) {
+        // Only log unexpected errors (not 401/unauthorized)
+        if (err?.status !== 401 && err?.code !== 'unauthorized') {
+          console.error('Error fetching user stats:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load stats');
+        } else {
+          // For 401 errors, just fail silently
+          setStats(null);
+          setError(null);
+        }
       } finally {
         setLoading(false);
       }

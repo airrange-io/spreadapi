@@ -98,16 +98,22 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
           onRequireTokenChange(true);
         }
       } else {
-        console.error('Failed to load tokens');
-        message.error('Failed to load tokens');
+        // Handle 401 as expected - user not authenticated
+        if (response.status !== 401) {
+          console.error('Failed to load tokens');
+          message.error('Failed to load tokens');
+        }
         // Still update count to 0 on error
         if (onTokenCountChange) {
           onTokenCountChange(0);
         }
       }
-    } catch (error) {
-      console.error('Error loading tokens:', error);
-      message.error('Error loading tokens');
+    } catch (error: any) {
+      // Only log unexpected errors (not 401/unauthorized)
+      if (error?.status !== 401 && error?.code !== 'unauthorized') {
+        console.error('Error loading tokens:', error);
+        message.error('Error loading tokens');
+      }
       if (onTokenCountChange) {
         onTokenCountChange(0);
       }
