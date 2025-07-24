@@ -1,22 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm, Skeleton, Radio, Collapse, Row, Col } from 'antd';
-import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined, TableOutlined, LockOutlined, EyeOutlined, FunctionOutlined } from '@ant-design/icons';
+import { App, Skeleton } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
-import TokenManagement from './TokenManagement';
-import ApiEndpointPreview from './ApiEndpointPreview';
-import ServiceTester from './ServiceTester';
 import * as GC from '@mescius/spread-sheets';
 
-// Lazy load modals for performance
-const HowItWorksModal = lazy(() => import('./HowItWorksModal'));
-const ParameterModal = lazy(() => import('./ParameterModal'));
-const AreaModal = lazy(() => import('./AreaModal'));
+// Import types from ParametersSection
+import type { InputDefinition, OutputDefinition, AreaParameter, AreaPermissions } from './components/ParametersSection';
 
-const { Title, Text, Paragraph } = Typography;
-const { Panel } = Collapse;
+// Lazy load all components for performance
+const StatisticCards = lazy(() => import(/* webpackChunkName: "StatisticCards" */ './components/StatisticCards'));
+const ParametersSection = lazy(() => import(/* webpackChunkName: "ParametersSection" */ './components/ParametersSection'));
+const SettingsSection = lazy(() => import(/* webpackChunkName: "SettingsSection" */ './components/SettingsSection'));
+const TokensSection = lazy(() => import(/* webpackChunkName: "TokensSection" */ './components/TokensSection'));
+const AddParameterButton = lazy(() => import(/* webpackChunkName: "AddParameterButton" */ './components/AddParameterButton'));
+
+// Lazy load modals for performance
+const HowItWorksModal = lazy(() => import(/* webpackChunkName: "HowItWorksModal" */ './HowItWorksModal'));
+const ParameterModal = lazy(() => import(/* webpackChunkName: "ParameterModal" */ './ParameterModal'));
+const AreaModal = lazy(() => import(/* webpackChunkName: "AreaModal" */ './AreaModal'));
 
 // Declare GC namespace for TypeScript
 declare global {
@@ -34,72 +37,6 @@ declare global {
 }
 
 type ActiveCard = 'parameters' | 'detail' | 'tokens' | null;
-
-interface InputDefinition {
-  id: string;
-  address: string; // Full address like "Savings!D4"
-  name: string;
-  alias: string; // URL-safe name
-  title?: string; // Original title from spreadsheet
-  row: number;
-  col: number;
-  type: 'number' | 'string' | 'boolean';
-  value?: any;
-  direction: 'input';
-  mandatory?: boolean;
-  min?: number;
-  max?: number;
-  description?: string;
-  format?: 'percentage';
-  percentageDecimals?: number;
-}
-
-interface OutputDefinition {
-  id: string;
-  address: string; // Full address like "Savings!D9"
-  name: string;
-  alias: string; // URL-safe name
-  title?: string; // Original title from spreadsheet
-  row: number;
-  col: number;
-  type: 'number' | 'string' | 'boolean';
-  value?: any;
-  direction: 'output';
-  description?: string;
-}
-
-// Area-related interfaces
-interface AreaPermissions {
-  canReadValues: boolean;
-  canWriteValues: boolean;
-  canReadFormulas: boolean;
-  canWriteFormulas: boolean;
-  canReadFormatting: boolean;
-  canWriteFormatting: boolean;
-  canAddRows: boolean;
-  canDeleteRows: boolean;
-  canModifyStructure: boolean;
-  allowedFormulas?: string[];
-}
-
-interface AreaParameter {
-  id?: string;
-  name: string;
-  alias: string;
-  address: string;
-  description?: string;
-  mode: 'readonly' | 'editable' | 'interactive';
-  permissions: AreaPermissions;
-  validation?: {
-    protectedCells?: string[];
-    editableColumns?: number[];
-    formulaComplexityLimit?: number;
-  };
-  aiContext?: {
-    purpose: string;
-    expectedBehavior: string;
-  };
-}
 
 interface EditorPanelProps {
   spreadInstance: any;
@@ -1016,37 +953,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   };
 
 
-  // Get card styling based on active state
-  const getCardStyle = (cardType: ActiveCard) => {
-    const baseStyle = {
-      flex: 1,
-      cursor: 'pointer',
-      padding: 6,
-      borderRadius: '8px',
-      borderColor: 'transparent',
-      backgroundColor: activeCard === cardType ? '#E2E3E1' : '#f2f2f2',
-      transition: 'all 0.2s'
-    };
-
-    if (activeCard === cardType) {
-      return {
-        ...baseStyle,
-        // borderColor: '#8A64C0',
-        // boxShadow: '0 0 0 1px rgba(24, 144, 255, 0.2)',
-        backgroundColor: '#E2E3E1' // '#f2f2f2'
-      };
-    }
-
-    return baseStyle;
-  };
-
-  // Get card body style for consistent padding
-  const getCardBodyStyle = () => ({
-    padding: '6px 12px',
-    // backgroundColor: '#f2f2f2',
-    borderRadius: '8px',
-  });
-
   // Memoize token callbacks to prevent unnecessary re-renders
   const handleRequireTokenChange = useCallback((value: boolean) => {
     setRequireToken(value);
@@ -1074,14 +980,6 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const handleTokensChange = useCallback((tokens: any[]) => {
     setAvailableTokens(tokens);
   }, []);
-
-  // Get statistic value style based on active state
-  const getStatisticValueStyle = (cardType: ActiveCard, originalColor: string) => {
-    if (activeCard === cardType) {
-      return { color: originalColor, fontSize: 18 };
-    }
-    return { color: '#2B2A35', fontSize: 18 };
-  };
 
   // Area-related handler functions
   const handleAddAsEditableArea = () => {
@@ -1240,15 +1138,82 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     message.success('Area configuration saved');
   };
 
-  // Get user-friendly mode label
-  const getModeLabel = (mode: string) => {
-    switch (mode) {
-      case 'readonly': return 'Read Only';
-      case 'editable': return 'Values Editable';
-      case 'interactive': return 'Fully Interactive';
-      default: return mode;
+  // Callbacks for navigating to areas
+  const handleNavigateToArea = useCallback((area: AreaParameter) => {
+    if (!spreadInstance) return;
+    try {
+      const [sheetName, rangeRef] = area.address.split('!');
+      const sheet = spreadInstance.getSheetFromName(sheetName);
+      if (sheet) {
+        spreadInstance.setActiveSheet(sheet);
+
+        const rangeParts = rangeRef.split(':');
+        if (rangeParts.length === 2) {
+          const startMatch = rangeParts[0].match(/^([A-Z]+)(\d+)$/);
+          const endMatch = rangeParts[1].match(/^([A-Z]+)(\d+)$/);
+
+          if (startMatch && endMatch) {
+            const colToIndex = (col: string) => {
+              let index = 0;
+              for (let i = 0; i < col.length; i++) {
+                index = index * 26 + col.charCodeAt(i) - 64;
+              }
+              return index - 1;
+            };
+
+            const startCol = colToIndex(startMatch[1]);
+            const startRow = parseInt(startMatch[2]) - 1;
+            const endCol = colToIndex(endMatch[1]);
+            const endRow = parseInt(endMatch[2]) - 1;
+
+            sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
+
+            const viewportInfo = sheet.getViewportInfo();
+            const rowViewportIndex = viewportInfo.rowViewportIndex || 0;
+            const colViewportIndex = viewportInfo.colViewportIndex || 0;
+
+            const centerRow = Math.floor((startRow + endRow) / 2);
+            const centerCol = Math.floor((startCol + endCol) / 2);
+
+            const topRow = sheet.getViewportTopRow(rowViewportIndex);
+            const bottomRow = sheet.getViewportBottomRow(rowViewportIndex);
+            const leftCol = sheet.getViewportLeftColumn(colViewportIndex);
+            const rightCol = sheet.getViewportRightColumn(colViewportIndex);
+
+            if (centerRow < topRow || centerRow > bottomRow) {
+              sheet.showRow(centerRow, 3);
+            }
+
+            if (centerCol < leftCol || centerCol > rightCol) {
+              sheet.showColumn(centerCol, 3);
+            }
+          }
+        } else {
+          const match = rangeRef.match(/^([A-Z]+)(\d+)$/);
+          if (match) {
+            const colToIndex = (col: string) => {
+              let index = 0;
+              for (let i = 0; i < col.length; i++) {
+                index = index * 26 + col.charCodeAt(i) - 64;
+              }
+              return index - 1;
+            };
+
+            const col = colToIndex(match[1]);
+            const row = parseInt(match[2]) - 1;
+            sheet.setSelection(row, col, 1, 1);
+            sheet.showCell(row, col, 3, 3);
+          }
+        }
+
+        if (spreadInstance.focus) {
+          spreadInstance.focus();
+        }
+      }
+    } catch (e) {
+      console.error('Error navigating to area:', e);
     }
-  };
+  }, [spreadInstance]);
 
   return (
     <div style={{
@@ -1258,73 +1223,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       overflow: 'hidden'
     }}>
       {/* Fixed header with cards */}
-      <div style={{
-        padding: '12px',
-        flex: '0 0 auto'
-      }}>
-        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-
-          <Card
-            size="small"
-            style={{
-              ...getCardStyle('parameters'),
-              flex: '0 0 calc(33.33% - 5.33px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('parameters')}
-          >
-            <Statistic
-              title="API Parameters"
-              value={inputs.length + outputs.length}
-              prefix={<SwapOutlined style={{ color: '#858585' }} />}
-              valueStyle={getStatisticValueStyle('parameters', '#4F2D7F')}
-              suffix={
-                <span style={{ fontSize: '12px', color: '#999', fontWeight: 'normal' }}>
-                  {inputs.length > 0 || outputs.length > 0 ? `(${inputs.length}/${outputs.length})` : ''}
-                </span>
-              }
-            />
-          </Card>
-
-          <Card
-            size="small"
-            style={{
-              ...getCardStyle('tokens'),
-              flex: '0 0 calc(33.33% - 5.33px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('tokens')}
-          >
-            <Statistic
-              title="Call the Service"
-              value={tokenCount}
-              prefix={<SafetyOutlined style={{ color: '#858585' }} />}
-              valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
-            />
-          </Card>
-
-          <Card
-            size="small"
-            style={{
-              ...getCardStyle('detail'),
-              flex: '0 0 calc(33.33% - 5.33px)',
-            }}
-            styles={{ body: getCardBodyStyle() }}
-            hoverable
-            onClick={() => handleCardClick('detail')}
-          >
-            <Statistic
-              title="Settings"
-              value={'---'}
-              prefix={<FileTextOutlined style={{ color: '#858585' }} />}
-              valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
-            />
-          </Card>
-
-        </div>
-      </div>
+      <Suspense fallback={<div style={{ padding: '12px' }}><Skeleton active /></div>}>
+        <StatisticCards
+          activeCard={activeCard}
+          inputsCount={inputs.length}
+          outputsCount={outputs.length}
+          tokenCount={tokenCount}
+          onCardClick={handleCardClick}
+        />
+      </Suspense>
 
       {/* Scrollable content area */}
       <div style={{
@@ -1341,589 +1248,63 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             flexDirection: 'column',
             height: '100%'
           }}>
-            {/* Columns Detail */}
+            {/* Settings Detail */}
             {activeCard === 'detail' && (
-              <div style={{
-                // display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
-                height: '100%',
-                marginTop: '8px',
-                marginBottom: '16px',
-                gap: '12px',
-                overflow: 'auto'
-              }}>
-                <div style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 14,
-                  backgroundColor: "#f8f8f8",
-                  border: `1px solid #ffffff`,
-                  borderRadius: 8,
-                  minHeight: 0,
-                  marginBottom: '16px',
-                }}>
-                  <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                    <div>
-                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
-                      <Input
-                        placeholder="Enter service name"
-                        value={apiName}
-                        onChange={(e) => setApiName(e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
-                      <Input.TextArea
-                        placeholder="Describe what this API does"
-                        value={apiDescription}
-                        onChange={(e) => setApiDescription(e.target.value)}
-                        rows={2} />
-                    </div>
-
-                    <div style={{ marginTop: '0px' }}>
-                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Advanced Options</strong></div>
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <Space align="center">
-                          <Checkbox
-                            checked={enableCaching}
-                            onChange={(e) => setEnableCaching(e.target.checked)}
-                          >
-                            Enable response caching
-                          </Checkbox>
-                          <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
-                            <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
-                          </Tooltip>
-                        </Space>
-                      </Space>
-                    </div>
-                  </Space>
-                </div>
-                <div style={{
-                  flex: 1,
-                  // display: 'flex',
-                  // flexDirection: 'column',
-                  padding: 14,
-                  backgroundColor: "#f8f8f8",
-                  border: `1px solid #ffffff`,
-                  borderRadius: 8,
-                  minHeight: 0,
-                }}>
-                  <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                    <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
-                    <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
-                        <Input.TextArea
-                          placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
-                          value={aiDescription}
-                          onChange={(e) => setAiDescription(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
-                        <Select
-                          mode="tags"
-                          style={{ width: '100%' }}
-                          placeholder="Add example questions or use cases (press Enter to add)"
-                          value={aiUsageExamples}
-                          onChange={setAiUsageExamples}
-                          tokenSeparators={[',']}
-                        />
-                      </div>
-
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
-                        <Select
-                          mode="tags"
-                          style={{ width: '100%' }}
-                          placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
-                          value={aiTags}
-                          onChange={setAiTags}
-                          tokenSeparators={[',']}
-                        />
-                      </div>
-
-                      <div>
-                        <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
-                        <Select
-                          style={{ width: '100%' }}
-                          placeholder="Select a category"
-                          value={category}
-                          onChange={setCategory}
-                        >
-                          <Select.Option value="finance">Finance</Select.Option>
-                          <Select.Option value="math">Mathematics</Select.Option>
-                          <Select.Option value="statistics">Statistics</Select.Option>
-                          <Select.Option value="business">Business</Select.Option>
-                          <Select.Option value="science">Science</Select.Option>
-                          <Select.Option value="engineering">Engineering</Select.Option>
-                          <Select.Option value="other">Other</Select.Option>
-                        </Select>
-                      </div>
-                    </Space>
-
-                    {/* <div style={{ marginTop: '16px' }}>
-                      <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Import Data</strong></div>
-                      <Upload
-                        accept=".xlsx,.xls"
-                        showUploadList={false}
-                        beforeUpload={(file) => {
-                          if (onImportExcel) {
-                            onImportExcel(file);
-                          } else {
-                            message.error('Import handler not configured');
-                          }
-                          return false; // Prevent default upload behavior
-                        }}
-                      >
-                        <Button icon={<UploadOutlined />}>
-                          Import Excel File
-                        </Button>
-                      </Upload>
-                    </div> */}
-                  </Space>
-                </div>
-              </div>
+              <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+                <SettingsSection
+                  apiName={apiName}
+                  apiDescription={apiDescription}
+                  enableCaching={enableCaching}
+                  aiDescription={aiDescription}
+                  aiUsageExamples={aiUsageExamples}
+                  aiTags={aiTags}
+                  category={category}
+                  onApiNameChange={setApiName}
+                  onApiDescriptionChange={setApiDescription}
+                  onEnableCachingChange={setEnableCaching}
+                  onAiDescriptionChange={setAiDescription}
+                  onAiUsageExamplesChange={setAiUsageExamples}
+                  onAiTagsChange={setAiTags}
+                  onCategoryChange={setCategory}
+                />
+              </Suspense>
             )}
 
             {/* Parameters Detail */}
             {activeCard === 'parameters' && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
-                marginTop: '8px',
-                height: '100%',
-                minHeight: 0,
-                overflow: 'auto'
-              }}>
-                <div style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 14,
-                  backgroundColor: "#f8f8f8",
-                  borderRadius: 8,
-                }}>
-                  <div>
-                    <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Input Parameters</strong></div>
-                    <div style={{
-                      fontSize: '12px'
-                    }}>
-                      {isLoading || !hasInitialized ? (
-                        <Skeleton active paragraph={{ rows: 2 }} />
-                      ) : inputs.length === 0 ? (
-                        <div style={{ color: '#999' }}>No input parameters defined yet</div>
-                      ) : (
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          {inputs.map((input, index) => (
-                            <div key={input.id} style={{
-                              padding: '8px 12px',
-                              background: 'white',
-                              borderRadius: '8px',
-                              border: '1px solid #e8e8e8'
-                            }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div
-                                  style={{ cursor: 'pointer', flex: 1 }}
-                                  onClick={() => navigateToParameter(input)}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = '0.8';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = '1';
-                                  }}
-                                >
-                                  <Space direction="vertical" size={0}>
-                                    <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                                      <strong>{input.name}</strong>
-                                    </Space>
-                                    <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                                      {input.title && input.title !== input.name && (
-                                        <div style={{ color: '#888', fontSize: '11px' }}>{input.title}, {input.type}</div>
-                                      )}
-                                      {(input.min !== undefined || input.max !== undefined) && (
-                                        <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                                          {input.min !== undefined && `Min: ${input.min}`}
-                                          {input.min !== undefined && input.max !== undefined && ' • '}
-                                          {input.max !== undefined && `Max: ${input.max}`}
-                                        </div>
-                                      )}
-                                      {input.description && (
-                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                          {input.description}
-                                        </div>
-                                      )}
-                                    </Space>
-                                  </Space>
-                                </div>
-                                <Space size="small">
-                                  <Tag color='purple' onClick={() => navigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
-                                  <Button
-                                    size="small"
-                                    type="text"
-                                    icon={<EditOutlined />}
-                                    onClick={() => handleEditParameter('input', input)}
-                                  />
-                                  <Popconfirm
-                                    title="Delete this parameter?"
-                                    description="This action cannot be undone."
-                                    onConfirm={() => handleDeleteParameter('input', input.id)}
-                                    okText="Yes"
-                                    cancelText="No"
-                                    okButtonProps={{ danger: true }}
-                                  >
-                                    <Button
-                                      size="small"
-                                      type="text"
-                                      danger
-                                      icon={<DeleteOutlined />}
-                                    />
-                                  </Popconfirm>
-                                </Space>
-                              </div>
-                            </div>
-                          ))}
-                        </Space>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 14,
-                  backgroundColor: "#f8f8f8",
-                  borderRadius: 8,
-                  marginTop: '16px',
-                }}>
-                  <div>
-                    <div style={{ marginBottom: '8px', color: '#898989' }}><strong>Output Parameters</strong></div>
-                    <div style={{
-                      fontSize: '12px'
-                    }}>
-                      {isLoading || !hasInitialized ? (
-                        <Skeleton active paragraph={{ rows: 2 }} />
-                      ) : outputs.length === 0 ? (
-                        <div style={{ color: '#999' }}>No output parameters defined yet</div>
-                      ) : (
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          {outputs.map((output, index) => (
-                            <div key={output.id} style={{
-                              padding: '8px 12px',
-                              background: 'white',
-                              borderRadius: '8px',
-                              border: '1px solid #e8e8e8'
-                            }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div
-                                  style={{ cursor: 'pointer', flex: 1 }}
-                                  onClick={() => navigateToParameter(output)}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = '0.8';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = '1';
-                                  }}
-                                >
-                                  <Space direction="vertical" size={0}>
-                                    <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                                      <strong>{output.name}</strong>
-                                    </Space>
-                                    <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                                      {output.title && output.title !== output.name && (
-                                        <div style={{ color: '#888', fontSize: '11px' }}>{output.title}, {output.type}</div>
-                                      )}
-                                      {output.description && (
-                                        <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                          {output.description}
-                                        </div>
-                                      )}
-                                    </Space>
-                                  </Space>
-                                </div>
-                                <Space size="small">
-                                  <Tag onClick={() => navigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
-                                  <Button
-                                    size="small"
-                                    type="text"
-                                    icon={<EditOutlined />}
-                                    onClick={() => handleEditParameter('output', output)}
-                                  />
-                                  <Popconfirm
-                                    title="Delete this parameter?"
-                                    description="This action cannot be undone."
-                                    onConfirm={() => handleDeleteParameter('output', output.id)}
-                                    okText="Yes"
-                                    cancelText="No"
-                                    okButtonProps={{ danger: true }}
-                                  >
-                                    <Button
-                                      size="small"
-                                      type="text"
-                                      danger
-                                      icon={<DeleteOutlined />}
-                                    />
-                                  </Popconfirm>
-                                </Space>
-                              </div>
-                            </div>
-                          ))}
-                        </Space>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Editable Areas for AI Section */}
-                <div style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 14,
-                  backgroundColor: "#f8f8f8",
-                  borderRadius: 8,
-                  marginTop: '16px',
-                  // borderLeft: '3px solid #fa8c16'
-                }}>
-                  <div>
-                    <div style={{
-                      marginBottom: '8px',
-                      color: '#898989',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}>
-                      <strong>Editable Areas for AI</strong>
-                      <Tooltip title="Areas that AI assistants can read and optionally modify">
-                        <InfoCircleOutlined style={{ fontSize: 12 }} />
-                      </Tooltip>
-                    </div>
-                    <div style={{ fontSize: '12px' }}>
-                      {isLoading || !hasInitialized ? (
-                        <Skeleton active paragraph={{ rows: 2 }} />
-                      ) : areas.length === 0 ? (
-                        <div style={{ color: '#999' }}>
-                          No editable areas defined yet
-                          <div style={{ fontSize: '11px', marginTop: 4 }}>
-                            Select a range and click "Add as Editable Area"
-                          </div>
-                        </div>
-                      ) : (
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          {areas.map((area, index) => (
-                            <div
-                              key={area.id || index}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '8px',
-                                backgroundColor: 'white',
-                                borderRadius: '4px',
-                                border: '1px solid #e8e8e8',
-                                cursor: 'pointer'
-                              }}
-                              onClick={() => {
-                                if (!spreadInstance) return;
-                                try {
-                                  const [sheetName, rangeRef] = area.address.split('!');
-                                  const sheet = spreadInstance.getSheetFromName(sheetName);
-                                  if (sheet) {
-                                    spreadInstance.setActiveSheet(sheet);
-
-                                    // Parse the range
-                                    const rangeParts = rangeRef.split(':');
-                                    if (rangeParts.length === 2) {
-                                      // It's a range - select the entire range
-                                      const startMatch = rangeParts[0].match(/^([A-Z]+)(\d+)$/);
-                                      const endMatch = rangeParts[1].match(/^([A-Z]+)(\d+)$/);
-
-                                      if (startMatch && endMatch) {
-                                        // Convert column letters to column index (supports multi-letter columns)
-                                        const colToIndex = (col: string) => {
-                                          let index = 0;
-                                          for (let i = 0; i < col.length; i++) {
-                                            index = index * 26 + col.charCodeAt(i) - 64;
-                                          }
-                                          return index - 1;
-                                        };
-
-                                        const startCol = colToIndex(startMatch[1]);
-                                        const startRow = parseInt(startMatch[2]) - 1;
-                                        const endCol = colToIndex(endMatch[1]);
-                                        const endRow = parseInt(endMatch[2]) - 1;
-
-                                        // Select the range
-                                        sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
-
-                                        // Scroll to make the range visible
-                                        const viewportInfo = sheet.getViewportInfo();
-                                        const rowViewportIndex = viewportInfo.rowViewportIndex || 0;
-                                        const colViewportIndex = viewportInfo.colViewportIndex || 0;
-
-                                        // Center the range in viewport
-                                        const centerRow = Math.floor((startRow + endRow) / 2);
-                                        const centerCol = Math.floor((startCol + endCol) / 2);
-
-                                        // Only scroll if needed
-                                        const topRow = sheet.getViewportTopRow(rowViewportIndex);
-                                        const bottomRow = sheet.getViewportBottomRow(rowViewportIndex);
-                                        const leftCol = sheet.getViewportLeftColumn(colViewportIndex);
-                                        const rightCol = sheet.getViewportRightColumn(colViewportIndex);
-
-                                        if (centerRow < topRow || centerRow > bottomRow) {
-                                          sheet.showRow(centerRow, 3); // 3 = VerticalPosition.center
-                                        }
-
-                                        if (centerCol < leftCol || centerCol > rightCol) {
-                                          sheet.showColumn(centerCol, 3); // 3 = HorizontalPosition.center
-                                        }
-                                      }
-                                    } else {
-                                      // Single cell
-                                      const match = rangeRef.match(/^([A-Z]+)(\d+)$/);
-                                      if (match) {
-                                        // Convert column letters to column index (supports multi-letter columns)
-                                        const colToIndex = (col: string) => {
-                                          let index = 0;
-                                          for (let i = 0; i < col.length; i++) {
-                                            index = index * 26 + col.charCodeAt(i) - 64;
-                                          }
-                                          return index - 1;
-                                        };
-
-                                        const col = colToIndex(match[1]);
-                                        const row = parseInt(match[2]) - 1;
-                                        sheet.setSelection(row, col, 1, 1);
-                                        sheet.showCell(row, col, 3, 3); // 3 = center for both vertical and horizontal
-                                      }
-                                    }
-
-                                    if (spreadInstance.focus) {
-                                      spreadInstance.focus();
-                                    }
-                                  }
-                                } catch (e) {
-                                  console.error('Error navigating to area:', e);
-                                }
-                              }}
-                            >
-                              {/* Area Icon based on mode */}
-                              {area.mode === 'readonly' ? (
-                                <LockOutlined style={{ color: '#ff4d4f' }} />
-                              ) : area.mode === 'interactive' ? (
-                                <TableOutlined style={{ color: '#52c41a' }} />
-                              ) : (
-                                <EditOutlined style={{ color: '#1890ff' }} />
-                              )}
-
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 500 }}>
-                                  {area.alias || area.name}
-                                </div>
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: '#999',
-                                  display: 'flex',
-                                  gap: '12px'
-                                }}>
-                                  <span>{area.address}</span>
-                                  <span>•</span>
-                                  <span>{getModeLabel(area.mode)}</span>
-                                  {area.permissions.canWriteFormulas && (
-                                    <>
-                                      <span>•</span>
-                                      <span style={{ color: '#fa8c16' }}>
-                                        <FunctionOutlined style={{ fontSize: 10 }} /> Formulas
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-
-                              <Space size="small">
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  icon={<EditOutlined />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditArea(area, index);
-                                  }}
-                                />
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  danger
-                                  icon={<DeleteOutlined />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveArea(index);
-                                  }}
-                                />
-                              </Space>
-                            </div>
-                          ))}
-                        </Space>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-                <div style={{ marginLeft: '4px', marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                  <Button
-                    type="link"
-                    size="small"
-                    icon={<InfoCircleOutlined />}
-                    onClick={() => setShowHowItWorksModal(true)}
-                    style={{ padding: 0, fontSize: '12px' }}
-                  >
-                    How it works
-                  </Button>
-                </div>
-              </div>
+              <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+                <ParametersSection
+                  inputs={inputs}
+                  outputs={outputs}
+                  areas={areas}
+                  isLoading={isLoading}
+                  hasInitialized={hasInitialized}
+                  onNavigateToParameter={navigateToParameter}
+                  onEditParameter={handleEditParameter}
+                  onDeleteParameter={handleDeleteParameter}
+                  onEditArea={handleEditArea}
+                  onRemoveArea={handleRemoveArea}
+                  onNavigateToArea={handleNavigateToArea}
+                  onShowHowItWorks={() => setShowHowItWorksModal(true)}
+                />
+              </Suspense>
             )}
 
             {/* Tokens Detail */}
             {activeCard === 'tokens' && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
-                height: '100%',
-                marginTop: '8px',
-                minHeight: 0
-              }}>
-                <Space direction="vertical" style={{ width: '100%' }} size={12}>
-                  <ApiEndpointPreview
-                    serviceId={serviceId || ''}
-                    isPublished={serviceStatus?.published || false}
-                    requireToken={requireToken}
-                  />
-                  <ServiceTester
-                    serviceId={serviceId || ''}
-                    isPublished={serviceStatus?.published || false}
-                    inputs={inputs}
-                    outputs={outputs}
-                    requireToken={requireToken}
-                    existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
-                  />
-                  <TokenManagement
-                    serviceId={serviceId || ''}
-                    requireToken={requireToken}
-                    onRequireTokenChange={handleRequireTokenChange}
-                    onTokenCountChange={handleTokenCountChange}
-                    onTokensChange={handleTokensChange}
-                  />
-                </Space>
-              </div>
+              <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+                <TokensSection
+                  serviceId={serviceId || ''}
+                  isPublished={serviceStatus?.published || false}
+                  requireToken={requireToken}
+                  inputs={inputs}
+                  outputs={outputs}
+                  availableTokens={availableTokens}
+                  onRequireTokenChange={handleRequireTokenChange}
+                  onTokenCountChange={handleTokenCountChange}
+                  onTokensChange={handleTokensChange}
+                />
+              </Suspense>
             )}
 
           </div>
@@ -1935,46 +1316,19 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
       {/* Fixed button at bottom - only show in parameters mode */}
       {activeCard === 'parameters' && (
-        <div
-          ref={buttonAreaRef}
-          style={{
-            padding: '12px',
-            paddingTop: 0,
-            background: 'white',
-            flex: '0 0 auto'
-          }}>
-          {(() => {
-            const buttonInfo = getAddButtonInfo();
-            const isRange = currentSelection && (currentSelection.rowCount > 1 || currentSelection.colCount > 1);
-
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  style={{ width: '100%', height: 48 }}
-                  onClick={handleAddFromSelection}
-                  disabled={buttonInfo.disabled || !spreadInstance || !spreadsheetReady}
-                >
-                  {buttonInfo.text}
-                </Button>
-
-                {/* Add as Editable Area button - only show for ranges */}
-                {isRange && !buttonInfo.disabled && (
-                  <Button
-                    type="default"
-                    icon={<TableOutlined />}
-                    style={{ width: '100%', height: 40 }}
-                    onClick={handleAddAsEditableArea}
-                    disabled={!spreadInstance || !spreadsheetReady}
-                  >
-                    Add Selection as Editable Area (for AI)
-                  </Button>
-                )}
-              </div>
-            );
-          })()}
-        </div>
+        <Suspense fallback={<div style={{ padding: '12px' }}><Skeleton.Button active block /></div>}>
+          <div ref={buttonAreaRef}>
+            <AddParameterButton
+              currentSelection={currentSelection}
+              spreadsheetReady={spreadsheetReady}
+              spreadInstance={spreadInstance}
+              inputs={inputs}
+              outputs={outputs}
+              onAddFromSelection={handleAddFromSelection}
+              onAddAsEditableArea={handleAddAsEditableArea}
+            />
+          </div>
+        </Suspense>
       )}
 
       {/* Add/Edit Parameter Modal - Lazy Loaded */}
