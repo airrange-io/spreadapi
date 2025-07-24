@@ -1014,9 +1014,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               },
             ]}
           />
-          <Tag color={serviceStatus?.published ? 'green' : 'orange'} style={{ marginLeft: 8 }}>
-            {serviceStatus?.published ? 'Published' : 'Draft'}
-          </Tag>
+          {configLoaded && (
+            <Tag color={serviceStatus?.published ? 'green' : 'orange'} style={{ marginLeft: 8 }}>
+              {serviceStatus?.published ? 'Published' : 'Draft'}
+            </Tag>
+          )}
         </Space>
 
         <Space>
