@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Card, Statistic, Typography, Space, Tag, Button, Input, Upload, Modal, Form, Select, Checkbox, App, Tooltip, Alert, Popconfirm, Skeleton, Radio, Collapse, Row, Col } from 'antd';
 import { FileTextOutlined, SwapOutlined, UploadOutlined, PlusOutlined, DeleteOutlined, EditOutlined, KeyOutlined, InfoCircleOutlined, SafetyOutlined, TableOutlined, LockOutlined, EyeOutlined, FunctionOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -9,6 +9,11 @@ import TokenManagement from './TokenManagement';
 import ApiEndpointPreview from './ApiEndpointPreview';
 import ServiceTester from './ServiceTester';
 import * as GC from '@mescius/spread-sheets';
+
+// Lazy load modals for performance
+const HowItWorksModal = lazy(() => import('./HowItWorksModal'));
+const ParameterModal = lazy(() => import('./ParameterModal'));
+const AreaModal = lazy(() => import('./AreaModal'));
 
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
@@ -1086,7 +1091,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     }
 
     const { row, col, rowCount = 1, colCount = 1 } = currentSelection;
-    
+
     // Only allow ranges, not single cells
     if (rowCount === 1 && colCount === 1) {
       message.warning('Please select a range of cells, not a single cell');
@@ -1095,22 +1100,22 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
 
     const sheet = spreadInstance.getActiveSheet();
     const sheetName = sheet.name();
-    
+
     // Build the address
     const startCell = getCellAddress(row, col);
     const endCell = getCellAddress(row + rowCount - 1, col + colCount - 1);
     const address = `${sheetName}!${startCell}:${endCell}`;
-    
+
     // Check if this range already exists as an area
     const exists = areas.some(area => area.address === address);
     if (exists) {
       message.warning('This range is already defined as an area');
       return;
     }
-    
+
     // Analyze the selected area
     const areaInfo = analyzeSelectedArea(sheet, row, col, rowCount, colCount);
-    
+
     // Create new area with defaults
     const newArea: AreaParameter = {
       id: `area_${Date.now()}`,
@@ -1128,7 +1133,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         expectedBehavior: ''
       }
     };
-    
+
     setEditingArea(newArea);
     setEditingAreaIndex(-1); // -1 means new area
     setShowAreaModal(true);
@@ -1142,7 +1147,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       columnTypes: [] as string[],
       suggestedColumns: [] as any[]
     };
-    
+
     // Check first row for headers
     const firstRowValues = [];
     for (let c = 0; c < colCount; c++) {
@@ -1152,7 +1157,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         analysis.hasHeaders = true;
       }
     }
-    
+
     // Analyze each column
     for (let c = 0; c < colCount; c++) {
       const columnAnalysis = {
@@ -1162,23 +1167,23 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         dataType: 'mixed' as string,
         sampleValues: [] as any[]
       };
-      
+
       // Check cells in column (skip header if exists)
       for (let r = analysis.hasHeaders ? 1 : 0; r < Math.min(10, rowCount); r++) {
         const cell = sheet.getCell(startRow + r, startCol + c);
         const formula = cell.formula();
         const value = cell.value();
-        
+
         if (formula) {
           columnAnalysis.hasFormulas = true;
           analysis.hasFormulas = true;
         }
-        
+
         if (value !== null && value !== undefined && value !== '') {
           columnAnalysis.sampleValues.push(value);
         }
       }
-      
+
       // Detect data type
       if (columnAnalysis.sampleValues.length > 0) {
         const types = columnAnalysis.sampleValues.map(v => typeof v);
@@ -1188,10 +1193,10 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           columnAnalysis.dataType = 'string';
         }
       }
-      
+
       analysis.suggestedColumns.push(columnAnalysis);
     }
-    
+
     return analysis;
   };
 
@@ -1226,12 +1231,12 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       newAreas[editingAreaIndex] = area;
       setAreas(newAreas);
     }
-    
+
     setSaveStatus('unsaved');
     setShowAreaModal(false);
     setEditingArea(null);
     setEditingAreaIndex(-1);
-    
+
     message.success('Area configuration saved');
   };
 
@@ -1682,14 +1687,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   display: 'flex',
                   flexDirection: 'column',
                   padding: 14,
-                  backgroundColor: "#fff7e6",
+                  backgroundColor: "#f8f8f8",
                   borderRadius: 8,
                   marginTop: '16px',
-                  borderLeft: '3px solid #fa8c16'
+                  // borderLeft: '3px solid #fa8c16'
                 }}>
                   <div>
-                    <div style={{ 
-                      marginBottom: '8px', 
+                    <div style={{
+                      marginBottom: '8px',
                       color: '#898989',
                       display: 'flex',
                       alignItems: 'center',
@@ -1713,8 +1718,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                       ) : (
                         <Space direction="vertical" style={{ width: '100%' }}>
                           {areas.map((area, index) => (
-                            <div 
-                              key={area.id || index} 
+                            <div
+                              key={area.id || index}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1732,14 +1737,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                   const sheet = spreadInstance.getSheetFromName(sheetName);
                                   if (sheet) {
                                     spreadInstance.setActiveSheet(sheet);
-                                    
+
                                     // Parse the range
                                     const rangeParts = rangeRef.split(':');
                                     if (rangeParts.length === 2) {
                                       // It's a range - select the entire range
                                       const startMatch = rangeParts[0].match(/^([A-Z]+)(\d+)$/);
                                       const endMatch = rangeParts[1].match(/^([A-Z]+)(\d+)$/);
-                                      
+
                                       if (startMatch && endMatch) {
                                         // Convert column letters to column index (supports multi-letter columns)
                                         const colToIndex = (col: string) => {
@@ -1749,34 +1754,34 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                           }
                                           return index - 1;
                                         };
-                                        
+
                                         const startCol = colToIndex(startMatch[1]);
                                         const startRow = parseInt(startMatch[2]) - 1;
                                         const endCol = colToIndex(endMatch[1]);
                                         const endRow = parseInt(endMatch[2]) - 1;
-                                        
+
                                         // Select the range
                                         sheet.setSelection(startRow, startCol, endRow - startRow + 1, endCol - startCol + 1);
-                                        
+
                                         // Scroll to make the range visible
                                         const viewportInfo = sheet.getViewportInfo();
                                         const rowViewportIndex = viewportInfo.rowViewportIndex || 0;
                                         const colViewportIndex = viewportInfo.colViewportIndex || 0;
-                                        
+
                                         // Center the range in viewport
                                         const centerRow = Math.floor((startRow + endRow) / 2);
                                         const centerCol = Math.floor((startCol + endCol) / 2);
-                                        
+
                                         // Only scroll if needed
                                         const topRow = sheet.getViewportTopRow(rowViewportIndex);
                                         const bottomRow = sheet.getViewportBottomRow(rowViewportIndex);
                                         const leftCol = sheet.getViewportLeftColumn(colViewportIndex);
                                         const rightCol = sheet.getViewportRightColumn(colViewportIndex);
-                                        
+
                                         if (centerRow < topRow || centerRow > bottomRow) {
                                           sheet.showRow(centerRow, 3); // 3 = VerticalPosition.center
                                         }
-                                        
+
                                         if (centerCol < leftCol || centerCol > rightCol) {
                                           sheet.showColumn(centerCol, 3); // 3 = HorizontalPosition.center
                                         }
@@ -1793,14 +1798,14 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                           }
                                           return index - 1;
                                         };
-                                        
+
                                         const col = colToIndex(match[1]);
                                         const row = parseInt(match[2]) - 1;
                                         sheet.setSelection(row, col, 1, 1);
                                         sheet.showCell(row, col, 3, 3); // 3 = center for both vertical and horizontal
                                       }
                                     }
-                                    
+
                                     if (spreadInstance.focus) {
                                       spreadInstance.focus();
                                     }
@@ -1818,13 +1823,13 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                               ) : (
                                 <EditOutlined style={{ color: '#1890ff' }} />
                               )}
-                              
+
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 500 }}>
                                   {area.alias || area.name}
                                 </div>
-                                <div style={{ 
-                                  fontSize: '11px', 
+                                <div style={{
+                                  fontSize: '11px',
                                   color: '#999',
                                   display: 'flex',
                                   gap: '12px'
@@ -1842,7 +1847,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                                   )}
                                 </div>
                               </div>
-                              
+
                               <Space size="small">
                                 <Button
                                   size="small"
@@ -1871,17 +1876,17 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '16px', fontSize: '12px', color: '#666' }}>
-                    <Button 
-                      type="link" 
-                      size="small" 
-                      icon={<InfoCircleOutlined />}
-                      onClick={() => setShowHowItWorksModal(true)}
-                      style={{ padding: 0, fontSize: '12px' }}
-                    >
-                      How it works
-                    </Button>
-                  </div>
+                </div>
+                <div style={{ marginLeft: '4px', marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<InfoCircleOutlined />}
+                    onClick={() => setShowHowItWorksModal(true)}
+                    style={{ padding: 0, fontSize: '12px' }}
+                  >
+                    How it works
+                  </Button>
                 </div>
               </div>
             )}
@@ -1941,7 +1946,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           {(() => {
             const buttonInfo = getAddButtonInfo();
             const isRange = currentSelection && (currentSelection.rowCount > 1 || currentSelection.colCount > 1);
-            
+
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <Button
@@ -1953,7 +1958,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                 >
                   {buttonInfo.text}
                 </Button>
-                
+
                 {/* Add as Editable Area button - only show for ranges */}
                 {isRange && !buttonInfo.disabled && (
                   <Button
@@ -1972,579 +1977,51 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         </div>
       )}
 
-      {/* Add/Edit Parameter Modal */}
-      <Modal
-        title={`${editingParameter ? 'Edit' : 'Add'} ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
-        open={showAddParameterModal}
-        onCancel={() => {
-          setShowAddParameterModal(false);
-          setEditingParameter(null);
-        }}
-        footer={null}
-        centered
-      >
-        <Form
-          key={`${selectedCellInfo?.address}-${Date.now()}-${editingParameter?.id || ''}`} // Force form to reinitialize
-          layout="vertical"
-          variant={'filled'}
-          onFinish={handleAddParameter}
-          initialValues={{
-            name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
-            title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
-            dataType: editingParameter ? editingParameter.type : (selectedCellInfo?.detectedDataType || 'string'),
-            description: editingParameter?.description || '',
-            mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
-            min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
-            max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined
-          }}
-        >
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              label="Parameter Name"
-              name="name"
-              rules={[{ required: true, message: 'Please enter a parameter name' }]}
-              style={{ flex: 1 }}
-            >
-              <Input placeholder="e.g., amount, rate, result" />
-            </Form.Item>
-
-            <Form.Item
-              label="Data Type"
-              name="dataType"
-              style={{ width: '150px' }}
-            >
-              <Select>
-                <Select.Option value="string">String</Select.Option>
-                <Select.Option value="number">Number</Select.Option>
-                <Select.Option value="boolean">Boolean</Select.Option>
-              </Select>
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            label="Original Title"
-            name="title"
-          // help="The original title from the spreadsheet (optional)"
-          >
-            <Input placeholder="e.g., Interest Rate, Total Amount" />
-          </Form.Item>
-
-          {selectedCellInfo?.format?.isPercentage && (
-            <Alert
-              message="Percentage Format Detected"
-              description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          )}
-
-          <Form.Item
-            label="Description (for AI assistants)"
-            name="description"
-          // help="This helps AI assistants understand how to use this parameter"
-          >
-            <Input.TextArea
-              rows={2}
-              placeholder="Describe what this parameter represents and how it should be used..."
-              maxLength={500}
-              showCount
-            />
-          </Form.Item>
-
-          {parameterType === 'input' && (
-            <>
-              <Form.Item
-                noStyle
-                shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
-              >
-                {({ getFieldValue }) =>
-                  getFieldValue('dataType') === 'number' ? (
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <Form.Item
-                        label="Min Value"
-                        name="min"
-                        style={{ flex: 1 }}
-                      >
-                        <Input type="number" placeholder="Optional" />
-                      </Form.Item>
-                      <Form.Item
-                        label="Max Value"
-                        name="max"
-                        style={{ flex: 1 }}
-                      >
-                        <Input type="number" placeholder="Optional" />
-                      </Form.Item>
-                    </div>
-                  ) : null
-                }
-              </Form.Item>
-            </>
-          )}
-
-          <Form.Item style={{ marginBottom: 8 }}>
-            <div style={{
-              padding: '12px',
-              background: '#f5f5f5',
-              borderRadius: '4px',
-              fontSize: '12px'
-            }}>
-              <strong>Selected Cell:</strong> {selectedCellInfo?.address}
-              {selectedCellInfo?.hasFormula && (
-                <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                  ✓ Contains formula (recommended as output)
-                </div>
-              )}
-              {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && (
-                <div style={{ marginTop: '4px' }}>
-                  Current value: {selectedCellInfo.value}
-                </div>
-              )}
-              {/* {!selectedCellInfo?.isSingleCell && (
-                <div style={{ marginTop: '4px', color: '#1890ff' }}>
-                  Range: {selectedCellInfo?.rowCount} rows × {selectedCellInfo?.colCount} columns
-                </div>
-              )} */}
-            </div>
-          </Form.Item>
-          {parameterType === 'input' && (
-            <>
-              <Form.Item
-                name="mandatory"
-                valuePropName="checked"
-                initialValue={true}
-              >
-                <Checkbox>Mandatory parameter</Checkbox>
-              </Form.Item>
-            </>
-          )}
-          <Form.Item style={{ marginBottom: 0, paddingBottom: 0 }}>
-            <Space style={{ marginTop: 8 }}>
-              <Button type="primary" htmlType="submit">
-                {editingParameter ? 'Update' : 'Add'} Parameter
-              </Button>
-              <Button onClick={() => {
-                setShowAddParameterModal(false);
-                setEditingParameter(null);
-              }}>
-                Cancel
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Area Configuration Modal */}
-      <Modal
-        title={
-          <Space>
-            <TableOutlined />
-            <span>{editingAreaIndex === -1 ? 'Add' : 'Edit'} Editable Area</span>
-          </Space>
-        }
-        open={showAreaModal}
-        onCancel={() => {
-          setShowAreaModal(false);
-          setEditingArea(null);
-          setEditingAreaIndex(-1);
-        }}
-        width={700}
-        footer={[
-          <Button key="cancel" onClick={() => setShowAreaModal(false)}>
-            Cancel
-          </Button>,
-          <Button 
-            key="save" 
-            type="primary" 
-            onClick={() => {
-              if (!editingArea?.name || !editingArea?.address) {
-                message.error('Area name and address are required');
-                return;
-              }
-              handleSaveArea(editingArea);
+      {/* Add/Edit Parameter Modal - Lazy Loaded */}
+      <Suspense fallback={<div />}>
+        {showAddParameterModal && (
+          <ParameterModal
+            open={showAddParameterModal}
+            parameterType={parameterType}
+            editingParameter={editingParameter}
+            selectedCellInfo={selectedCellInfo}
+            suggestedParamName={suggestedParamName}
+            onClose={() => {
+              setShowAddParameterModal(false);
+              setEditingParameter(null);
             }}
-          >
-            {editingAreaIndex === -1 ? 'Add' : 'Save'} Area
-          </Button>
-        ]}
-        centered
-      >
-        {editingArea && (
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
-            {/* Basic Info */}
-            <div>
-              <Form layout="vertical">
-                <Form.Item label="Area Name" required>
-                  <Input 
-                    value={editingArea.name}
-                    onChange={e => setEditingArea({...editingArea, name: e.target.value})}
-                    placeholder="e.g., sales_data"
-                  />
-                </Form.Item>
-                
-                <Form.Item label="Display Name">
-                  <Input 
-                    value={editingArea.alias}
-                    onChange={e => setEditingArea({...editingArea, alias: e.target.value})}
-                    placeholder="e.g., Monthly Sales Data"
-                  />
-                </Form.Item>
-                
-                <Form.Item label="Selected Range">
-                  <Input value={editingArea.address} disabled />
-                </Form.Item>
-                
-                <Form.Item label="Description">
-                  <Input.TextArea 
-                    value={editingArea.description}
-                    onChange={e => setEditingArea({...editingArea, description: e.target.value})}
-                    placeholder="Describe what this area contains..."
-                    rows={2}
-                  />
-                </Form.Item>
-              </Form>
-            </div>
-            
-            {/* Quick Permission Presets */}
-            <div>
-              <Title level={5}>Access Level</Title>
-              <Radio.Group 
-                value={editingArea.mode} 
-                onChange={e => {
-                  const mode = e.target.value;
-                  setEditingArea({
-                    ...editingArea,
-                    mode,
-                    permissions: mode === 'readonly' ? PERMISSION_PRESETS.readonly :
-                               mode === 'interactive' ? PERMISSION_PRESETS.interactive :
-                               PERMISSION_PRESETS.valueOnly
-                  });
-                }}
-              >
-                <Space direction="vertical">
-                  <Radio value="readonly">
-                    <Space>
-                      <LockOutlined />
-                      <span>Read Only</span>
-                      <Text type="secondary">- AI can see values but not modify</Text>
-                    </Space>
-                  </Radio>
-                  <Radio value="editable">
-                    <Space>
-                      <EditOutlined />
-                      <span>Editable Values</span>
-                      <Text type="secondary">- AI can modify values but not formulas</Text>
-                    </Space>
-                  </Radio>
-                  <Radio value="interactive">
-                    <Space>
-                      <TableOutlined />
-                      <span>Full Interactive</span>
-                      <Text type="secondary">- AI can modify values, formulas, and structure</Text>
-                    </Space>
-                  </Radio>
-                </Space>
-              </Radio.Group>
-            </div>
-            
-            {/* Advanced Options */}
-            <Collapse ghost>
-              <Panel header="Advanced Permissions" key="1">
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Space direction="vertical">
-                      <Checkbox 
-                        checked={editingArea.permissions.canReadFormulas}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canReadFormulas: e.target.checked}
-                        })}
-                      >
-                        Show formulas to AI
-                      </Checkbox>
-                      <Checkbox 
-                        checked={editingArea.permissions.canWriteFormulas}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canWriteFormulas: e.target.checked}
-                        })}
-                        disabled={!editingArea.permissions.canReadFormulas}
-                      >
-                        Allow formula modifications
-                      </Checkbox>
-                      <Checkbox 
-                        checked={editingArea.permissions.canReadFormatting}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canReadFormatting: e.target.checked}
-                        })}
-                      >
-                        Include cell formatting
-                      </Checkbox>
-                    </Space>
-                  </Col>
-                  <Col span={12}>
-                    <Space direction="vertical">
-                      <Checkbox 
-                        checked={editingArea.permissions.canAddRows}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canAddRows: e.target.checked}
-                        })}
-                      >
-                        Allow adding rows
-                      </Checkbox>
-                      <Checkbox 
-                        checked={editingArea.permissions.canDeleteRows}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canDeleteRows: e.target.checked}
-                        })}
-                      >
-                        Allow deleting rows
-                      </Checkbox>
-                      <Checkbox 
-                        checked={editingArea.permissions.canModifyStructure}
-                        onChange={e => setEditingArea({
-                          ...editingArea,
-                          permissions: {...editingArea.permissions, canModifyStructure: e.target.checked}
-                        })}
-                      >
-                        Allow structure changes
-                      </Checkbox>
-                    </Space>
-                  </Col>
-                </Row>
-              </Panel>
-              
-              <Panel header="AI Context (Optional)" key="2">
-                <Form.Item label="Purpose">
-                  <Input.TextArea 
-                    value={editingArea.aiContext?.purpose}
-                    onChange={e => setEditingArea({
-                      ...editingArea,
-                      aiContext: {...editingArea.aiContext, purpose: e.target.value}
-                    })}
-                    placeholder="Describe what this area contains and its purpose..."
-                    rows={2}
-                  />
-                </Form.Item>
-                
-                <Form.Item label="Expected Behavior">
-                  <Input.TextArea 
-                    value={editingArea.aiContext?.expectedBehavior}
-                    onChange={e => setEditingArea({
-                      ...editingArea,
-                      aiContext: {...editingArea.aiContext, expectedBehavior: e.target.value}
-                    })}
-                    placeholder="Guide the AI on how to interact with this area..."
-                    rows={2}
-                  />
-                </Form.Item>
-              </Panel>
-            </Collapse>
-          </Space>
+            onSubmit={handleAddParameter}
+          />
         )}
-      </Modal>
+      </Suspense>
 
-      {/* How It Works Modal */}
-      <Modal
-        title={
-          <Space>
-            <InfoCircleOutlined />
-            <span>How SpreadAPI Works</span>
-          </Space>
-        }
-        open={showHowItWorksModal}
-        onCancel={() => setShowHowItWorksModal(false)}
-        width={800}
-        footer={[
-          <Button key="close" onClick={() => setShowHowItWorksModal(false)}>
-            Got it!
-          </Button>
-        ]}
-        centered
-      >
-        <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
-            {/* Overview */}
-            <div>
-              <Title level={4}>Overview</Title>
-              <Paragraph>
-                SpreadAPI turns your spreadsheets into powerful APIs that can be called by applications, AI assistants, 
-                or integrated into workflows. Your spreadsheet becomes a calculation engine that accepts inputs and returns outputs.
-              </Paragraph>
-            </div>
+      {/* Area Configuration Modal - Lazy Loaded */}
+      <Suspense fallback={<div />}>
+        {showAreaModal && (
+          <AreaModal
+            open={showAreaModal}
+            editingArea={editingArea}
+            editingAreaIndex={editingAreaIndex}
+            onClose={() => {
+              setShowAreaModal(false);
+              setEditingArea(null);
+              setEditingAreaIndex(-1);
+            }}
+            onSave={handleSaveArea}
+            onAreaChange={setEditingArea}
+          />
+        )}
+      </Suspense>
 
-            {/* Three Core Concepts */}
-            <div>
-              <Title level={4}>Three Core Concepts</Title>
-              
-              <div style={{ marginBottom: 16 }}>
-                <Title level={5}>
-                  <Space>
-                    <SwapOutlined style={{ color: '#1890ff' }} />
-                    1. Input Parameters
-                  </Space>
-                </Title>
-                <Paragraph>
-                  Input parameters are values that users or applications provide when calling your service. 
-                  Think of them as function arguments - you define which cells should receive these values.
-                </Paragraph>
-                <ul>
-                  <li>Select any cell in your spreadsheet</li>
-                  <li>Click "Add as Input" to make it a parameter</li>
-                  <li>Give it a meaningful name (e.g., "interest_rate", "loan_amount")</li>
-                  <li>Set validation rules (min/max values, required/optional)</li>
-                </ul>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <Title level={5}>
-                  <Space>
-                    <FileTextOutlined style={{ color: '#52c41a' }} />
-                    2. Output Parameters
-                  </Space>
-                </Title>
-                <Paragraph>
-                  Output parameters are the calculated results from your spreadsheet. These are the values 
-                  returned when someone calls your API.
-                </Paragraph>
-                <ul>
-                  <li>Select cells containing formulas or results</li>
-                  <li>Click "Add as Output"</li>
-                  <li>Name your outputs (e.g., "monthly_payment", "total_interest")</li>
-                  <li>Can be single cells or ranges (like tables)</li>
-                </ul>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <Title level={5}>
-                  <Space>
-                    <TableOutlined style={{ color: '#fa8c16' }} />
-                    3. Editable Areas (For AI)
-                  </Space>
-                </Title>
-                <Paragraph>
-                  Editable areas are special regions that AI assistants can interact with directly. 
-                  Unlike input/output parameters, these allow AI to read and modify multiple cells, 
-                  including formulas.
-                </Paragraph>
-                <ul>
-                  <li>Select a range of cells (e.g., A1:D10)</li>
-                  <li>Click "Add as Editable Area"</li>
-                  <li>Set permissions (read-only, edit values, edit formulas)</li>
-                  <li>AI can experiment, analyze, and transform data within these areas</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* How It Flows */}
-            <div>
-              <Title level={4}>The API Flow</Title>
-              <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-                <ol style={{ marginBottom: 0 }}>
-                  <li><strong>API Call Received</strong>: Your service receives a request with input values</li>
-                  <li><strong>Inputs Applied</strong>: Values are placed into the designated input cells</li>
-                  <li><strong>Calculation</strong>: Spreadsheet formulas automatically recalculate</li>
-                  <li><strong>Outputs Collected</strong>: Results are read from output cells</li>
-                  <li><strong>Response Sent</strong>: Calculated values are returned as JSON</li>
-                </ol>
-              </div>
-            </div>
-
-            {/* Example */}
-            <div>
-              <Title level={4}>Example: Loan Calculator</Title>
-              <div style={{ background: '#e6f7ff', padding: 16, borderRadius: 8 }}>
-                <Paragraph style={{ marginBottom: 8 }}>
-                  <strong>Inputs:</strong>
-                </Paragraph>
-                <ul style={{ marginBottom: 12 }}>
-                  <li>Cell B2: loan_amount (e.g., 200000)</li>
-                  <li>Cell B3: interest_rate (e.g., 0.045)</li>
-                  <li>Cell B4: years (e.g., 30)</li>
-                </ul>
-                
-                <Paragraph style={{ marginBottom: 8 }}>
-                  <strong>Spreadsheet Formula:</strong>
-                </Paragraph>
-                <code style={{ display: 'block', marginBottom: 12, padding: 8, background: '#fff' }}>
-                  Cell E2: =PMT(B3/12, B4*12, -B2)
-                </code>
-                
-                <Paragraph style={{ marginBottom: 8 }}>
-                  <strong>Output:</strong>
-                </Paragraph>
-                <ul style={{ marginBottom: 12 }}>
-                  <li>Cell E2: monthly_payment (returns: 1013.37)</li>
-                </ul>
-                
-                <Paragraph style={{ marginBottom: 0 }}>
-                  <strong>API Call:</strong>
-                </Paragraph>
-                <pre style={{ marginTop: 8, marginBottom: 0 }}>
-{`GET /api/getresults?api=loan_calc&loan_amount=200000&interest_rate=0.045&years=30
-
-Response:
-{
-  "outputs": {
-    "monthly_payment": 1013.37
-  }
-}`}
-                </pre>
-              </div>
-            </div>
-
-            {/* Publishing and Using */}
-            <div>
-              <Title level={4}>Publishing Your Service</Title>
-              <Paragraph>
-                Once you've defined your parameters:
-              </Paragraph>
-              <ol>
-                <li>Click "Publish Service" to make it available</li>
-                <li>Get your unique API endpoint</li>
-                <li>Share with developers or configure for AI assistants</li>
-                <li>Enable MCP integration for Claude and other AI tools</li>
-              </ol>
-            </div>
-
-            {/* AI Integration */}
-            <div>
-              <Title level={4}>AI Assistant Integration (MCP)</Title>
-              <Paragraph>
-                When you enable MCP (Model Context Protocol), AI assistants like Claude can:
-              </Paragraph>
-              <ul>
-                <li>Discover your available services automatically</li>
-                <li>Call your API with natural language requests</li>
-                <li>Work with editable areas to experiment and analyze</li>
-                <li>Create complex workflows combining multiple services</li>
-              </ul>
-              <Alert
-                message="Pro Tip"
-                description="Editable areas are perfect for AI assistants to perform what-if analysis, data cleaning, or formula generation without affecting your main calculations."
-                type="info"
-                showIcon
-              />
-            </div>
-
-            {/* Best Practices */}
-            <div>
-              <Title level={4}>Best Practices</Title>
-              <ul>
-                <li><strong>Clear Naming</strong>: Use descriptive names for parameters (not "input1")</li>
-                <li><strong>Validation</strong>: Set min/max values to prevent errors</li>
-                <li><strong>Documentation</strong>: Add descriptions to help users understand each parameter</li>
-                <li><strong>Error Handling</strong>: Use IFERROR() in formulas for robustness</li>
-                <li><strong>Test First</strong>: Try your API before publishing</li>
-                <li><strong>AI Context</strong>: Provide clear descriptions for AI to understand your service</li>
-              </ul>
-            </div>
-          </Space>
-        </div>
-      </Modal>
+      {/* How It Works Modal - Lazy Loaded */}
+      <Suspense fallback={<div />}>
+        {showHowItWorksModal && (
+          <HowItWorksModal
+            open={showHowItWorksModal}
+            onClose={() => setShowHowItWorksModal(false)}
+          />
+        )}
+      </Suspense>
 
     </div>
   );
