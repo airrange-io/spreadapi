@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Tag } from 'antd';
+import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
@@ -28,7 +28,7 @@ const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.
 }) as any;
 
 const { Content, Sider } = Layout;
-// const { Title, Text } = Typography;
+const { Text } = Typography;
 // const { Dragger } = Upload;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
@@ -1010,7 +1010,24 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 title: <a onClick={handleBack}>Services</a>,
               },
               {
-                title: configLoaded ? (apiConfig.name || 'New Service') : '...',
+                title: configLoaded ? (
+                  <Text 
+                    editable={{
+                      onChange: (value) => {
+                        if (value && value.trim()) {
+                          setApiConfig(prev => ({ ...prev, name: value.trim() }));
+                          setHasChanges(true);
+                        }
+                      },
+                      tooltip: 'Click to edit service name',
+                      enterIcon: null,
+                      maxLength: 100,
+                    }}
+                    style={{ margin: 0 }}
+                  >
+                    {apiConfig.name || 'New Service'}
+                  </Text>
+                ) : '...',
               },
             ]}
           />
