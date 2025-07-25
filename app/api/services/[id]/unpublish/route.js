@@ -49,8 +49,8 @@ export async function POST(request, { params }) {
     const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
     if (publishedData.urlData) {
       try {
-        const { del } = await import('@/lib/blob-client');
-        await del(publishedData.urlData);
+        const { delBlob } = await import('@/lib/blob-client');
+        await delBlob(publishedData.urlData);
       } catch (error) {
         console.warn('Failed to delete blob:', error);
       }
