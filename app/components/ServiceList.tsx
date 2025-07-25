@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
-import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 
@@ -33,6 +33,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(isAuthenticated === null);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
   const loadingRef = useRef(false);
 
   useEffect(() => {
@@ -187,6 +188,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   };
 
   const handleEdit = (serviceId: string) => {
+    setClickedServiceId(serviceId);
     router.push(`/service/${serviceId}`);
   };
 
@@ -219,6 +221,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       render: (text: string, record: Service) => (
         <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
           {record.id === 'test1234_mdejqoua8ptor' ? `${text} (Try Demo)` : text}
+          {clickedServiceId === record.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
         </Button>
       ),
       sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
@@ -480,7 +483,10 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
               <Card.Meta
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text strong>{service.name}</Text>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Text strong>{service.name}</Text>
+                      {clickedServiceId === service.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
+                    </div>
                     <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4 }}>
                       {service.status}
                     </Tag>
