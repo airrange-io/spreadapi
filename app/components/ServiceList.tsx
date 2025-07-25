@@ -228,14 +228,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
-      responsive: ['md'],
+      responsive: ['md' as const] as any,
       render: (text: string) => text || 'No description',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      align: 'center',
+      align: 'center' as const,
       width: 100,
       render: (status: string) => (
         <Tag color={status === 'published' ? 'green' : 'orange'}>
@@ -252,7 +252,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       title: 'Calls',
       dataIndex: 'calls',
       key: 'calls',
-      align: 'center',
+      align: 'center' as const,
       width: 100,
       render: (calls: number) => calls || 0,
       sorter: (a: Service, b: Service) => a.calls - b.calls,
@@ -269,7 +269,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       title: '',
       key: 'actions',
       width: 60,
-      align: 'left',
+      align: 'left' as const,
       render: (_: any, record: Service) => (
         <Space size="middle">
           {/* <Button

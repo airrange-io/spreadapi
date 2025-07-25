@@ -12,5 +12,6 @@ export default function HankoProfile() {
     });
   }, []);
 
+  // @ts-ignore - Custom element from Hanko library
   return <hanko-profile />;
 }

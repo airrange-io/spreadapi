@@ -3,6 +3,7 @@
 import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Button, Typography, Tooltip, App, Dropdown, Popconfirm } from 'antd';
+import type { MenuProps } from 'antd';
 import { PlusOutlined, MenuOutlined, LoadingOutlined, AppstoreOutlined, DeleteOutlined, LeftOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';

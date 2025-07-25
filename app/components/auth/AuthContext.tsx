@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkAuth = async () => {
       try {
-        const currentUser = await hanko.user.getCurrent();
+        const currentUser = await (hanko as any).user.getCurrent();
         setUser(currentUser);
         setError(null);
         
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       if (hanko) {
-        await hanko.user.logout();
+        await (hanko as any).user.logout();
         setUser(null);
         router.push('/');
       }

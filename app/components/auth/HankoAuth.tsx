@@ -46,7 +46,7 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
     const unsubscribe = hanko.onSessionCreated(async () => {
       try {
         // Get the user data to cache it
-        const user = await hanko.user.getCurrent();
+        const user = await (hanko as any).user.getCurrent();
         if (user) {
           // Cache user data in Redis
           await fetch('/api/auth/cache-user', {
@@ -94,5 +94,6 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
     );
   }
 
+  // @ts-ignore - Custom element from Hanko library
   return <hanko-auth />;
 }
