@@ -219,7 +219,7 @@ const ListsPage: React.FC = observer(() => {
           {/* Header */}
           <div className="lists-page-header">
             {/* Left side */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
               <Button
                 type='text'
                 icon={<MenuOutlined />}

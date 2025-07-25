@@ -56,7 +56,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({
 
   return (
     <div style={{
-      padding: '12px',
+      padding: '16px',
       flex: '0 0 auto'
     }}>
       <div style={{ display: 'flex', gap: '8px', width: '100%' }}>

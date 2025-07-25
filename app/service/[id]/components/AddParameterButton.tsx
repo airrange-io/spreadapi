@@ -90,7 +90,7 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   return (
     <div
       style={{
-        padding: '12px',
+        padding: '16px',
         paddingTop: 0,
         background: 'white',
         flex: '0 0 auto'

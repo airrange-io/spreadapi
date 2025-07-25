@@ -1246,7 +1246,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
       <div style={{
         flex: 1,
         overflow: 'auto',
-        padding: '0 12px',
+        padding: '0 16px',
         paddingBottom: 12, // activeCard === 'parameters' ? buttonAreaHeight + 12 : 12,
         minHeight: 0
       }}>

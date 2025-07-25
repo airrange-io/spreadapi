@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
@@ -10,6 +10,7 @@ import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 import EmptyWorkbookState from './EmptyWorkbookState';
+import { appStore } from '@/stores/AppStore';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
 const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
@@ -823,7 +824,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#f5f5f5'
+          backgroundColor: '#ffffff'
         }}>
           <Spin size="default" />
         </div>
@@ -843,7 +844,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#f5f5f5'
+          background: '#ffffff'
         }}>
           <Spin size="default" />
         </div>
@@ -978,6 +979,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          backgroundColor: '#ffffff',
           gap: 16
         }}>
           <Spin size="default" />
@@ -996,7 +998,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         flexShrink: 0,
         background: 'white',
         padding: 0,
-        paddingLeft: 8,
+        paddingLeft: 16,
         paddingRight: 12,
         display: 'flex',
         alignItems: 'center',
@@ -1006,14 +1008,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <Space size="small" align="center">
           <Button
             type="text"
-            icon={<ArrowLeftOutlined />}
-            onClick={handleBack}
-            style={{ padding: '4px 8px' }}
+            icon={<MenuOutlined />}
+            onClick={appStore.toggleSidebar}
           />
           <Breadcrumb
             items={[
               {
-                title: <a onClick={handleBack}>Services</a>,
+                title: <a onClick={() => router.push('/')}>Services</a>,
               },
               {
                 title: configLoaded ? (
