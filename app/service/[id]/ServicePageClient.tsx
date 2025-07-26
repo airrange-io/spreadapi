@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined } from '@ant-design/icons';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
@@ -259,11 +259,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           // Check if this is the full endpoint response or regular endpoint
           const isFullEndpoint = data.service && data.status;
-          
+
           if (isFullEndpoint) {
             // Full endpoint response
             setServiceStatus(data.status);
-            
+
             const loadedConfig = {
               name: data.service.name || '',
               description: data.service.description || '',
@@ -287,7 +287,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               published: data.status === 'published',
               status: data.status || 'draft'
             });
-            
+
             const loadedConfig = {
               name: data.name || '',
               description: data.description || '',
@@ -556,7 +556,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       message.success('Service published successfully!');
       console.log('Publish result:', result);
-      
+
       // Set a flag to refresh the service list
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('refreshServiceList', Date.now().toString());
@@ -937,11 +937,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleEmptyStateImport = useCallback((file: File) => {
     // Store the file for later use
     setImportFileForEmptyState(file);
-    
+
     // First create an empty spreadsheet
     setShowEmptyState(false);
     setDefaultSpreadsheetData();
-    
+
     // The file will be imported once the workbook is initialized
   }, []);
 
@@ -1019,7 +1019,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               {
                 title: configLoaded ? (
                   <Space>
-                    <Text 
+                    <Text
                       editable={!isDemoMode && {
                         onChange: (value) => {
                           if (value && value.trim()) {
@@ -1043,11 +1043,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               },
             ]}
           />
-          {configLoaded && (
-            <Tag color={serviceStatus?.published ? 'green' : 'orange'} style={{ marginLeft: 8 }}>
-              {serviceStatus?.published ? 'Published' : 'Draft'}
-            </Tag>
-          )}
         </Space>
 
         <Space>
@@ -1070,27 +1065,41 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </Button>
           )}
           {!isDemoMode && (
-            serviceStatus?.published ? (
-              <Button
-                danger
-                color="danger"
-                variant="filled"
-                onClick={handleUnpublish}
-                loading={loading}
-                disabled={hasChanges}
-              >
-                Unpublish Service
+            <Dropdown
+              menu={{
+                items: [
+                  serviceStatus?.published ? {
+                    key: 'unpublish',
+                    label: 'Unpublish this service',
+                    icon: <CloseCircleOutlined />,
+                    danger: true,
+                    onClick: handleUnpublish,
+                    disabled: hasChanges
+                  } : {
+                    key: 'publish',
+                    label: 'Publish this service',
+                    icon: <CheckCircleOutlined />,
+                    onClick: handlePublish,
+                    disabled: hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                  }
+                ]
+              }}
+              trigger={['click']}
+              disabled={loading}
+            >
+              <Button style={{
+                borderRadius: 6,
+                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#fff7e6',
+                borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
+                color: serviceStatus?.published ? '#52c41a' : '#fa8c16'
+              }}>
+                <Space>
+                  {serviceStatus?.published ? 'Published' : 'Draft'}
+                  <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} />
+                  <DownOutlined />
+                </Space>
               </Button>
-            ) : (
-              <Button
-                type="primary"
-                onClick={handlePublish}
-                loading={loading}
-                disabled={hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
-              >
-                Publish Service
-              </Button>
-            )
+            </Dropdown>
           )}
         </Space>
       </div>
