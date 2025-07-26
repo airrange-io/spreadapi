@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { Space, Alert } from 'antd';
 import ApiEndpointPreview from '../ApiEndpointPreview';
 import ServiceTester from '../ServiceTester';
@@ -32,15 +32,45 @@ const TokensSection: React.FC<TokensSectionProps> = ({
   onTokenCountChange,
   onTokensChange,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+
+  useLayoutEffect(() => {
+    const measureWidth = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        setContainerWidth(width);
+      }
+    };
+
+    measureWidth();
+    const timeout = setTimeout(measureWidth, 100);
+
+    const resizeObserver = new ResizeObserver(measureWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    window.addEventListener('resize', measureWidth);
+
+    return () => {
+      clearTimeout(timeout);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', measureWidth);
+    };
+  }, []);
+
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      marginTop: '8px',
-      minHeight: 0
-    }}>
+    <div 
+      ref={containerRef}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        marginTop: '8px',
+        minHeight: 0
+      }}>
       <Space direction="vertical" style={{ width: '100%' }} size={12}>
         {!isPublished && (
           <Alert
@@ -61,6 +91,7 @@ const TokensSection: React.FC<TokensSectionProps> = ({
           outputs={outputs}
           requireToken={requireToken}
           existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
+          containerWidth={containerWidth}
         />
         <TokenManagement
           serviceId={serviceId}

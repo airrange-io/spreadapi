@@ -18,6 +18,7 @@ interface ServiceTesterProps {
   outputs: any[];
   requireToken?: boolean;
   existingToken?: string;
+  containerWidth?: number;
 }
 
 const ServiceTester: React.FC<ServiceTesterProps> = ({
@@ -26,7 +27,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   inputs,
   outputs,
   requireToken,
-  existingToken
+  existingToken,
+  containerWidth: propsContainerWidth
 }) => {
   const [form] = Form.useForm();
   const [parameterValues, setParameterValues] = useState<Record<string, any>>({});
@@ -35,8 +37,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [wizardError, setWizardError] = useState<string>('');
   const [wizardResponseTime, setWizardResponseTime] = useState<number>(0);
   const [totalCalls, setTotalCalls] = useState<number>(0);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  const formContainerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = propsContainerWidth || 0;
 
   // Initialize parameter values from inputs
   useEffect(() => {
@@ -109,38 +110,21 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     setWizardUrl(buildWizardUrl(parameterValues));
   }, [parameterValues, serviceId, requireToken, existingToken]);
 
-  // Track container width for responsive layout
-  useLayoutEffect(() => {
-    if (!formContainerRef.current) return;
 
-    const updateWidth = () => {
-      if (formContainerRef.current) {
-        const width = formContainerRef.current.getBoundingClientRect().width;
-        setContainerWidth(width);
-      }
-    };
+  // Get column span based on container width
+  const getColumnSpan = () => {
+    if (containerWidth === 0 || containerWidth < 400) return 24; // 1 column
+    if (containerWidth < 600) return 12; // 2 columns
+    if (containerWidth < 900) return 8; // 3 columns
+    return 6; // 4 columns
+  };
 
-    // Initial measurement
-    updateWidth();
-
-    // Create ResizeObserver
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width;
-        setContainerWidth(width);
-      }
-    });
-
-    resizeObserver.observe(formContainerRef.current);
-
-    // Also update on window resize as backup
-    window.addEventListener('resize', updateWidth);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updateWidth);
-    };
-  }, []);
+  // Get column span for statistics (max 3 columns)
+  const getStatColumnSpan = () => {
+    if (containerWidth === 0 || containerWidth < 400) return 24; // 1 column
+    if (containerWidth < 600) return 12; // 2 columns
+    return 8; // 3 columns max
+  };
 
   const renderParameterInput = (input: any) => {
     const commonProps = {
@@ -180,16 +164,16 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     <>
       {/* Quick Test Section */}
       <CollapsibleSection 
-        title="Quick Test" 
+        title="Quick Test"
         defaultOpen={false}
       >
-        <div ref={formContainerRef} style={{ width: '100%' }}>
+        <div style={{ width: '100%' }}>
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
           {/* Input Parameters Form */}
           {inputs.length > 0 && (
             <div style={{ width: '100%' }}>
               <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                Input Parameters
+                Input Parameters {containerWidth > 0 && `(${containerWidth}px)`}
               </Typography.Text>
               <Form
                 form={form}
@@ -197,37 +181,14 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                 initialValues={parameterValues}
                 style={{ width: '100%' }}
               >
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: (() => {
-                    const width = Math.round(containerWidth);
-                    if (width === 0) {
-                      // Fallback when not measured yet
-                      return 'repeat(auto-fit, minmax(200px, 1fr))';
-                    }
-                    if (width < 350) {
-                      return '1fr';
-                    }
-                    if (width < 450) {
-                      return 'repeat(2, 1fr)';
-                    }
-                    if (width < 780) {
-                      return 'repeat(3, 1fr)';
-                    }
-                    return 'repeat(4, 1fr)';
-                  })(),
-                  gap: 16,
-                  width: '100%'
-                }}>
+                <Row gutter={[16, 8]}>
                   {inputs.map((input) => {
                     // For text inputs or inputs with descriptions, span full width
                     const shouldSpanFull = input.type !== 'number' && input.type !== 'boolean';
+                    const colSpan = shouldSpanFull ? 24 : getColumnSpan();
                     
                     return (
-                      <div 
-                        key={input.id}
-                        style={shouldSpanFull ? { gridColumn: '1 / -1' } : {}}
-                      >
+                      <Col key={input.id} span={colSpan}>
                         <Form.Item
                           name={input.alias || input.name}
                           label={
@@ -246,10 +207,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                         >
                           {renderParameterInput(input)}
                         </Form.Item>
-                      </div>
+                      </Col>
                     );
                   })}
-                </div>
+                </Row>
               </Form>
             </div>
           )}
@@ -300,29 +261,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
                     Output Results
                   </Typography.Text>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: (() => {
-                      const width = Math.round(containerWidth);
-                      if (width === 0) {
-                        return 'repeat(auto-fit, minmax(200px, 1fr))';
-                      }
-                      if (width < 350) {
-                        return '1fr';
-                      }
-                      if (width < 450) {
-                        return 'repeat(2, 1fr)';
-                      }
-                      if (width < 780) {
-                        return 'repeat(3, 1fr)';
-                      }
-                      return 'repeat(4, 1fr)';
-                    })(),
-                    gap: 16,
-                    width: '100%',
-                    marginBottom: 24
-                  }}>
+                  <Row gutter={[16, 8]}>
                     {wizardResult.outputs.map((output: any) => {
+                      
                       // Use title if available, otherwise alias or name
                       const displayTitle = output.title || output.alias || output.name;
                       
@@ -356,21 +297,21 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                         displayValue = strValue.length > 20 ? strValue.substring(0, 17) + '...' : strValue;
                       }
                       
-                      return (
-                        <div key={output.name || output.alias}>
-                          <Statistic
-                            title={displayTitle}
-                            value={displayValue}
-                            precision={precision}
-                            valueStyle={{ 
-                              fontSize: '20px',
-                              color: output.error ? '#ff4d4f' : undefined
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <Col key={output.name || output.alias} span={getColumnSpan()}>
+                            <Statistic
+                              title={displayTitle}
+                              value={displayValue}
+                              precision={precision}
+                              valueStyle={{ 
+                                fontSize: '18px',
+                                color: output.error ? '#ff4d4f' : undefined
+                              }}
+                            />
+                          </Col>
+                        );
+                      })}
+                  </Row>
                 </>
               )}
               
@@ -378,51 +319,33 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
                 Call Statistics
               </Typography.Text>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: (() => {
-                  const width = Math.round(containerWidth);
-                  if (width === 0) {
-                    return 'repeat(auto-fit, minmax(200px, 1fr))';
-                  }
-                  if (width < 350) {
-                    return '1fr';
-                  }
-                  if (width < 450) {
-                    return 'repeat(2, 1fr)';
-                  }
-                  if (width < 780) {
-                    return 'repeat(3, 1fr)';
-                  }
-                  return 'repeat(4, 1fr)';
-                })(),
-                gap: 16,
-                width: '100%'
-              }}>
-                <div>
+              <Row gutter={[16, 8]}>
+                <Col span={getStatColumnSpan()}>
                   <Statistic
                     title="Response Time"
                     value={wizardResponseTime}
                     suffix="ms"
                     prefix={<ClockCircleOutlined />}
+                    valueStyle={{ fontSize: '18px' }}
                   />
-                </div>
-                <div>
+                </Col>
+                <Col span={getStatColumnSpan()}>
                   <Statistic
                     title="Status"
                     value={wizardError ? "Error" : "Success"}
-                    valueStyle={{ color: wizardError ? '#ff4d4f' : '#52c41a' }}
+                    valueStyle={{ color: wizardError ? '#ff4d4f' : '#52c41a', fontSize: '18px' }}
                     prefix={wizardError ? <InfoCircleOutlined /> : <CheckCircleOutlined />}
                   />
-                </div>
-                <div>
+                </Col>
+                <Col span={getStatColumnSpan()}>
                   <Statistic
                     title="Total Calls"
                     value={totalCalls}
                     prefix={<ApiOutlined />}
+                    valueStyle={{ fontSize: '18px' }}
                   />
-                </div>
-              </div>
+                </Col>
+              </Row>
 
               {/* Result or Error Display */}
               <div style={{ marginTop: 16 }}>
