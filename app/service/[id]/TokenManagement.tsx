@@ -304,7 +304,10 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
               type="default"
               size="small"
               icon={<PlusOutlined />}
-              onClick={() => setShowCreateModal(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCreateModal(true);
+              }}
               disabled={isDemoMode}
             >
               Create Token

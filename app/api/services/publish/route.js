@@ -23,8 +23,8 @@ export async function POST(request) {
       );
     }
     
-    // Call the server-side function
-    const result = await createOrUpdateService(serviceId, publishData, tenant);
+    // Call the server-side function with userId
+    const result = await createOrUpdateService(serviceId, publishData, tenant, userId);
     
     return NextResponse.json(result);
   } catch (error) {

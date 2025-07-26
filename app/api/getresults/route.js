@@ -48,7 +48,7 @@ async function logCalls(apiId, apiToken) {
       );
     }
 
-    multi.hIncrBy(`service:${apiId}`, "calls", 1);
+    multi.hIncrBy(`service:${apiId}:published`, "calls", 1);
     multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
     
     // New analytics tracking

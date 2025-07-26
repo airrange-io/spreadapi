@@ -29,35 +29,40 @@ export async function GET(request) {
     // Parse service index data and build service list
     const services = [];
     
-    // Use multi to fetch call counts efficiently
-    const multi = redis.multi();
-    const serviceIdsList = [];
-    
-    for (const [serviceId, indexData] of Object.entries(serviceIndex)) {
+    // Get all service data with proper status and call counts
+    for (const serviceId of Object.keys(serviceIndex)) {
       try {
-        // Parse JSON data from index
-        const serviceInfo = typeof indexData === 'string' ? JSON.parse(indexData) : indexData;
-        services.push(serviceInfo);
-        serviceIdsList.push(serviceId);
+        // Get actual service data from Redis
+        const serviceData = await redis.hGetAll(`service:${serviceId}`);
+        if (!serviceData || !serviceData.id) continue;
         
-        // Add call count fetch to multi
-        multi.hGet(`service:${serviceId}`, 'calls');
+        // Check if service is published
+        const isPublished = await redis.exists(`service:${serviceId}:published`) === 1;
+        
+        // Get call count from published hash if published
+        let callCount = 0;
+        if (isPublished) {
+          const publishedCalls = await redis.hGet(`service:${serviceId}:published`, 'calls');
+          callCount = parseInt(publishedCalls) || 0;
+        }
+        
+        // Build service info with real-time status
+        services.push({
+          id: serviceData.id,
+          name: serviceData.name || 'Untitled Service',
+          description: serviceData.description || '',
+          status: isPublished ? 'published' : 'draft',
+          calls: callCount,
+          createdAt: serviceData.createdAt,
+          updatedAt: serviceData.updatedAt,
+          lastUsed: null // This could be tracked separately if needed
+        });
       } catch (error) {
         console.error(`Error processing service ${serviceId}:`, error);
         // Skip this service if there's an error
         continue;
       }
     }
-    
-    // Execute multi to get all call counts
-    const callCounts = await multi.exec();
-    
-    // Update services with actual call counts
-    services.forEach((service, index) => {
-      if (callCounts[index] && callCounts[index][1] !== null) {
-        service.calls = parseInt(callCounts[index][1]) || 0;
-      }
-    });
     
     // Filter out nulls and sort by updatedAt descending
     const validServices = services.filter(s => s !== null);
@@ -167,20 +172,8 @@ export async function POST(request) {
     // Store service
     await redis.hSet(`service:${id}`, serviceData);
     
-    // Add to user's services index with full overview data
-    const indexData = {
-      id: id,
-      name: serviceData.name,
-      description: serviceData.description,
-      status: 'draft',
-      createdAt: serviceData.createdAt,
-      updatedAt: serviceData.updatedAt,
-      publishedAt: null,
-      calls: 0,
-      lastUsed: null,
-      workbookUrl: serviceData.workbookUrl
-    };
-    await redis.hSet(`user:${userId}:services`, id, JSON.stringify(indexData));
+    // Add to user's services index with just the status
+    await redis.hSet(`user:${userId}:services`, id, 'draft');
     
     // Track user activity
     await trackUserActivity(userId, `created_service:${id}`);

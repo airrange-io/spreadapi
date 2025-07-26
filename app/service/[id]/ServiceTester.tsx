@@ -105,7 +105,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             type="default"
             size="small"
             icon={<PlayCircleOutlined />}
-            onClick={handleTest}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTest();
+            }}
             loading={testing}
             disabled={!isPublished}
           >
