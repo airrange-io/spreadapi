@@ -119,11 +119,12 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     return 6; // 4 columns
   };
 
-  // Get column span for statistics (max 3 columns)
+  // Get column span for statistics
   const getStatColumnSpan = () => {
     if (containerWidth === 0 || containerWidth < 400) return 24; // 1 column
     if (containerWidth < 600) return 12; // 2 columns
-    return 8; // 3 columns max
+    if (containerWidth < 900) return 8; // 3 columns
+    return 6; // 4 columns
   };
 
   const renderParameterInput = (input: any) => {
