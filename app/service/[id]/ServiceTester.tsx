@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Space, Typography, Alert, Tooltip, Form, InputNumber, Switch, Statistic, Row, Col, Divider } from 'antd';
+import React, { useState, useEffect, lazy, Suspense, useRef, useLayoutEffect } from 'react';
+import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Divider, Spin } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import CollapsibleSection from './components/CollapsibleSection';
+
+// Lazy load the IntegrationExamples component
+const IntegrationExamples = lazy(() => import('./components/IntegrationExamples'));
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -32,6 +35,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [wizardError, setWizardError] = useState<string>('');
   const [wizardResponseTime, setWizardResponseTime] = useState<number>(0);
   const [totalCalls, setTotalCalls] = useState<number>(0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const formContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize parameter values from inputs
   useEffect(() => {
@@ -104,6 +109,39 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     setWizardUrl(buildWizardUrl(parameterValues));
   }, [parameterValues, serviceId, requireToken, existingToken]);
 
+  // Track container width for responsive layout
+  useLayoutEffect(() => {
+    if (!formContainerRef.current) return;
+
+    const updateWidth = () => {
+      if (formContainerRef.current) {
+        const width = formContainerRef.current.getBoundingClientRect().width;
+        setContainerWidth(width);
+      }
+    };
+
+    // Initial measurement
+    updateWidth();
+
+    // Create ResizeObserver
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        setContainerWidth(width);
+      }
+    });
+
+    resizeObserver.observe(formContainerRef.current);
+
+    // Also update on window resize as backup
+    window.addEventListener('resize', updateWidth);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
   const renderParameterInput = (input: any) => {
     const commonProps = {
       style: { width: '100%' },
@@ -143,27 +181,56 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
       {/* Quick Test Section */}
       <CollapsibleSection 
         title="Quick Test" 
-        defaultOpen={true}
+        defaultOpen={false}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           {/* Input Parameters Form */}
           {inputs.length > 0 && (
-            <div>
+            <div ref={formContainerRef} style={{ width: '100%' }}>
               <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                Input Parameters
+                Input Parameters {containerWidth > 0 && `(${Math.round(containerWidth)}px - ${
+                  containerWidth < 350 ? '1 col' :
+                  containerWidth < 450 ? '2 cols' :
+                  containerWidth < 780 ? '3 cols' : '4 cols'
+                })`}
               </Typography.Text>
               <Form
                 form={form}
                 layout="vertical"
                 initialValues={parameterValues}
+                style={{ width: '100%' }}
               >
-                <Row gutter={[16, 8]}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: (() => {
+                    const width = Math.round(containerWidth);
+                    if (width === 0) {
+                      // Fallback when not measured yet
+                      return 'repeat(auto-fit, minmax(200px, 1fr))';
+                    }
+                    if (width < 350) {
+                      return '1fr';
+                    }
+                    if (width < 450) {
+                      return 'repeat(2, 1fr)';
+                    }
+                    if (width < 780) {
+                      return 'repeat(3, 1fr)';
+                    }
+                    return 'repeat(4, 1fr)';
+                  })(),
+                  gap: 16,
+                  width: '100%'
+                }}>
                   {inputs.map((input) => {
-                    // Use full width for text inputs with descriptions, smaller width for numbers
-                    const colSpan = input.type === 'number' && !input.description ? 8 : (input.type === 'boolean' ? 12 : 24);
+                    // For text inputs or inputs with descriptions, span full width
+                    const shouldSpanFull = input.type !== 'number' && input.type !== 'boolean';
                     
                     return (
-                      <Col key={input.id} xs={24} sm={colSpan} md={colSpan} lg={colSpan}>
+                      <div 
+                        key={input.id}
+                        style={shouldSpanFull ? { gridColumn: '1 / -1' } : {}}
+                      >
                         <Form.Item
                           name={input.alias || input.name}
                           label={
@@ -182,10 +249,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                         >
                           {renderParameterInput(input)}
                         </Form.Item>
-                      </Col>
+                      </div>
                     );
                   })}
-                </Row>
+                </div>
               </Form>
             </div>
           )}
@@ -288,6 +355,25 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             </>
           )}
         </Space>
+      </CollapsibleSection>
+
+      {/* Integration Examples Section */}
+      <CollapsibleSection 
+        title="Integration Examples" 
+        defaultOpen={false}
+        style={{ marginTop: 12 }}
+      >
+        <Suspense fallback={
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <Spin size="small" />
+          </div>
+        }>
+          <IntegrationExamples 
+            serviceId={serviceId}
+            requireToken={requireToken}
+            parameterValues={parameterValues}
+          />
+        </Suspense>
       </CollapsibleSection>
     </>
   );
