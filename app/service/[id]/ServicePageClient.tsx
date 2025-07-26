@@ -1069,15 +1069,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
             </Button>
           )}
-          {!hasChanges && <Button
-            color="default"
-            variant="filled"
-            onClick={() => {
-              window.open(`/api-tester?service=${serviceId}${apiConfig.name ? `&name=${encodeURIComponent(apiConfig.name)}` : ''}`, '_blank');
-            }}
-          >
-            API Tester & Docs
-          </Button>}
           {!isDemoMode && (
             serviceStatus?.published ? (
               <Button

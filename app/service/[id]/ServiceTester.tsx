@@ -183,16 +183,13 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
         title="Quick Test" 
         defaultOpen={false}
       >
-        <Space direction="vertical" style={{ width: '100%' }} size={16}>
+        <div ref={formContainerRef} style={{ width: '100%' }}>
+          <Space direction="vertical" style={{ width: '100%' }} size={16}>
           {/* Input Parameters Form */}
           {inputs.length > 0 && (
-            <div ref={formContainerRef} style={{ width: '100%' }}>
+            <div style={{ width: '100%' }}>
               <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                Input Parameters {containerWidth > 0 && `(${Math.round(containerWidth)}px - ${
-                  containerWidth < 350 ? '1 col' :
-                  containerWidth < 450 ? '2 cols' :
-                  containerWidth < 780 ? '3 cols' : '4 cols'
-                })`}
+                Input Parameters
               </Typography.Text>
               <Form
                 form={form}
@@ -297,32 +294,135 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             <>
               <Divider style={{ margin: '16px 0' }} />
               
-              {/* Statistics */}
-              <Row gutter={16}>
-                <Col span={8}>
+              {/* Output Results Statistics */}
+              {wizardResult && wizardResult.outputs && wizardResult.outputs.length > 0 && (
+                <>
+                  <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
+                    Output Results
+                  </Typography.Text>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: (() => {
+                      const width = Math.round(containerWidth);
+                      if (width === 0) {
+                        return 'repeat(auto-fit, minmax(200px, 1fr))';
+                      }
+                      if (width < 350) {
+                        return '1fr';
+                      }
+                      if (width < 450) {
+                        return 'repeat(2, 1fr)';
+                      }
+                      if (width < 780) {
+                        return 'repeat(3, 1fr)';
+                      }
+                      return 'repeat(4, 1fr)';
+                    })(),
+                    gap: 16,
+                    width: '100%',
+                    marginBottom: 24
+                  }}>
+                    {wizardResult.outputs.map((output: any) => {
+                      // Use title if available, otherwise alias or name
+                      const displayTitle = output.title || output.alias || output.name;
+                      
+                      // Format the value based on type
+                      let displayValue: string | number;
+                      let precision: number | undefined;
+                      
+                      if (typeof output.value === 'number') {
+                        displayValue = output.value;
+                        precision = 2;
+                      } else if (typeof output.value === 'boolean') {
+                        displayValue = output.value ? 'True' : 'False';
+                      } else if (Array.isArray(output.value)) {
+                        // Handle arrays/areas
+                        if (output.value.length === 0) {
+                          displayValue = 'Empty';
+                        } else if (Array.isArray(output.value[0])) {
+                          // 2D array (area)
+                          const rows = output.value.length;
+                          const cols = output.value[0].length;
+                          displayValue = `${rows}×${cols} area`;
+                        } else {
+                          // 1D array
+                          displayValue = `${output.value.length} items`;
+                        }
+                      } else if (output.value === null || output.value === undefined) {
+                        displayValue = 'N/A';
+                      } else {
+                        // String or other - truncate if too long
+                        const strValue = String(output.value);
+                        displayValue = strValue.length > 20 ? strValue.substring(0, 17) + '...' : strValue;
+                      }
+                      
+                      return (
+                        <div key={output.name || output.alias}>
+                          <Statistic
+                            title={displayTitle}
+                            value={displayValue}
+                            precision={precision}
+                            valueStyle={{ 
+                              fontSize: '20px',
+                              color: output.error ? '#ff4d4f' : undefined
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              
+              {/* Call Statistics */}
+              <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
+                Call Statistics
+              </Typography.Text>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: (() => {
+                  const width = Math.round(containerWidth);
+                  if (width === 0) {
+                    return 'repeat(auto-fit, minmax(200px, 1fr))';
+                  }
+                  if (width < 350) {
+                    return '1fr';
+                  }
+                  if (width < 450) {
+                    return 'repeat(2, 1fr)';
+                  }
+                  if (width < 780) {
+                    return 'repeat(3, 1fr)';
+                  }
+                  return 'repeat(4, 1fr)';
+                })(),
+                gap: 16,
+                width: '100%'
+              }}>
+                <div>
                   <Statistic
                     title="Response Time"
                     value={wizardResponseTime}
                     suffix="ms"
                     prefix={<ClockCircleOutlined />}
                   />
-                </Col>
-                <Col span={8}>
+                </div>
+                <div>
                   <Statistic
                     title="Status"
                     value={wizardError ? "Error" : "Success"}
                     valueStyle={{ color: wizardError ? '#ff4d4f' : '#52c41a' }}
                     prefix={wizardError ? <InfoCircleOutlined /> : <CheckCircleOutlined />}
                   />
-                </Col>
-                <Col span={8}>
+                </div>
+                <div>
                   <Statistic
                     title="Total Calls"
                     value={totalCalls}
                     prefix={<ApiOutlined />}
                   />
-                </Col>
-              </Row>
+                </div>
+              </div>
 
               {/* Result or Error Display */}
               <div style={{ marginTop: 16 }}>
@@ -354,7 +454,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               </div>
             </>
           )}
-        </Space>
+          </Space>
+        </div>
       </CollapsibleSection>
 
       {/* Integration Examples Section */}

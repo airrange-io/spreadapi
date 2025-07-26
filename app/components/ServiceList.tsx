@@ -192,10 +192,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     router.push(`/service/${serviceId}`);
   };
 
-  const handleTest = (serviceId: string, serviceName: string) => {
-    // Navigate to API tester with pre-filled service ID and name
-    router.push(`/api-tester?service=${serviceId}&name=${encodeURIComponent(serviceName)}`);
-  };
 
   const handleUsage = (serviceId: string) => {
     // Navigate to usage/analytics page
@@ -283,13 +279,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           <Dropdown
             menu={{
               items: [
-                {
-                  key: 'test',
-                  icon: <PlayCircleOutlined />,
-                  label: 'Test API',
-                  onClick: () => handleTest(record.id, record.name),
-                  disabled: record.status === 'draft',
-                },
                 {
                   key: 'usage',
                   icon: <LineChartOutlined />,

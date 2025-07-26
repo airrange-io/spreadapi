@@ -112,7 +112,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({
           onClick={() => onCardClick('detail')}
         >
           <Statistic
-            title="Settings"
+            title="Settings & AI"
             value={'---'}
             prefix={<FileTextOutlined style={{ color: '#858585' }} />}
             valueStyle={getStatisticValueStyle('detail', '#4F2D7F')}
