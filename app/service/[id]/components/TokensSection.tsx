@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Space } from 'antd';
+import { Space, Alert } from 'antd';
 import ApiEndpointPreview from '../ApiEndpointPreview';
 import ServiceTester from '../ServiceTester';
 import TokenManagement from '../TokenManagement';
@@ -42,6 +42,13 @@ const TokensSection: React.FC<TokensSectionProps> = ({
       minHeight: 0
     }}>
       <Space direction="vertical" style={{ width: '100%' }} size={12}>
+        {!isPublished && (
+          <Alert
+            message="Service must be published to test"
+            type="warning"
+            showIcon
+          />
+        )}
         <ApiEndpointPreview
           serviceId={serviceId}
           isPublished={isPublished}

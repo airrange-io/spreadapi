@@ -1,0 +1,51 @@
+/* Custom styles for CollapsibleSection */
+
+.custom-collapse-section .ant-collapse-item {
+  border: none !important;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  margin-bottom: 0;
+}
+
+.custom-collapse-section .ant-collapse-header {
+  padding: 14px !important;
+  border-radius: 8px !important;
+  background-color: #f8f8f8 !important;
+  border: none !important;
+}
+
+.custom-collapse-section .ant-collapse-content {
+  border: none !important;
+  background-color: #f8f8f8;
+}
+
+.custom-collapse-section .ant-collapse-content-active {
+  overflow: visible !important;
+}
+
+.custom-collapse-section .ant-collapse-content-box {
+  padding: 8px 14px 14px 14px !important;
+  background-color: #f8f8f8;
+}
+
+.custom-collapse-section .ant-collapse-expand-icon {
+  padding-inline-start: 8px !important;
+}
+
+/* Add spacing between extra content and collapse icon */
+.custom-collapse-section .ant-collapse-extra {
+  margin-right: 16px !important;
+}
+
+/* Remove the default border and background when expanded */
+.custom-collapse-section .ant-collapse-item-active .ant-collapse-header {
+  background-color: #f8f8f8 !important;
+}
+
+/* Ensure no borders appear */
+.custom-collapse-section,
+.custom-collapse-section .ant-collapse-item,
+.custom-collapse-section .ant-collapse-item:last-child {
+  border: none !important;
+  border-radius: 8px;
+}

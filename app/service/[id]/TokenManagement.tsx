@@ -18,6 +18,7 @@ import {
   Card,
   Alert
 } from 'antd';
+import CollapsibleSection from './components/CollapsibleSection';
 import {
   PlusOutlined,
   KeyOutlined,
@@ -294,17 +295,22 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
   return (
     <>
       {/* Tokens Card */}
-      <Card
-        size="small"
-        title={
-          <Space>
-            <span>API Tokens</span>
-            <Tooltip title="Secure tokens for API authentication">
-              <InfoCircleOutlined style={{ fontSize: 14, color: '#999' }} />
-            </Tooltip>
-          </Space>
+      <CollapsibleSection 
+        title="API Tokens" 
+        defaultOpen={false}
+        extra={
+          !isDemoMode && (
+            <Button
+              type="default"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => setShowCreateModal(true)}
+              disabled={isDemoMode}
+            >
+              Create Token
+            </Button>
+          )
         }
-        style={{ marginBottom: 12, backgroundColor: '#f8f8f8', borderColor: '#f8f8f8' }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
           {/* Tokens list */}
@@ -335,19 +341,8 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
               />
             </div>
           )}
-
-          {/* Bottom Create Token button */}
-          {!isDemoMode && (
-            <Button
-              type="default"
-              onClick={() => setShowCreateModal(true)}
-              block
-            >
-              Create Token
-            </Button>
-          )}
         </Space>
-      </Card>
+      </CollapsibleSection>
 
       {/* Create token modal */}
       <Modal

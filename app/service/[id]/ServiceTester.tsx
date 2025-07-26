@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Space, Typography, Alert, Tooltip } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import ApiResultViewer from './ApiResultViewer';
+import CollapsibleSection from './components/CollapsibleSection';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -96,28 +97,23 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   return (
     <>
-      <Card
-        size="small"
-        title={
-          <Space>
-            <span>Quick Test</span>
-            <Tooltip title="Test your API with current spreadsheet values">
-              <InfoCircleOutlined style={{ fontSize: 14, color: '#999' }} />
-            </Tooltip>
-          </Space>
+      <CollapsibleSection 
+        title="Quick Test" 
+        defaultOpen={true}
+        extra={
+          <Button
+            type="default"
+            size="small"
+            icon={<PlayCircleOutlined />}
+            onClick={handleTest}
+            loading={testing}
+            disabled={!isPublished}
+          >
+            Test API
+          </Button>
         }
-        style={{ backgroundColor: '#f8f8f8', borderColor: '#f8f8f8' }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
-          {!isPublished && (
-            <Alert
-              message="Service must be published to test"
-              type="warning"
-              showIcon
-              style={{ marginBottom: 8 }}
-            />
-          )}
-
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>Test URL (Modify the URL to test with different parameter values):</Text>
             <TextArea
@@ -132,19 +128,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               disabled={!isPublished}
             />
           </div>
-
-          <Button
-            type="default"
-            icon={<PlayCircleOutlined />}
-            onClick={handleTest}
-            loading={testing}
-            disabled={!isPublished}
-            block
-          >
-            Test API
-          </Button>
         </Space>
-      </Card>
+      </CollapsibleSection>
 
       <ApiResultViewer
         visible={showResultModal}

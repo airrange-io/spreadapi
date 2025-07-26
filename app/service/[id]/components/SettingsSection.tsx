@@ -3,6 +3,7 @@
 import React from 'react';
 import { Space, Input, Checkbox, Tooltip, Select } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import CollapsibleSection from './CollapsibleSection';
 
 interface SettingsSectionProps {
   apiName: string;
@@ -39,26 +40,14 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 }) => {
   return (
     <div style={{
+      display: 'flex',
       flexDirection: 'column',
       width: '100%',
-      height: '100%',
       marginTop: '8px',
-      marginBottom: '16px',
-      gap: '12px',
-      overflow: 'auto'
     }}>
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 14,
-        backgroundColor: "#f8f8f8",
-        border: `1px solid #ffffff`,
-        borderRadius: 8,
-        minHeight: 0,
-        marginBottom: '16px',
-      }}>
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+      <Space direction="vertical" size={12} style={{ width: '100%' }}>
+        <CollapsibleSection title="Service Info" defaultOpen={true}>
+          <Space direction="vertical" style={{ width: '100%' }} size={12}>
           <div>
             <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
             <Input
@@ -95,19 +84,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
             </Space>
           </div>
         </Space>
-      </div>
+      </CollapsibleSection>
 
-      <div style={{
-        flex: 1,
-        padding: 14,
-        backgroundColor: "#f8f8f8",
-        border: `1px solid #ffffff`,
-        borderRadius: 8,
-        minHeight: 0,
-      }}>
+      <CollapsibleSection title="AI Assistant Information" defaultOpen={false}>
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
-          <div style={{ marginBottom: '8px', color: "#898989" }}><strong>AI Assistant Information</strong></div>
-          <Space direction="vertical" style={{ width: '100%' }} size={12}>
             <div>
               <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
               <Input.TextArea
@@ -159,9 +139,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 <Select.Option value="other">Other</Select.Option>
               </Select>
             </div>
-          </Space>
         </Space>
-      </div>
+      </CollapsibleSection>
+      </Space>
     </div>
   );
 };
