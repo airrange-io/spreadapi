@@ -344,6 +344,26 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
               />
             </div>
           )}
+          
+          {/* Info text about token usage */}
+          <div style={{ 
+            marginTop: 16, 
+            padding: '12px', 
+            background: '#f5f5f5', 
+            borderRadius: 4 
+          }}>
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              <InfoCircleOutlined style={{ marginRight: 8 }} />
+              {tokens.length > 0 ? (
+                <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL. 
+                Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it. 
+                The Quick Test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
+              ) : (
+                <>When you create API tokens, you'll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL 
+                to authenticate your API calls. The Quick Test will automatically include the token parameter placeholder.</>
+              )}
+            </Text>
+          </div>
         </Space>
       </CollapsibleSection>
 

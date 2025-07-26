@@ -94,7 +94,7 @@ const StatisticCards: React.FC<StatisticCardsProps> = ({
           onClick={() => onCardClick('tokens')}
         >
           <Statistic
-            title="API / Tokens"
+            title="API Test"
             value={tokenCount}
             prefix={<SafetyOutlined style={{ color: '#858585' }} />}
             valueStyle={getStatisticValueStyle('tokens', '#2B2A35')}
