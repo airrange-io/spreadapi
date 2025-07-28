@@ -32,6 +32,96 @@ const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
 const INTERNAL_ERROR = -32603;
 
+// Simple in-memory cache for tool descriptions (TTL: 5 minutes)
+const toolDescriptionCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Build service list description for tool descriptions
+ */
+async function buildServiceListDescription(auth) {
+  try {
+    // Check cache first
+    const cacheKey = `${auth.userId}:${JSON.stringify(auth.serviceIds || [])}`;
+    const cached = toolDescriptionCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.data;
+    }
+    
+    // Get user's services
+    const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+    const userServiceIds = Object.keys(userServiceIndex);
+    
+    // Get allowed service IDs from auth
+    const allowedServiceIds = auth.serviceIds || [];
+    const hasServiceRestrictions = allowedServiceIds.length > 0;
+    
+    const serviceDescriptions = [];
+    const servicesWithAreas = [];
+    
+    // Collect all user's published services
+    for (const serviceId of userServiceIds) {
+      // Skip if not published
+      const isPublished = await redis.exists(`service:${serviceId}:published`);
+      if (!isPublished) continue;
+      
+      // Check if this service is allowed for this token
+      if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+        continue;
+      }
+      
+      const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+      if (!publishedData.urlData) continue;
+      
+      const title = publishedData.title || serviceId;
+      const description = publishedData.description || publishedData.aiDescription || '';
+      const shortDesc = description.substring(0, 60) + (description.length > 60 ? '...' : '');
+      
+      // Check if has calculation capability
+      const hasCalc = publishedData.inputs && publishedData.outputs;
+      
+      // Check if has areas
+      let areas = [];
+      if (publishedData.areas) {
+        try {
+          areas = JSON.parse(publishedData.areas);
+        } catch (e) {}
+      }
+      
+      if (hasCalc) {
+        serviceDescriptions.push(`• ${title} (${serviceId}) - ${shortDesc}`);
+      }
+      
+      if (areas.length > 0) {
+        const areaNames = areas.map(a => a.name).join(', ');
+        servicesWithAreas.push(`• ${title} (${serviceId}) - Areas: ${areaNames}`);
+      }
+    }
+    
+    const result = {
+      calcServices: serviceDescriptions,
+      areaServices: servicesWithAreas,
+      totalCount: serviceDescriptions.length + servicesWithAreas.length
+    };
+    
+    // Cache the result
+    toolDescriptionCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error building service descriptions:', error);
+    return {
+      calcServices: [],
+      areaServices: [],
+      totalCount: 0
+    };
+  }
+}
+
 /**
  * Transform service to MCP tool format
  */
@@ -125,6 +215,50 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
 
 
 /**
+ * Generate smart parameter examples based on service type
+ */
+function generateParameterExamples(serviceId, paramName, paramType) {
+  const examples = {
+    mortgage_calc: {
+      loanAmount: ['300000 (for a $300k loan)', '450000 (for a $450k loan)'],
+      interestRate: ['0.065 (for 6.5%)', '0.07 (for 7%)', '0.0525 (for 5.25%)'],
+      loanTerm: ['30 (for 30 years)', '15 (for 15 years)'],
+      downPayment: ['60000 (20% of $300k)', '30000 (10% of $300k)']
+    },
+    investment_calc: {
+      principal: ['10000 (initial investment)', '50000 (larger investment)'],
+      rate: ['0.08 (8% annual return)', '0.10 (10% annual return)'],
+      years: ['10 (decade)', '20 (long-term)', '5 (short-term)']
+    },
+    budget_tracker: {
+      income: ['5000 (monthly income)', '60000 (annual income)'],
+      expenses: ['3500 (monthly expenses)', '42000 (annual expenses)']
+    }
+  };
+  
+  // Try to find service-specific examples
+  if (examples[serviceId]?.[paramName]) {
+    return examples[serviceId][paramName];
+  }
+  
+  // Generic examples based on parameter name patterns
+  if (paramName.toLowerCase().includes('amount') || paramName.toLowerCase().includes('principal')) {
+    return ['10000', '50000', '100000'];
+  }
+  if (paramName.toLowerCase().includes('rate') || paramName.toLowerCase().includes('interest')) {
+    return ['0.05 (5%)', '0.065 (6.5%)', '0.08 (8%)'];
+  }
+  if (paramName.toLowerCase().includes('term') || paramName.toLowerCase().includes('year')) {
+    return ['5', '15', '30'];
+  }
+  if (paramName.toLowerCase().includes('percent')) {
+    return ['0.10 (10%)', '0.20 (20%)', '0.25 (25%)'];
+  }
+  
+  return null;
+}
+
+/**
  * Execute a service calculation (original function)
  */
 async function executeService(serviceId, inputs) {
@@ -152,14 +286,27 @@ async function executeService(serviceId, inputs) {
       // Check if this is a missing parameters error with documentation
       if (response.status === 400 && data.parameters) {
         // Format helpful response with parameter documentation
-        let helpText = `Service: ${data.service.name}\n${data.service.description}\n\n`;
+        let helpText = `📊 ${data.service.name}\n${data.service.description}\n\n`;
         
         if (data.parameters.required.length > 0) {
-          helpText += 'Required parameters:\n';
+          helpText += '🔴 Required parameters:\n';
           data.parameters.required.forEach(p => {
-            helpText += `- ${p.name} (${p.type}): ${p.description}`;
+            helpText += `\n• ${p.name} (${p.type}): ${p.description}`;
+            
+            // Add constraints
             if (p.min !== undefined || p.max !== undefined) {
-              helpText += ` [${p.min || ''}-${p.max || ''}]`;
+              helpText += `\n  Range: ${p.min || 'any'} to ${p.max || 'any'}`;
+            }
+            
+            // Add format hints
+            if (p.format === 'percentage') {
+              helpText += '\n  💡 Format: Enter as decimal (0.05 for 5%)';
+            }
+            
+            // Add examples
+            const examples = generateParameterExamples(serviceId, p.name, p.type);
+            if (examples) {
+              helpText += '\n  📝 Examples: ' + examples.join(', ');
             }
             helpText += '\n';
           });
@@ -297,6 +444,20 @@ async function handleJsonRpc(request, auth) {
       }
       
       case 'tools/list': {
+        // Build service descriptions for this user/token
+        const serviceInfo = await buildServiceListDescription(auth);
+        
+        // Build dynamic descriptions
+        let calcDescription = 'Execute calculations with optional area updates.';
+        if (serviceInfo.calcServices.length > 0) {
+          calcDescription += '\n\nYour available calculation services:\n' + serviceInfo.calcServices.join('\n');
+        }
+        
+        let areaDescription = 'Read data from an editable area in any SpreadAPI service.';
+        if (serviceInfo.areaServices.length > 0) {
+          areaDescription += '\n\nYour services with editable areas:\n' + serviceInfo.areaServices.join('\n');
+        }
+        
         // Always include generic tools
         const tools = [
           {
@@ -336,13 +497,16 @@ async function handleJsonRpc(request, auth) {
           },
           {
             name: 'spreadapi_calc',
-            description: 'Execute calculations with optional area updates. This is the primary tool for all calculations and area updates. When updating areas, it performs the updates and calculation in a single atomic operation for optimal performance.',
+            description: calcDescription,
             inputSchema: {
               type: 'object',
               properties: {
                 serviceId: {
                   type: 'string',
-                  description: 'The ID of the service to execute'
+                  description: 'The ID of the service to execute',
+                  enum: serviceInfo.calcServices.length > 0 
+                    ? serviceInfo.calcServices.map(s => s.match(/\(([^)]+)\)/)?.[1]).filter(Boolean)
+                    : undefined
                 },
                 inputs: {
                   type: 'object',
@@ -409,13 +573,16 @@ async function handleJsonRpc(request, auth) {
           },
           {
             name: 'spreadapi_read_area',
-            description: 'Read data from an editable area in any SpreadAPI service',
+            description: areaDescription,
             inputSchema: {
               type: 'object',
               properties: {
                 serviceId: {
                   type: 'string',
-                  description: 'The ID of the service containing the area'
+                  description: 'The ID of the service containing the area',
+                  enum: serviceInfo.areaServices.length > 0 
+                    ? serviceInfo.areaServices.map(s => s.match(/\(([^)]+)\)/)?.[1]).filter(Boolean)
+                    : undefined
                 },
                 areaName: {
                   type: 'string',
@@ -434,6 +601,45 @@ async function handleJsonRpc(request, auth) {
               },
               required: ['serviceId', 'areaName'],
               additionalProperties: false
+            }
+          },
+          {
+            name: 'spreadapi_batch',
+            description: 'Execute multiple calculations at once for comparison. Perfect for scenarios like comparing different loan terms, investment strategies, or budget variations.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                calculations: {
+                  type: 'array',
+                  description: 'Array of calculations to perform',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      serviceId: {
+                        type: 'string',
+                        description: 'The service to use for this calculation'
+                      },
+                      inputs: {
+                        type: 'object',
+                        description: 'Input parameters for this calculation'
+                      },
+                      label: {
+                        type: 'string',
+                        description: 'Label for this scenario (e.g., "15-year loan", "Conservative estimate")'
+                      }
+                    },
+                    required: ['serviceId', 'inputs']
+                  },
+                  minItems: 1,
+                  maxItems: 10
+                },
+                compareOutputs: {
+                  type: 'array',
+                  description: 'Which outputs to include in comparison table',
+                  items: { type: 'string' }
+                }
+              },
+              required: ['calculations']
             }
           }
         ];
@@ -684,6 +890,139 @@ async function handleJsonRpc(request, auth) {
             result,
             id
           };
+        }
+        
+        // Handle batch calculations
+        if (name === 'spreadapi_batch') {
+          try {
+            const { calculations, compareOutputs } = args;
+            
+            if (!calculations || !Array.isArray(calculations) || calculations.length === 0) {
+              throw new Error('Calculations array is required');
+            }
+            
+            // Execute all calculations
+            const results = [];
+            for (const calc of calculations) {
+              const { serviceId, inputs, label } = calc;
+              
+              // Check permissions for each service
+              const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+              if (!userServiceIndex[serviceId]) {
+                results.push({
+                  label: label || `Calculation ${results.length + 1}`,
+                  error: 'Service not found'
+                });
+                continue;
+              }
+              
+              const allowedServiceIds = auth.serviceIds || [];
+              if (allowedServiceIds.length > 0 && !allowedServiceIds.includes(serviceId)) {
+                results.push({
+                  label: label || `Calculation ${results.length + 1}`,
+                  error: 'Access denied'
+                });
+                continue;
+              }
+              
+              try {
+                const result = await executeService(serviceId, inputs);
+                const outputText = result.content[0].text;
+                
+                // Parse outputs from the text response
+                const outputs = {};
+                const lines = outputText.split('\n');
+                lines.forEach(line => {
+                  const match = line.match(/^(.+?):\s*(.+)$/);
+                  if (match) {
+                    outputs[match[1]] = match[2];
+                  }
+                });
+                
+                results.push({
+                  label: label || `Calculation ${results.length + 1}`,
+                  serviceId,
+                  inputs,
+                  outputs,
+                  success: true
+                });
+              } catch (error) {
+                results.push({
+                  label: label || `Calculation ${results.length + 1}`,
+                  error: error.message
+                });
+              }
+            }
+            
+            // Format comparison response
+            let responseText = '📊 Batch Calculation Results\n\n';
+            
+            // Show individual results
+            results.forEach((result, idx) => {
+              responseText += `### ${result.label}\n`;
+              if (result.error) {
+                responseText += `❌ Error: ${result.error}\n\n`;
+              } else {
+                Object.entries(result.outputs).forEach(([key, value]) => {
+                  responseText += `${key}: ${value}\n`;
+                });
+                responseText += '\n';
+              }
+            });
+            
+            // Create comparison table if we have successful results
+            const successfulResults = results.filter(r => r.success);
+            if (successfulResults.length > 1) {
+              responseText += '### Comparison Table\n\n';
+              
+              // Get all unique output keys
+              const allOutputKeys = new Set();
+              successfulResults.forEach(r => {
+                Object.keys(r.outputs).forEach(key => allOutputKeys.add(key));
+              });
+              
+              // Filter by compareOutputs if specified
+              const outputsToCompare = compareOutputs && compareOutputs.length > 0
+                ? Array.from(allOutputKeys).filter(key => compareOutputs.includes(key))
+                : Array.from(allOutputKeys);
+              
+              // Build comparison table
+              responseText += '| Scenario |';
+              outputsToCompare.forEach(key => {
+                responseText += ` ${key} |`;
+              });
+              responseText += '\n|' + '-|'.repeat(outputsToCompare.length + 1) + '\n';
+              
+              successfulResults.forEach(result => {
+                responseText += `| ${result.label} |`;
+                outputsToCompare.forEach(key => {
+                  responseText += ` ${result.outputs[key] || 'N/A'} |`;
+                });
+                responseText += '\n';
+              });
+            }
+            
+            return {
+              jsonrpc: '2.0',
+              result: {
+                content: [{
+                  type: 'text',
+                  text: responseText
+                }]
+              },
+              id
+            };
+            
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Batch calculation failed: ${error.message}`
+              },
+              id
+            };
+          }
         }
         
         // Handle built-in tools
