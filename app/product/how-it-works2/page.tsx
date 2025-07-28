@@ -691,7 +691,7 @@ const HowItWorks2Page: React.FC = () => {
                         <a href="/docs" className="footer-link">Docs</a>
                       </div>
                       <a href="/" className="footer-logo-link">
-                        <img src="/logo-text.svg" alt="SpreadAPI" className="footer-logo" />
+                        <img src="/logo-full.svg" alt="SpreadAPI" className="footer-logo" />
                       </a>
                       <div className="footer-social-list">
                         <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
