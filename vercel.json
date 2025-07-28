@@ -6,8 +6,8 @@
       "memory": 1024
     },
     "app/api/warm/route.js": {
-      "maxDuration": 10,
-      "memory": 512
+      "maxDuration": 30,
+      "memory": 1024
     },
     "app/api/*/route.js": {
       "maxDuration": 10
