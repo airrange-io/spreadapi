@@ -41,6 +41,25 @@ export async function GET(request) {
       const sheet = testWorkbook.getActiveSheet();
       sheet.setValue(0, 0, "warm");
       
+      // Just warm the SpreadJS module and helper functions
+      // This keeps the serverless function and dependencies warm
+      try {
+        // Load helper modules to warm them
+        const { getApiDefinition } = require('../../../utils/helperApi');
+        const { generateResultCacheHash } = require('../../../lib/cacheHelpers');
+        
+        // Create a simple test calculation to ensure all paths are warm
+        const testSheet = testWorkbook.getActiveSheet();
+        testSheet.setValue(1, 0, 10);
+        testSheet.setValue(2, 0, 20);
+        testSheet.setFormula(3, 0, "=A2+A3");
+        const result = testSheet.getValue(3, 0);
+        
+        console.log(`[WARM] Test calculation result: ${result}`);
+      } catch (e) {
+        console.log('[WARM] Error during warming test:', e.message);
+      }
+      
       spreadJsStatus = 'initialized';
     } catch (sjsError) {
       console.error('[WARM] SpreadJS initialization failed:', sjsError.message);

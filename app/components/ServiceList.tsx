@@ -322,7 +322,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   icon: <ApiOutlined />,
                   label: 'Copy Endpoint',
                   onClick: () => {
-                    const endpoint = `${window.location.origin}/api/${record.id}`;
+                    const endpoint = `${window.location.origin}/api/v1/services/${record.id}/execute`;
                     navigator.clipboard.writeText(endpoint);
                     message.success('API endpoint copied to clipboard');
                   },

@@ -502,7 +502,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
                 copyable
                 style={{ marginTop: 8 }}
               >
-                {`curl -H "Authorization: Bearer ${newToken.token}" https://spreadapi.io/api/getresults?api=${serviceId}`}
+                {`curl -H "Authorization: Bearer ${newToken.token}" https://spreadapi.io/api/v1/services/${serviceId}/execute`}
               </Paragraph>
             </div>
           </Space>

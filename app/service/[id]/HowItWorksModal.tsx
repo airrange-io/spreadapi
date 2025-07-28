@@ -149,12 +149,23 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 <strong>API Call:</strong>
               </Paragraph>
               <pre style={{ marginTop: 8, marginBottom: 0 }}>
-                {`GET /api/getresults?api=loan_calc&loan_amount=200000&interest_rate=0.045&years=30
+                {`GET /api/v1/services/loan_calc/execute?loan_amount=200000&interest_rate=0.045&years=30
 
 Response:
 {
+  "serviceId": "loan_calc",
+  "inputs": {
+    "loan_amount": 200000,
+    "interest_rate": 0.045,
+    "years": 30
+  },
   "outputs": {
     "monthly_payment": 1013.37
+  },
+  "metadata": {
+    "executionTime": 23,
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "v1"
   }
 }`}
               </pre>

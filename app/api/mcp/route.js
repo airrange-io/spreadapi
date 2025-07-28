@@ -287,7 +287,7 @@ export async function POST(request) {
         // Check if service belongs to the user (if no service restrictions)
         if (!hasServiceRestrictions) {
           const userServicesIndex = await redis.hGetAll(`user:${authResult.userId}:services`);
-          if (!userServicesIndex.hasOwnProperty(serviceId)) {
+          if (!Object.prototype.hasOwnProperty.call(userServicesIndex, serviceId)) {
             return NextResponse.json({
               jsonrpc: '2.0',
               error: {

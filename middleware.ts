@@ -23,12 +23,23 @@ export async function middleware(req: NextRequest) {
     '/api/timing-breakdown',
     '/api/test-cache',
     // '/api/warm', // Removed - cron jobs need unauthenticated access
+    '/api/v1/services', // Service management requires auth
+    // Note: /api/v1/services/*/execute is handled separately to allow public access
   ];
   
   // Check if current path needs protection
   const isProtectedRoute = protectedRoutes.some(route => 
     pathname.startsWith(route)
   );
+  
+  // Execute endpoints might be public (if service doesn't require token)
+  const isExecuteEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+\/execute/);
+  
+  // Service details endpoint might be public for published services
+  const isServiceDetailsEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+$/);
+  
+  // Services list endpoint should be public to allow service discovery
+  const isServicesListEndpoint = pathname === '/api/v1/services';
   
   // Allow unauthenticated access to demo service (both page and API routes)
   const isDemoService = pathname === '/service/test1234_mdejqoua8ptor' || 
@@ -40,7 +51,7 @@ export async function middleware(req: NextRequest) {
   console.log(`[Middleware] Path: ${pathname}, isDemoService: ${isDemoService}`);
   
   // Skip auth for public routes and demo service
-  if (!isProtectedRoute || isDemoService) {
+  if (!isProtectedRoute || isDemoService || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
     // For demo service, add a header to indicate read-only mode
     if (isDemoService) {
       const requestHeaders = new Headers(req.headers);
@@ -53,6 +64,20 @@ export async function middleware(req: NextRequest) {
         },
       });
     }
+    
+    // For v1 API endpoints, pass through without auth
+    // The endpoints themselves will check if the service requires a token
+    if (isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-public-access', 'true');
+      
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+    
     return NextResponse.next();
   }
   
@@ -138,5 +163,8 @@ export const config = {
     '/api/timing-breakdown',
     '/api/test-cache',
     // '/api/warm', // Removed - cron jobs need unauthenticated access
+    
+    // v1 API routes
+    '/api/v1/:path*',
   ]
 };

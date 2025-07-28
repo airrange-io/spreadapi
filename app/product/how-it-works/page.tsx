@@ -406,8 +406,8 @@ const HowItWorksPage: React.FC = () => {
                           <span>API Request</span>
                         </div>
                         <pre className="code-example">
-{`GET /api/getresults?api=loan_calc
-  &loan_amount=200000
+{`GET /api/v1/services/loan_calc/execute
+  ?loan_amount=200000
   &interest_rate=0.045
   &years=30`}
                         </pre>
@@ -416,13 +416,21 @@ const HowItWorksPage: React.FC = () => {
                         </div>
                         <pre className="code-example">
 {`{
+  "serviceId": "loan_calc",
+  "inputs": {
+    "loan_amount": 200000,
+    "interest_rate": 0.045,
+    "years": 30
+  },
   "outputs": {
     "monthly_payment": 1013.37,
     "total_interest": 164813.42,
     "total_paid": 364813.42
   },
-  "info": {
-    "timeCalculation": 12
+  "metadata": {
+    "executionTime": 12,
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "v1"
   }
 }`}
                         </pre>
