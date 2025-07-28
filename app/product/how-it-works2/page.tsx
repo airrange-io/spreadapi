@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import '../product.css';
+import Footer from '@/components/product/Footer';
 
 const HowItWorks2Page: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -704,6 +705,9 @@ const HowItWorks2Page: React.FC = () => {
             </div>
           </div>
         </footer>
+        
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
     </>

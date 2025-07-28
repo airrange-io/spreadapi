@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import './product.css';
+import Footer from '@/components/product/Footer';
 
 const ProductPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -713,8 +714,7 @@ const ProductPage: React.FC = () => {
           </main>
 
           {/* Footer */}
-          <footer className="footer">
-          </footer>
+          <Footer />
         </div>
       </div>
     </>

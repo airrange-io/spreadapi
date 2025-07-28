@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import './how-it-works.css';
+import Footer from '@/components/product/Footer';
 
 const HowItWorksPage: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -206,18 +207,16 @@ const HowItWorksPage: React.FC = () => {
               <div className="container-large">
                 <div className="padding-section-large">
                   <div className="margin-bottom margin-large">
-                    <div className="align-center">
-                      <div className="max-width-large">
+                    <div className="text-align-center">
+                      <div className="max-width-large align-center">
                         <div className="margin-bottom margin-xsmall">
                           <div className="subheading">
                             <div>Core Concepts</div>
                           </div>
                         </div>
-                        <div className="text-align-center">
-                          <h2>
-                            Three Simple <span className="text-color-primary">Building Blocks</span>
-                          </h2>
-                        </div>
+                        <h2>
+                          Three Simple <span className="text-color-primary">Building Blocks</span>
+                        </h2>
                       </div>
                     </div>
                   </div>
@@ -614,7 +613,7 @@ const HowItWorksPage: React.FC = () => {
           </section>
 
           {/* CTA Section */}
-          <section className="section-home-cta">
+          {/* <section className="section-home-cta">
             <div className="padding-global">
               <div className="container-large">
                 <div className="padding-section-large">
@@ -636,37 +635,19 @@ const HowItWorksPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </section>
+          </section> */}
         </main>
 
         {/* Footer */}
-        <footer className="footer">
+        {/* <footer className="footer">
           <div className="padding-global">
             <div className="container-large">
-              <div className="footer-component">
-                <div className="padding-section-medium">
-                  <div>
-                    <div className="footer-top-wrapper">
-                      <div className="footer-link-list">
-                        <a href="/" className="footer-link">Home</a>
-                        <a href="/how-it-works" className="footer-link">How it Works</a>
-                        <a href="/docs" className="footer-link">Documentation</a>
-                        <a href="/pricing" className="footer-link">Pricing</a>
-                      </div>
-                      <a href="/" className="footer-logo-link">
-                        <img src="/logo-full.svg" alt="SpreadAPI" className="footer-logo" />
-                      </a>
-                      <div className="footer-social-list">
-                        <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
-                        <a href="/terms-of-service" className="footer-link">Terms of Service</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
-        </footer>
+        </footer> */}
+        
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
     </>
