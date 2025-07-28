@@ -34,9 +34,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [loading, setLoading] = useState(isAuthenticated === null);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
+  const [hideDemoService, setHideDemoService] = useState(false);
   const loadingRef = useRef(false);
 
   useEffect(() => {
+    // Check if demo service should be hidden
+    const shouldHideDemo = localStorage.getItem('hideDemoService') === 'true';
+    setHideDemoService(shouldHideDemo);
+    
     // Only load services once when auth state is determined
     if (isAuthenticated !== null) {
       loadServices();
@@ -86,7 +91,8 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
-  const loadServices = async () => {
+  const loadServices = async (forceHideDemo?: boolean) => {
+    const shouldHideDemo = forceHideDemo !== undefined ? forceHideDemo : hideDemoService;
     // Prevent duplicate calls
     if (loadingRef.current) {
       return;
@@ -139,6 +145,22 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       if (response.ok) {
         const data = await response.json();
         const loadedServices = data.services || [];
+        
+        // If user has no services, add the demo service (unless hidden)
+        if (loadedServices.length === 0 && !shouldHideDemo) {
+          const demoService: Service = {
+            id: 'test1234_mdejqoua8ptor',
+            name: 'Demo: Sales Calculator',
+            description: 'Try our Excel API with this interactive sales calculator demo. Calculate totals, apply discounts, and see real-time results!',
+            status: 'published',
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: new Date().toISOString(),
+            calls: 0,
+            lastUsed: null
+          };
+          loadedServices.push(demoService);
+        }
+        
         setServices(loadedServices);
         // Initialize filtered services with all services if no search query
         if (!searchQuery.trim()) {
@@ -326,7 +348,17 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     </Popconfirm>
                   ),
                   danger: true,
-                }] : []),
+                }] : [{
+                  key: 'remove-demo',
+                  icon: <DeleteOutlined />,
+                  label: 'Remove this demo service',
+                  onClick: () => {
+                    localStorage.setItem('hideDemoService', 'true');
+                    setHideDemoService(true);
+                    loadServices(true);
+                    message.success('Demo service removed from your list');
+                  },
+                }]),
               ],
             }}
             trigger={['click']}
@@ -366,7 +398,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       );
     }
 
-    // This empty state should only show if authenticated but no services
+    // This empty state should only show if authenticated but no services (including demo)
     if (isAuthenticated === true) {
       return (
         <Empty
@@ -374,13 +406,24 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           description="No APIs created yet"
           style={{ marginTop: 180 }}
         >
-          <Button type="primary" onClick={() => {
-            const newId = generateServiceId(userId || 'test1234');
-            console.log('[ServiceList] Generated service ID:', newId);
-            router.push(`/service/${newId}`);
-          }}>
-            Create Your First Service
-          </Button>
+          <Space direction="vertical" align="center">
+            <Button type="primary" onClick={() => {
+              const newId = generateServiceId(userId || 'test1234');
+              console.log('[ServiceList] Generated service ID:', newId);
+              router.push(`/service/${newId}`);
+            }}>
+              Create Your First Service
+            </Button>
+            {hideDemoService && (
+              <Button type="link" onClick={() => {
+                localStorage.removeItem('hideDemoService');
+                setHideDemoService(false);
+                loadServices(false);
+              }}>
+                Show demo service
+              </Button>
+            )}
+          </Space>
         </Empty>
       );
     }
