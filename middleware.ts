@@ -22,7 +22,7 @@ export async function middleware(req: NextRequest) {
     '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
-    '/api/warm',
+    // '/api/warm', // Removed - cron jobs need unauthenticated access
   ];
   
   // Check if current path needs protection
@@ -137,6 +137,6 @@ export const config = {
     '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
-    '/api/warm',
+    // '/api/warm', // Removed - cron jobs need unauthenticated access
   ]
 };
