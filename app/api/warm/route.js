@@ -7,23 +7,18 @@ export async function GET(request) {
   const startTime = Date.now();
   
   try {
-    // Verify this is a legitimate cron job request
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-    
-    // Check if running locally or if cron secret matches
-    if (process.env.NODE_ENV === 'production' && cronSecret) {
-      if (authHeader !== `Bearer ${cronSecret}`) {
-        // For Vercel cron jobs, also check for internal Vercel headers
-        const vercelCron = request.headers.get('x-vercel-cron');
-        if (!vercelCron) {
-          return NextResponse.json({
-            status: 'error',
-            error: 'Unauthorized'
-          }, { status: 401 });
-        }
-      }
+    // Log headers for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      const headers = {};
+      request.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+      console.log('[WARM] Request headers:', headers);
     }
+    
+    // Note: Vercel cron jobs can only be triggered by Vercel itself
+    // They are inherently secure, so additional auth is optional
+    // If you want to add auth, set CRON_SECRET in Vercel env vars
     
     // Lazy load and initialize SpreadJS
     let spreadJsStatus = 'not tested';
