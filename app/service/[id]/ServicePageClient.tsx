@@ -376,7 +376,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setInitialLoading(false);
         }
       } catch (error) {
-        console.error('Failed to load service:', error);
+        // Ignore abort errors - they're expected when component unmounts
+        if (error.name !== 'AbortError') {
+          console.error('Failed to load service:', error);
+        }
         setInitialLoading(false);
       }
     };

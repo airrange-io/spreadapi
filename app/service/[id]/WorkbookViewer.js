@@ -155,7 +155,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
         setChangeCount((prev) => prev + 1);
       });
-
       // Update record count
       const sheet = workbook.getActiveSheet();
       if (sheet) {

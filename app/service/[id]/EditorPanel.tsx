@@ -532,7 +532,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   }
 
                   // Only change the background color
-                  newStyle.backColor = "#F9F0FF";
+                  newStyle.backColor = "#F0F5FF"; // Light geekblue (geekblue-1) to match the tag color
 
                   sheet.setStyle(row, col, newStyle);
                   newHighlightedCells.add(`${sheetName}!${getCellAddress(row, col)}`);
@@ -550,7 +550,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
             }
 
             // Only change the background color
-            newStyle.backColor = "#F9F0FF";
+            newStyle.backColor = "#F0F5FF"; // Light geekblue (geekblue-1) to match the tag color
 
             sheet.setStyle(output.row, output.col, newStyle);
             newHighlightedCells.add(output.address);

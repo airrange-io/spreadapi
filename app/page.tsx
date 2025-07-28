@@ -161,10 +161,8 @@ const ListsPage: React.FC = observer(() => {
 
         // Generate a new service ID and navigate with file flag
         const newId = generateServiceId(user?.id || 'test1234');
-        console.log('[HomePage] Generated service ID from drag & drop:', newId);
         router.push(`/service/${newId}?fileDropped=true`);
       } catch (error) {
-        console.error('Error processing dropped file:', error);
         messageApi.error('Fehler beim Verarbeiten der Datei');
       }
     };
@@ -264,7 +262,6 @@ const ListsPage: React.FC = observer(() => {
 
                   // Generate a new service ID and navigate
                   const newId = generateServiceId(user?.id || 'test1234');
-                  console.log('[HomePage Button] Generated service ID:', newId);
                   router.push(`/service/${newId}`);
                 }}
                 className="new-list-button"

@@ -19,22 +19,18 @@ export async function GET(request, { params }) {
     const resolvedParams = await params;
     const { id } = resolvedParams;
     
-    console.log(`[Workbook GET] Service ID: ${id}, User: ${userId}`);
     
     if (!id) {
       return NextResponse.json({ error: 'Service ID is required' }, { status: 400 });
     }
 
     // Get service data from hash structure
-    console.log(`[Workbook GET] Loading service hash`);
     const service = await redis.hGetAll(`service:${id}`);
     
     if (!service || Object.keys(service).length === 0) {
-      console.log(`[Workbook GET] Service not found`);
       return new NextResponse(null, { status: 204 });
     }
     
-    console.log(`[Workbook GET] Service loaded, has workbookUrl: ${!!service.workbookUrl}`);
     
     // Verify ownership (allow demo-user to access demo service)
     const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
@@ -47,7 +43,6 @@ export async function GET(request, { params }) {
     const currentEtag = `"${service.workbookModified || service.updatedAt || 'no-workbook'}"`;
     
     if (clientEtag && clientEtag === currentEtag && service.workbookUrl) {
-      console.log('[Workbook GET] Client has up-to-date version (304)');
       return new NextResponse(null, { 
         status: 304,
         headers: {
@@ -57,23 +52,16 @@ export async function GET(request, { params }) {
       });
     }
     
-    console.log('[Workbook GET] Service data:', { 
-      hasService: !!service, 
-      hasWorkbookUrl: !!service.workbookUrl,
-      workbookUrl: service.workbookUrl
-    });
     
     // Get workbook URL from service data
     const workbookUrl = service.workbookUrl;
     
     if (!workbookUrl) {
       // Return 204 No Content when no workbook exists yet (expected for new services)
-      console.log(`[Workbook GET] No workbook URL found`);
       return new NextResponse(null, { status: 204 });
     }
 
     // Fetch the workbook from blob storage
-    console.log(`[Workbook GET] Fetching workbook from blob storage: ${workbookUrl}`);
     
     try {
       // Fetch the blob content
@@ -98,7 +86,6 @@ export async function GET(request, { params }) {
         const arrayBuffer = await response.arrayBuffer();
         const base64 = Buffer.from(arrayBuffer).toString('base64');
         
-        console.log('SJS workbook fetched successfully');
         return NextResponse.json({
           workbookData: null, // No JSON data
           workbookBlob: base64, // Base64 encoded SJS data
@@ -115,7 +102,6 @@ export async function GET(request, { params }) {
       } else {
         // Return JSON data for JSON files
         const workbookData = await response.json();
-        console.log('JSON workbook fetched successfully');
         
         return NextResponse.json({
           workbookData,
@@ -133,7 +119,6 @@ export async function GET(request, { params }) {
       }
       
     } catch (error) {
-      console.error('Error fetching blob:', error);
       return NextResponse.json({ 
         error: 'Failed to fetch workbook',
         details: error.message 
@@ -141,7 +126,6 @@ export async function GET(request, { params }) {
     }
 
   } catch (error) {
-    console.error('Error fetching workbook:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch workbook',
       details: error.message 
@@ -203,7 +187,6 @@ export async function PUT(request, { params }) {
     }
 
     // Get service data from new hash structure
-    console.log(`[Workbook PUT] Looking for service with ID: ${id}`);
     const service = await redis.hGetAll(`service:${id}`);
     
     if (!service || Object.keys(service).length === 0) {
@@ -216,11 +199,6 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
-    console.log(`[Workbook PUT] Service found:`, { 
-      id, 
-      hasWorkbookUrl: !!service.workbookUrl,
-      userId: service.userId 
-    });
 
     // Check size (Vercel Blob limit is 512MB)
     const sizeMB = workbookBuffer.length / (1024 * 1024);
@@ -233,11 +211,9 @@ export async function PUT(request, { params }) {
     // Delete old workbook if exists
     if (service.workbookUrl) {
       try {
-        console.log(`[Workbook PUT] Deleting old workbook: ${service.workbookUrl}`);
         const blobUrl = service.workbookUrl.replace(process.env.NEXT_VERCEL_BLOB_URL || '', '');
         await delBlob(blobUrl);
       } catch (error) {
-        console.warn('[Workbook PUT] Failed to delete old workbook:', error);
       }
     }
 
@@ -245,14 +221,12 @@ export async function PUT(request, { params }) {
     const uploadPath = `users/${userId}/workbooks/${id}.${fileExtension}`;
     const timestamp = new Date().toISOString();
     
-    console.log(`[Workbook PUT] Uploading workbook to path: ${uploadPath}, size: ${sizeMB.toFixed(2)}MB, type: ${contentType}`);
     const blob = await putBlob(uploadPath, workbookBuffer, {
       access: 'public', // Required when using custom token
       contentType: contentType,
       addRandomSuffix: true, // Add random suffix for security
       cacheControlMaxAge: 0, // No cache - always fetch fresh data
     });
-    console.log(`[Workbook PUT] Workbook uploaded successfully to: ${blob.url}`);
 
     // Update service hash with new workbook URL and size
     const updateData = {
@@ -282,7 +256,6 @@ export async function PUT(request, { params }) {
     };
     await redis.hSet(`user:${userId}:services`, id, JSON.stringify(indexData));
     
-    console.log(`[Workbook PUT] Service updated successfully`);
 
     return NextResponse.json({
       success: true,
@@ -292,7 +265,6 @@ export async function PUT(request, { params }) {
     });
 
   } catch (error) {
-    console.error('Error saving workbook:', error);
     return NextResponse.json({ 
       error: 'Failed to save workbook',
       details: error.message 

@@ -48,8 +48,6 @@ export async function middleware(req: NextRequest) {
                         pathname.startsWith('/api/services/test1234_mdejqoua8ptor/') ||
                         pathname === '/api/workbook/test1234_mdejqoua8ptor';
   
-  console.log(`[Middleware] Path: ${pathname}, isDemoService: ${isDemoService}`);
-  
   // Skip auth for public routes and demo service
   if (!isProtectedRoute || isDemoService || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
     // For demo service, add a header to indicate read-only mode

@@ -59,7 +59,6 @@ export class UserStore {
       if (userData) {
         this.user = { ...this.user, ...userData };
       }
-      console.log('[UserStore] User updated:', this.user);
     });
   };
 

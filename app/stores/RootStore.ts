@@ -58,7 +58,6 @@ export class RootStore {
       }
 
       const data = await response.json();
-      console.log('[RootStore] Home init data received:', data);
 
       // Update stores with the unified data
       if (data.user && data.user.id) {
