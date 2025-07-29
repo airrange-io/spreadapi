@@ -6,7 +6,7 @@
  */
 
 /* Import the base product styles */
-@import '../product.css';
+@import '../product/product.css';
 
 /* Page specific styles */
 .how-it-works-page {

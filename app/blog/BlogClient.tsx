@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
 import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
+import Navigation from '@/components/Navigation';
 import './blog.css';
 import '../product/product.css';
 
@@ -40,18 +41,17 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
         }
       `}</style>
 
-      {/* Navigation */}
+      {/* Navigation with custom language switcher */}
       <nav className="navbar-component">
         <div className="navbar-container">
-          <a href={locale === 'en' ? '/product' : `/product/${locale}`} className="navbar-logo-link">
+          <a href="/product" className="navbar-logo-link">
             <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
           </a>
 
           <div className="navbar-menu">
-            <a href="/product" className="navbar-link">Features</a>
-            <a href="/product#benefits" className="navbar-link">Benefits</a>
-            <a href="/blog" className="navbar-link active">Blog</a>
-            <a href="/product#faq" className="navbar-link">FAQs</a>
+            <a href="/product" className="navbar-link">Overview</a>
+            <a href="/how-excel-api-works" className="navbar-link">How it Works</a>
+            <a href="/excel-ai-integration" className="navbar-link">AI Integration</a>
           </div>
 
           <div className="navbar-button-wrapper">
@@ -76,10 +76,9 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
         {mobileMenuOpen && (
           <div className="mobile-menu">
             <nav className="mobile-nav">
-              <a href="/product" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-              <a href="/product#benefits" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Benefits</a>
-              <a href="/blog" className="navbar-link active" onClick={() => setMobileMenuOpen(false)}>Blog</a>
-              <a href="/product#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>FAQs</a>
+              <a href="/product" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Overview</a>
+              <a href="/how-excel-api-works" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
+              <a href="/excel-ai-integration" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>AI Integration</a>
               <a href="/product#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
             </nav>
           </div>

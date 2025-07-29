@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import './product.css';
 import Footer from '@/components/product/Footer';
-import { productFAQs } from '@/data/faq';
+import { developerFAQs } from '@/data/developer-faq';
+import Navigation from '@/components/Navigation';
 
 const ProductPage: React.FC = () => {
   const [ctaEmail, setCtaEmail] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -21,7 +21,7 @@ const ProductPage: React.FC = () => {
     setExpandedFaq(expandedFaq === index ? null : index);
   };
 
-  const faqItems = productFAQs;
+  const faqItems = developerFAQs;
 
   return (
     <>
@@ -38,49 +38,7 @@ const ProductPage: React.FC = () => {
 
         <div className="page-wrapper">
           {/* Navigation */}
-          <nav className="navbar-component">
-            <div className="navbar-container">
-              <a href="/" className="navbar-logo-link">
-                <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
-              </a>
-
-              <div className="navbar-menu">
-                <a href="#feature" className="navbar-link">Features</a>
-                <a href="#benefits" className="navbar-link">Benefits</a>
-                <a href="/blog" className="navbar-link">Blog</a>
-                <a href="#faq" className="navbar-link">Faqs</a>
-              </div>
-
-              <div className="navbar-button-wrapper">
-                <a href="#cta" className="button hide-mobile-portrait">Get Started</a>
-                <button
-                  className="navbar-menu-button"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
-                    <div className="menu-icon-line-top"></div>
-                    <div className="menu-icon-line-center">
-                      <div className="menu-icon-line-center-inner"></div>
-                    </div>
-                    <div className="menu-icon-line-bottom"></div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="mobile-menu">
-                <nav className="mobile-nav">
-                  <a href="#feature" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-                  <a href="#benefits" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Benefits</a>
-                  <a href="/blog" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Blog</a>
-                  <a href="#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Faqs</a>
-                  <a href="#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
-                </nav>
-              </div>
-            )}
-          </nav>
+          <Navigation currentPage="product" />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -105,9 +63,25 @@ const ProductPage: React.FC = () => {
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '560px', margin: '0 auto' }}>Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations.</p>
                             <div className="margin-top margin-medium">
-                              <div className="waitlist-form-signup" style={{ justifyContent: 'center' }}>
-                                <a href="/" className="button w-button" style={{ width: 'auto', padding: '0.5rem 1.5rem' }}>
-                                  Start Building Now
+                              <div className="waitlist-form-signup" style={{ justifyContent: 'center', gap: '16px' }}>
+                                <a href="/" className="button w-button" style={{ 
+                                  width: 'auto', 
+                                  padding: '14px 28px',
+                                  fontSize: '16px',
+                                  fontWeight: '600'
+                                }}>
+                                  Get Instant API Access
+                                </a>
+                                <a href="/docs" className="button" style={{ 
+                                  width: 'auto', 
+                                  padding: '14px 28px',
+                                  background: 'transparent',
+                                  border: '2px solid #9333EA',
+                                  color: '#9333EA',
+                                  fontSize: '16px',
+                                  fontWeight: '600'
+                                }}>
+                                  View Documentation
                                 </a>
                               </div>
                             </div>
@@ -132,6 +106,69 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
             </header>
+
+            {/* Pain Point Section */}
+            <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="text-align-center" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '30px' }}>
+                      Why LLMs <span style={{ color: '#ef4444' }}>Fail</span> at Excel Calculations
+                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', marginTop: '50px' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
+                            <path d="M30 20V30M30 40H30.01" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="30" cy="30" r="18" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 4"/>
+                          </svg>
+                        </div>
+                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Hallucinated Numbers</h3>
+                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
+                          LLMs guess at calculations and often return completely wrong results, especially with complex formulas
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
+                            <rect x="15" y="15" width="30" height="30" rx="4" stroke="#9333EA" strokeWidth="2"/>
+                            <path d="M22 25H38M22 30H38M22 35H38" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M35 40L40 45M40 45L45 40M40 45V20" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Lost Formulas</h3>
+                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
+                          File uploads only capture static values, losing all your Excel logic, formulas, and dependencies
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
+                            <path d="M35 27H25C23.8954 27 23 27.8954 23 29V39C23 40.1046 23.8954 41 25 41H35C36.1046 41 37 40.1046 37 39V29C37 27.8954 36.1046 27 35 27Z" stroke="#9333EA" strokeWidth="2"/>
+                            <path d="M27 27V23C27 21.6739 27.5268 20.4021 28.4645 19.4645C29.4021 18.5268 30.6739 18 32 18C33.3261 18 34.5979 18.5268 35.5355 19.4645C36.4732 20.4021 37 21.6739 37 23V27" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3"/>
+                            <circle cx="30" cy="34" r="1.5" fill="#9333EA"/>
+                          </svg>
+                        </div>
+                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Data Security Risk</h3>
+                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
+                          Uploading sensitive spreadsheets to AI providers exposes your proprietary business logic
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '50px', padding: '30px', background: 'rgba(147, 51, 234, 0.1)', borderRadius: '12px', border: '1px solid rgba(147, 51, 234, 0.3)' }}>
+                      <h3 style={{ color: '#9333EA', marginBottom: '15px' }}>The SpreadAPI Solution</h3>
+                      <p style={{ color: '#374151', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                        Let LLMs handle the words, leave calculations to Excel. Your spreadsheets stay on our secure servers, 
+                        never uploaded to AI providers. Real Excel engine ensures 100% accurate results every time.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Feature Section 1 */}
             <section id="feature" className="section-home-feature">
@@ -192,6 +229,87 @@ const ProductPage: React.FC = () => {
                             <rect x="70" y="230" width="140" height="80" rx="4" fill="#F8F6FE" />
                             <rect x="230" y="230" width="140" height="80" rx="4" fill="#F8F6FE" />
                           </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Technical Differentiators Section */}
+            <section className="section-home-feature" style={{ background: '#f8f9fa' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="text-align-center">
+                      <div className="margin-bottom margin-xsmall">
+                        <div className="subheading">
+                          <div>Why We're Different</div>
+                        </div>
+                      </div>
+                      <div className="margin-bottom margin-large">
+                        <h2>Real Excel Engine, <span className="text-color-primary">Not CSV Parsing</span></h2>
+                      </div>
+                      
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                        gap: '30px',
+                        maxWidth: '1000px',
+                        margin: '0 auto',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>⚙️</div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Full Excel Formula Support</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            VLOOKUP, XLOOKUP, pivot tables, array formulas - everything works exactly as in Excel
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>🔒</div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No File Uploads to AI</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            Your Excel files stay on our servers. AI only receives calculation results, never your data
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>🤖</div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            Native Model Context Protocol support for seamless ChatGPT and Claude integration
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>⚡</div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Real-Time Calculations</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            50ms response times with intelligent caching and pre-warmed Excel engines
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -508,23 +626,23 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* FAQ Section */}
+            {/* Developer FAQ Section */}
             <section id="faq" className="section-home-faq">
               <div className="padding-global">
-                <div className="container-small">
+                <div className="container-medium">
                   <div className="padding-section-large">
                     <div className="margin-bottom margin-large">
                       <div className="text-align-center">
-                        <div className="max-width-large">
+                        <div className="max-width-large align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Faqs</div>
+                              <div>Developer FAQ</div>
                             </div>
                           </div>
                           <div className="margin-bottom margin-small">
-                            <h2>Your Questions Answered</h2>
+                            <h2>Technical Questions <span className="text-color-primary">Answered</span></h2>
                           </div>
-                          <p className="text-size-medium">Everything you need to know about turning Excel into AI-powered APIs. Can't find what you're looking for? Reach out to our team for personalized assistance.</p>
+                          <p className="text-size-medium">Deep dive into the technical details. Built by developers, for developers.</p>
                         </div>
                       </div>
                     </div>
@@ -543,7 +661,7 @@ const ProductPage: React.FC = () => {
                                   fill="none"
                                   xmlns="http://www.w3.org/2000/svg"
                                 >
-                                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M12 5V19M5 12H19" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                               </div>
                               <div className={`faq-answer ${expandedFaq === index ? 'expanded' : ''}`}>
@@ -570,33 +688,34 @@ const ProductPage: React.FC = () => {
                       <div className="text-align-center">
                         <div className="max-width-xlarge">
                           <div className="margin-bottom margin-small">
-                            <h2 className="text-color-white">Ready to Turn Your Spreadsheets Into AI-Powered APIs?</h2>
+                            <h2 className="text-color-white">Transform Excel Into APIs</h2>
                           </div>
-                          <p className="text-size-medium text-color-white">Join forward-thinking companies using SpreadAPI to bridge Excel and AI. Start with our free tier and transform your spreadsheets in minutes.</p>
+                          <p className="text-size-medium text-color-white">
+                            No credit card required. Start with our free tier and upgrade when you need more.
+                          </p>
                         </div>
                       </div>
                       <div className="margin-top margin-medium">
-                        <div className="waitlist-form-wrapper">
-                          <form onSubmit={handleCtaEmailSubmit} className="waitlist-form">
-                            <div className="waitlist-form-signup">
-                              <input
-                                className="form-input is-waitlist"
-                                maxLength={256}
-                                name="email-2"
-                                placeholder="Enter your email"
-                                type="email"
-                                value={ctaEmail}
-                                onChange={(e) => setCtaEmail(e.target.value)}
-                                required
-                              />
-                              <input type="submit" className="button button-white" value="Get Started Free" />
-                            </div>
-                            <div className="margin-top margin-xsmall">
-                              <div className="text-size-tiny text-color-white">
-                                I Accept the <a href="https://www.airrange.io/terms" className="text-link text-color-white">Terms of Service</a>.
-                              </div>
-                            </div>
-                          </form>
+                        <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <a href="/" className="button button-white" style={{ 
+                            padding: '16px 32px', 
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px'
+                          }}>
+                            Get Instant API Access
+                          </a>
+                          <a href="/pricing" className="button" style={{ 
+                            background: 'transparent',
+                            border: '2px solid white',
+                            color: 'white',
+                            padding: '16px 32px', 
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px'
+                          }}>
+                            View Pricing
+                          </a>
                         </div>
                       </div>
                     </div>

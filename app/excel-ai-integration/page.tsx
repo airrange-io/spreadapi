@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import '../product.css';
+import '../product/product.css';
 import Footer from '@/components/product/Footer';
+import Navigation from '@/components/Navigation';
 
 const AIIntegrationPage: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
@@ -27,49 +27,7 @@ const AIIntegrationPage: React.FC = () => {
 
         <div className="page-wrapper">
           {/* Navigation */}
-          <nav className="navbar-component">
-            <div className="navbar-container">
-              <a href="/" className="navbar-logo-link">
-                <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
-              </a>
-
-              <div className="navbar-menu">
-                <a href="/product" className="navbar-link">Overview</a>
-                <a href="/product/ai-integration" className="navbar-link">AI Integration</a>
-                <a href="/product/editable-areas" className="navbar-link">Editable Areas</a>
-                <a href="/product#faq" className="navbar-link">FAQ</a>
-              </div>
-
-              <div className="navbar-button-wrapper">
-                <a href="/product#cta" className="button hide-mobile-portrait">Get Started</a>
-                <button
-                  className="navbar-menu-button"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
-                    <div className="menu-icon-line-top"></div>
-                    <div className="menu-icon-line-center">
-                      <div className="menu-icon-line-center-inner"></div>
-                    </div>
-                    <div className="menu-icon-line-bottom"></div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {mobileMenuOpen && (
-              <div className="mobile-menu">
-                <nav className="mobile-nav">
-                  <a href="/product" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Overview</a>
-                  <a href="/product/ai-integration" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>AI Integration</a>
-                  <a href="/product/editable-areas" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Editable Areas</a>
-                  <a href="/product#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-                  <a href="/product#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
-                </nav>
-              </div>
-            )}
-          </nav>
+          <Navigation currentPage="excel-ai-integration" />
 
           <main className="main-wrapper">
             {/* Hero Section */}

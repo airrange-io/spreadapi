@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import './how-it-works.css';
 import Footer from '@/components/product/Footer';
+import Navigation from '@/components/Navigation';
 
 const HowItWorksPage: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -22,49 +22,7 @@ const HowItWorksPage: React.FC = () => {
       
       <div className="page-wrapper">
         {/* Navigation */}
-        <nav className="navbar-component">
-          <div className="navbar-container">
-            <a href="/" className="navbar-logo-link">
-              <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
-            </a>
-            
-            <div className="navbar-menu">
-              <a href="#overview" className="navbar-link">Overview</a>
-              <a href="#concepts" className="navbar-link">Concepts</a>
-              <a href="#workflow" className="navbar-link">Workflow</a>
-              <a href="#ai-integration" className="navbar-link">AI Integration</a>
-            </div>
-            
-            <div className="navbar-button-wrapper">
-              <a href="/login" className="button hide-mobile-portrait">Get Started</a>
-              <button 
-                className="navbar-menu-button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
-                  <div className="menu-icon-line-top"></div>
-                  <div className="menu-icon-line-center">
-                    <div className="menu-icon-line-center-inner"></div>
-                  </div>
-                  <div className="menu-icon-line-bottom"></div>
-                </div>
-              </button>
-            </div>
-          </div>
-          
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="mobile-menu">
-              <nav className="mobile-nav">
-                <a href="#overview" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Overview</a>
-                <a href="#concepts" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Concepts</a>
-                <a href="#workflow" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Workflow</a>
-                <a href="#ai-integration" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>AI Integration</a>
-                <a href="/login" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
-              </nav>
-            </div>
-          )}
-        </nav>
+        <Navigation currentPage="how-excel-api-works" />
 
         <main className="main-wrapper">
           {/* Hero Section */}
@@ -363,25 +321,50 @@ const HowItWorksPage: React.FC = () => {
                       <h3 className="text-align-center margin-bottom margin-medium">The API Flow</h3>
                       <div className="api-flow-diagram">
                         <div className="api-flow-item">
-                          <div className="api-flow-icon">📥</div>
+                          <div className="api-flow-icon">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                              <path d="M24 14V34M24 34L16 26M24 34L32 26" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <rect x="14" y="10" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
+                            </svg>
+                          </div>
                           <h4>API Call Received</h4>
                           <p>Your service receives a request with input values</p>
                         </div>
                         <div className="api-flow-arrow">→</div>
                         <div className="api-flow-item">
-                          <div className="api-flow-icon">📝</div>
+                          <div className="api-flow-icon">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                              <rect x="12" y="12" width="24" height="24" rx="3" stroke="#9333EA" strokeWidth="2"/>
+                              <path d="M18 20H30M18 24H30M18 28H26" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                              <path d="M32 32L36 36" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                            </svg>
+                          </div>
                           <h4>Inputs Applied</h4>
                           <p>Values placed into designated cells</p>
                         </div>
                         <div className="api-flow-arrow">→</div>
                         <div className="api-flow-item">
-                          <div className="api-flow-icon">⚡</div>
+                          <div className="api-flow-icon">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                              <path d="M28 14L20 24H28L20 34" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="24" cy="24" r="11" stroke="#9333EA" strokeWidth="2" strokeDasharray="3 3"/>
+                            </svg>
+                          </div>
                           <h4>Calculation</h4>
                           <p>Formulas automatically recalculate</p>
                         </div>
                         <div className="api-flow-arrow">→</div>
                         <div className="api-flow-item">
-                          <div className="api-flow-icon">📤</div>
+                          <div className="api-flow-icon">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                              <path d="M24 34V14M24 14L16 22M24 14L32 22" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <rect x="14" y="34" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
+                            </svg>
+                          </div>
                           <h4>Response Sent</h4>
                           <p>Results returned as JSON</p>
                         </div>
@@ -511,22 +494,53 @@ const HowItWorksPage: React.FC = () => {
 
                   <div className="ai-features-grid">
                     <div className="ai-feature-card">
-                      <div className="ai-feature-icon">🔍</div>
+                      <div className="ai-feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                          <circle cx="20" cy="20" r="8" stroke="#9333EA" strokeWidth="2.5"/>
+                          <path d="M26 26L34 34" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round"/>
+                          <path d="M16 20H24M20 16V24" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
                       <h3>Auto-Discovery</h3>
                       <p>AI assistants automatically find and understand your available services</p>
                     </div>
                     <div className="ai-feature-card">
-                      <div className="ai-feature-icon">💬</div>
+                      <div className="ai-feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                          <rect x="10" y="14" width="28" height="20" rx="10" stroke="#9333EA" strokeWidth="2.5"/>
+                          <path d="M38 24L38 30C38 32 36 34 34 34L28 34L24 38L24 34" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="18" cy="24" r="1.5" fill="#9333EA"/>
+                          <circle cx="24" cy="24" r="1.5" fill="#9333EA"/>
+                          <circle cx="30" cy="24" r="1.5" fill="#9333EA"/>
+                        </svg>
+                      </div>
                       <h3>Natural Language</h3>
                       <p>Users can request calculations in plain English - AI handles the rest</p>
                     </div>
                     <div className="ai-feature-card">
-                      <div className="ai-feature-icon">📊</div>
+                      <div className="ai-feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                          <rect x="12" y="24" width="6" height="12" rx="1" fill="#9333EA"/>
+                          <rect x="21" y="18" width="6" height="18" rx="1" fill="#9333EA" fillOpacity="0.7"/>
+                          <rect x="30" y="12" width="6" height="24" rx="1" fill="#9333EA" fillOpacity="0.5"/>
+                          <path d="M10 10L10 38L38 38" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
                       <h3>Interactive Analysis</h3>
                       <p>AI can work with editable areas to perform complex data analysis</p>
                     </div>
                     <div className="ai-feature-card">
-                      <div className="ai-feature-icon">🔄</div>
+                      <div className="ai-feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                          <path d="M24 14C18.5 14 14 18.5 14 24C14 29.5 18.5 34 24 34" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round"/>
+                          <path d="M24 34C29.5 34 34 29.5 34 24C34 18.5 29.5 14 24 14" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round"/>
+                          <path d="M20 18L24 14L28 18M28 30L24 34L20 30" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                       <h3>Workflow Automation</h3>
                       <p>Combine multiple services into sophisticated AI-powered workflows</p>
                     </div>
