@@ -284,7 +284,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       title: '',
       key: 'actions',
       width: 50,
-      align: 'center',
+      align: 'center' as const,
       render: (_: any, record: Token) => (
         isDemoMode ? null : (
           <Popconfirm
