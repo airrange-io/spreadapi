@@ -3,24 +3,85 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
+import RelatedPosts from '@/components/blog/RelatedPosts';
+import TableOfContents from '@/components/blog/TableOfContents';
 import '../blog.css';
+
+interface RelatedPost {
+  slug: string;
+  title: string;
+  category: string;
+  excerpt?: string;
+}
 
 interface BlogPostClientProps {
   post: BlogPost;
+  relatedPosts?: RelatedPost[];
 }
 
-export default function BlogPostClient({ post }: BlogPostClientProps) {
+export default function BlogPostClient({ post, relatedPosts = [] }: BlogPostClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Convert markdown-style formatting to HTML
+  // Generate structured data for SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    author: {
+      '@type': 'Organization',
+      name: post.author,
+      url: 'https://spreadapi.com'
+    },
+    datePublished: post.date,
+    dateModified: post.date,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://spreadapi.com/blog/${post.slug}`
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SpreadAPI',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://spreadapi.com/logo.png'
+      }
+    },
+    keywords: post.tags.join(', '),
+    articleSection: post.category,
+    wordCount: post.content.split(' ').length,
+    image: {
+      '@type': 'ImageObject',
+      url: `https://spreadapi.com/api/og?title=${encodeURIComponent(post.title)}`,
+      width: 1200,
+      height: 630
+    }
+  };
+
+  // Convert markdown-style formatting to HTML with heading IDs
   const formatContent = (content: string) => {
-    // For simplicity, we'll just render the content as-is
-    // In production, you'd use a proper markdown parser
-    return <div dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />;
+    // Add IDs to headings for TOC navigation
+    let html = content.replace(/\n/g, '<br />');
+    
+    // Replace headings with IDs
+    html = html.replace(/^(#{2,3})\s+(.+)$/gm, (match, hashes, text) => {
+      const level = hashes.length;
+      const id = text
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-');
+      return `<h${level} id="${id}">${text}</h${level}>`;
+    });
+    
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
 
   return (
     <div className="product-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <style jsx global>{`
         .product-page,
         .product-page * {
@@ -75,6 +136,25 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
         )}
       </nav>
 
+      {/* Breadcrumb Navigation */}
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <div className="breadcrumb-container">
+          <ol className="breadcrumb-list">
+            <li className="breadcrumb-item">
+              <Link href="/">Home</Link>
+            </li>
+            <li className="breadcrumb-separator">/</li>
+            <li className="breadcrumb-item">
+              <Link href="/blog">Blog</Link>
+            </li>
+            <li className="breadcrumb-separator">/</li>
+            <li className="breadcrumb-item active" aria-current="page">
+              {post.title}
+            </li>
+          </ol>
+        </div>
+      </nav>
+
       {/* Blog Post Hero */}
       <div className="blog-post-hero">
         <div className="blog-post-hero-content">
@@ -90,19 +170,33 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
         </div>
       </div>
 
-      {/* Blog Post Content */}
-      <article className="blog-post-content">
-        {formatContent(post.content)}
-        
-        {/* Tags */}
-        <div className="blog-tags">
-          {post.tags.map((tag: string) => (
-            <Link key={tag} href={`/blog?tag=${tag}`} className="blog-tag">
-              {tag}
-            </Link>
-          ))}
+      {/* Blog Post Content with TOC */}
+      <div className="blog-post-layout">
+        <div className="blog-post-container">
+          <article className="blog-post-content">
+            {formatContent(post.content)}
+            
+            {/* Tags */}
+            <div className="blog-tags">
+              {post.tags.map((tag: string) => (
+                <Link key={tag} href={`/blog?tag=${tag}`} className="blog-tag">
+                  {tag}
+                </Link>
+              ))}
+            </div>
+            
+            {/* Related Posts */}
+            {relatedPosts.length > 0 && (
+              <RelatedPosts posts={relatedPosts} currentSlug={post.slug} />
+            )}
+          </article>
+          
+          {/* Table of Contents - Desktop only */}
+          <aside className="blog-post-sidebar">
+            <TableOfContents content={post.content} />
+          </aside>
         </div>
-      </article>
+      </div>
 
       {/* Navigation */}
       <div className="blog-nav">

@@ -22,7 +22,8 @@
         "app/*"
       ],
       "@/components/*": [
-        "app/components/*"
+        "app/components/*",
+        "components/*"
       ],
       "@/styles/*": [
         "app/styles/*"
@@ -41,6 +42,9 @@
       ],
       "@/hooks/*": [
         "hooks/*"
+      ],
+      "@/data/*": [
+        "data/*"
       ]
     },
     "plugins": [
