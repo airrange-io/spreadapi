@@ -1,11 +1,10 @@
 import { MetadataRoute } from 'next';
 import { getSortedPostsData } from '@/lib/blog';
+import { supportedLocales } from '@/lib/translations/blog-helpers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://spreadapi.com';
-  
-  // Get all blog posts
-  const posts = getSortedPostsData();
+  const sitemapEntries: MetadataRoute.Sitemap = [];
   
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -51,21 +50,46 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
-    {
-      url: `${baseUrl}/blog`,
+  ];
+  
+  sitemapEntries.push(...staticPages);
+  
+  // Add blog list pages for each locale
+  supportedLocales.forEach(locale => {
+    const blogUrl = locale === 'en' 
+      ? `${baseUrl}/blog`
+      : `${baseUrl}/blog/${locale}`;
+      
+    sitemapEntries.push({
+      url: blogUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.7,
-    },
-  ];
+    });
+  });
   
-  // Blog post pages
-  const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
-  
-  return [...staticPages, ...blogPages];
+  // Add all blog posts in all available languages
+  supportedLocales.forEach(locale => {
+    try {
+      const posts = getSortedPostsData(locale);
+      
+      posts.forEach(post => {
+        const url = locale === 'en'
+          ? `${baseUrl}/blog/${post.slug}`
+          : `${baseUrl}/blog/${locale}/${post.slug}`;
+          
+        sitemapEntries.push({
+          url,
+          lastModified: new Date(post.date),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        });
+      });
+    } catch (error) {
+      // Skip if no posts for this locale yet
+      console.log(`No posts found for locale ${locale}`);
+    }
+  });
+
+  return sitemapEntries;
 }

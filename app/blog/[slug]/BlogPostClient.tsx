@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
 import RelatedPosts from '@/components/blog/RelatedPosts';
 import TableOfContents from '@/components/blog/TableOfContents';
+import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import '../blog.css';
+import '../../product/product.css';
 
 interface RelatedPost {
   slug: string;
@@ -61,18 +63,75 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
 
   // Convert markdown-style formatting to HTML with heading IDs
   const formatContent = (content: string) => {
-    // Add IDs to headings for TOC navigation
-    let html = content.replace(/\n/g, '<br />');
+    let html = content;
+    const idCounts: { [key: string]: number } = {};
     
-    // Replace headings with IDs
-    html = html.replace(/^(#{2,3})\s+(.+)$/gm, (match, hashes, text) => {
+    // Replace code blocks first (```language\ncode```)
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+      return `<pre><code>${code.trim()}</code></pre>`;
+    });
+    
+    // Replace inline code (`code`)
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Replace headings with IDs (# ## ###)
+    html = html.replace(/^(#{1,3})\s+(.+)$/gm, (match, hashes, text) => {
       const level = hashes.length;
-      const id = text
+      let id = text
         .toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-');
+      
+      // Make IDs unique by adding a counter if duplicate
+      if (idCounts[id]) {
+        idCounts[id]++;
+        id = `${id}-${idCounts[id]}`;
+      } else {
+        idCounts[id] = 1;
+      }
+      
       return `<h${level} id="${id}">${text}</h${level}>`;
     });
+    
+    // Replace bold text (**text**)
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace italic text (*text*) - more careful regex
+    html = html.replace(/(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Replace blockquotes (> text)
+    html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+    
+    // Replace unordered lists (- item)
+    html = html.replace(/((?:^[\s]*[-*]\s+.+$\n?)+)/gm, (match) => {
+      const items = match.trim().split('\n').map(item => 
+        `<li>${item.replace(/^[\s]*[-*]\s+/, '')}</li>`
+      ).join('\n');
+      return `<ul>\n${items}\n</ul>`;
+    });
+    
+    // Replace ordered lists (1. item)
+    html = html.replace(/((?:^[\s]*\d+\.\s+.+$\n?)+)/gm, (match) => {
+      const items = match.trim().split('\n').map(item => 
+        `<li>${item.replace(/^[\s]*\d+\.\s+/, '')}</li>`
+      ).join('\n');
+      return `<ol>\n${items}\n</ol>`;
+    });
+    
+    // Replace horizontal rules (---)
+    html = html.replace(/^---$/gm, '<hr />');
+    
+    // Handle paragraphs - split by double newlines
+    const paragraphs = html.split(/\n\n+/);
+    html = paragraphs.map(para => {
+      // Don't wrap if it's already a block element
+      if (para.match(/^<(h[1-6]|ul|ol|pre|blockquote|hr)/)) {
+        return para;
+      }
+      // Convert single newlines to <br> within paragraphs
+      para = para.replace(/\n/g, '<br />');
+      return `<p>${para}</p>`;
+    }).join('\n\n');
     
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   };
@@ -107,6 +166,7 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
           </div>
 
           <div className="navbar-button-wrapper">
+            <LanguageSwitcher currentLocale={locale} currentSlug={post.slug} />
             <a href="/product#cta" className="button hide-mobile-portrait">Get Started</a>
             <button
               className="navbar-menu-button"
@@ -146,7 +206,7 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
             </li>
             <li className="breadcrumb-separator">/</li>
             <li className="breadcrumb-item">
-              <Link href="/blog">Blog</Link>
+              <Link href={locale === 'en' ? '/blog' : `/blog/${locale}`}>Blog</Link>
             </li>
             <li className="breadcrumb-separator">/</li>
             <li className="breadcrumb-item active" aria-current="page">

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
+import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import './blog.css';
 import '../product/product.css';
 
@@ -10,15 +11,23 @@ interface BlogClientProps {
   posts: BlogPost[];
   categories: string[];
   locale?: string;
+  categoryMapping?: Record<string, string>; // Maps display names to actual categories
 }
 
-export default function BlogClient({ posts, categories, locale = 'en' }: BlogClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+export default function BlogClient({ posts, categories, locale = 'en', categoryMapping }: BlogClientProps) {
+  // Use the first category as the default (which should be 'All' or its translation)
+  const [selectedCategory, setSelectedCategory] = useState(categories[0] || 'All');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const filteredPosts = selectedCategory === 'All' 
+  // Check if we're on the "All" category (first category in the list)
+  const isAllCategory = selectedCategory === categories[0];
+  
+  // Get the actual category for filtering (handle translations)
+  const actualCategory = categoryMapping?.[selectedCategory] || selectedCategory;
+  
+  const filteredPosts = isAllCategory
     ? posts 
-    : posts.filter(post => post.category === selectedCategory);
+    : posts.filter(post => post.category === actualCategory);
 
   return (
     <div className="blog-layout">
@@ -46,6 +55,7 @@ export default function BlogClient({ posts, categories, locale = 'en' }: BlogCli
           </div>
 
           <div className="navbar-button-wrapper">
+            <LanguageSwitcher currentLocale={locale} />
             <a href="/product#cta" className="button hide-mobile-portrait">Get Started</a>
             <button
               className="navbar-menu-button"
@@ -89,6 +99,7 @@ export default function BlogClient({ posts, categories, locale = 'en' }: BlogCli
           {categories.map(category => (
             <button
               key={category}
+              type="button"
               className={`blog-category-button ${selectedCategory === category ? 'active' : ''}`}
               onClick={() => setSelectedCategory(category)}
             >
@@ -100,7 +111,7 @@ export default function BlogClient({ posts, categories, locale = 'en' }: BlogCli
         {/* Blog Grid */}
         <div className="blog-grid">
           {filteredPosts.map(post => (
-            <Link href={`/blog/${post.slug}`} key={post.slug} className="blog-card">
+            <Link href={locale === 'en' ? `/blog/${post.slug}` : `/blog/${locale}/${post.slug}`} key={post.slug} className="blog-card">
               <div className="blog-card-category">{post.category}</div>
               <h2 className="blog-card-title">{post.title}</h2>
               <p className="blog-card-excerpt">{post.excerpt}</p>

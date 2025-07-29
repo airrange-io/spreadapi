@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const postsDirectory = path.join(process.cwd(), 'content/blog/en');
+const contentDirectory = path.join(process.cwd(), 'content/blog');
 
 export interface BlogPost {
   slug: string;
@@ -18,13 +18,15 @@ export interface BlogPost {
   ogImage?: string;
 }
 
-export function getSortedPostsData(): BlogPost[] {
+export function getSortedPostsData(locale: string = 'en'): BlogPost[] {
+  const postsDirectory = path.join(contentDirectory, locale);
+  
   // Create directory if it doesn't exist
   if (!fs.existsSync(postsDirectory)) {
     fs.mkdirSync(postsDirectory, { recursive: true });
   }
 
-  // Get file names under /content/blog
+  // Get file names under /content/blog/[locale]
   const fileNames = fs.readdirSync(postsDirectory);
   const allPostsData = fileNames
     .filter(fileName => fileName.endsWith('.json'))
@@ -59,8 +61,9 @@ export function getSortedPostsData(): BlogPost[] {
   });
 }
 
-export async function getPostData(slug: string): Promise<BlogPost | null> {
+export async function getPostData(slug: string, locale: string = 'en'): Promise<BlogPost | null> {
   try {
+    const postsDirectory = path.join(contentDirectory, locale);
     const fullPath = path.join(postsDirectory, `${slug}.json`);
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     const postData = JSON.parse(fileContents);
@@ -75,31 +78,31 @@ export async function getPostData(slug: string): Promise<BlogPost | null> {
       readingTime,
     } as BlogPost;
   } catch (error) {
-    console.error(`Error loading post ${slug}:`, error);
+    console.error(`Error loading post ${slug} for locale ${locale}:`, error);
     return null;
   }
 }
 
-export function getPostsByCategory(category: string): BlogPost[] {
-  const allPosts = getSortedPostsData();
+export function getPostsByCategory(category: string, locale: string = 'en'): BlogPost[] {
+  const allPosts = getSortedPostsData(locale);
   return allPosts.filter(post => post.category.toLowerCase() === category.toLowerCase());
 }
 
-export function getPostsByTag(tag: string): BlogPost[] {
-  const allPosts = getSortedPostsData();
+export function getPostsByTag(tag: string, locale: string = 'en'): BlogPost[] {
+  const allPosts = getSortedPostsData(locale);
   return allPosts.filter(post => 
     post.tags.map(t => t.toLowerCase()).includes(tag.toLowerCase())
   );
 }
 
-export function getAllCategories(): string[] {
-  const allPosts = getSortedPostsData();
+export function getAllCategories(locale: string = 'en'): string[] {
+  const allPosts = getSortedPostsData(locale);
   const categories = new Set(allPosts.map(post => post.category));
   return Array.from(categories);
 }
 
-export function getAllTags(): string[] {
-  const allPosts = getSortedPostsData();
+export function getAllTags(locale: string = 'en'): string[] {
+  const allPosts = getSortedPostsData(locale);
   const tags = new Set(allPosts.flatMap(post => post.tags));
   return Array.from(tags);
 }

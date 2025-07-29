@@ -1,11 +1,11 @@
 // SEO-optimized URL slugs for each language
 export const slugTranslations: Record<string, Record<string, string>> = {
-  // Excel to API without uploads
-  'excel-api-without-uploads-complete-guide': {
-    en: 'excel-api-without-uploads-complete-guide',
+  // Excel to API without uploads / Stop reimplementing Excel
+  'stop-reimplementing-excel-business-logic-javascript': {
+    en: 'stop-reimplementing-excel-business-logic-javascript',
     de: 'excel-geschaeftslogik-nicht-neu-programmieren',
-    fr: 'excel-vers-api-sans-telechargements-guide-complet',
-    es: 'excel-a-api-sin-cargas-guia-completa'
+    fr: 'arretez-reprogrammer-logique-excel-javascript',
+    es: 'deja-reprogramar-logica-excel-javascript'
   },
   
   // MCP Protocol Guide
@@ -20,8 +20,8 @@ export const slugTranslations: Record<string, Record<string, string>> = {
   'chatgpt-excel-integration-secure': {
     en: 'chatgpt-excel-integration-secure',
     de: 'chatgpt-excel-integration-sicher',
-    fr: 'integration-chatgpt-excel-securisee',
-    es: 'integracion-chatgpt-excel-segura'
+    fr: 'chatgpt-excel-integration-securisee',
+    es: 'chatgpt-excel-integracion-segura'
   },
   
   // Excel API vs File Uploads

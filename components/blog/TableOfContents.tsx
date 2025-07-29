@@ -22,15 +22,24 @@ export default function TableOfContents({ content }: TableOfContentsProps) {
     const extractHeadings = () => {
       const headingRegex = /^(#{2,3})\s+(.+)$/gm;
       const items: TocItem[] = [];
+      const idCounts: { [key: string]: number } = {};
       let match;
 
       while ((match = headingRegex.exec(content)) !== null) {
         const level = match[1].length;
         const text = match[2].trim();
-        const id = text
+        let id = text
           .toLowerCase()
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '-');
+        
+        // Make IDs unique by adding a counter if duplicate
+        if (idCounts[id]) {
+          idCounts[id]++;
+          id = `${id}-${idCounts[id]}`;
+        } else {
+          idCounts[id] = 1;
+        }
         
         items.push({ id, text, level });
       }
