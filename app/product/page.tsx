@@ -117,6 +117,7 @@ const ProductPage: React.FC = () => {
               <div className="navbar-menu">
                 <a href="#feature" className="navbar-link">Features</a>
                 <a href="#benefits" className="navbar-link">Benefits</a>
+                <a href="/blog" className="navbar-link">Blog</a>
                 <a href="#faq" className="navbar-link">Faqs</a>
               </div>
 
@@ -143,6 +144,7 @@ const ProductPage: React.FC = () => {
                 <nav className="mobile-nav">
                   <a href="#feature" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
                   <a href="#benefits" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Benefits</a>
+                  <a href="/blog" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Blog</a>
                   <a href="#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Faqs</a>
                   <a href="#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
                 </nav>

@@ -944,13 +944,7 @@ p {
   background-color: #ffffff;
 }
 
-.footer-top-wrapper {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 3rem;
-  align-items: center;
-  padding-bottom: 3rem;
-}
+/* Removed conflicting grid layout for footer-top-wrapper */
 
 .footer-link-list,
 .footer-social-list {
@@ -1272,6 +1266,8 @@ p {
 
 .footer-top-wrapper {
   margin-bottom: 4rem;
+  padding-top: 4rem;
+  padding-bottom: 2rem;
 }
 
 .footer-content-grid {
@@ -1366,10 +1362,11 @@ p {
 /* Footer Responsive */
 @media (max-width: 1200px) {
   .footer-content-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 2.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
   }
 
+  /* Logo section takes full row at bottom */
   .footer-right-section {
     grid-column: 1 / -1;
     margin-top: 2rem;
@@ -1382,11 +1379,11 @@ p {
   .footer-cta-component {
     flex-direction: column;
     text-align: center;
+    gap: 1.5rem;
   }
-
-  .footer-content-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
+  
+  .footer-cta-content h2 {
+    font-size: 2rem;
   }
 
   .footer-legal-wrapper {
@@ -1397,23 +1394,79 @@ p {
 }
 
 @media (max-width: 767px) {
-
   .footer-content-grid {
     grid-template-columns: 1fr;
     gap: 2.5rem;
+  }
+  
+  .footer-menu-column {
     text-align: center;
   }
-
-  .footer-menu-column {
-    align-items: center;
-  }
-
+  
   .footer-menu-list {
     align-items: center;
   }
-
+  
+  /* Logo section no longer needs special handling in single column */
   .footer-right-section {
+    margin-top: 0;
+    text-align: center;
     align-items: center;
+  }
+  
+  /* Reduce padding on mobile */
+  .footer-top-wrapper {
+    padding-top: 3rem;
+    margin-bottom: 3rem;
+  }
+  
+  .footer-cta-content h2 {
+    font-size: 1.75rem;
+  }
+  
+  .footer-menu-title {
+    margin-bottom: 1rem;
+    font-size: 14px;
+  }
+  
+  .footer-link {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 575px) {
+  /* Even smaller adjustments for mobile phones */
+  .footer-top-wrapper {
+    padding-top: 2.5rem;
+    margin-bottom: 2.5rem;
+  }
+  
+  .footer-menu-list {
+    gap: 0.5rem;
+  }
+  
+  .footer-menu-title {
+    font-size: 12px;
+  }
+  
+  .footer-link {
+    font-size: 14px;
+  }
+  
+  .footer-description p {
+    font-size: 14px;
+  }
+  
+  .footer-bottom-wrapper {
+    padding-top: 1.5rem;
+  }
+  
+  .footer-cta-content h2 {
+    font-size: 1.5rem;
+  }
+  
+  .footer-legal-links {
+    gap: 1rem;
   }
 }
 
