@@ -3,13 +3,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
+import './blog.css';
+import '../product/product.css';
 
 interface BlogClientProps {
   posts: BlogPost[];
   categories: string[];
+  locale?: string;
 }
 
-export default function BlogClient({ posts, categories }: BlogClientProps) {
+export default function BlogClient({ posts, categories, locale = 'en' }: BlogClientProps) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -18,10 +21,10 @@ export default function BlogClient({ posts, categories }: BlogClientProps) {
     : posts.filter(post => post.category === selectedCategory);
 
   return (
-    <div className="product-page">
+    <div className="blog-layout">
       <style jsx global>{`
-        .product-page,
-        .product-page * {
+        .blog-layout,
+        .blog-layout * {
           font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
@@ -31,7 +34,7 @@ export default function BlogClient({ posts, categories }: BlogClientProps) {
       {/* Navigation */}
       <nav className="navbar-component">
         <div className="navbar-container">
-          <a href="/" className="navbar-logo-link">
+          <a href={locale === 'en' ? '/product' : `/product/${locale}`} className="navbar-logo-link">
             <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
           </a>
 

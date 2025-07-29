@@ -17,9 +17,10 @@ interface RelatedPost {
 interface BlogPostClientProps {
   post: BlogPost;
   relatedPosts?: RelatedPost[];
+  locale?: string;
 }
 
-export default function BlogPostClient({ post, relatedPosts = [] }: BlogPostClientProps) {
+export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' }: BlogPostClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Generate structured data for SEO
@@ -94,7 +95,7 @@ export default function BlogPostClient({ post, relatedPosts = [] }: BlogPostClie
       {/* Navigation */}
       <nav className="navbar-component">
         <div className="navbar-container">
-          <a href="/" className="navbar-logo-link">
+          <a href={locale === 'en' ? '/product' : `/product/${locale}`} className="navbar-logo-link">
             <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
           </a>
 
