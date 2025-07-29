@@ -304,19 +304,18 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
     
     const result = {
       apiId: serviceId,
-      info: {
-        timeApiData: timeApiData,
-        timeCalculation: Date.now() - timeAll,
-        timeAll: Date.now() - timeAll,
+      inputs: answerInputs,
+      outputs: answerOutputs,
+      metadata: {
+        dataFetchTime: timeApiData,
+        executionTime: Date.now() - timeAll,
         useCaching: useCaching,
         recalc: false, // SpreadJS doesn't recalc when loading from cache
         fromProcessCache: fromProcessCache,
         fromRedisCache: fromRedisCache,
         processCacheStats: spreadjsModule && spreadjsModule.getCacheStats ? spreadjsModule.getCacheStats() : null,
         memoryUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
-      },
-      inputs: answerInputs,
-      outputs: answerOutputs,
+      }
     };
     
     // Cache result if caching enabled
@@ -398,18 +397,14 @@ export async function POST(request, { params }) {
               serviceId,
               inputs: body.inputs,
               outputs: cacheResult.outputs || [],
-              info: {
-                ...cacheResult.info,
-                timeAll: totalTime,
-                cached: true,
-                fromResultCache: true
-              },
               metadata: {
+                ...cacheResult.metadata,
                 executionTime: 0,
                 totalTime,
                 timestamp: new Date().toISOString(),
                 version: 'v1',
-                cached: true
+                cached: true,
+                fromResultCache: true
               }
             });
           }
@@ -439,17 +434,57 @@ export async function POST(request, { params }) {
     const totalTime = Date.now() - totalStart;
     console.log(`[v1/execute] Total execution time: ${totalTime}ms`);
     
+    // Track response time analytics
+    const responseTime = result.metadata?.executionTime || totalTime;
+    if (responseTime > 0) {
+      Promise.resolve().then(async () => {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const multi = redis.multi();
+          
+          // Store response time for this request
+          multi.hIncrBy(`service:${serviceId}:analytics`, `${today}:response_time_sum`, responseTime);
+          multi.hIncrBy(`service:${serviceId}:analytics`, `${today}:response_time_count`, 1);
+          
+          // Track response time distribution
+          let bucket = '0-50ms';
+          if (responseTime > 1000) bucket = '>1000ms';
+          else if (responseTime > 500) bucket = '500-1000ms';
+          else if (responseTime > 200) bucket = '200-500ms';
+          else if (responseTime > 100) bucket = '100-200ms';
+          else if (responseTime > 50) bucket = '50-100ms';
+          
+          multi.hIncrBy(`service:${serviceId}:analytics`, `response_dist:${bucket}`, 1);
+          
+          await multi.exec();
+          
+          // Calculate average
+          const [sumStr, countStr] = await redis.hmGet(
+            `service:${serviceId}:analytics`,
+            [`${today}:response_time_sum`, `${today}:response_time_count`]
+          );
+          
+          if (sumStr && countStr) {
+            const sum = parseInt(sumStr);
+            const count = parseInt(countStr);
+            const avg = Math.round(sum / count);
+            await redis.hSet(`service:${serviceId}:analytics`, {
+              [`${today}:avg_response_time`]: avg.toString(),
+              'avg_response_time': avg.toString()
+            });
+          }
+        } catch (err) {
+          console.error('Error tracking response time:', err);
+        }
+      });
+    }
+    
     return NextResponse.json({
       serviceId,
       inputs: body.inputs,
       outputs: result.outputs || [],
-      info: result.info || {
-        timeAll: totalTime,
-        timeCalculation: result.info?.timeCalculation || 0,
-        memoryUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
-      },
       metadata: {
-        executionTime: result.info?.timeCalculation || 0,
+        ...result.metadata,
         totalTime,
         timestamp: new Date().toISOString(),
         version: 'v1'

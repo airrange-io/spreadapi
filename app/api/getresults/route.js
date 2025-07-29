@@ -633,37 +633,79 @@ async function getResults(requestInfo) {
 
     timeEnd = Date.now();
     timeCalculation = timeEnd - timeStart;
-    const timers = {
-      timeApiData: timeApiData,
-      timeCalculation: timeCalculation,
-      timeAll: timeEnd - timeAll,
+    const metadata = {
+      dataFetchTime: timeApiData,
+      executionTime: timeEnd - timeAll,
       useCaching: useCaching,
       recalc: specialRecalculation,
       fromProcessCache: fromProcessCache,
       processCacheStats: getCacheStats(),
       memoryUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
     };
-    if (withTables) timers.timeTableData = timeTableData;
-    console.log("INFO Timers", timers);
+    if (withTables) metadata.timeTableData = timeTableData;
+    console.log("INFO Metadata", metadata);
 
     result = {
       apiId: requestInfo.apiId,
-      info: timers,
       inputs: answerInputs,
       outputs: answerOutputs,
+      metadata: metadata
     };
     
     // Track response time in milliseconds
     const totalResponseTime = timeEnd - timeAll;
-    redis.hSet(`service:${requestInfo.apiId}:analytics`, { avg_response_time: totalResponseTime.toString() }).catch(() => {});
+    
+    // Track detailed response time analytics
+    if (totalResponseTime > 0) {
+      Promise.resolve().then(async () => {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const multi = redis.multi();
+          
+          // Store response time for this request
+          multi.hIncrBy(`service:${requestInfo.apiId}:analytics`, `${today}:response_time_sum`, totalResponseTime);
+          multi.hIncrBy(`service:${requestInfo.apiId}:analytics`, `${today}:response_time_count`, 1);
+          
+          // Track response time distribution
+          let bucket = '0-50ms';
+          if (totalResponseTime > 1000) bucket = '>1000ms';
+          else if (totalResponseTime > 500) bucket = '500-1000ms';
+          else if (totalResponseTime > 200) bucket = '200-500ms';
+          else if (totalResponseTime > 100) bucket = '100-200ms';
+          else if (totalResponseTime > 50) bucket = '50-100ms';
+          
+          multi.hIncrBy(`service:${requestInfo.apiId}:analytics`, `response_dist:${bucket}`, 1);
+          
+          await multi.exec();
+          
+          // Calculate average
+          const [sumStr, countStr] = await redis.hmGet(
+            `service:${requestInfo.apiId}:analytics`,
+            [`${today}:response_time_sum`, `${today}:response_time_count`]
+          );
+          
+          if (sumStr && countStr) {
+            const sum = parseInt(sumStr);
+            const count = parseInt(countStr);
+            const avg = Math.round(sum / count);
+            await redis.hSet(`service:${requestInfo.apiId}:analytics`, {
+              [`${today}:avg_response_time`]: avg.toString(),
+              'avg_response_time': avg.toString()
+            });
+          }
+        } catch (err) {
+          console.error('Error tracking response time:', err);
+        }
+      });
+    }
 
     // write to cache (non-blocking for better performance)
     if (useCaching && cacheKey) {
       const cacheResult = {
         apiId: requestInfo.apiId,
-        info: { timeApiData: -1, timeCalculation: -1 },
         inputs: answerInputs,
         outputs: answerOutputs,
+        metadata: metadata
       };
       
       // Fire and forget - don't wait for cache write

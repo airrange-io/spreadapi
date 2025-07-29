@@ -34,6 +34,14 @@ const TokensSection: React.FC<TokensSectionProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
+
+  const handleTestComplete = async () => {
+    // Refresh token stats after successful test
+    if (tokenManagementRef.current) {
+      await tokenManagementRef.current.refreshTokens();
+    }
+  };
 
   useLayoutEffect(() => {
     const measureWidth = () => {
@@ -92,8 +100,10 @@ const TokensSection: React.FC<TokensSectionProps> = ({
           requireToken={requireToken}
           existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
           containerWidth={containerWidth}
+          onTestComplete={handleTestComplete}
         />
         <TokenManagement
+          ref={tokenManagementRef}
           serviceId={serviceId}
           requireToken={requireToken}
           isDemoMode={isDemoMode}

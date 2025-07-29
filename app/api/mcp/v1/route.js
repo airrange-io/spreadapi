@@ -365,8 +365,8 @@ async function executeService(serviceId, inputs) {
     }
     
     // Add metadata if available
-    if (data.info) {
-      resultText += `\nCalculation time: ${data.info.timeCalculation}ms`;
+    if (data.metadata && data.metadata.executionTime) {
+      resultText += `\nCalculation time: ${data.metadata.executionTime}ms`;
     }
     
     return {
@@ -1059,6 +1059,13 @@ async function handleJsonRpc(request, auth) {
             
             // Get additional metadata from Redis
             const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+            
+            // Prewarm the service asynchronously
+            import('../../../../lib/prewarmService.js').then(({ prewarmService }) => {
+              prewarmService(serviceId).catch(err => {
+                console.log(`[MCP] Prewarm for ${serviceId} initiated`);
+              });
+            }).catch(() => {});
             
             // Format the response
             let responseText = `Service: ${publishedData.title || serviceId}\n`;

@@ -38,6 +38,9 @@
       ],
       "@/utils/*": [
         "utils/*"
+      ],
+      "@/hooks/*": [
+        "hooks/*"
       ]
     },
     "plugins": [

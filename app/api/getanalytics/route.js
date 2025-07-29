@@ -35,6 +35,13 @@ async function getServiceAnalytics(serviceId, options = {}) {
     lastNDays.forEach(date => {
       fieldsToFetch.push(`${date}:calls`);
       fieldsToFetch.push(`${date}:errors`);
+      fieldsToFetch.push(`${date}:avg_response_time`);
+    });
+    
+    // Add response time distribution fields
+    const responseBuckets = ['0-50ms', '50-100ms', '100-200ms', '200-500ms', '500-1000ms', '>1000ms'];
+    responseBuckets.forEach(bucket => {
+      fieldsToFetch.push(`response_dist:${bucket}`);
     });
     
     // Use hMGet for specific fields instead of hGetAll (more efficient)
@@ -66,11 +73,13 @@ async function getServiceAnalytics(serviceId, options = {}) {
     lastNDays.forEach((date, index) => {
       const calls = parseInt(analyticsData[`${date}:calls`] || '0');
       const errors = parseInt(analyticsData[`${date}:errors`] || '0');
+      const avgResponseTime = parseInt(analyticsData[`${date}:avg_response_time`] || '0');
       totalErrors += errors;
       dailyData.push({
         date,
         calls,
         errors,
+        avgResponseTime: avgResponseTime > 0 ? avgResponseTime : undefined,
         isToday: index === 0
       });
     });
@@ -88,6 +97,19 @@ async function getServiceAnalytics(serviceId, options = {}) {
     
     // Get average response time from analytics hash
     const avgResponseTime = analyticsData.avg_response_time || '0';
+    
+    // Parse response time distribution
+    const responseTimeDistribution = [];
+    const buckets = ['0-50ms', '50-100ms', '100-200ms', '200-500ms', '500-1000ms', '>1000ms'];
+    buckets.forEach(bucket => {
+      const count = parseInt(analyticsData[`response_dist:${bucket}`] || '0');
+      if (count > 0) {
+        responseTimeDistribution.push({
+          range: bucket,
+          count
+        });
+      }
+    });
     
     // Also get legacy data format for backward compatibility
     const serviceInfo = await redis.hGetAll("service:" + serviceId);
@@ -141,6 +163,7 @@ async function getServiceAnalytics(serviceId, options = {}) {
       },
       hourlyData: hourlyData.reverse(), // Most recent first
       dailyData: dailyData.reverse(), // Most recent first
+      responseTimeDistribution,
       // Legacy format for backward compatibility
       created: serviceInfo?.created,
       callsByDate,

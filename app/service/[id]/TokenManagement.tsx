@@ -55,7 +55,7 @@ interface TokenManagementProps {
   onTokensChange?: (tokens: Token[]) => void;
 }
 
-const TokenManagement = React.memo(function TokenManagement({ serviceId, requireToken, isDemoMode, onRequireTokenChange, onTokenCountChange, onTokensChange }: TokenManagementProps) {
+const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> }, TokenManagementProps>(function TokenManagement({ serviceId, requireToken, isDemoMode, onRequireTokenChange, onTokenCountChange, onTokensChange }, ref) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -65,6 +65,11 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
   const [form] = Form.useForm();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Expose refresh method to parent components
+  React.useImperativeHandle(ref, () => ({
+    refreshTokens: loadTokens
+  }), [serviceId]);
+
   // Load tokens on mount and when component becomes visible
   useEffect(() => {
     // Only load if we haven't loaded before or if serviceId changes
@@ -72,6 +77,18 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       loadTokens();
     }
   }, [serviceId]);
+
+  // Refresh token stats periodically when visible
+  useEffect(() => {
+    if (!hasLoadedOnce) return;
+
+    // Set up periodic refresh every 30 seconds
+    const intervalId = setInterval(() => {
+      loadTokens();
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [hasLoadedOnce, serviceId]);
 
   const loadTokens = async () => {
     setLoading(true);
@@ -198,6 +215,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      width: '35%',
       render: (name: string) => (
         <Space>
           <KeyOutlined style={{ color: '#1890ff' }} />
@@ -234,21 +252,17 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       title: 'Usage',
       dataIndex: 'usageCount',
       key: 'usageCount',
-      render: (count: number) => (
-        <Text>{count.toLocaleString()} calls</Text>
-      )
-    },
-    {
-      title: 'Last Used',
-      dataIndex: 'lastUsedAt',
-      key: 'lastUsedAt',
-      render: (date: string) => date ? (
-        <Tooltip title={dayjs(date).format('YYYY-MM-DD HH:mm:ss')}>
-          <Text type="secondary">{dayjs(date).fromNow()}</Text>
-        </Tooltip>
-      ) : (
-        <Text type="secondary">Never</Text>
-      )
+      render: (count: number, record: Token) => {
+        const lastUsedText = record.lastUsedAt 
+          ? `Last used: ${dayjs(record.lastUsedAt).format('YYYY-MM-DD HH:mm:ss')} (${dayjs(record.lastUsedAt).fromNow()})`
+          : 'Never used';
+        
+        return (
+          <Tooltip title={lastUsedText}>
+            <Text>{count.toLocaleString()} calls</Text>
+          </Tooltip>
+        );
+      }
     },
     {
       title: 'Expires',
@@ -267,8 +281,10 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
       }
     },
     {
-      title: 'Actions',
+      title: '',
       key: 'actions',
+      width: 50,
+      align: 'center',
       render: (_: any, record: Token) => (
         isDemoMode ? null : (
           <Popconfirm
@@ -283,9 +299,7 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
               danger
               icon={<DeleteOutlined />}
               size="small"
-            >
-              Revoke
-            </Button>
+            />
           </Popconfirm>
         )
       )
@@ -299,27 +313,28 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
         title="API Tokens"
         defaultOpen={false}
         extra={
-          !isDemoMode && (
-            <Tooltip title="Create new API token">
-              <Button
-                type="text"
-                icon={<PlusOutlined />}
-                onClick={(e) => {
-                  e.stopPropagation();
+          <Tooltip title={isDemoMode ? "Token creation is disabled in demo mode" : "Create new API token"}>
+            <Button
+              type="text"
+              icon={<PlusOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isDemoMode) {
                   setShowCreateModal(true);
-                }}
-                disabled={isDemoMode}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  padding: '5px',
-                  marginTop: -3
-                }}
-              />
-            </Tooltip>
-          )
+                }
+              }}
+              disabled={isDemoMode}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                padding: '5px',
+                marginTop: -3,
+                opacity: isDemoMode ? 0.5 : 1
+              }}
+            />
+          </Tooltip>
         }
       >
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -512,4 +527,4 @@ const TokenManagement = React.memo(function TokenManagement({ serviceId, require
   );
 });
 
-export default TokenManagement;
+export default React.memo(TokenManagement);

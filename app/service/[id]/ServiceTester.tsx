@@ -4,6 +4,7 @@ import React, { useState, useEffect, lazy, Suspense, useRef, useLayoutEffect } f
 import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Divider, Spin } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import CollapsibleSection from './components/CollapsibleSection';
+import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 
 // Lazy load the IntegrationExamples component
 const IntegrationExamples = lazy(() => import('./components/IntegrationExamples'));
@@ -19,6 +20,7 @@ interface ServiceTesterProps {
   requireToken?: boolean;
   existingToken?: string;
   containerWidth?: number;
+  onTestComplete?: () => void;
 }
 
 const ServiceTester: React.FC<ServiceTesterProps> = ({
@@ -28,7 +30,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   outputs,
   requireToken,
   existingToken,
-  containerWidth: propsContainerWidth
+  containerWidth: propsContainerWidth,
+  onTestComplete
 }) => {
   const [form] = Form.useForm();
   const [parameterValues, setParameterValues] = useState<Record<string, any>>({});
@@ -39,6 +42,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [totalCalls, setTotalCalls] = useState<number>(0);
   const containerWidth = propsContainerWidth || 0;
   const isMounted = useRef(false);
+  
+  // Prewarm the service when component mounts
+  useServicePrewarm(serviceId, isPublished);
 
   // Initialize parameter values from inputs
   useEffect(() => {
@@ -104,10 +110,15 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
       setTotalCalls(prev => prev + 1);
       
       // Use the actual calculation time from the response if available
-      if (data.info && data.info.timeCalculation !== undefined) {
-        setWizardResponseTime(data.info.timeCalculation);
-      } else if (data.info && data.info.timeAll !== undefined) {
-        setWizardResponseTime(data.info.timeAll);
+      if (data.metadata && data.metadata.executionTime !== undefined) {
+        setWizardResponseTime(data.metadata.executionTime);
+      } else if (data.metadata && data.metadata.totalTime !== undefined) {
+        setWizardResponseTime(data.metadata.totalTime);
+      }
+      
+      // Trigger callback to refresh tokens if test was successful
+      if (onTestComplete && requireToken) {
+        onTestComplete();
       }
     } catch (error: any) {
       setWizardError(error.message || 'Failed to test API');
@@ -132,7 +143,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     });
 
     if (requireToken) {
-      // Use a clear placeholder that indicates the user needs to replace it
+      // Always use placeholder since we don't have the actual token value
+      // Users need to replace this with their actual token
       urlParams.append('token', 'REPLACE_WITH_YOUR_TOKEN');
     }
 
@@ -281,12 +293,17 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           <div>
             <Text type="secondary" style={{ fontSize: 12 }}>
               Test URL (Modify to test with different values):
-              {requireToken && (
-                <Text type="warning" style={{ fontSize: 12, marginLeft: 8 }}>
+            </Text>
+            {requireToken && (
+              <div style={{ marginTop: 4 }}>
+                <Text type="warning" style={{ fontSize: 12 }}>
                   ⚠️ Replace REPLACE_WITH_YOUR_TOKEN with your actual token
                 </Text>
-              )}
-            </Text>
+                <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                  Note: Token usage is only tracked when using a real token, not the placeholder.
+                </Text>
+              </div>
+            )}
             <TextArea
               value={wizardUrl}
               onChange={(e) => setWizardUrl(e.target.value)}
@@ -390,12 +407,14 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     prefix={<ClockCircleOutlined />}
                     valueStyle={{ fontSize: '18px' }}
                   />
-                  {wizardResult?.info && (
+                  {wizardResult?.metadata && (
                     <Typography.Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
-                      {wizardResult.info.fromProcessCache && "From process cache"}
-                      {wizardResult.info.fromRedisCache && "From Redis cache"}
-                      {wizardResult.info.fromResultCache && "From result cache"}
-                      {!wizardResult.info.fromProcessCache && !wizardResult.info.fromRedisCache && !wizardResult.info.fromResultCache && "Fresh calculation"}
+                      {wizardResult.metadata.fromProcessCache && "From process cache"}
+                      {wizardResult.metadata.fromRedisCache && "From Redis cache"}
+                      {wizardResult.metadata.fromResultCache && "From result cache"}
+                      {!(wizardResult.metadata.fromProcessCache || 
+                         wizardResult.metadata.fromRedisCache || 
+                         wizardResult.metadata.fromResultCache) && "Fresh calculation"}
                     </Typography.Text>
                   )}
                 </Col>

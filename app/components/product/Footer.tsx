@@ -58,11 +58,11 @@ const Footer: React.FC = () => {
                     </div>
                   </div>
                   <div className="footer-right-section">
-                    <img src="/icons/logo-full.svg" alt="SpreadAPI" className="footer-right-logo" />
+                    <img src="/icons/logo-transparent.svg" alt="SpreadAPI" className="footer-right-logo" />
                     <div className="footer-description">
                       <p className="text-size-small">
-                        SpreadAPI bridges the gap between Excel and AI, turning decades of business logic into secure, 
-                        instant APIs. Your spreadsheets become powerful calculation engines that AI can access without 
+                        SpreadAPI bridges the gap between Excel and AI, turning decades of business logic into secure,
+                        instant APIs. Your spreadsheets become powerful calculation engines that AI can access without
                         seeing proprietary formulas. Upload, configure, and let AI handle complex calculations with 100% accuracy.
                       </p>
                     </div>
