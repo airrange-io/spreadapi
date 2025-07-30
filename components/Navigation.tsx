@@ -59,7 +59,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
               <LanguageSwitcher currentLocale={locale} />
             </div>
           )}
-          <Link href="/product#cta" className="button hide-mobile-portrait">Get Started</Link>
+          <Link href="/" className="button hide-mobile-portrait">Get Started</Link>
           <button
             className="navbar-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -90,7 +90,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
               </Link>
             ))}
             <Link
-              href="/product#cta"
+              href="/"
               className="button w-button"
               onClick={() => setMobileMenuOpen(false)}
             >
