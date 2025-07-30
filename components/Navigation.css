@@ -1,0 +1,151 @@
+/* Navigation Component Styles */
+.navigation-component {
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+.navigation-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  min-height: 72px;
+}
+
+.navigation-logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.navigation-logo {
+  height: 2.5rem;
+  display: block;
+}
+
+.navigation-menu {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.navigation-link {
+  color: #4b5563 !important;
+  text-decoration: none !important;
+  font-weight: 400 !important;
+  font-size: 0.9375rem !important;
+  transition: color 0.2s ease !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.navigation-link:hover {
+  color: #9333EA !important;
+}
+
+.navigation-button-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navigation-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .navigation-menu {
+    display: none;
+  }
+  
+  .navigation-menu-button {
+    display: block;
+  }
+  
+  .navigation-container {
+    padding: 1rem;
+  }
+}
+
+/* Mobile menu */
+.navigation-mobile-menu {
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  padding-top: 2rem;
+}
+
+.navigation-mobile-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.navigation-mobile-nav .navigation-link {
+  font-size: 1.25rem !important;
+  padding: 0.5rem 0;
+}
+
+/* Menu icon */
+.menu-icon {
+  width: 24px;
+  height: 18px;
+  position: relative;
+}
+
+.menu-icon-line-top,
+.menu-icon-line-center,
+.menu-icon-line-bottom {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #0a0a0a;
+  transition: all 0.3s ease;
+}
+
+.menu-icon-line-top {
+  top: 0;
+}
+
+.menu-icon-line-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.menu-icon-line-bottom {
+  bottom: 0;
+}
+
+.menu-icon.open .menu-icon-line-top {
+  transform: rotate(45deg) translateY(8px);
+}
+
+.menu-icon.open .menu-icon-line-center {
+  opacity: 0;
+}
+
+.menu-icon.open .menu-icon-line-bottom {
+  transform: rotate(-45deg) translateY(-8px);
+}

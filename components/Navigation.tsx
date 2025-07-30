@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import './Navigation.css';
 
 const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitcher'), {
   ssr: false,
@@ -17,6 +18,19 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', locale = 'en', showLanguageSwitcher = false }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Always show language switcher on blog pages
+  const shouldShowLanguageSwitcher = showLanguageSwitcher || currentPage === 'blog';
+
+  // Critical styles to prevent FOUC - simplified approach
+  const linkStyle = {
+    color: '#4b5563',
+    textDecoration: 'none',
+    fontWeight: 400,
+    fontSize: '0.9375rem',
+    transition: 'color 0.2s ease',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  };
 
   // Define menu items with their labels and paths
   const menuItems = [
@@ -39,36 +53,41 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   }
 
   return (
-    <nav className={`navbar-component ${className}`}>
-      <div className="navbar-container">
-        <Link href="/product" className="navbar-logo-link">
-          <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
+    <nav className={`navigation-component ${className}`}>
+      <div className="navigation-container">
+        <Link href="/product" className="navigation-logo-link">
+          <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navigation-logo" />
         </Link>
 
-        <div className="navbar-menu">
+        <div className="navigation-menu">
           {visibleMenuItems.map((item) => (
-            <Link key={item.key} href={item.path} className="navbar-link">
+            <Link 
+              key={item.key} 
+              href={item.path} 
+              className="navigation-link"
+              style={linkStyle}
+            >
               {item.label}
             </Link>
           ))}
         </div>
 
-        <div className="navbar-button-wrapper">
-          {showLanguageSwitcher && (
-            <div style={{ marginRight: '16px' }}>
-              <LanguageSwitcher currentLocale={locale} />
-            </div>
-          )}
+        <div className="navigation-button-wrapper">
+          <div style={{ 
+            marginRight: '16px',
+            minWidth: '48px',
+            display: shouldShowLanguageSwitcher ? 'block' : 'none'
+          }}>
+            <LanguageSwitcher currentLocale={locale} />
+          </div>
           <Link href="/" className="button hide-mobile-portrait">Get Started</Link>
           <button
-            className="navbar-menu-button"
+            className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
               <div className="menu-icon-line-top"></div>
-              <div className="menu-icon-line-center">
-                <div className="menu-icon-line-center-inner"></div>
-              </div>
+              <div className="menu-icon-line-center"></div>
               <div className="menu-icon-line-bottom"></div>
             </div>
           </button>
@@ -77,13 +96,13 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="mobile-menu">
-          <nav className="mobile-nav">
+        <div className="navigation-mobile-menu">
+          <nav className="navigation-mobile-nav">
             {visibleMenuItems.map((item) => (
               <Link
                 key={item.key}
                 href={item.path}
-                className="navbar-link"
+                className="navigation-link"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}

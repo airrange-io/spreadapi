@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
 import RelatedPosts from '@/components/blog/RelatedPosts';
 import TableOfContents from '@/components/blog/TableOfContents';
-import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
+import Navigation from '@/components/Navigation';
 import '../blog.css';
-import '../../product/product.css';
 
 interface RelatedPost {
   slug: string;
@@ -23,8 +22,6 @@ interface BlogPostClientProps {
 }
 
 export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' }: BlogPostClientProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   // Generate structured data for SEO
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -223,67 +220,7 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
       `}</style>
 
       {/* Navigation */}
-      <nav className="navbar-component" style={{ 
-        background: '#ffffff', 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 1000,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)',
-        minHeight: '72px',
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <div className="navbar-container" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 2rem'
-        }}>
-          <a href="/product" className="navbar-logo-link">
-            <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
-          </a>
-
-          <div className="navbar-menu">
-            <a href="/product" className="navbar-link">Features</a>
-            <a href="/product#benefits" className="navbar-link">Benefits</a>
-            <a href="/blog" className="navbar-link active">Blog</a>
-            <a href="/product#faq" className="navbar-link">FAQs</a>
-          </div>
-
-          <div className="navbar-button-wrapper">
-            <LanguageSwitcher currentLocale={locale} currentSlug={post.slug} />
-            <a href="/product#cta" className="button hide-mobile-portrait">Get Started</a>
-            <button
-              className="navbar-menu-button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
-                <div className="menu-icon-line-top"></div>
-                <div className="menu-icon-line-center">
-                  <div className="menu-icon-line-center-inner"></div>
-                </div>
-                <div className="menu-icon-line-bottom"></div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="mobile-menu">
-            <nav className="mobile-nav">
-              <a href="/product" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
-              <a href="/product#benefits" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Benefits</a>
-              <a href="/blog" className="navbar-link active" onClick={() => setMobileMenuOpen(false)}>Blog</a>
-              <a href="/product#faq" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>FAQs</a>
-              <a href="/product#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
-            </nav>
-          </div>
-        )}
-      </nav>
+      <Navigation currentPage="blog" locale={locale} showLanguageSwitcher={true} />
 
       {/* Breadcrumb Navigation */}
       <nav className="breadcrumb" aria-label="Breadcrumb" style={{

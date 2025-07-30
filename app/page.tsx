@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented, Dropdown } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -38,6 +38,7 @@ const ListsPage: React.FC = observer(() => {
   const [showMCPModal, setShowMCPModal] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isCreatingService, setIsCreatingService] = useState(false);
 
   // Mark when we're on the client
   useEffect(() => {
@@ -249,7 +250,8 @@ const ListsPage: React.FC = observer(() => {
               {/* New Service Button */}
               <Button
                 type="primary"
-                icon={<PlusOutlined />}
+                icon={isCreatingService ? <LoadingOutlined /> : <PlusOutlined />}
+                loading={isCreatingService}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -259,6 +261,9 @@ const ListsPage: React.FC = observer(() => {
                     router.push('/login?returnTo=/');
                     return;
                   }
+
+                  // Set loading state
+                  setIsCreatingService(true);
 
                   // Generate a new service ID and navigate
                   const newId = generateServiceId(user?.id || 'test1234');

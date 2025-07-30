@@ -67,9 +67,11 @@ export default function LanguageSwitcher({ currentLocale, currentSlug }: Languag
         aria-label="Change language"
         style={{ 
           padding: '8px 12px',
-          minWidth: 'auto',
+          minWidth: '48px',
+          height: '40px',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: '4px'
         }}
       >

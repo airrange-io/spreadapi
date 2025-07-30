@@ -6,7 +6,6 @@ import { BlogPost } from '@/lib/blog';
 import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import Navigation from '@/components/Navigation';
 import './blog.css';
-import '../product/product.css';
 
 interface BlogClientProps {
   posts: BlogPost[];
