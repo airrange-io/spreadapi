@@ -154,7 +154,7 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
       {/* Navigation */}
       <nav className="navbar-component">
         <div className="navbar-container">
-          <a href={locale === 'en' ? '/product' : `/product/${locale}`} className="navbar-logo-link">
+          <a href="/product" className="navbar-logo-link">
             <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
           </a>
 

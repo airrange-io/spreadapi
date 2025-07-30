@@ -325,14 +325,14 @@
 
 /* Blog post layout with TOC */
 .blog-post-layout {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
 .blog-post-container {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 280px;
   gap: 3rem;
   align-items: start;
   position: relative;
@@ -346,7 +346,8 @@
 .blog-post-hero {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-  padding: 100px 0 80px;
+  padding: 60px 0 40px;
+  margin-bottom: 60px;
 }
 
 .blog-post-hero-content {
@@ -369,7 +370,7 @@
 }
 
 .blog-post-title {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 20px;
   line-height: 1.2;
@@ -379,18 +380,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  font-size: 1rem;
+  gap: 16px;
+  font-size: 0.9rem;
   opacity: 0.9;
 }
 
 .blog-post-content {
   max-width: 800px;
-  margin: -40px auto 80px;
-  padding: 40px;
+  margin: 0 auto 60px;
+  padding: 0 20px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 /* Blog content typography */
@@ -725,7 +724,7 @@
   }
   
   .blog-post-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
   .blog-grid {
@@ -733,13 +732,18 @@
     gap: 20px;
   }
   
+  .blog-post-hero {
+    padding: 40px 0 30px;
+    margin-bottom: 40px;
+  }
+  
   .blog-post-content {
-    padding: 20px;
-    margin: -20px 20px 40px;
+    padding: 0 20px;
+    margin: 0 auto 40px;
   }
   
   .blog-post-meta {
-    flex-direction: column;
+    font-size: 0.8rem;
     gap: 8px;
   }
 }
