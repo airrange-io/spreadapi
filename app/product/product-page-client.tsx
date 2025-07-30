@@ -590,7 +590,7 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Testimonials Section */}
+            {/* Use Case Examples Section */}
             <section className="section-home-testimonials">
               <div className="padding-global">
                 <div className="container-large">
@@ -600,15 +600,15 @@ const ProductPage: React.FC = () => {
                         <div className="max-width-medium align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Testimonials</div>
+                              <div>Use Case Examples</div>
                             </div>
                           </div>
                           <div className="margin-bottom margin-small">
                             <h2>
-                              Real Results from <span className="text-color-primary">Early Adopters</span>
+                              How Teams Could Use <span className="text-color-primary">SpreadAPI</span>
                             </h2>
                           </div>
-                          <p className="text-size-medium">See how companies are transforming their Excel-based processes with AI integration.</p>
+                          <p className="text-size-medium">Discover how different teams could transform their Excel-based processes with AI integration.</p>
                         </div>
                       </div>
                     </div>
@@ -616,32 +616,38 @@ const ProductPage: React.FC = () => {
                       <div className="testimonials-item">
                         <div className="testimonial-content">
                           <div className="margin-bottom margin-medium">
-                            <div className="heading-style-h5">"We turned our complex pricing spreadsheet into an API that our AI sales bot uses. Quote accuracy went from 70% to 100%, and quote generation time dropped from 2 hours to 30 seconds. Game-changing doesn't even begin to describe it."</div>
+                            <div className="heading-style-h5">Sales teams could transform complex pricing spreadsheets into APIs that AI sales assistants can access instantly. Imagine quote generation dropping from hours to seconds while maintaining 100% accuracy using your existing Excel formulas.</div>
                           </div>
                         </div>
                         <div className="testimonial-author-wrapper">
                           <div className="testimonial-author-image-wrapper">
-                            <div className="testimonial-author-image"></div>
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
+                              <path d="M24 14V24L30 27M33 24C33 28.9706 28.9706 33 24 33C19.0294 33 15 28.9706 15 24C15 19.0294 19.0294 15 24 15C28.9706 15 33 19.0294 33 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                           </div>
                           <div className="testimonial-author-content-wrapper">
-                            <p className="heading-style-h6">Sarah Chen</p>
-                            <p>VP Sales, TechCorp</p>
+                            <p className="heading-style-h6">Sales Teams</p>
+                            <p>Complex Pricing Calculations</p>
                           </div>
                         </div>
                       </div>
                       <div className="testimonials-item">
                         <div className="testimonial-content">
                           <div className="margin-bottom margin-medium">
-                            <div className="heading-style-h5">"Our financial advisors now use Claude to run scenarios on client portfolios. The AI accesses our Excel models through SpreadAPI, ensuring calculations are always accurate. Compliance loves it because the core logic stays protected in Excel."</div>
+                            <div className="heading-style-h5">Financial advisors could enable AI assistants to run portfolio scenarios using their proprietary Excel models. The AI gets calculation power while sensitive formulas stay secure—perfect for compliance requirements.</div>
                           </div>
                         </div>
                         <div className="testimonial-author-wrapper">
                           <div className="testimonial-author-image-wrapper">
-                            <div className="testimonial-author-image"></div>
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
+                              <path d="M15 20H33M15 28H33M19 16V32M29 16V32M13 24C13 19.5817 16.5817 16 21 16H27C31.4183 16 35 19.5817 35 24C35 28.4183 31.4183 32 27 32H21C16.5817 32 13 28.4183 13 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                           </div>
                           <div className="testimonial-author-content-wrapper">
-                            <p className="heading-style-h6">Marcus Johnson</p>
-                            <p>CTO, WealthTech Solutions</p>
+                            <p className="heading-style-h6">Financial Services</p>
+                            <p>Portfolio Analysis & Compliance</p>
                           </div>
                         </div>
                       </div>
