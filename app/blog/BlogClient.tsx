@@ -38,15 +38,51 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
+        
+        @media (max-width: 768px) {
+          .blog-hero h1 {
+            font-size: 2.5rem !important;
+          }
+          .blog-hero p {
+            font-size: 1rem !important;
+          }
+          .blog-hero {
+            padding: 60px 0 50px !important;
+          }
+        }
       `}</style>
 
       {/* Navigation */}
       <Navigation currentPage="blog" locale={locale} showLanguageSwitcher={true} />
 
       {/* Hero Section */}
-      <div className="blog-hero">
-        <h1>SpreadAPI Blog</h1>
-        <p>Excel meets AI: Technical insights, tutorials, and best practices for building intelligent spreadsheet applications</p>
+      <div className="blog-hero" style={{
+        background: 'linear-gradient(135deg, #9333EA 0%, #7C3AED 100%)',
+        color: 'white',
+        padding: '100px 0 80px',
+        textAlign: 'center',
+        position: 'relative'
+      }}>
+        <div style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '0 2rem'
+        }}>
+          <h1 style={{
+            fontSize: '3.5rem',
+            fontWeight: '700',
+            marginBottom: '1.5rem',
+            color: 'white'
+          }}>SpreadAPI Blog</h1>
+          <p style={{
+            fontSize: '1.25rem',
+            lineHeight: '1.6',
+            opacity: '0.95',
+            maxWidth: '600px',
+            margin: '0 auto',
+            color: 'white'
+          }}>Excel meets AI: Technical insights, tutorials, and best practices for building intelligent spreadsheet applications</p>
+        </div>
       </div>
 
       {/* Main Content */}

@@ -149,11 +149,99 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
+        
+        @media (max-width: 1024px) {
+          .blog-post-container {
+            grid-template-columns: 1fr !important;
+          }
+          .blog-post-sidebar {
+            display: none !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .blog-post-content {
+            padding: 24px 20px !important;
+            border-radius: 8px !important;
+            margin: 0 16px !important;
+          }
+          .blog-post-hero h1 {
+            font-size: 1.75rem !important;
+            line-height: 1.3 !important;
+          }
+          .blog-post-hero {
+            padding: 40px 0 40px !important;
+          }
+          .blog-post-layout {
+            padding: 40px 0 !important;
+          }
+          .blog-post-container {
+            padding: 0 !important;
+          }
+          .navbar-container {
+            padding: 1rem !important;
+          }
+          .breadcrumb-container {
+            padding: 0 1rem !important;
+          }
+          .blog-post-meta {
+            font-size: 13px !important;
+            flex-wrap: wrap !important;
+          }
+          .blog-post-category {
+            font-size: 11px !important;
+            padding: 8px 20px !important;
+          }
+        }
+        
+        /* Override table of contents scrollbar */
+        .table-of-contents {
+          overflow-y: visible !important;
+          max-height: none !important;
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+        }
+        
+        /* Hide scrollbar on all browsers */
+        .blog-post-sidebar::-webkit-scrollbar,
+        .table-of-contents::-webkit-scrollbar {
+          display: none !important;
+        }
+        
+        .blog-post-sidebar,
+        .table-of-contents {
+          -ms-overflow-style: none !important;  /* IE and Edge */
+          scrollbar-width: none !important;  /* Firefox */
+        }
+        
+        /* Hover effect for breadcrumb links */
+        .breadcrumb-link:hover {
+          color: #7C3AED !important;
+          text-decoration: underline !important;
+        }
       `}</style>
 
       {/* Navigation */}
-      <nav className="navbar-component">
-        <div className="navbar-container">
+      <nav className="navbar-component" style={{ 
+        background: '#ffffff', 
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 1000,
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)',
+        minHeight: '72px',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <div className="navbar-container" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 2rem'
+        }}>
           <a href="/product" className="navbar-logo-link">
             <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
           </a>
@@ -198,18 +286,53 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
       </nav>
 
       {/* Breadcrumb Navigation */}
-      <nav className="breadcrumb" aria-label="Breadcrumb">
-        <div className="breadcrumb-container">
-          <ol className="breadcrumb-list">
-            <li className="breadcrumb-item">
-              <Link href="/">Home</Link>
+      <nav className="breadcrumb" aria-label="Breadcrumb" style={{
+        backgroundColor: '#F9FAFB',
+        padding: '20px 0',
+        borderBottom: '1px solid #E5E7EB',
+        marginBottom: 0
+      }}>
+        <div className="breadcrumb-container" style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 2rem'
+        }}>
+          <ol className="breadcrumb-list" style={{
+            display: 'flex',
+            alignItems: 'center',
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+            flexWrap: 'wrap',
+            gap: '8px'
+          }}>
+            <li className="breadcrumb-item" style={{ fontSize: '14px' }}>
+              <Link href="/" className="breadcrumb-link" style={{ 
+                color: '#9333EA', 
+                textDecoration: 'none', 
+                fontWeight: '500',
+                transition: 'color 0.2s ease'
+              }}>Home</Link>
             </li>
-            <li className="breadcrumb-separator">/</li>
-            <li className="breadcrumb-item">
-              <Link href={locale === 'en' ? '/blog' : `/blog/${locale}`}>Blog</Link>
+            <li className="breadcrumb-separator" style={{ color: '#9CA3AF', fontSize: '14px' }}>/</li>
+            <li className="breadcrumb-item" style={{ fontSize: '14px' }}>
+              <Link href={locale === 'en' ? '/blog' : `/blog/${locale}`} className="breadcrumb-link" style={{ 
+                color: '#9333EA', 
+                textDecoration: 'none', 
+                fontWeight: '500',
+                transition: 'color 0.2s ease'
+              }}>Blog</Link>
             </li>
-            <li className="breadcrumb-separator">/</li>
-            <li className="breadcrumb-item active" aria-current="page">
+            <li className="breadcrumb-separator" style={{ color: '#9CA3AF', fontSize: '14px' }}>/</li>
+            <li className="breadcrumb-item active" aria-current="page" style={{ 
+              fontSize: '14px',
+              color: '#4B5563',
+              fontWeight: '500',
+              maxWidth: '400px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
               {post.title}
             </li>
           </ol>
@@ -217,11 +340,46 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
       </nav>
 
       {/* Blog Post Hero */}
-      <div className="blog-post-hero">
-        <div className="blog-post-hero-content">
-          <div className="blog-post-category">{post.category}</div>
-          <h1 className="blog-post-title">{post.title}</h1>
-          <div className="blog-post-meta">
+      <div className="blog-post-hero" style={{
+        background: 'linear-gradient(135deg, #9333EA 0%, #7C3AED 100%)',
+        color: 'white',
+        padding: '60px 0 50px',
+        marginTop: 0,
+        marginBottom: 0
+      }}>
+        <div className="blog-post-hero-content" style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          textAlign: 'center'
+        }}>
+          <div className="blog-post-category" style={{
+            display: 'inline-block',
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(10px)',
+            padding: '10px 24px',
+            borderRadius: '24px',
+            fontSize: '13px',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            marginBottom: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>{post.category}</div>
+          <h1 className="blog-post-title" style={{
+            fontSize: '3rem',
+            fontWeight: '700',
+            marginBottom: '24px',
+            lineHeight: '1.2'
+          }}>{post.title}</h1>
+          <div className="blog-post-meta" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            fontSize: '15px',
+            opacity: '0.9'
+          }}>
             <span>{post.author}</span>
             <span>•</span>
             <span>{new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -232,9 +390,26 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
       </div>
 
       {/* Blog Post Content with TOC */}
-      <div className="blog-post-layout">
-        <div className="blog-post-container">
-          <article className="blog-post-content">
+      <div className="blog-post-layout" style={{
+        backgroundColor: '#F9FAFB',
+        padding: '60px 0',
+        minHeight: '100vh'
+      }}>
+        <div className="blog-post-container" style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 20px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 300px',
+          gap: '3rem',
+          alignItems: 'start'
+        }}>
+          <article className="blog-post-content" style={{
+            backgroundColor: 'white',
+            padding: '48px',
+            borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
             {formatContent(post.content)}
             
             {/* Tags */}
@@ -253,20 +428,40 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
           </article>
           
           {/* Table of Contents - Desktop only */}
-          <aside className="blog-post-sidebar">
-            <TableOfContents content={post.content} />
+          <aside className="blog-post-sidebar" style={{
+            position: 'sticky',
+            top: '100px',
+            backgroundColor: 'white',
+            padding: '32px',
+            borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            maxHeight: 'calc(100vh - 120px)',
+            overflowY: 'hidden'
+          }}>
+            <div style={{ overflowY: 'hidden' }}>
+              <TableOfContents content={post.content} />
+            </div>
           </aside>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="blog-nav">
+      <div className="blog-nav" style={{
+        backgroundColor: '#F9FAFB',
+        padding: '40px 0 60px'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 20px'
+        }}>
         <Link href="/blog" className="blog-nav-link">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5L7 10L12 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back to Blog
         </Link>
+        </div>
       </div>
     </div>
   );
