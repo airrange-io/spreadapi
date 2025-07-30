@@ -1,29 +1,39 @@
-'use client';
-
-import React, { useState } from 'react';
+import { Metadata } from 'next';
 import '../product/product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import AIIntegrationStyles from './ai-integration-styles';
 
-const AIIntegrationPage: React.FC = () => {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+export const metadata: Metadata = {
+  title: 'Excel AI Integration - SpreadAPI | Connect ChatGPT & Claude to Excel',
+  description: 'Give AI assistants Excel superpowers. Let ChatGPT and Claude use your spreadsheet calculations for accurate quotes, financial modeling, and business automation.',
+  keywords: 'excel ai integration, chatgpt excel, claude excel, cursor ai excel, mcp protocol, ai spreadsheet automation, excel api for ai',
+  openGraph: {
+    title: 'Give AI Assistants Excel Superpowers - SpreadAPI',
+    description: 'Connect ChatGPT, Claude, and Cursor to your Excel calculations. Enable accurate, reproducible results.',
+    type: 'article',
+    url: 'https://spreadapi.com/excel-ai-integration',
+    siteName: 'SpreadAPI',
+    images: [{
+      url: 'https://spreadapi.com/api/og?title=Excel%20AI%20Integration&description=Give%20AI%20assistants%20Excel%20superpowers',
+      width: 1200,
+      height: 630,
+      alt: 'Excel AI Integration with SpreadAPI',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Excel + AI = Superpowers - SpreadAPI',
+    description: 'Connect AI assistants to Excel calculations. Accurate, reproducible results.',
+  },
+};
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
-
+export default function AIIntegrationPage() {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
-        <style jsx global>{`
-          .product-page,
-          .product-page * {
-            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
-        `}</style>
+        <AIIntegrationStyles />
 
         <div className="page-wrapper">
           {/* Navigation */}
@@ -41,39 +51,20 @@ const AIIntegrationPage: React.FC = () => {
                           <div className="max-width-xlarge align-center">
                             <div className="margin-bottom margin-xsmall">
                               <div className="subheading">
-                                <div>Excel AI Integration with Model Context Protocol (MCP)</div>
+                                <div>Excel meets AI</div>
                               </div>
                             </div>
                             <div className="margin-bottom margin-small">
                               <h1>
-                                Connect AI to Excel Spreadsheets Securely:<br />
-                                <span className="text-color-primary">Zero Data Upload with MCP Integration</span>
+                                Give AI Assistants <span className="text-color-primary">Excel Superpowers</span>
                               </h1>
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
-                              SpreadAPI enables Claude, ChatGPT, and other AI assistants to work with your Excel spreadsheets through secure Model Context Protocol (MCP) integration. 
-                              Get 100% accurate AI calculations without uploading files or exposing proprietary formulas—your Excel logic stays private while AI delivers powerful automation.
+                              Imagine ChatGPT creating perfect quotes using your pricing spreadsheet. Or Claude analyzing scenarios 
+                              with your financial models. Or Cursor writing code that uses your business calculations. 
+                              SpreadAPI makes it happen—in minutes, not months.
                             </p>
                           </div>
-                        </div>
-                      </div>
-                      <div className="header-image-wrapper">
-                        <div className="code-example-wrapper">
-                          <pre className="code-block">
-{`// Claude asks your spreadsheet to calculate
-const result = await claude.use_mcp_tool({
-  server: "spreadapi",
-  tool: "calculate_pricing",
-  arguments: {
-    quantity: 1000,
-    customer_type: "enterprise",
-    discount_code: "VOLUME20"
-  }
-});
-
-// Returns: { total: 45000, discount: 9000, unit_price: 45 }
-// 100% accurate, using YOUR Excel formulas`}
-                          </pre>
                         </div>
                       </div>
                     </div>
@@ -82,8 +73,8 @@ const result = await claude.use_mcp_tool({
               </div>
             </header>
 
-            {/* Security Feature Section */}
-            <section className="section-home-feature">
+            {/* Problem/Solution Section */}
+            <section className="section-home-features">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -91,83 +82,71 @@ const result = await claude.use_mcp_tool({
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            Protect Excel Formulas from AI: <span className="text-color-primary">Enterprise-Grade Security</span> for Spreadsheets
+                            The AI-Excel Gap <span className="text-color-primary">Everyone Faces</span>
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            Unlike traditional AI-Excel integrations requiring full file uploads, SpreadAPI's revolutionary MCP approach keeps your data secure. 
-                            AI assistants send calculation requests to your local API while your Excel formulas, proprietary business logic, and confidential algorithms 
-                            remain completely private. Enable powerful AI spreadsheet automation without sacrificing intellectual property or data security.
+                            Your Excel files contain years of refined business logic. Complex pricing rules, financial models, 
+                            resource calculations—all perfected over time. But when AI tries to help, it either:
                           </p>
                         </div>
                         <div className="feature-keypoint-list">
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <span style={{ color: '#ef4444', fontSize: '20px' }}>✗</span>
                             </div>
-                            <p className="text-size-medium">Formulas Never Exposed to AI</p>
+                            <p className="text-size-medium">Hallucinates numbers instead of calculating correctly</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <span style={{ color: '#ef4444', fontSize: '20px' }}>✗</span>
                             </div>
-                            <p className="text-size-medium">Zero Cloud Upload Required</p>
+                            <p className="text-size-medium">Requires manual copy-paste of data back and forth</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <span style={{ color: '#ef4444', fontSize: '20px' }}>✗</span>
                             </div>
-                            <p className="text-size-medium">European Infrastructure Compliance</p>
+                            <p className="text-size-medium">Can't access your spreadsheet formulas at all</p>
                           </div>
                         </div>
                       </div>
                       <div className="feature-image-wrapper">
-                        <div className="security-diagram">
-                          <svg viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="600" height="400" fill="#F8F6FE" rx="12" />
-                            {/* AI Assistant Box */}
-                            <rect x="40" y="150" width="140" height="100" rx="8" fill="#E8E0FF" stroke="#9333EA" strokeWidth="2" />
-                            <text x="110" y="190" textAnchor="middle" fill="#9333EA" fontSize="14" fontWeight="600">AI Assistant</text>
-                            <text x="110" y="210" textAnchor="middle" fill="#666" fontSize="12">(Claude)</text>
-                            
-                            {/* Arrow */}
-                            <path d="M180 200 L240 200" stroke="#9333EA" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                            <text x="210" y="190" textAnchor="middle" fill="#666" fontSize="11">MCP Request</text>
-                            
-                            {/* SpreadAPI Box */}
-                            <rect x="240" y="150" width="140" height="100" rx="8" fill="#F0E1FF" stroke="#9333EA" strokeWidth="2" />
-                            <text x="310" y="190" textAnchor="middle" fill="#9333EA" fontSize="14" fontWeight="600">SpreadAPI</text>
-                            <text x="310" y="210" textAnchor="middle" fill="#666" fontSize="12">(Your Server)</text>
-                            
-                            {/* Arrow */}
-                            <path d="M380 200 L440 200" stroke="#9333EA" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                            <text x="410" y="190" textAnchor="middle" fill="#666" fontSize="11">Calculate</text>
-                            
-                            {/* Excel Box */}
-                            <rect x="440" y="150" width="140" height="100" rx="8" fill="#E8FFE8" stroke="#4CAF50" strokeWidth="2" />
-                            <text x="510" y="190" textAnchor="middle" fill="#4CAF50" fontSize="14" fontWeight="600">Your Excel</text>
-                            <text x="510" y="210" textAnchor="middle" fill="#666" fontSize="12">(Secure)</text>
-                            
-                            {/* Lock Icon */}
-                            <circle cx="510" cy="230" r="15" fill="#4CAF50" fillOpacity="0.2" />
-                            <path d="M505 225v5a1 1 0 001 1h8a1 1 0 001-1v-5m-10 0v-2a5 5 0 0110 0v2m-10 0h10" stroke="#4CAF50" strokeWidth="1.5" fill="none" />
-                            
-                            <defs>
-                              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#9333EA" />
-                              </marker>
-                            </defs>
-                          </svg>
+                        <div className="feature-image-placeholder" style={{ 
+                          background: '#f8f9fa', 
+                          borderRadius: '12px', 
+                          padding: '40px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '20px'
+                        }}>
+                          <div style={{ 
+                            background: 'white', 
+                            padding: '20px', 
+                            borderRadius: '8px',
+                            border: '1px solid #e0e0e0'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>AI</div>
+                              <strong>Without SpreadAPI:</strong>
+                            </div>
+                            <p style={{ margin: 0, color: '#666' }}>"Based on my estimates, the price would be around $4,500..."</p>
+                            <p style={{ margin: '5px 0 0 0', color: '#ef4444', fontSize: '14px' }}>❌ Wrong by $823</p>
+                          </div>
+                          <div style={{ 
+                            background: 'white', 
+                            padding: '20px', 
+                            borderRadius: '8px',
+                            border: '1px solid #9333EA'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>AI</div>
+                              <strong>With SpreadAPI:</strong>
+                            </div>
+                            <p style={{ margin: 0, color: '#666' }}>"Using your pricing model, the exact price is $3,677.42"</p>
+                            <p style={{ margin: '5px 0 0 0', color: '#22c55e', fontSize: '14px' }}>✓ 100% accurate, includes all discounts</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -176,319 +155,285 @@ const result = await claude.use_mcp_tool({
               </div>
             </section>
 
-            {/* Technical Architecture Section */}
-            <section className="section-home-feature">
+            {/* How It Works */}
+            <section className="section-home-process">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
-                    <div className="feature-component reverse">
-                      <div className="feature-image-wrapper">
-                        <div className="architecture-diagram">
-                          <div className="architecture-card">
-                            <h4>Granular Permission System</h4>
-                            <div className="permission-grid">
-                              <div className="permission-item allowed">✓ Read Cell Values</div>
-                              <div className="permission-item allowed">✓ Execute Calculations</div>
-                              <div className="permission-item denied">✗ View Formulas</div>
-                              <div className="permission-item denied">✗ Access Full Sheet</div>
-                              <div className="permission-item allowed">✓ Batch Processing</div>
-                              <div className="permission-item denied">✗ Modify Structure</div>
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <div className="margin-bottom margin-xsmall">
+                            <div className="subheading">
+                              <div>Simple Setup</div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="feature-content-wrapper">
-                        <div className="margin-bottom margin-small">
                           <h2>
-                            Excel AI Permissions: <span className="text-color-primary">Cell-Level Access Control</span> for Maximum Security
+                            From Excel to AI-Ready in <span className="text-color-primary">3 Steps</span>
                           </h2>
                         </div>
-                        <div className="margin-bottom margin-medium">
-                          <p className="text-size-medium">
-                            SpreadAPI's granular permission system lets you define exactly what AI can access in your Excel files. Control AI permissions at the cell level—
-                            specify which formulas AI can read, which cells it can modify, and which data remains hidden. This precision ensures AI assistants get the 
-                            computational access they need while protecting your sensitive business logic and proprietary calculations.
-                          </p>
-                        </div>
-                        <div className="feature-list">
-                          <div className="feature-item">
-                            <div className="feature-item-icon-wrapper">
-                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M20 14v6m0 4h.01M12 20a8 8 0 1116 0 8 8 0 01-16 0z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                      </div>
+                    </div>
+
+                    <div className="process-grid">
+                      <div className="process-item">
+                        <div className="process-number">1</div>
+                        <h3>Upload Your Excel</h3>
+                        <p>Just drag and drop. Your complex pricing model, financial calculator, or planning spreadsheet—SpreadAPI handles them all.</p>
+                      </div>
+                      <div className="process-item">
+                        <div className="process-number">2</div>
+                        <h3>Define What AI Can Use</h3>
+                        <p>Mark input cells (like quantity, customer type) and output cells (like final price, delivery date). Your formulas stay hidden.</p>
+                      </div>
+                      <div className="process-item">
+                        <div className="process-number">3</div>
+                        <h3>Connect Your AI</h3>
+                        <p>One-click setup for Claude Desktop, ChatGPT, or Cursor. Or use our API with any AI platform. That's it—your AI now has Excel superpowers.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Real-World Examples */}
+            <section className="section-home-examples" style={{ background: '#f8f9fa' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <div className="margin-bottom margin-xsmall">
+                            <div className="subheading">
+                              <div>Possibilities</div>
                             </div>
-                            <div className="feature-item-content-wrapper">
-                              <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">Zero Hallucination Guarantee</h3>
+                          </div>
+                          <h2>
+                            What Becomes <span className="text-color-primary">Possible</span>
+                          </h2>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="examples-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
+                      {/* Customer Support Example */}
+                      <div className="example-card" style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+                        <div className="example-icon" style={{ marginBottom: '20px' }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <path d="M12 20C12 15.58 15.58 12 20 12C24.42 12 28 15.58 28 20C28 24.42 24.42 28 20 28C18.7 28 17.5 27.65 16.45 27.05L12 28L12.95 23.55C12.35 22.5 12 21.3 12 20Z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M24 20H28C28 15.58 24.42 12 20 12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h3>Customer Support That Never Gets Prices Wrong</h3>
+                        <p style={{ marginBottom: '20px' }}>Your support chatbot can now:</p>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                          <li style={{ marginBottom: '10px' }}>✓ Generate accurate quotes using your exact pricing rules</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Calculate shipping costs based on your logistics model</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Apply the right discounts for each customer tier</li>
+                        </ul>
+                        <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                          "Our AI support agent now handles 80% of quote requests—with 100% accuracy"
+                        </p>
+                      </div>
+
+                      {/* Sales Team Example */}
+                      <div className="example-card" style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+                        <div className="example-icon" style={{ marginBottom: '20px' }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <rect x="10" y="24" width="6" height="8" rx="1" fill="#9333EA"/>
+                            <rect x="17" y="18" width="6" height="14" rx="1" fill="#9333EA" fillOpacity="0.7"/>
+                            <rect x="24" y="12" width="6" height="20" rx="1" fill="#9333EA" fillOpacity="0.5"/>
+                            <path d="M10 10L10 32H30" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h3>Sales Teams Creating Perfect Proposals</h3>
+                        <p style={{ marginBottom: '20px' }}>Empower your sales team to:</p>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                          <li style={{ marginBottom: '10px' }}>✓ Generate complex multi-product quotes instantly</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Run what-if scenarios during client calls</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Always use the latest pricing and promotions</li>
+                        </ul>
+                        <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                          "Sales cycles reduced by 40% with instant, accurate pricing"
+                        </p>
+                      </div>
+
+                      {/* Developer Example */}
+                      <div className="example-card" style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+                        <div className="example-icon" style={{ marginBottom: '20px' }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <rect x="8" y="12" width="24" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M16 18L12 22L16 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M24 18L28 22L24 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M20 16L18 28" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h3>Developers Building Smarter Applications</h3>
+                        <p style={{ marginBottom: '20px' }}>Let Cursor or GitHub Copilot:</p>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                          <li style={{ marginBottom: '10px' }}>✓ Use Excel calculations directly in code</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Generate test cases from spreadsheet logic</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Build UIs that match Excel workflows perfectly</li>
+                        </ul>
+                        <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                          "No more reimplementing Excel formulas—just use the real thing"
+                        </p>
+                      </div>
+
+                      {/* Financial Analysis Example */}
+                      <div className="example-card" style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e0e0e0' }}>
+                        <div className="example-icon" style={{ marginBottom: '20px' }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <circle cx="20" cy="20" r="10" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M20 14V26M16 17H22.5C23.33 17 24 17.67 24 18.5C24 19.33 23.33 20 22.5 20H17.5C16.67 20 16 20.67 16 21.5C16 22.33 16.67 23 17.5 23H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <h3>Financial Analysis at AI Speed</h3>
+                        <p style={{ marginBottom: '20px' }}>Enable Claude or ChatGPT to:</p>
+                        <ul style={{ listStyle: 'none', padding: 0 }}>
+                          <li style={{ marginBottom: '10px' }}>✓ Run complex financial models instantly</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Generate investment scenarios with real calculations</li>
+                          <li style={{ marginBottom: '10px' }}>✓ Create reports using your exact methodologies</li>
+                        </ul>
+                        <p style={{ fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                          "AI can now explain AND calculate our financial projections"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Integration Showcase */}
+            <section className="section-home-integrations">
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <div className="margin-bottom margin-xsmall">
+                            <div className="subheading">
+                              <div>Universal Compatibility</div>
+                            </div>
+                          </div>
+                          <h2>
+                            Works With <span className="text-color-primary">Every AI Platform</span>
+                          </h2>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="integrations-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', maxWidth: '800px', margin: '0 auto' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <rect x="12" y="20" width="24" height="16" rx="2" stroke="#9333EA" strokeWidth="2"/>
+                            <path d="M16 32L24 26L32 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="18" cy="14" r="2" fill="#9333EA"/>
+                            <circle cx="30" cy="14" r="2" fill="#9333EA"/>
+                          </svg>
+                        </div>
+                        <h4>Claude Desktop</h4>
+                        <p style={{ fontSize: '14px', color: '#666' }}>MCP protocol built-in</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <path d="M14 24C14 18.48 18.48 14 24 14C29.52 14 34 18.48 34 24C34 29.52 29.52 34 24 34C22.45 34 21 33.55 19.75 32.8L14 34L15.2 28.25C14.45 27 14 25.55 14 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="20" cy="24" r="1.5" fill="#9333EA"/>
+                            <circle cx="24" cy="24" r="1.5" fill="#9333EA"/>
+                            <circle cx="28" cy="24" r="1.5" fill="#9333EA"/>
+                          </svg>
+                        </div>
+                        <h4>ChatGPT</h4>
+                        <p style={{ fontSize: '14px', color: '#666' }}>Custom GPT ready</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <path d="M20 16L12 24L20 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M28 16L36 24L28 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M16 28H32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h4>Cursor</h4>
+                        <p style={{ fontSize: '14px', color: '#666' }}>Direct integration</p>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                            <circle cx="24" cy="24" r="4" fill="#9333EA"/>
+                            <path d="M24 14V20M24 28V34M14 24H20M28 24H34" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M17.64 17.64L21.88 21.88M26.12 26.12L30.36 30.36M30.36 17.64L26.12 21.88M21.88 26.12L17.64 30.36" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h4>Any Platform</h4>
+                        <p style={{ fontSize: '14px', color: '#666' }}>REST API & SDKs</p>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '60px', padding: '40px', background: '#f8f6fe', borderRadius: '12px' }}>
+                      <h3 style={{ textAlign: 'center', marginBottom: '30px' }}>See It In Action</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'center' }}>
+                        <div>
+                          <h4 style={{ marginBottom: '15px' }}>Claude Desktop + Excel = Magic</h4>
+                          <div style={{ background: 'white', padding: '20px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                              <span style={{ color: '#666' }}>You:</span> "Calculate pricing for 500 units of PRO-001 for an enterprise customer in the US"
+                            </div>
+                            <div style={{ marginBottom: '15px' }}>
+                              <span style={{ color: '#9333EA' }}>Claude:</span> "I'll calculate that using your pricing model..."
+                            </div>
+                            <div style={{ background: '#f0f0f0', padding: '10px', borderRadius: '4px', marginBottom: '15px' }}>
+                              Using SpreadAPI: pricing-model<br/>
+                              → Base price: $12,500<br/>
+                              → Volume discount: -$1,875<br/>
+                              → Enterprise tier: -$1,250<br/>
+                              → Final price: $9,375
+                            </div>
+                            <div>
+                              <span style={{ color: '#9333EA' }}>Claude:</span> "The total is $9,375 including all applicable discounts."
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 style={{ marginBottom: '15px' }}>Real Excel Calculations</h4>
+                          <ul style={{ listStyle: 'none', padding: 0 }}>
+                            <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'start' }}>
+                              <span style={{ color: '#22c55e', marginRight: '10px' }}>✓</span>
+                              <div>
+                                <strong>100% Accurate</strong><br/>
+                                <span style={{ fontSize: '14px', color: '#666' }}>Uses your actual Excel formulas</span>
                               </div>
-                              <p className="text-size-medium">AI can't make up numbers when it's calling your actual Excel formulas. Every calculation is deterministic, traceable, and 100% accurate.</p>
-                            </div>
-                          </div>
-                          <div className="feature-item">
-                            <div className="feature-item-icon-wrapper">
-                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M16 20l4 4 8-8m-8 12a8 8 0 110-16 8 8 0 010 16z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-                            <div className="feature-item-content-wrapper">
-                              <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">Audit Trail Everything</h3>
+                            </li>
+                            <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'start' }}>
+                              <span style={{ color: '#22c55e', marginRight: '10px' }}>✓</span>
+                              <div>
+                                <strong>Always Current</strong><br/>
+                                <span style={{ fontSize: '14px', color: '#666' }}>Updates when you change Excel</span>
                               </div>
-                              <p className="text-size-medium">Every AI request is logged with inputs, outputs, and timestamps. Perfect for compliance, debugging, and understanding AI behavior patterns.</p>
-                            </div>
-                          </div>
+                            </li>
+                            <li style={{ marginBottom: '15px', display: 'flex', alignItems: 'start' }}>
+                              <span style={{ color: '#22c55e', marginRight: '10px' }}>✓</span>
+                              <div>
+                                <strong>Fully Secure</strong><br/>
+                                <span style={{ fontSize: '14px', color: '#666' }}>AI only sees results, not formulas</span>
+                              </div>
+                            </li>
+                          </ul>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Installation Section */}
-            <section className="section-home-installation">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="align-center">
-                        <div className="max-width-large">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Quick Start</div>
-                            </div>
-                          </div>
-                          <div className="text-align-center">
-                            <h2>
-                              Quick Excel AI Setup: <span className="text-color-primary">Connect Claude & ChatGPT</span> in 5 Minutes
-                            </h2>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="installation-steps">
-                      <div className="step-card">
-                        <div className="step-number">1</div>
-                        <h3>Step 1: Install SpreadAPI MCP Server for AI Integration</h3>
-                        <pre className="code-snippet">npm install @spreadapi/mcp-server</pre>
-                        <p>Configure SpreadAPI Model Context Protocol server to enable AI-Excel connectivity</p>
-                      </div>
-                      <div className="step-card">
-                        <div className="step-number">2</div>
-                        <h3>Step 2: Connect AI Assistant to Excel API Endpoint</h3>
-                        <pre className="code-snippet">{`{
-  "mcpServers": {
-    "spreadapi": {
-      "command": "npx",
-      "args": ["@spreadapi/mcp-server"],
-      "env": {
-        "SPREADAPI_URL": "https://your-instance.com"
-      }
-    }
-  }
-}`}</pre>
-                        <p>Link Claude, ChatGPT, or other AI tools to your secure SpreadAPI Excel endpoint</p>
-                      </div>
-                      <div className="step-card">
-                        <div className="step-number">3</div>
-                        <h3>Step 3: Enable AI-Powered Excel Calculations</h3>
-                        <pre className="code-snippet">Claude: "Calculate pricing for 500 units"</pre>
-                        <p>AI assistants automatically discover and execute Excel formulas through secure MCP tools</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Use Cases Section */}
-            <section className="section-home-usecases">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="align-center">
-                        <div className="max-width-large">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Real-World Applications</div>
-                            </div>
-                          </div>
-                          <div className="text-align-center">
-                            <h2>
-                              AI Excel Use Cases: <span className="text-color-primary">Automate Spreadsheet Workflows</span> with MCP
-                            </h2>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="usecase-grid">
-                      <div className="usecase-card">
-                        <div className="usecase-icon">
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M24 14v20m-8-8h16" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <h3>Bulk Excel Processing: AI Handles Thousands of Calculations</h3>
-                        <p>Enable AI to process thousands of Excel calculations simultaneously. Handle bulk operations like customer quote generation, financial modeling, and data analysis at scale—all using your existing spreadsheet formulas.</p>
-                        <div className="usecase-code">
-                          <pre>{`// Process 10,000 quotes in seconds
-const results = await claude.batch_calculate({
-  tool: "pricing_calculator",
-  data: customerList
-});`}</pre>
-                        </div>
-                      </div>
-                      <div className="usecase-card">
-                        <div className="usecase-icon">
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M16 24l6 6 12-12" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                        <h3>AI-Powered Scenario Analysis for Excel Models</h3>
-                        <p>Let AI explore complex Excel scenarios instantly. Analyze margin impacts, forecast variations, and business model changes with 100% accuracy using your actual spreadsheet formulas—no approximations or errors.</p>
-                        <div className="usecase-code">
-                          <pre>{`// Scenario analysis
-for (let increase = 5; increase <= 15; increase++) {
-  const impact = await analyze_scenario({
-    cost_increase: increase
-  });
-}`}</pre>
-                        </div>
-                      </div>
-                      <div className="usecase-card">
-                        <div className="usecase-icon">
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M14 16h20v16H14zm0 8h20M22 16v16" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                        <h3>Automated Excel Reports with AI Intelligence</h3>
-                        <p>Transform Excel data into professional reports automatically. AI generates financial summaries, KPI dashboards, and custom analytics using your spreadsheet calculations—maintaining accuracy while saving hours of manual work.</p>
-                        <div className="usecase-code">
-                          <pre>{`// Generate monthly report
-const report = await claude.generate_report({
-  template: "financial_summary",
-  period: "2024-Q1"
-});`}</pre>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Technical Benefits Section */}
-            <section className="section-home-benefits">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="align-center">
-                        <div className="max-width-large">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Why Engineers Love It</div>
-                            </div>
-                          </div>
-                          <div className="text-align-center">
-                            <h2>
-                              Built for <span className="text-color-primary">Scale & Reliability</span>
-                            </h2>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="benefits-component">
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M20 12v8l4 2m-4 6a8 8 0 100-16 8 8 0 000 16z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>Sub-100ms Latency</h3>
-                        </div>
-                        <p>Intelligent caching and optimized calculation engine ensure AI gets instant responses, even for complex models.</p>
-                      </div>
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M12 20h16m-8-8v16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>Horizontal Scaling</h3>
-                        </div>
-                        <p>Handle millions of AI requests with our cloud-native architecture. Auto-scales based on demand.</p>
-                      </div>
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <circle cx="20" cy="20" r="8" stroke="#9333EA" strokeWidth="1.5" />
-                              <path d="M20 16v4l2 2" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>99.99% Uptime</h3>
-                        </div>
-                        <p>Enterprise-grade reliability with redundancy, failover, and comprehensive monitoring built-in.</p>
-                      </div>
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M16 20l4 4 8-8" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>SOC 2 Compliant</h3>
-                        </div>
-                        <p>Security isn't an afterthought. Encrypted at rest, in transit, with comprehensive audit logging.</p>
-                      </div>
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M14 26l6-12 6 12m-10-4h8" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>Multi-AI Support</h3>
-                        </div>
-                        <p>Works with Claude, ChatGPT, Gemini, and any MCP-compatible AI assistant. Future-proof integration.</p>
-                      </div>
-                      <div className="benefits-item">
-                        <div className="margin-bottom margin-medium">
-                          <div className="icon-wrapper">
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M20 28v-8m0 0l-4 4m4-4l4 4m-4-12v.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="margin-bottom margin-xsmall">
-                          <h3>Self-Hosted Option</h3>
-                        </div>
-                        <p>Deploy on your infrastructure for ultimate control. Docker, Kubernetes, or bare metal—your choice.</p>
                       </div>
                     </div>
                   </div>
@@ -497,7 +442,7 @@ const report = await claude.generate_report({
             </section>
 
             {/* CTA Section */}
-            <section className="section-home-cta">
+            <section id="cta" className="section-home-cta">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -505,19 +450,66 @@ const report = await claude.generate_report({
                       <div className="text-align-center">
                         <div className="max-width-xlarge">
                           <div className="margin-bottom margin-small">
-                            <h2 className="text-color-white">Ready to Give AI Superpowers?</h2>
+                            <h2 className="text-color-white">Ready to Give Your AI Excel Superpowers?</h2>
                           </div>
                           <p className="text-size-medium text-color-white">
-                            Join innovative teams using SpreadAPI to bridge the gap between AI and Excel. 
-                            Start with our free tier and see the magic happen in minutes.
+                            Set up in minutes. See results immediately. Transform how AI works with your business data.
                           </p>
                         </div>
                       </div>
                       <div className="margin-top margin-medium">
-                        <div className="cta-button-group">
-                          <a href="/product#cta" className="button button-white">Start Free Trial</a>
-                          <a href="https://github.com/spreadapi/mcp-server" className="button button-secondary">View on GitHub</a>
+                        <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <a href="/" className="button button-white" style={{ 
+                            padding: '16px 32px', 
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px'
+                          }}>
+                            Start Free Trial
+                          </a>
+                          <a href="/how-excel-api-works" className="button" style={{ 
+                            background: 'transparent',
+                            border: '2px solid white',
+                            color: 'white',
+                            padding: '16px 32px', 
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px'
+                          }}>
+                            See How It Works
+                          </a>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Contact Section */}
+            <section className="section-home-contact">
+              <div className="padding-global">
+                <div className="container-medium">
+                  <div className="padding-section-large">
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <div className="margin-bottom margin-xsmall">
+                            <div className="subheading">
+                              <div>Questions?</div>
+                            </div>
+                          </div>
+                          <h2>
+                            We're Here to <span className="text-color-primary">Help</span>
+                          </h2>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="home-contact-component">
+                      <div className="home-contact-item">
+                        <p>
+                          Whether you're exploring possibilities or ready to implement, we're here to help at <a href="mailto:hello@airrange.io">hello@airrange.io</a>.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -532,6 +524,4 @@ const report = await claude.generate_report({
       </div>
     </>
   );
-};
-
-export default AIIntegrationPage;
+}

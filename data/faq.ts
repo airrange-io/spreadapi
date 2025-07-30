@@ -1,19 +1,19 @@
 export const productFAQs = [
   {
     question: "What is SpreadAPI?",
-    answer: "SpreadAPI transforms your Excel spreadsheets into powerful REST APIs instantly. It allows developers to use Excel's calculation engine and business logic directly in their applications without reimplementing formulas or uploading files."
+    answer: "SpreadAPI transforms your Excel spreadsheets into powerful REST APIs instantly. It allows developers to use Excel's calculation engine and business logic directly in their applications without reimplementing formulas."
   },
   {
-    question: "How does SpreadAPI work without file uploads?",
-    answer: "SpreadAPI connects directly to your Excel files stored in cloud services like OneDrive, SharePoint, or Google Drive. It reads the spreadsheet structure and formulas, then exposes them as API endpoints. Your data stays secure in your cloud storage while the API provides real-time calculations."
+    question: "How does SpreadAPI protect my Excel data?",
+    answer: "SpreadAPI stores your Excel files on secure servers but gives you complete control over what AI and applications can access. You define specific input/output cells and can grant granular permissions to different areas. Your formulas and sensitive data remain private."
   },
   {
     question: "Is SpreadAPI secure for sensitive business data?",
-    answer: "Yes, SpreadAPI is designed with security first. Your Excel files remain in your own cloud storage, we never store your data. All connections are encrypted, and you maintain full control over access permissions. SpreadAPI only processes calculations, not your actual data."
+    answer: "Yes, SpreadAPI is designed with security first. All connections are encrypted, and you maintain full control over access permissions. You decide exactly which cells AI and applications can access, keeping your proprietary formulas and sensitive data private."
   },
   {
     question: "Can I use SpreadAPI with ChatGPT or Claude?",
-    answer: "Absolutely! SpreadAPI supports the MCP (Model Context Protocol) which allows seamless integration with AI assistants like ChatGPT and Claude. Your AI can directly access and use Excel calculations without manual data entry or file uploads."
+    answer: "Absolutely! SpreadAPI supports the MCP (Model Context Protocol) which allows seamless integration with AI assistants like ChatGPT and Claude. You control exactly what parts of your Excel the AI can access - granting permissions to specific cells or ranges while keeping the rest private."
   },
   {
     question: "What Excel features does SpreadAPI support?",

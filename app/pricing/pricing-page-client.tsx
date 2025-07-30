@@ -87,10 +87,30 @@ export default function PricingPageClient() {
                       margin: '0 0 30px 0',
                       flex: 1
                     }}>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ 1 Excel API</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ 100 API calls/month</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Basic support</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Community access</li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        1 Excel API
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        100 API calls/month
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Basic support
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Community access
+                      </li>
                     </ul>
                     <a href="/" style={{
                       display: 'block',
@@ -147,11 +167,36 @@ export default function PricingPageClient() {
                       margin: '0 0 30px 0',
                       flex: 1
                     }}>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ 10 Excel APIs</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ 10,000 API calls/month</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Priority support</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ AI Integration (MCP)</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Custom domains</li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        10 Excel APIs
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        10,000 API calls/month
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Priority support
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        AI Integration (MCP)
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Custom domains
+                      </li>
                     </ul>
                     <a href="/" style={{
                       display: 'block',
@@ -193,12 +238,42 @@ export default function PricingPageClient() {
                       margin: '0 0 30px 0',
                       flex: 1
                     }}>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Unlimited Excel APIs</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ 100,000 API calls/month</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Premium support</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Advanced analytics</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ SLA guarantee</li>
-                      <li style={{ padding: '10px 0', color: '#4b5563' }}>✓ Custom integrations</li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Unlimited Excel APIs
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        100,000 API calls/month
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Premium support
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Advanced analytics
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        SLA guarantee
+                      </li>
+                      <li style={{ padding: '10px 0', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Custom integrations
+                      </li>
                     </ul>
                     <a href="mailto:sales@spreadapi.com" style={{
                       display: 'block',

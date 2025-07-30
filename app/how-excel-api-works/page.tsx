@@ -1,24 +1,39 @@
-'use client';
-
-import React from 'react';
+import { Metadata } from 'next';
 import './how-it-works.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import HowItWorksStyles from './how-it-works-styles';
 
-const HowItWorksPage: React.FC = () => {
+export const metadata: Metadata = {
+  title: 'How Excel API Works - SpreadAPI | Transform Spreadsheets to APIs',
+  description: 'Learn how SpreadAPI transforms your Excel spreadsheets into powerful REST APIs. No coding required. Perfect for AI integration with ChatGPT and Claude.',
+  keywords: 'how excel api works, spreadsheet to api conversion, excel rest api tutorial, excel api integration guide, mcp excel integration',
+  openGraph: {
+    title: 'How SpreadAPI Works - Excel to API in Minutes',
+    description: 'Transform your Excel spreadsheets into REST APIs instantly. Learn the simple 3-step process.',
+    type: 'article',
+    url: 'https://spreadapi.com/how-excel-api-works',
+    siteName: 'SpreadAPI',
+    images: [{
+      url: 'https://spreadapi.com/api/og?title=How%20Excel%20API%20Works&description=Transform%20spreadsheets%20to%20APIs%20in%203%20simple%20steps',
+      width: 1200,
+      height: 630,
+      alt: 'How SpreadAPI Works',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'How SpreadAPI Works - Excel to API',
+    description: 'Transform Excel spreadsheets into REST APIs. No coding required.',
+  },
+};
 
+export default function HowItWorksPage() {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="how-it-works-page">
-        <style jsx global>{`
-          .how-it-works-page,
-          .how-it-works-page * {
-            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
-        `}</style>
+        <HowItWorksStyles />
       
       <div className="page-wrapper">
         {/* Navigation */}
@@ -583,37 +598,61 @@ const HowItWorksPage: React.FC = () => {
                       </div>
                       <div className="practices-list">
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>Clear Naming:</strong> Use descriptive names like "interest_rate" not "input1"
                           </div>
                         </div>
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>Validation:</strong> Set min/max values to prevent calculation errors
                           </div>
                         </div>
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>Documentation:</strong> Add descriptions to help users understand parameters
                           </div>
                         </div>
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>Error Handling:</strong> Use IFERROR() in formulas for robustness
                           </div>
                         </div>
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>Test First:</strong> Always test your API before publishing
                           </div>
                         </div>
                         <div className="practice-item">
-                          <div className="practice-icon">✓</div>
+                          <div className="practice-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16.6667 5L7.5 14.1667L3.33333 10" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <div>
                             <strong>AI Context:</strong> Provide clear descriptions for AI understanding
                           </div>
@@ -668,4 +707,3 @@ const HowItWorksPage: React.FC = () => {
   );
 };
 
-export default HowItWorksPage;

@@ -3,27 +3,6 @@ import React from 'react';
 const Footer: React.FC = () => {
   return (
     <>
-      {/* Want to give it a try section */}
-      <section className="section-footer-cta">
-        <div className="padding-global">
-          <div className="container-large">
-            <div className="padding-section-medium">
-              <div className="footer-cta-component">
-                <div className="footer-cta-content">
-                  <h2>Want to give it a try?</h2>
-                  <p className="text-size-medium">Transform your Excel expertise into AI-powered solutions</p>
-                </div>
-                <div className="footer-cta-button">
-                  <a href="https://airrange.io" className="button button-white">
-                    Get Started Free
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="footer-component">
         <div className="padding-global">
@@ -35,11 +14,13 @@ const Footer: React.FC = () => {
                     <div className="footer-menu-title">Product</div>
                     <div className="footer-menu-list">
                       <a href="/product" className="footer-link">Excel to API</a>
-                      <a href="/product/how-it-works" className="footer-link">How it Works</a>
-                      <a href="/product/ai-integration" className="footer-link">AI Integration</a>
+                      <a href="/how-excel-api-works" className="footer-link">How it Works</a>
+                      <a href="/excel-ai-integration" className="footer-link">AI Integration</a>
                       <a href="/product/editable-areas" className="footer-link">Editable Areas</a>
+                      <a href="/ai-security-control" className="footer-link">AI Security</a>
                     </div>
                   </div>
+                  {/* Use Cases & Examples - Disabled for now
                   <div className="footer-menu-column">
                     <div className="footer-menu-title">Use Cases & Examples</div>
                     <div className="footer-menu-list">
@@ -49,12 +30,13 @@ const Footer: React.FC = () => {
                       <a href="https://airrange.io" className="footer-link">Automated Reporting</a>
                     </div>
                   </div>
+                  */}
                   <div className="footer-menu-column">
                     <div className="footer-menu-title">Company</div>
                     <div className="footer-menu-list">
-                      <a href="https://airrange.io" className="footer-link">About</a>
-                      <a href="https://airrange.io" className="footer-link">Blog</a>
-                      <a href="https://airrange.io" className="footer-link">Contact</a>
+                      <a href="https://www.airrange.io/imprint" className="footer-link">About</a>
+                      <a href="/blog" className="footer-link">Blog</a>
+                      <a href="https://www.airrange.io/contact-us" className="footer-link">Contact</a>
                     </div>
                   </div>
                   <div className="footer-right-section">

@@ -266,7 +266,12 @@ const ProductPage: React.FC = () => {
                           borderRadius: '12px',
                           boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                         }}>
-                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>⚙️</div>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5"/>
+                              <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Full Excel Formula Support</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             VLOOKUP, XLOOKUP, pivot tables, array formulas - everything works exactly as in Excel
@@ -279,7 +284,14 @@ const ProductPage: React.FC = () => {
                           borderRadius: '12px',
                           boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                         }}>
-                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>🔒</div>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5"/>
+                              <circle cx="14" cy="17" r="1.5" fill="#9333EA"/>
+                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5"/>
+                            </svg>
+                          </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No File Uploads to AI</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             Your Excel files stay on our servers. AI only receives calculation results, never your data
@@ -292,7 +304,16 @@ const ProductPage: React.FC = () => {
                           borderRadius: '12px',
                           boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                         }}>
-                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>🤖</div>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                              <circle cx="11" cy="13" r="1" fill="#9333EA"/>
+                              <circle cx="17" cy="13" r="1" fill="#9333EA"/>
+                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             Native Model Context Protocol support for seamless ChatGPT and Claude integration
@@ -305,7 +326,11 @@ const ProductPage: React.FC = () => {
                           borderRadius: '12px',
                           boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                         }}>
-                          <div style={{ fontSize: '28px', marginBottom: '15px' }}>⚡</div>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Real-Time Calculations</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             50ms response times with intelligent caching and pre-warmed Excel engines
