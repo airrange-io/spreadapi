@@ -29,22 +29,28 @@ export async function GET(request) {
     // Parse service index data and build service list
     const services = [];
     
-    // Get all service data with proper status and call counts
-    for (const serviceId of Object.keys(serviceIndex)) {
+    // Use Redis multi for batch operations
+    const multi = redis.multi();
+    
+    // Queue all Redis commands
+    for (const serviceId of serviceIds) {
+      multi.hGetAll(`service:${serviceId}`);
+      multi.exists(`service:${serviceId}:published`);
+      multi.hGet(`service:${serviceId}:published`, 'calls');
+    }
+    
+    // Execute all commands at once
+    const results = await multi.exec();
+    
+    // Process results (3 results per service)
+    for (let i = 0; i < serviceIds.length; i++) {
       try {
-        // Get actual service data from Redis
-        const serviceData = await redis.hGetAll(`service:${serviceId}`);
+        const baseIndex = i * 3;
+        const serviceData = results[baseIndex];
+        const isPublished = results[baseIndex + 1] === 1;
+        const publishedCalls = results[baseIndex + 2];
+        
         if (!serviceData || !serviceData.id) continue;
-        
-        // Check if service is published
-        const isPublished = await redis.exists(`service:${serviceId}:published`) === 1;
-        
-        // Get call count from published hash if published
-        let callCount = 0;
-        if (isPublished) {
-          const publishedCalls = await redis.hGet(`service:${serviceId}:published`, 'calls');
-          callCount = parseInt(publishedCalls) || 0;
-        }
         
         // Build service info with real-time status
         services.push({
@@ -52,13 +58,13 @@ export async function GET(request) {
           name: serviceData.name || 'Untitled Service',
           description: serviceData.description || '',
           status: isPublished ? 'published' : 'draft',
-          calls: callCount,
+          calls: isPublished ? (parseInt(publishedCalls) || 0) : 0,
           createdAt: serviceData.createdAt,
           updatedAt: serviceData.updatedAt,
           lastUsed: null // This could be tracked separately if needed
         });
       } catch (error) {
-        console.error(`Error processing service ${serviceId}:`, error);
+        console.error(`Error processing service ${serviceIds[i]}:`, error);
         // Skip this service if there's an error
         continue;
       }

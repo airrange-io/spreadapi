@@ -21,7 +21,6 @@ interface MCPSettingsModalProps {
 
 const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, onClose }) => {
   const [tokenName, setTokenName] = useState('');
-  const [tokenDescription, setTokenDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [existingTokens, setExistingTokens] = useState<any[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
@@ -94,7 +93,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: tokenName,
-          description: tokenDescription,
           serviceIds: selectedServiceIds
         })
       });
@@ -194,16 +192,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             />
           </div>
 
-          <div>
-            <Text strong>Description (Optional)</Text>
-            <Input.TextArea
-              placeholder="What is this token used for?"
-              value={tokenDescription}
-              onChange={(e) => setTokenDescription(e.target.value)}
-              rows={2}
-              style={{ marginTop: 8 }}
-            />
-          </div>
 
           <div>
             <Text strong>Service Access</Text>

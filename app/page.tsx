@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented, Dropdown } from 'antd';
+import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -275,35 +275,68 @@ const ListsPage: React.FC = observer(() => {
                 <span className="mobile-text">New</span>
               </Button>
               
-              {/* User Menu - Only for authenticated users */}
-              {isAuthenticated && (
-                <Dropdown
-                  menu={{
-                    items: [
-                      {
-                        key: 'profile',
-                        icon: <SettingOutlined />,
-                        label: 'Profile Settings',
-                        onClick: () => router.push('/profile'),
+              {/* User Menu - Always visible */}
+              <Dropdown
+                menu={{
+                  items: isAuthenticated ? [
+                    {
+                      key: 'profile',
+                      icon: <SettingOutlined />,
+                      label: 'Profile Settings',
+                      onClick: () => router.push('/profile'),
+                    },
+                    { type: 'divider' },
+                    {
+                      key: 'logout',
+                      icon: <LogoutOutlined />,
+                      label: 'Logout',
+                      onClick: async () => {
+                        document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                        router.push('/');
+                        setIsAuthenticated(false);
                       },
-                      { type: 'divider' },
-                      {
-                        key: 'logout',
-                        icon: <LogoutOutlined />,
-                        label: 'Logout',
-                        onClick: async () => {
-                          document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                          router.push('/');
-                          setIsAuthenticated(false);
-                        },
-                      },
-                    ],
-                  }}
-                  placement="bottomRight"
-                >
-                  <Button type="text" icon={<UserOutlined />} />
-                </Dropdown>
-              )}
+                    },
+                  ] : [
+                    {
+                      key: 'login',
+                      label: 'Login',
+                      onClick: () => router.push('/login'),
+                    },
+                  ],
+                }}
+                placement="bottomRight"
+                disabled={!isAuthenticated && !authLoading}
+              >
+                <Button 
+                  type="text" 
+                  style={{ padding: 4 }}
+                  icon={
+                    isAuthenticated && user?.email ? (
+                      <Avatar 
+                        style={{ 
+                          backgroundColor: '#9333EA',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                        size={32}
+                      >
+                        {user.email.charAt(0).toUpperCase()}
+                      </Avatar>
+                    ) : (
+                      <Avatar 
+                        style={{ 
+                          backgroundColor: '#f0f0f0',
+                          color: '#999',
+                          cursor: isAuthenticated ? 'pointer' : 'default'
+                        }}
+                        size={32}
+                        icon={<UserOutlined />}
+                      />
+                    )
+                  }
+                />
+              </Dropdown>
             </div>
           </div>
 
