@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs';
+  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs' | 'ai-security-control';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
