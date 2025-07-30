@@ -3,14 +3,15 @@ import '../product/product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 import AIIntegrationStyles from './ai-integration-styles';
+import ProcessSteps from './ProcessSteps';
 
 export const metadata: Metadata = {
   title: 'Excel AI Integration - SpreadAPI | Connect ChatGPT & Claude to Excel',
   description: 'Give AI assistants Excel superpowers. Let ChatGPT and Claude use your spreadsheet calculations for accurate quotes, financial modeling, and business automation.',
-  keywords: 'excel ai integration, chatgpt excel, claude excel, cursor ai excel, mcp protocol, ai spreadsheet automation, excel api for ai',
+  keywords: 'excel ai integration, chatgpt excel, claude excel, mcp protocol, ai spreadsheet automation, excel api for ai',
   openGraph: {
     title: 'Give AI Assistants Excel Superpowers - SpreadAPI',
-    description: 'Connect ChatGPT, Claude, and Cursor to your Excel calculations. Enable accurate, reproducible results.',
+    description: 'Connect ChatGPT and Claude to your Excel calculations. Enable accurate, reproducible results.',
     type: 'article',
     url: 'https://spreadapi.com/excel-ai-integration',
     siteName: 'SpreadAPI',
@@ -61,8 +62,7 @@ export default function AIIntegrationPage() {
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
                               Imagine ChatGPT creating perfect quotes using your pricing spreadsheet. Or Claude analyzing scenarios 
-                              with your financial models. Or Cursor writing code that uses your business calculations. 
-                              SpreadAPI makes it happen—in minutes, not months.
+                              with your financial models. SpreadAPI makes it happen—in minutes, not months.
                             </p>
                           </div>
                         </div>
@@ -175,23 +175,7 @@ export default function AIIntegrationPage() {
                       </div>
                     </div>
 
-                    <div className="process-grid">
-                      <div className="process-item">
-                        <div className="process-number">1</div>
-                        <h3>Upload Your Excel</h3>
-                        <p>Just drag and drop. Your complex pricing model, financial calculator, or planning spreadsheet—SpreadAPI handles them all.</p>
-                      </div>
-                      <div className="process-item">
-                        <div className="process-number">2</div>
-                        <h3>Define What AI Can Use</h3>
-                        <p>Mark input cells (like quantity, customer type) and output cells (like final price, delivery date). Your formulas stay hidden.</p>
-                      </div>
-                      <div className="process-item">
-                        <div className="process-number">3</div>
-                        <h3>Connect Your AI</h3>
-                        <p>One-click setup for Claude Desktop, ChatGPT, or Cursor. Or use our API with any AI platform. That's it—your AI now has Excel superpowers.</p>
-                      </div>
-                    </div>
+                    <ProcessSteps />
                   </div>
                 </div>
               </div>
@@ -274,7 +258,7 @@ export default function AIIntegrationPage() {
                           </svg>
                         </div>
                         <h3>Developers Building Smarter Applications</h3>
-                        <p style={{ marginBottom: '20px' }}>Let Cursor or GitHub Copilot:</p>
+                        <p style={{ marginBottom: '20px' }}>Let GitHub Copilot and AI coding assistants:</p>
                         <ul style={{ listStyle: 'none', padding: 0 }}>
                           <li style={{ marginBottom: '10px' }}>✓ Use Excel calculations directly in code</li>
                           <li style={{ marginBottom: '10px' }}>✓ Generate test cases from spreadsheet logic</li>
@@ -331,15 +315,12 @@ export default function AIIntegrationPage() {
                       </div>
                     </div>
 
-                    <div className="integrations-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', maxWidth: '800px', margin: '0 auto' }}>
+                    <div className="integrations-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px', maxWidth: '800px', margin: '0 auto' }}>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                            <rect x="12" y="20" width="24" height="16" rx="2" stroke="#9333EA" strokeWidth="2"/>
-                            <path d="M16 32L24 26L32 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx="18" cy="14" r="2" fill="#9333EA"/>
-                            <circle cx="30" cy="14" r="2" fill="#9333EA"/>
+                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '48px' }}>
+                          <svg height="48" viewBox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+                            <title>Claude</title>
+                            <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fillRule="nonzero"/>
                           </svg>
                         </div>
                         <h4>Claude Desktop</h4>
@@ -347,28 +328,21 @@ export default function AIIntegrationPage() {
                       </div>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M14 24C14 18.48 18.48 14 24 14C29.52 14 34 18.48 34 24C34 29.52 29.52 34 24 34C22.45 34 21 33.55 19.75 32.8L14 34L15.2 28.25C14.45 27 14 25.55 14 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx="20" cy="24" r="1.5" fill="#9333EA"/>
-                            <circle cx="24" cy="24" r="1.5" fill="#9333EA"/>
-                            <circle cx="28" cy="24" r="1.5" fill="#9333EA"/>
+                          <svg width="48" height="48" viewBox="0 0 2406 2406" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 578.4C1 259.5 259.5 1 578.4 1h1249.1c319 0 577.5 258.5 577.5 577.4V2406H578.4C259.5 2406 1 2147.5 1 1828.6V578.4z" fill="#74aa9c"/>
+                            <path d="M1107.3 299.1c-197.999 0-373.9 127.3-435.2 315.3L650 743.5v427.9c0 21.4 11 40.4 29.4 51.4l344.5 198.515V833.3h.1v-27.9L1372.7 604c33.715-19.52 70.44-32.857 108.47-39.828L1447.6 450.3C1361 353.5 1237.1 298.5 1107.3 299.1zm0 117.5-.6.6c79.699 0 156.3 27.5 217.6 78.4-2.5 1.2-7.4 4.3-11 6.1L952.8 709.3c-18.4 10.4-29.4 30-29.4 51.4V1248l-155.1-89.4V755.8c-.1-187.099 151.601-338.9 339-339.2z" fill="#fff"/>
+                            <use href="#chatgpt-a" transform="rotate(60 1203 1203)"/>
+                            <use href="#chatgpt-a" transform="rotate(120 1203 1203)"/>
+                            <use href="#chatgpt-a" transform="rotate(180 1203 1203)"/>
+                            <use href="#chatgpt-a" transform="rotate(240 1203 1203)"/>
+                            <use href="#chatgpt-a" transform="rotate(300 1203 1203)"/>
+                            <defs>
+                              <path id="chatgpt-a" d="M1107.3 299.1c-197.999 0-373.9 127.3-435.2 315.3L650 743.5v427.9c0 21.4 11 40.4 29.4 51.4l344.5 198.515V833.3h.1v-27.9L1372.7 604c33.715-19.52 70.44-32.857 108.47-39.828L1447.6 450.3C1361 353.5 1237.1 298.5 1107.3 299.1zm0 117.5-.6.6c79.699 0 156.3 27.5 217.6 78.4-2.5 1.2-7.4 4.3-11 6.1L952.8 709.3c-18.4 10.4-29.4 30-29.4 51.4V1248l-155.1-89.4V755.8c-.1-187.099 151.601-338.9 339-339.2z" fill="#fff"/>
+                            </defs>
                           </svg>
                         </div>
                         <h4>ChatGPT</h4>
                         <p style={{ fontSize: '14px', color: '#666' }}>Custom GPT ready</p>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M20 16L12 24L20 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M28 16L36 24L28 32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M16 28H32" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
-                        </div>
-                        <h4>Cursor</h4>
-                        <p style={{ fontSize: '14px', color: '#666' }}>Direct integration</p>
                       </div>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
@@ -459,11 +433,14 @@ export default function AIIntegrationPage() {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button button-white" style={{ 
+                          <a href="/" className="button" style={{ 
+                            background: 'white',
+                            color: '#1a1a1a',
                             padding: '16px 32px', 
                             fontSize: '18px',
                             fontWeight: '600',
-                            minWidth: '200px'
+                            minWidth: '200px',
+                            border: 'none'
                           }}>
                             Start Free Trial
                           </a>

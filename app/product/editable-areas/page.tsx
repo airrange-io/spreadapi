@@ -603,7 +603,15 @@ try {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="cta-button-group">
-                          <a href="/product#cta" className="button button-white">Start Free Trial</a>
+                          <a href="/product#cta" className="button" style={{
+                            background: 'white',
+                            color: '#1a1a1a',
+                            padding: '16px 32px',
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px',
+                            border: 'none'
+                          }}>Start Free Trial</a>
                           <a href="/docs/editable-areas" className="button button-secondary">Read Documentation</a>
                         </div>
                       </div>

@@ -18,7 +18,6 @@ interface BlogClientProps {
 export default function BlogClient({ posts, categories, locale = 'en', categoryMapping }: BlogClientProps) {
   // Use the first category as the default (which should be 'All' or its translation)
   const [selectedCategory, setSelectedCategory] = useState(categories[0] || 'All');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Check if we're on the "All" category (first category in the list)
   const isAllCategory = selectedCategory === categories[0];
@@ -41,49 +40,18 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
         }
       `}</style>
 
-      {/* Navigation with custom language switcher */}
-      <nav className="navbar-component">
-        <div className="navbar-container">
-          <a href="/product" className="navbar-logo-link">
-            <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navbar-logo" />
-          </a>
-
-          <div className="navbar-menu">
-            <a href="/product" className="navbar-link">Overview</a>
-            <a href="/how-excel-api-works" className="navbar-link">How it Works</a>
-            <a href="/excel-ai-integration" className="navbar-link">AI Integration</a>
-          </div>
-
-          <div className="navbar-button-wrapper">
-            <LanguageSwitcher currentLocale={locale} />
-            <a href="/product#cta" className="button hide-mobile-portrait">Get Started</a>
-            <button
-              className="navbar-menu-button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <div className={`menu-icon ${mobileMenuOpen ? 'open' : ''}`}>
-                <div className="menu-icon-line-top"></div>
-                <div className="menu-icon-line-center">
-                  <div className="menu-icon-line-center-inner"></div>
-                </div>
-                <div className="menu-icon-line-bottom"></div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="mobile-menu">
-            <nav className="mobile-nav">
-              <a href="/product" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>Overview</a>
-              <a href="/how-excel-api-works" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>How it Works</a>
-              <a href="/excel-ai-integration" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>AI Integration</a>
-              <a href="/product#cta" className="button w-button" onClick={() => setMobileMenuOpen(false)}>Get Started</a>
-            </nav>
-          </div>
-        )}
-      </nav>
+      {/* Navigation */}
+      <Navigation currentPage="blog" locale={locale} showLanguageSwitcher={false} />
+      
+      {/* Language Switcher positioned in navbar */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '20px', 
+        right: '120px', 
+        zIndex: 10 
+      }}>
+        <LanguageSwitcher currentLocale={locale} />
+      </div>
 
       {/* Hero Section */}
       <div className="blog-hero">

@@ -342,7 +342,15 @@ export default function PricingPageClient() {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center">
-                          <a href="/" className="button button-white">
+                          <a href="/" className="button" style={{
+                            background: 'white',
+                            color: '#1a1a1a',
+                            padding: '16px 32px',
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            minWidth: '200px',
+                            border: 'none'
+                          }}>
                             Get Instant API Access
                           </a>
                         </div>

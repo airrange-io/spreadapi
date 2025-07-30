@@ -722,11 +722,14 @@ const ProductPage: React.FC = () => {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button button-white" style={{ 
+                          <a href="/" className="button" style={{ 
+                            background: 'white',
+                            color: '#1a1a1a',
                             padding: '16px 32px', 
                             fontSize: '18px',
                             fontWeight: '600',
-                            minWidth: '200px'
+                            minWidth: '200px',
+                            border: 'none'
                           }}>
                             Get Instant API Access
                           </a>
