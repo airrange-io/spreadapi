@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { jwtVerify, createRemoteJWKSet } from "jose";
+import { DEMO_SERVICE_ID, DEMO_USER_ID } from "@/lib/constants";
 
 const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
@@ -42,11 +43,11 @@ export async function middleware(req: NextRequest) {
   const isServicesListEndpoint = pathname === '/api/v1/services';
   
   // Allow unauthenticated access to demo service (both page and API routes)
-  const isDemoService = pathname === '/service/test1234_mdejqoua8ptor' || 
-                        pathname.startsWith('/service/test1234_mdejqoua8ptor/') ||
-                        pathname === '/api/services/test1234_mdejqoua8ptor' ||
-                        pathname.startsWith('/api/services/test1234_mdejqoua8ptor/') ||
-                        pathname === '/api/workbook/test1234_mdejqoua8ptor';
+  const isDemoService = pathname === `/service/${DEMO_SERVICE_ID}` || 
+                        pathname.startsWith(`/service/${DEMO_SERVICE_ID}/`) ||
+                        pathname === `/api/services/${DEMO_SERVICE_ID}` ||
+                        pathname.startsWith(`/api/services/${DEMO_SERVICE_ID}/`) ||
+                        pathname === `/api/workbook/${DEMO_SERVICE_ID}`;
   
   // Skip auth for public routes and demo service
   if (!isProtectedRoute || isDemoService || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
@@ -54,7 +55,7 @@ export async function middleware(req: NextRequest) {
     if (isDemoService) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-demo-mode', 'true');
-      requestHeaders.set('x-user-id', 'demo-user');
+      requestHeaders.set('x-user-id', DEMO_USER_ID);
       
       return NextResponse.next({
         request: {

@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 import EmptyWorkbookState from './EmptyWorkbookState';
 import { appStore } from '@/stores/AppStore';
+import { DEMO_SERVICE_ID } from '@/lib/constants';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
 const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
@@ -254,7 +255,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           console.log('Service data loaded:', data);
 
           // Check if this is the demo service
-          const isDemo = serviceId === 'test1234_mdejqoua8ptor';
+          const isDemo = serviceId === DEMO_SERVICE_ID;
           setIsDemoMode(isDemo);
 
           // Check if this is the full endpoint response or regular endpoint

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import redis, { isRedisConnected } from '../../../lib/redis';
 import { CACHE_KEYS } from '../../../lib/cacheHelpers';
+import { DEMO_SERVICE_ID } from '@/lib/constants';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const apiId = searchParams.get('api') || 'test1234_mdejqoua8ptor'; // Warming service
+    const apiId = searchParams.get('api') || DEMO_SERVICE_ID; // Warming service
     
     const diagnosis = {
       apiId,

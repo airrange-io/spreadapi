@@ -38,5 +38,5 @@ export const CACHE_KEYS = {
 export const CACHE_TTL = {
   api: 30 * 60,      // 30 minutes for API definitions
   result: 5 * 60,    // 5 minutes for calculation results
-  workbook: 10 * 60  // 10 minutes for workbooks (future use)
+  workbook: 60 * 60  // 60 minutes for workbooks
 };

@@ -5,6 +5,7 @@ import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
+import { DEMO_SERVICE_ID } from '@/lib/constants';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -41,7 +42,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     // Check if demo service should be hidden
     const shouldHideDemo = localStorage.getItem('hideDemoService') === 'true';
     setHideDemoService(shouldHideDemo);
-    
+
     // Only load services once when auth state is determined
     if (isAuthenticated !== null) {
       loadServices();
@@ -105,11 +106,11 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       // If not authenticated, show demo service
       if (isAuthenticated === false) {
         const demoService: Service = {
-          id: 'test1234_mdejqoua8ptor',
-          name: 'Demo: Sales Calculator',
-          description: 'Try our Excel API with this interactive sales calculator demo. Calculate totals, apply discounts, and see real-time results!',
+          id: DEMO_SERVICE_ID,
+          name: 'Demo: Compound Interest Calculator',
+          description: 'Try our Excel API with this interactive compound interest calculator demo.',
           status: 'published',
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: '2025-01-01T00:00:00Z',
           updatedAt: new Date().toISOString(),
           calls: 0,
           lastUsed: null
@@ -145,22 +146,22 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       if (response.ok) {
         const data = await response.json();
         const loadedServices = data.services || [];
-        
+
         // If user has no services, add the demo service (unless hidden)
         if (loadedServices.length === 0 && !shouldHideDemo) {
           const demoService: Service = {
-            id: 'test1234_mdejqoua8ptor',
-            name: 'Demo: Sales Calculator',
-            description: 'Try our Excel API with this interactive sales calculator demo. Calculate totals, apply discounts, and see real-time results!',
+            id: DEMO_SERVICE_ID,
+            name: 'Demo: Compound Interest Calculator',
+            description: 'Try our Excel API with this interactive compound interest calculator demo.',
             status: 'published',
-            createdAt: '2024-01-01T00:00:00Z',
+            createdAt: '2025-01-01T00:00:00Z',
             updatedAt: new Date().toISOString(),
             calls: 0,
             lastUsed: null
           };
           loadedServices.push(demoService);
         }
-        
+
         setServices(loadedServices);
         // Initialize filtered services with all services if no search query
         if (!searchQuery.trim()) {
@@ -238,7 +239,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'name',
       render: (text: string, record: Service) => (
         <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
-          {record.id === 'test1234_mdejqoua8ptor' ? `${text} (Try Demo)` : text}
+          {record.id === DEMO_SERVICE_ID ? `${text}` : text}
           {clickedServiceId === record.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
         </Button>
       ),
@@ -329,7 +330,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   disabled: record.status === 'draft',
                 },
                 { type: 'divider' },
-                ...(record.id !== 'test1234_mdejqoua8ptor' ? [{
+                ...(record.id !== DEMO_SERVICE_ID ? [{
                   key: 'delete',
                   icon: <DeleteOutlined />,
                   label: (
@@ -487,7 +488,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     icon={<EditOutlined />}
                     onClick={() => handleEdit(service.id)}
                   >
-                    {service.id === 'test1234_mdejqoua8ptor' ? 'Try Demo' : 'Edit'}
+                    {service.id === DEMO_SERVICE_ID ? 'Try Demo' : 'Edit'}
                   </Button>
                 </div>,
                 // <div onClick={(e) => e.stopPropagation()}>
@@ -505,7 +506,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     type="text"
                     icon={<LineChartOutlined />}
                     onClick={() => handleUsage(service.id)}
-                    disabled={service.status === 'draft' || service.id === 'test1234_mdejqoua8ptor'}
+                    disabled={service.status === 'draft' || service.id === DEMO_SERVICE_ID}
                   >
                     Usage
                   </Button>
@@ -541,7 +542,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                         </Text>
                       </Space>
 
-                      {service.id !== 'test1234_mdejqoua8ptor' && (
+                      {service.id !== DEMO_SERVICE_ID && (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Popconfirm
                             title="Delete this service?"

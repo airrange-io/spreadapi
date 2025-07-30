@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { putBlob, delBlob } from '../../../../lib/blob-client';
 import redis from '../../../../lib/redis';
+import { DEMO_SERVICE_ID, DEMO_USER_ID } from '@/lib/constants';
 
 // GET /api/workbook/[id] - Retrieve workbook from blob storage
 export async function GET(request, { params }) {
@@ -33,7 +34,7 @@ export async function GET(request, { params }) {
     
     
     // Verify ownership (allow demo-user to access demo service)
-    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    const isDemoAccess = userId === DEMO_USER_ID && id === DEMO_SERVICE_ID;
     if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -194,7 +195,7 @@ export async function PUT(request, { params }) {
     }
     
     // Verify ownership (allow demo-user to access demo service)
-    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    const isDemoAccess = userId === DEMO_USER_ID && id === DEMO_SERVICE_ID;
     if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -309,7 +310,7 @@ export async function DELETE(request, { params }) {
     }
     
     // Verify ownership (allow demo-user to access demo service)
-    const isDemoAccess = userId === 'demo-user' && id === 'test1234_mdejqoua8ptor';
+    const isDemoAccess = userId === DEMO_USER_ID && id === DEMO_SERVICE_ID;
     if (service.userId !== userId && !isDemoAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
