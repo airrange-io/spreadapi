@@ -5,6 +5,8 @@ import './product.css';
 import Footer from '@/components/product/Footer';
 import { developerFAQs } from '@/data/developer-faq';
 import Navigation from '@/components/Navigation';
+import { IntercomProvider } from '../components/IntercomProvider';
+import { IntercomScript } from '../components/IntercomScript';
 
 const ProductPage: React.FC = () => {
   const [ctaEmail, setCtaEmail] = useState('');
@@ -24,7 +26,7 @@ const ProductPage: React.FC = () => {
   const faqItems = developerFAQs;
 
   return (
-    <>
+    <IntercomProvider>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <style jsx global>{`
@@ -794,7 +796,8 @@ const ProductPage: React.FC = () => {
           <Footer />
         </div>
       </div>
-    </>
+      <IntercomScript />
+    </IntercomProvider>
   );
 };
 

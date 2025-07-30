@@ -12,6 +12,8 @@ import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import Sidebar from '@/components/Sidebar';
 import ServiceList from '@/components/ServiceList';
 import dynamic from 'next/dynamic';
+import { IntercomProvider } from './components/IntercomProvider';
+import { IntercomScript } from './components/IntercomScript';
 
 // Lazy load the MCP Settings Modal
 const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), {
@@ -172,10 +174,11 @@ const ListsPage: React.FC = observer(() => {
   };
 
   return (
-    <Layout style={{ height: '100vh' }}>
-      <Sidebar />
+    <IntercomProvider>
+      <Layout style={{ height: '100vh' }}>
+        <Sidebar />
 
-      <Layout
+        <Layout
         style={{
           marginLeft: 0, // No margin needed since sidebar is now a drawer overlay
           transition: TRANSITIONS.default,
@@ -420,12 +423,14 @@ const ListsPage: React.FC = observer(() => {
         </Content>
       </Layout>
       
-      {/* MCP Settings Modal */}
-      <MCPSettingsModal
-        visible={showMCPModal}
-        onClose={() => setShowMCPModal(false)}
-      />
-    </Layout>
+        {/* MCP Settings Modal */}
+        <MCPSettingsModal
+          visible={showMCPModal}
+          onClose={() => setShowMCPModal(false)}
+        />
+      </Layout>
+      <IntercomScript />
+    </IntercomProvider>
   );
 });
 
