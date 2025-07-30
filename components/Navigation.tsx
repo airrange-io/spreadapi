@@ -2,6 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitcher'), {
+  ssr: false,
+});
 
 interface NavigationProps {
   currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs' | 'ai-security-control';
@@ -24,7 +29,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   ];
 
   // Filter out the current page from the menu
-  const visibleMenuItems = menuItems.filter(item => item.key !== currentPage);
+  let visibleMenuItems = menuItems.filter(item => item.key !== currentPage);
+  
+  // Show fewer items on blog page to make room for language selector
+  if (currentPage === 'blog') {
+    visibleMenuItems = visibleMenuItems.filter(item => 
+      item.key === 'product' || item.key === 'how-excel-api-works' || item.key === 'excel-ai-integration'
+    );
+  }
 
   return (
     <nav className={`navbar-component ${className}`}>
@@ -44,7 +56,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
         <div className="navbar-button-wrapper">
           {showLanguageSwitcher && (
             <div style={{ marginRight: '16px' }}>
-              {/* LanguageSwitcher would be imported and used here */}
+              <LanguageSwitcher currentLocale={locale} />
             </div>
           )}
           <Link href="/product#cta" className="button hide-mobile-portrait">Get Started</Link>

@@ -41,17 +41,7 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
       `}</style>
 
       {/* Navigation */}
-      <Navigation currentPage="blog" locale={locale} showLanguageSwitcher={false} />
-      
-      {/* Language Switcher positioned in navbar */}
-      <div style={{ 
-        position: 'absolute', 
-        top: '20px', 
-        right: '120px', 
-        zIndex: 10 
-      }}>
-        <LanguageSwitcher currentLocale={locale} />
-      </div>
+      <Navigation currentPage="blog" locale={locale} showLanguageSwitcher={true} />
 
       {/* Hero Section */}
       <div className="blog-hero">
