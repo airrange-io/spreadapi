@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { appStore } from '@/stores/AppStore';
@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-export const IntercomProvider = observer(({ children }: { children?: React.ReactNode }) => {
+const IntercomProviderInner = observer(({ children }: { children?: React.ReactNode }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const appId = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || 'vt5lp0iv';
@@ -61,3 +61,11 @@ export const IntercomProvider = observer(({ children }: { children?: React.React
 
   return <>{children}</>;
 });
+
+export const IntercomProvider = ({ children }: { children?: React.ReactNode }) => {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <IntercomProviderInner>{children}</IntercomProviderInner>
+    </Suspense>
+  );
+};
