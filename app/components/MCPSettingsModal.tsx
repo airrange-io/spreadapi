@@ -101,7 +101,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
         const data = await res.json();
         setGeneratedToken(data.token);
         setTokenName('');
-        setTokenDescription('');
         messageApi.success('Token generated successfully');
         await loadTokens();
       } else {
