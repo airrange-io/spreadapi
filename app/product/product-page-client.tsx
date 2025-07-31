@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import './product.css';
 import Footer from '@/components/product/Footer';
+import ProductHeader from '@/components/product/ProductHeader';
 import { developerFAQs } from '@/data/developer-faq';
 import Navigation from '@/components/Navigation';
 import { IntercomProvider } from '../components/IntercomProvider';
@@ -44,128 +46,187 @@ const ProductPage: React.FC = () => {
 
           <main className="main-wrapper">
             {/* Hero Section */}
-            <header className="section-home-header">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="home-header-component">
-                      <div className="margin-bottom margin-xlarge">
-                        <div className="text-align-center">
-                          <div className="max-width-xlarge align-center">
-                            <div className="margin-bottom margin-xsmall">
-                              <div className="subheading">
-                                <div>Excel as a Web Service</div>
-                              </div>
-                            </div>
-                            <div className="margin-bottom margin-small">
-                              <h1>
-                                Turn Excel Into APIs.<br />
-                                <span className="text-color-primary">Let AI Talk to Spreadsheets</span>
-                              </h1>
-                            </div>
-                            <p className="text-size-medium" style={{ maxWidth: '560px', margin: '0 auto' }}>Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations.</p>
-                            <div className="margin-top margin-medium">
-                              <div className="waitlist-form-signup" style={{ justifyContent: 'center', gap: '16px' }}>
-                                <a href="/" className="button w-button" style={{ 
-                                  width: 'auto', 
-                                  padding: '14px 28px',
-                                  fontSize: '16px',
-                                  fontWeight: '600'
-                                }}>
-                                  Get Instant API Access
-                                </a>
-                                <a href="/docs" className="button" style={{ 
-                                  width: 'auto', 
-                                  padding: '14px 28px',
-                                  background: 'transparent',
-                                  border: '2px solid #9333EA',
-                                  color: '#9333EA',
-                                  fontSize: '16px',
-                                  fontWeight: '600'
-                                }}>
-                                  View Documentation
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="header-image-wrapper">
-                        <div className="header-image-placeholder">
-                          <svg viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="800" height="500" fill="#F8F6FE" />
-                            <rect x="50" y="50" width="700" height="400" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
-                            <rect x="80" y="80" width="200" height="340" rx="4" fill="#F8F6FE" />
-                            <rect x="300" y="80" width="200" height="160" rx="4" fill="#F8F6FE" />
-                            <rect x="520" y="80" width="200" height="220" rx="4" fill="#F8F6FE" />
-                            <rect x="300" y="260" width="200" height="160" rx="4" fill="#F8F6FE" />
-                            <rect x="520" y="320" width="200" height="100" rx="4" fill="#F8F6FE" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </header>
+            <ProductHeader
+              subheading="Excel as a Web Service"
+              title={<>Turn Excel Into APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
+              description="Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations."
+              primaryButtonText="Get Instant API Access"
+              primaryButtonHref="/"
+              secondaryButtonText="View Documentation"
+              secondaryButtonHref="/docs"
+              showImage={true}
+            />
 
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
               <div className="padding-global">
                 <div className="container-large">
-                  <div className="text-align-center" style={{ maxWidth: '900px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '2.5rem', marginBottom: '30px' }}>
-                      Why LLMs <span style={{ color: '#ef4444' }}>Fail</span> at Excel Calculations
+                  <div className="text-align-center" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
+                      Why AI Struggles with <span style={{ color: '#9333EA' }}>Spreadsheet Math</span>
                     </h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', marginTop: '50px' }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M30 20V30M30 40H30.01" stroke="#ef4444" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                            <circle cx="30" cy="30" r="18" stroke="#ef4444" strokeWidth="2" strokeDasharray="4 4"/>
+                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
+                      AI's honest confessions about Excel calculations
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 14H8M12 14H16M20 14H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M14 4V8M14 12V16M14 20V24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="14" cy="14" r="3" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
                           </svg>
                         </div>
-                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Hallucinated Numbers</h3>
-                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
-                          LLMs guess at calculations and often return completely wrong results, especially with complex formulas
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Run Your Formulas"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          I see your formulas and Excel's results, but I can't execute them. I work with saved values, not live calculations.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Claude, ChatGPT & Gemini
                         </p>
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <rect x="15" y="15" width="30" height="30" rx="4" stroke="#9333EA" strokeWidth="2"/>
-                            <path d="M22 25H38M22 30H38M22 35H38" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
-                            <path d="M35 40L40 45M40 45L45 40M40 45V20" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="6" width="16" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M10 10H14M10 14H12M10 18H16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="20" cy="20" r="6" fill="white"/>
+                            <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
                           </svg>
                         </div>
-                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Lost Formulas</h3>
-                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
-                          File uploads only capture static values, losing all your Excel logic, formulas, and dependencies
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Only Know 50-100 Functions"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          Basic math? Sure. But Excel has hundreds more - XIRR, YIELD, array formulas? I'll miss edge cases.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Claude, being honest
                         </p>
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
-                          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="60" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" />
-                            <path d="M35 27H25C23.8954 27 23 27.8954 23 29V39C23 40.1046 23.8954 41 25 41H35C36.1046 41 37 40.1046 37 39V29C37 27.8954 36.1046 27 35 27Z" stroke="#9333EA" strokeWidth="2"/>
-                            <path d="M27 27V23C27 21.6739 27.5268 20.4021 28.4645 19.4645C29.4021 18.5268 30.6739 18 32 18C33.3261 18 34.5979 18.5268 35.5355 19.4645C36.4732 20.4021 37 21.6739 37 23V27" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3"/>
-                            <circle cx="30" cy="34" r="1.5" fill="#9333EA"/>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 14L12 14M12 14L16 14M12 14L12 10M12 14L12 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M16 10L20 10M20 10L20 14M20 10L24 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M16 18L20 18M20 18L20 14M20 18L24 22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="12" cy="14" r="2" fill="#9333EA"/>
                           </svg>
                         </div>
-                        <h3 style={{ color: '#9333EA', marginBottom: '10px' }}>Data Security Risk</h3>
-                        <p style={{ color: '#666666', fontSize: '0.95rem' }}>
-                          Uploading sensitive spreadsheets to AI providers exposes your proprietary business logic
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"My Errors Compound Fast"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          One small mistake in cell A1? By row 1000, I'm completely off. Error propagation is my nightmare.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Every AI Model
+                        </p>
+                      </div>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="14" cy="14" r="11" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Take Forever to Calculate"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          1000+ formulas? That's 2-15 minutes of dependency mapping. Excel does it in 1-2 seconds.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Every AI Model
+                        </p>
+                      </div>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M16 14L24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <text x="14" y="17" textAnchor="middle" fontSize="12" fill="#9333EA">20%</text>
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"Complex Models? 20% Accuracy"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          With 1000+ formulas, I have 20-40% chance of getting it right. SpreadAPI? Always 100%.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Claude & ChatGPT
+                        </p>
+                      </div>
+                      <div style={{ 
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
+                            <rect x="16" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
+                            <rect x="10" y="18" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M12 12L16 12M14 16L14 18" stroke="#9333EA" strokeWidth="1.5"/>
+                            <circle cx="22" cy="6" r="4" fill="white"/>
+                            <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5"/>
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Handle Dependencies"</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          Cell A depends on B, B on C... I spend most time figuring out order, not calculating.
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          - Gemini
                         </p>
                       </div>
                     </div>
-                    <div style={{ marginTop: '50px', padding: '30px', background: 'rgba(147, 51, 234, 0.1)', borderRadius: '12px', border: '1px solid rgba(147, 51, 234, 0.3)' }}>
-                      <h3 style={{ color: '#9333EA', marginBottom: '15px' }}>The SpreadAPI Solution</h3>
-                      <p style={{ color: '#374151', fontSize: '1.1rem', lineHeight: '1.6' }}>
-                        Let LLMs handle the words, leave calculations to Excel. Your spreadsheets stay on our secure servers, 
-                        never uploaded to AI providers. Real Excel engine ensures 100% accurate results every time.
+                    
+                    <div style={{ marginTop: '50px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '20px', color: '#374151', marginBottom: '30px' }}>
+                        <strong style={{ color: '#9333EA' }}>SpreadAPI:</strong> Your Excel stays Excel. AI gets exact results. Always 100% accurate.
                       </p>
+                      <Link href="/product/why-ai-fails-at-math" style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '14px 28px',
+                        background: 'white',
+                        border: '2px solid #9333EA',
+                        borderRadius: '8px',
+                        color: '#9333EA',
+                        textDecoration: 'none',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        Read the Full AI Confession →
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -274,9 +335,9 @@ const ProductPage: React.FC = () => {
                               <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Full Excel Formula Support</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>500+ Excel Functions</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            VLOOKUP, XLOOKUP, pivot tables, array formulas - everything works exactly as in Excel
+                            VLOOKUP, XLOOKUP, array formulas, financial functions - 500+ functions work exactly as in Excel
                           </p>
                         </div>
                         
@@ -336,6 +397,44 @@ const ProductPage: React.FC = () => {
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Real-Time Calculations</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             50ms response times with intelligent caching and pre-warmed Excel engines
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <circle cx="14" cy="14" r="9" stroke="#9333EA" strokeWidth="1.5"/>
+                              <path d="M14 10V14L17 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M20 4L22 6M22 6L24 4M22 6V2" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Version Control Built-In</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            Update your Excel anytime. AI instantly uses the new version without any code changes
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M14 14L20 8M20 8H16M20 8V12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="14" cy="14" r="2" fill="#9333EA"/>
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Zero Learning Curve</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            Your team keeps using Excel as always. AI gets superpowers. No training needed
                           </p>
                         </div>
                       </div>
