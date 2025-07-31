@@ -18,13 +18,29 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
   const appId = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || 'vt5lp0iv';
   const [shouldInitialize, setShouldInitialize] = useState(false);
 
-  // Delay initialization by 3 seconds
+  // Sync initialization with script loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShouldInitialize(true);
-    }, 3000);
+    const checkIntercomLoaded = () => {
+      if (typeof window !== 'undefined' && window.Intercom) {
+        setShouldInitialize(true);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    // Check immediately in case script already loaded
+    checkIntercomLoaded();
+
+    // Set up interval to check for Intercom availability
+    const interval = setInterval(checkIntercomLoaded, 500);
+
+    // Stop checking after 15 seconds
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {

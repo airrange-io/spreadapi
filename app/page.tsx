@@ -3,15 +3,27 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, Space, Popconfirm, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
-import Sidebar from '@/components/Sidebar';
-import ServiceList from '@/components/ServiceList';
 import dynamic from 'next/dynamic';
+
+// Dynamically import heavy components
+const Sidebar = dynamic(() => import('@/components/Sidebar'), {
+  ssr: false,
+  loading: () => null
+});
+
+const ServiceList = dynamic(() => import('@/components/ServiceList'), {
+  ssr: true,
+  loading: () => {
+    const ServiceListSkeleton = require('@/components/ServiceListSkeleton').default;
+    return <ServiceListSkeleton />;
+  }
+});
 import { IntercomProvider } from './components/IntercomProvider';
 import { IntercomScript } from './components/IntercomScript';
 
