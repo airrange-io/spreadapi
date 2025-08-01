@@ -1,16 +1,34 @@
 'use client';
 
 import React from 'react';
-import { Card, Row, Col, Skeleton, Space } from 'antd';
+import { Card, Row, Col, Skeleton, Space, Spin } from 'antd';
 
-export default function ServiceListSkeleton() {
-  // Show 4 skeleton cards as a reasonable default
-  const skeletonCards = Array(4).fill(null);
+interface ServiceListSkeletonProps {
+  viewMode?: 'card' | 'table';
+}
+
+export default function ServiceListSkeleton({ viewMode = 'card' }: ServiceListSkeletonProps) {
+  // Show 4 skeleton items as a reasonable default
+  const skeletonItems = Array(4).fill(null);
+  
+  if (viewMode === 'table') {
+    return (
+      <div style={{ 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '400px',
+        padding: '20px 0'
+      }}>
+        <Spin size="default" />
+      </div>
+    );
+  }
   
   return (
     <div style={{ padding: '20px 0' }}>
       <Row gutter={[16, 16]}>
-        {skeletonCards.map((_, index) => (
+        {skeletonItems.map((_, index) => (
           <Col xs={24} sm={24} md={12} lg={8} xl={6} key={`skeleton-${index}`}>
             <Card
               style={{ cursor: 'pointer' }}

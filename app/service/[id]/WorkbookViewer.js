@@ -11,7 +11,7 @@ import * as GC from "@mescius/spread-sheets";
 import "@mescius/spread-sheets-io";
 // import "@mescius/spread-sheets-charts";
 // import "@mescius/spread-sheets-shapes";
-// import "@mescius/spread-sheets-tablesheet";
+import "@mescius/spread-sheets-tablesheet";
 // import "@mescius/spread-sheets-languagepackages";
 import "@mescius/spread-sheets-designer-resources-en";
 // import "@mescius/spread-sheets-formula-panel";

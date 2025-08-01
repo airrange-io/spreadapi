@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
@@ -621,6 +621,51 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
+  const handleExportToExcel = async () => {
+    try {
+      if (!spreadInstance) {
+        message.error('Spreadsheet not loaded');
+        return;
+      }
+
+      message.loading('Exporting to Excel...', 0);
+      
+      // Use the spread instance's built-in export functionality
+      const exportOptions = {
+        includeBindingSource: true,
+        includeStyles: true,
+        includeFormulas: true,
+        saveAsView: false,
+        includeUnusedStyles: false,
+        includeAutoMergedCells: false
+      };
+
+      spreadInstance.export((blob) => {
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${apiConfig.name || 'spreadsheet'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        message.destroy();
+        message.success('Excel file exported successfully');
+      }, (error) => {
+        console.error('Export error:', error);
+        message.destroy();
+        message.error('Failed to export Excel file');
+      }, exportOptions);
+
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      message.destroy();
+      message.error('Failed to export: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -1103,6 +1148,28 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   <DownOutlined />
                 </Space>
               </Button>
+            </Dropdown>
+          )}
+          {!isDemoMode && (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'export-excel',
+                    label: 'Export to Excel',
+                    icon: <FileExcelOutlined />,
+                    onClick: () => handleExportToExcel()
+                  }
+                ]
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button 
+                type="text" 
+                icon={<MoreOutlined />}
+                style={{ marginLeft: 8 }}
+              />
             </Dropdown>
           )}
         </Space>

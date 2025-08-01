@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import dynamic from 'next/dynamic';
+import ServiceListSkeleton from '@/components/ServiceListSkeleton';
 
 // Dynamically import heavy components
 const Sidebar = dynamic(() => import('@/components/Sidebar'), {
@@ -18,11 +19,7 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
 });
 
 const ServiceList = dynamic(() => import('@/components/ServiceList'), {
-  ssr: true,
-  loading: () => {
-    const ServiceListSkeleton = require('@/components/ServiceListSkeleton').default;
-    return <ServiceListSkeleton />;
-  }
+  ssr: true
 });
 import { IntercomProvider } from './components/IntercomProvider';
 import { IntercomScript } from './components/IntercomScript';
@@ -50,7 +47,12 @@ const ListsPage: React.FC = observer(() => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [showMCPModal, setShowMCPModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
+    // Initialize with table view on server, will be updated on client
+    if (typeof window === 'undefined') return 'table';
+    const saved = localStorage.getItem('serviceViewMode');
+    return (saved === 'table' || saved === 'card') ? saved : 'table';
+  });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
 
@@ -320,7 +322,6 @@ const ListsPage: React.FC = observer(() => {
                   ],
                 }}
                 placement="bottomRight"
-                disabled={!isAuthenticated && !authLoading}
               >
                 <Button 
                   type="text" 
@@ -343,7 +344,7 @@ const ListsPage: React.FC = observer(() => {
                         style={{ 
                           backgroundColor: '#f0f0f0',
                           color: '#999',
-                          cursor: isAuthenticated ? 'pointer' : 'default'
+                          cursor: 'pointer'
                         }}
                         size={32}
                         icon={<UserOutlined />}
@@ -390,7 +391,11 @@ const ListsPage: React.FC = observer(() => {
                 />
               </div>
               {/* Service List */}
-              <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
+              {isClient ? (
+                <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
+              ) : (
+                <ServiceListSkeleton viewMode={viewMode} />
+              )}
               {/* New here? Link - show for users with less than 5 lists */}
               {!searchQuery && appStore.list.length < 5 && (
                 <div style={{
