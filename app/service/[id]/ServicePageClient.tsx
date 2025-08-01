@@ -1190,11 +1190,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             >
               <Button style={{
                 borderRadius: 6,
+                paddingLeft: 12,
+                paddingRight: 12,
                 backgroundColor: serviceStatus?.published ? '#f6ffed' : '#fff7e6',
                 borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
                 color: serviceStatus?.published ? '#52c41a' : '#fa8c16'
               }}>
-                <Space>
+                <Space size={4}>
                   {serviceStatus?.published ? 'Published' : 'Draft'}
                   <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} />
                   <DownOutlined />
@@ -1219,7 +1221,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               <Button 
                 type="text" 
                 icon={<MoreOutlined />}
-                style={{ marginLeft: 8 }}
               />
             </Dropdown>
         </Space>

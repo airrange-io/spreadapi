@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Modal, Button, Input, Card, Alert, Typography, Space, 
-  Tag, Divider, Tooltip, List, Spin, App, Checkbox
+import {
+  Modal, Button, Input, Card, Alert, Typography, Space,
+  Tag, Divider, Empty, List, Spin, App, Checkbox
 } from 'antd';
-import { 
-  CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined, 
+import {
+  CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined,
   LockOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
@@ -30,7 +30,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [loadingServices, setLoadingServices] = useState(false);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
-  
+
   const { message: messageApi } = App.useApp();
 
   useEffect(() => {
@@ -118,7 +118,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       const res = await fetch(`/api/mcp/tokens/${token}`, {
         method: 'DELETE'
       });
-      
+
       if (res.ok) {
         messageApi.success('Token revoked successfully');
         await loadTokens();
@@ -138,7 +138,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   };
 
   const [mcpUrl, setMcpUrl] = useState('/api/mcp');
-  
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setMcpUrl(`${window.location.origin}/api/mcp`);
@@ -171,7 +171,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       </Paragraph>
 
       {/* Token Generation */}
-      <Card 
+      <Card
         title={
           <Space>
             <LockOutlined />
@@ -255,17 +255,17 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                       Save this token - it won't be shown again!
                     </Text>
                   </div>
-                  
+
                   <Divider style={{ margin: '12px 0' }} />
-                  
+
                   <div>
                     <Text strong>Quick Setup for Claude Desktop:</Text>
                     <Text style={{ display: 'block', marginTop: 8, marginBottom: 8 }}>
                       Add this to your Claude Desktop config file:
                     </Text>
-                    <pre style={{ 
-                      background: '#f5f5f5', 
-                      padding: 12, 
+                    <pre style={{
+                      background: '#f5f5f5',
+                      padding: 12,
                       borderRadius: 4,
                       overflow: 'auto',
                       position: 'relative'
@@ -289,7 +289,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                       >
                         Copy
                       </Button>
-{`{
+                      {`{
   "mcpServers": {
     "spreadapi": {
       "command": "npx",
@@ -319,7 +319,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       </Card>
 
       {/* Existing Tokens */}
-      <Card 
+      <Card
         title="Your API Tokens"
         style={{ marginBottom: 24 }}
         extra={
@@ -333,11 +333,12 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             <Spin />
           </div>
         ) : existingTokens.length === 0 ? (
-          <Alert
-            message="No tokens yet"
-            description="Generate your first token above to get started"
-            type="info"
-          />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Generate your first token above to get started" />
+          // <Alert
+          //   message="No tokens yet"
+          //   description="Generate your first token above to get started"
+          //   type="info"
+          // />
         ) : (
           <List
             dataSource={existingTokens}
@@ -409,7 +410,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       </Card>
 
       {/* Configuration Guide */}
-      <Card 
+      <Card
         title="How to Connect Claude Desktop"
         extra={
           <Button
@@ -438,20 +439,20 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             <div style={{ marginTop: 16 }}>
               <Title level={5} style={{ marginBottom: 8 }}>Method 1: Bridge Package (Recommended)</Title>
               <Text>Install and configure the SpreadAPI MCP bridge:</Text>
-              
+
               <Text strong style={{ display: 'block', marginTop: 12 }}>First, install the bridge package:</Text>
-              <pre style={{ 
-                background: '#f5f5f5', 
-                padding: 12, 
+              <pre style={{
+                background: '#f5f5f5',
+                padding: 12,
                 borderRadius: 4,
                 marginTop: 8,
                 overflow: 'auto'
               }}>
-{`npm install -g spreadapi-mcp`}
+                {`npm install -g spreadapi-mcp`}
               </pre>
-              
+
               <Text strong style={{ display: 'block', marginTop: 16 }}>Then add this to your Claude Desktop config:</Text>
-              
+
               <Alert
                 style={{ marginTop: 12, marginBottom: 12 }}
                 message="Config file location"
@@ -466,14 +467,14 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
               />
 
               <Text>Add this to your config file (merge with existing mcpServers if any):</Text>
-              <pre style={{ 
-                background: '#f5f5f5', 
-                padding: 12, 
+              <pre style={{
+                background: '#f5f5f5',
+                padding: 12,
                 borderRadius: 4,
                 overflow: 'auto',
-                marginTop: 12 
+                marginTop: 12
               }}>
-{`{
+                {`{
   "mcpServers": {
     "spreadapi": {
       "command": "npx",
@@ -486,7 +487,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   }
 }`}
               </pre>
-              
+
               <Space style={{ marginTop: 12 }} wrap>
                 <Button
                   icon={<CopyOutlined />}
@@ -506,7 +507,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                   Copy Config
                 </Button>
               </Space>
-              
+
               <Alert
                 style={{ marginTop: 12 }}
                 message="Important"

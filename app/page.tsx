@@ -193,253 +193,255 @@ const ListsPage: React.FC = observer(() => {
         <Sidebar />
 
         <Layout
-        style={{
-          marginLeft: 0, // No margin needed since sidebar is now a drawer overlay
-          transition: TRANSITIONS.default,
-          position: 'relative'
-        }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <Content style={{ background: '#ffffff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          {/* Drag and drop overlay */}
-          {isDragging && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(79, 45, 127, 0.1)',
-                border: '3px dashed #4F2D7F',
-                borderRadius: '8px',
-                zIndex: 1000,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pointerEvents: 'none',
-              }}
-            >
-              <InboxOutlined style={{ fontSize: '64px', color: '#4F2D7F', marginBottom: '16px' }} />
-              <Text style={{ fontSize: '20px', color: '#4F2D7F', fontWeight: 500 }}>
-                Datei hier ablegen
-              </Text>
-              <Text style={{ fontSize: '16px', color: '#6B4A99', marginTop: '8px' }}>
-                CSV, Excel oder JSON
-              </Text>
-            </div>
-          )}
-          {/* Header */}
-          <div className="lists-page-header">
-            {/* Left side */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
-              <Button
-                type='text'
-                icon={<MenuOutlined />}
-                onClick={appStore.toggleSidebar}
-              />
-              {/* Breadcrumb */}
-              <div className="desktop-only">
-                <Breadcrumb
-                  items={[{
-                    title: <span style={{ marginLeft: 0 }}>Spreadsheet APIs</span>,
-                  }]}
-                />
+          style={{
+            marginLeft: 0, // No margin needed since sidebar is now a drawer overlay
+            transition: TRANSITIONS.default,
+            position: 'relative'
+          }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <Content style={{ background: '#ffffff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Drag and drop overlay */}
+            {isDragging && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(79, 45, 127, 0.1)',
+                  border: '3px dashed #4F2D7F',
+                  borderRadius: '8px',
+                  zIndex: 1000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                <InboxOutlined style={{ fontSize: '64px', color: '#4F2D7F', marginBottom: '16px' }} />
+                <Text style={{ fontSize: '20px', color: '#4F2D7F', fontWeight: 500 }}>
+                  Datei hier ablegen
+                </Text>
+                <Text style={{ fontSize: '16px', color: '#6B4A99', marginTop: '8px' }}>
+                  CSV, Excel oder JSON
+                </Text>
               </div>
-            </div>
-
-            {/* Right side - Action Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
-              {/* MCP Settings Button - Only for authenticated users */}
-              {isAuthenticated && (
+            )}
+            {/* Header */}
+            <div className="lists-page-header">
+              {/* Left side */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
                 <Button
-                  icon={<AppstoreOutlined />}
-                  onClick={() => setShowMCPModal(true)}
-                  title="MCP Integration"
-                >
-                  <span className="desktop-text">MCP</span>
-                </Button>
-              )}
-              
-              {/* New Service Button */}
-              <Button
-                type="primary"
-                icon={isCreatingService ? <LoadingOutlined /> : <PlusOutlined />}
-                loading={isCreatingService}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  // Check authentication
-                  if (!isAuthenticated) {
-                    router.push('/login?returnTo=/');
-                    return;
-                  }
-
-                  // Set loading state
-                  setIsCreatingService(true);
-
-                  // Generate a new service ID and navigate
-                  const newId = generateServiceId(user?.id || 'test1234');
-                  router.push(`/service/${newId}`);
-                }}
-                className="new-list-button"
-              >
-                <span className="desktop-text">New Service</span>
-                <span className="mobile-text">New</span>
-              </Button>
-              
-              {/* User Menu - Always visible */}
-              <Dropdown
-                menu={{
-                  items: isAuthenticated ? [
-                    {
-                      key: 'profile',
-                      icon: <SettingOutlined />,
-                      label: 'Profile Settings',
-                      onClick: () => router.push('/profile'),
-                    },
-                    { type: 'divider' },
-                    {
-                      key: 'logout',
-                      icon: <LogoutOutlined />,
-                      label: 'Logout',
-                      onClick: async () => {
-                        document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                        router.push('/');
-                        setIsAuthenticated(false);
-                      },
-                    },
-                  ] : [
-                    {
-                      key: 'login',
-                      label: 'Login',
-                      onClick: () => router.push('/login'),
-                    },
-                  ],
-                }}
-                placement="bottomRight"
-              >
-                <Button 
-                  type="text" 
-                  style={{ padding: 4 }}
-                  icon={
-                    isAuthenticated && user?.email ? (
-                      <Avatar 
-                        style={{ 
-                          backgroundColor: '#9333EA',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                        size={32}
-                      >
-                        {user.email.charAt(0).toUpperCase()}
-                      </Avatar>
-                    ) : (
-                      <Avatar 
-                        style={{ 
-                          backgroundColor: '#f0f0f0',
-                          color: '#999',
-                          cursor: 'pointer'
-                        }}
-                        size={32}
-                        icon={<UserOutlined />}
-                      />
-                    )
-                  }
+                  type='text'
+                  icon={<MenuOutlined />}
+                  onClick={appStore.toggleSidebar}
                 />
-              </Dropdown>
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* Page Title and Search */}
-            <div style={{ width: '100%' }}>
-
-              {/* Search Bar and View Toggle */}
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
-                <Input
-                  placeholder="Search Service APIs..."
-                  disabled={appStore.loading}
-                  prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  allowClear
-                  size="large"
-                  style={{
-                    flex: 1,
-                    borderRadius: '8px',
-                    fontSize: '16px'
-                  }}
-                  className="search-input"
-                />
-                <Segmented
-                  options={[
-                    { label: <AppstoreAddOutlined />, value: 'card' },
-                    { label: <TableOutlined />, value: 'table' }
-                  ]}
-                  value={viewMode}
-                  onChange={(value) => {
-                    setViewMode(value as 'card' | 'table');
-                    localStorage.setItem('serviceViewMode', value);
-                  }}
-                />
-              </div>
-              {/* Service List */}
-              {isClient ? (
-                <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
-              ) : (
-                <ServiceListSkeleton viewMode={viewMode} />
-              )}
-              {/* New here? Link - show for users with less than 5 lists */}
-              {!searchQuery && appStore.list.length < 5 && (
-                <div style={{
-                  position: isContentScrollable ? 'relative' : 'fixed',
-                  bottom: isContentScrollable ? 'auto' : '80px',
-                  left: isContentScrollable ? 'auto' : '50%',
-                  transform: isContentScrollable ? 'none' : 'translateX(-50%)',
-                  textAlign: 'center',
-                  marginTop: isContentScrollable ? '32px' : '0',
-                  paddingBottom: isContentScrollable ? '16px' : '0',
-                  width: isContentScrollable ? 'auto' : '100%',
-                }}>
-                  <a
-                    href="/product"
-                    style={{
-                      fontSize: '14px',
-                      color: '#8c8c8c',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'color 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#4F2D7F';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#8c8c8c';
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-                      <path d="M12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.76121C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20ZM9 12H10V17H14V16H11V12H9ZM12 8C11.7348 8 11.4804 8.10536 11.2929 8.29289C11.1054 8.48043 11 8.73478 11 9C11 9.26522 11.1054 9.51957 11.2929 9.70711C11.4804 9.89464 11.7348 10 12 10C12.2652 10 12.5196 9.89464 12.7071 9.70711C12.8946 9.51957 13 9.26522 13 9C13 8.73478 12.8946 8.48043 12.7071 8.29289C12.5196 8.10536 12.2652 8 12 8Z" fill="currentColor"/>
-                    </svg>
-                    <span>Neu hier? So funktioniert SpreadAPI</span>
-                  </a>
+                {/* Breadcrumb */}
+                <div className="desktop-only">
+                  <Breadcrumb
+                    items={[{
+                      title: <span style={{ marginLeft: 0 }}>Spreadsheet APIs</span>,
+                    }]}
+                  />
                 </div>
-              )}
+              </div>
 
+              {/* Right side - Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
+                {/* MCP Settings Button - Only for authenticated users */}
+                {isAuthenticated && (
+                  <Button
+                    variant='filled'
+                    color="default"
+                    icon={<AppstoreOutlined />}
+                    onClick={() => setShowMCPModal(true)}
+                    title="MCP Integration"
+                  >
+                    <span className="desktop-text">MCP</span>
+                  </Button>
+                )}
+
+                {/* New Service Button */}
+                <Button
+                  type="primary"
+                  icon={isCreatingService ? <LoadingOutlined /> : <PlusOutlined />}
+                  loading={isCreatingService}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Check authentication
+                    if (!isAuthenticated) {
+                      router.push('/login?returnTo=/');
+                      return;
+                    }
+
+                    // Set loading state
+                    setIsCreatingService(true);
+
+                    // Generate a new service ID and navigate
+                    const newId = generateServiceId(user?.id || 'test1234');
+                    router.push(`/service/${newId}`);
+                  }}
+                  className="new-list-button"
+                >
+                  <span className="desktop-text">New Service</span>
+                  <span className="mobile-text">New</span>
+                </Button>
+
+                {/* User Menu - Always visible */}
+                <Dropdown
+                  menu={{
+                    items: isAuthenticated ? [
+                      {
+                        key: 'profile',
+                        icon: <SettingOutlined />,
+                        label: 'Profile Settings',
+                        onClick: () => router.push('/profile'),
+                      },
+                      { type: 'divider' },
+                      {
+                        key: 'logout',
+                        icon: <LogoutOutlined />,
+                        label: 'Logout',
+                        onClick: async () => {
+                          document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                          router.push('/');
+                          setIsAuthenticated(false);
+                        },
+                      },
+                    ] : [
+                      {
+                        key: 'login',
+                        label: 'Login',
+                        onClick: () => router.push('/login'),
+                      },
+                    ],
+                  }}
+                  placement="bottomRight"
+                >
+                  <Button
+                    type="text"
+                    style={{ padding: 4 }}
+                    icon={
+                      isAuthenticated && user?.email ? (
+                        <Avatar
+                          style={{
+                            backgroundColor: '#4F2D7F',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                          }}
+                          size={32}
+                        >
+                          {user.email.charAt(0).toUpperCase()}
+                        </Avatar>
+                      ) : (
+                        <Avatar
+                          style={{
+                            backgroundColor: '#f0f0f0',
+                            color: '#999',
+                            cursor: 'pointer'
+                          }}
+                          size={32}
+                          icon={<UserOutlined />}
+                        />
+                      )
+                    }
+                  />
+                </Dropdown>
+              </div>
             </div>
 
-          </div>
-        </Content>
-      </Layout>
-      
+            {/* Main content */}
+            <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              {/* Page Title and Search */}
+              <div style={{ width: '100%' }}>
+
+                {/* Search Bar and View Toggle */}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
+                  <Input
+                    placeholder="Search Service APIs..."
+                    disabled={appStore.loading}
+                    prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    allowClear
+                    size="large"
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      fontSize: '16px'
+                    }}
+                    className="search-input"
+                  />
+                  <Segmented
+                    options={[
+                      { label: <AppstoreAddOutlined />, value: 'card' },
+                      { label: <TableOutlined />, value: 'table' }
+                    ]}
+                    value={viewMode}
+                    onChange={(value) => {
+                      setViewMode(value as 'card' | 'table');
+                      localStorage.setItem('serviceViewMode', value);
+                    }}
+                  />
+                </div>
+                {/* Service List */}
+                {isClient ? (
+                  <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
+                ) : (
+                  <ServiceListSkeleton viewMode={viewMode} />
+                )}
+                {/* New here? Link - show for users with less than 5 lists */}
+                {!searchQuery && appStore.list.length < 5 && (
+                  <div style={{
+                    position: isContentScrollable ? 'relative' : 'fixed',
+                    bottom: isContentScrollable ? 'auto' : '80px',
+                    left: isContentScrollable ? 'auto' : '50%',
+                    transform: isContentScrollable ? 'none' : 'translateX(-50%)',
+                    textAlign: 'center',
+                    marginTop: isContentScrollable ? '32px' : '0',
+                    paddingBottom: isContentScrollable ? '16px' : '0',
+                    width: isContentScrollable ? 'auto' : '100%',
+                  }}>
+                    <a
+                      href="/product"
+                      style={{
+                        fontSize: '14px',
+                        color: '#8c8c8c',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#4F2D7F';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#8c8c8c';
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                        <path d="M12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.76121C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20ZM9 12H10V17H14V16H11V12H9ZM12 8C11.7348 8 11.4804 8.10536 11.2929 8.29289C11.1054 8.48043 11 8.73478 11 9C11 9.26522 11.1054 9.51957 11.2929 9.70711C11.4804 9.89464 11.7348 10 12 10C12.2652 10 12.5196 9.89464 12.7071 9.70711C12.8946 9.51957 13 9.26522 13 9C13 8.73478 12.8946 8.48043 12.7071 8.29289C12.5196 8.10536 12.2652 8 12 8Z" fill="currentColor" />
+                      </svg>
+                      <span>Neu hier? So funktioniert SpreadAPI</span>
+                    </a>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+          </Content>
+        </Layout>
+
         {/* MCP Settings Modal */}
         <MCPSettingsModal
           visible={showMCPModal}

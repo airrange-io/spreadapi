@@ -72,7 +72,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {/* Record Count */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <TableOutlined style={{ fontSize: '14px', opacity: 0.9 }} />
-          <span>
+          {/* <span>
             {filteredCount !== undefined && filteredCount !== recordCount ? (
               <>
                 {filteredCount.toLocaleString()} of {recordCount.toLocaleString()} records
@@ -82,10 +82,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
                 {recordCount.toLocaleString()} record{recordCount !== 1 ? 's' : ''}
               </>
             )}
-          </span>
+          </span> */}
         </div>
         
-        <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} />
+        {/* <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} /> */}
         
         {/* Selected Count - Clickable with menu */}
         {selectedCount > 0 && (

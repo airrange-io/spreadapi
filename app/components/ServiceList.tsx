@@ -119,7 +119,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           {
             id: DEMO_SERVICE_IDS[1],
             name: 'Demo: Orders Lookup',
-            description: 'Search and filter through order data with our TableSheet demo.',
+            description: 'Get customer and order summary based on external data.',
             status: 'published',
             createdAt: '2025-01-01T00:00:00Z',
             updatedAt: new Date().toISOString(),
@@ -175,7 +175,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             {
               id: DEMO_SERVICE_IDS[1],
               name: 'Demo: Orders Lookup',
-              description: 'Search and filter through order data with our TableSheet demo.',
+              description: 'Get customer and order summary based on external data.',
               status: 'published',
               createdAt: '2025-01-01T00:00:00Z',
               updatedAt: new Date().toISOString(),
