@@ -12,9 +12,16 @@ import {
 
 // Lazy load SpreadJS to improve cold start
 let spreadjsModule = null;
+let spreadjsInitialized = false;
+
 const getSpreadjsModule = () => {
   if (!spreadjsModule) {
     spreadjsModule = require('@/lib/spreadjs-server');
+  }
+  // Initialize base SpreadJS only once per process
+  if (!spreadjsInitialized) {
+    spreadjsModule.initializeSpreadJS();
+    spreadjsInitialized = true;
   }
   return spreadjsModule;
 };
@@ -129,18 +136,23 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
     const apiInputs = apiJson?.inputs || apiJson?.input || [];
     const apiOutputs = apiJson?.outputs || apiJson?.output || [];
     
-    // Check for tables
-    const withTables = fileJson.sheetTabCount > 0;
+    // Get SpreadJS functions early - this initializes base SpreadJS
+    const spreadjsLoadStart = Date.now();
+    const spreadjs = getSpreadjsModule();
+    const { getCachedWorkbook, createWorkbook, needsTablesheetModule, loadTablesheetModule } = spreadjs;
+    const timeSpreadJSLoad = Date.now() - spreadjsLoadStart;
+    
+    // Check if we need TableSheet module (only load if actually needed)
+    const withTables = needsTablesheetModule(fileJson);
+    let timeTableSheetLoad = 0;
     if (withTables) {
-      const { loadTablesheetModule } = getSpreadjsModule();
-      const tablesheetLoaded = await loadTablesheetModule();
+      const tablesheetLoadStart = Date.now();
+      const tablesheetLoaded = loadTablesheetModule();
+      timeTableSheetLoad = Date.now() - tablesheetLoadStart;
       if (!tablesheetLoaded) {
         return { error: "error loading required modules" };
       }
     }
-    
-    // Get or create cached workbook
-    const { getCachedWorkbook, createWorkbook } = getSpreadjsModule();
     const useCaching = apiDefinition.useCaching !== false && !options.nocache;
     
     let spread;
@@ -353,6 +365,9 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
       metadata: {
         dataFetchTime: timeApiData,
         executionTime: Date.now() - timeAll,
+        spreadJSLoadTime: timeSpreadJSLoad,
+        tableSheetLoadTime: timeTableSheetLoad,
+        hasTableSheets: withTables,
         useCaching: useCaching,
         recalc: false, // SpreadJS doesn't recalc when loading from cache
         fromProcessCache: fromProcessCache,
@@ -361,6 +376,18 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
         memoryUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
       }
     };
+    
+    // Log performance metrics for monitoring
+    if (process.env.NODE_ENV !== 'production' || withTables) {
+      console.log(`[calculateDirect] Performance metrics for ${serviceId}:`, {
+        totalTime: Date.now() - timeAll,
+        spreadJSLoad: timeSpreadJSLoad,
+        tableSheetLoad: timeTableSheetLoad,
+        hasTableSheets: withTables,
+        fromCache: fromProcessCache || fromRedisCache,
+        memory: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
+      });
+    }
     
     // Cache result if caching enabled
     if (useCaching) {
