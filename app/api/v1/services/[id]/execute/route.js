@@ -19,6 +19,9 @@ const getSpreadjsModule = () => {
   return spreadjsModule;
 };
 
+// TableSheet data caching
+const tableSheetCache = require('@/lib/tableSheetDataCache');
+
 /**
  * Execute a SpreadAPI service calculation
  * 
@@ -179,12 +182,53 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
               const dataManager = workbook.dataManager();
               if (dataManager && dataManager.tables) {
                 const tablePromises = [];
+                
+                // Get caching settings
+                const cacheTableSheetData = apiDefinition.cacheTableSheetData !== 'false';
+                const tableSheetCacheTTL = parseInt(apiDefinition.tableSheetCacheTTL) || 300;
+                
                 for (const [rowKey, rowObject] of Object.entries(dataManager.tables)) {
                   const table = rowObject;
-                  const tablePromise = table.fetch(true).catch((err) => {
-                    console.error(`Error fetching table ${rowKey}:`, err);
-                    return null;
-                  });
+                  const tablePromise = (async () => {
+                    try {
+                      // Try to get table URL for caching
+                      let tableUrl = null;
+                      if (table.source && typeof table.source === 'object' && table.source.remote) {
+                        tableUrl = table.source.remote.read || table.source.remote.url;
+                      }
+                      
+                      // Create cache key
+                      const cacheKey = `${serviceId}:table:${rowKey}:${tableUrl || 'local'}`;
+                      
+                      // Check cache if enabled
+                      if (cacheTableSheetData && tableUrl) {
+                        const cachedData = tableSheetCache.getCachedTableSheetData(cacheKey, tableSheetCacheTTL);
+                        if (cachedData) {
+                          console.log(`[TableSheet Cache HIT] ${rowKey} for service ${serviceId}`);
+                          // Apply cached data to table
+                          if (table.setDataSource) {
+                            table.setDataSource(cachedData);
+                          }
+                          return cachedData;
+                        }
+                      }
+                      
+                      // Fetch fresh data
+                      console.log(`[TableSheet Cache MISS] Fetching ${rowKey} for service ${serviceId}`);
+                      const freshData = await table.fetch(true);
+                      
+                      // Cache if enabled and reasonable size
+                      if (cacheTableSheetData && tableUrl && freshData) {
+                        const dataSize = JSON.stringify(freshData).length;
+                        tableSheetCache.cacheTableSheetData(cacheKey, freshData, tableUrl, dataSize);
+                      }
+                      
+                      return freshData;
+                    } catch (err) {
+                      console.error(`Error fetching table ${rowKey}:`, err);
+                      return null;
+                    }
+                  })();
                   tablePromises.push(tablePromise);
                 }
                 await Promise.all(tablePromises);

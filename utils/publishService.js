@@ -159,7 +159,9 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       tokens: flags.tokens || [],
       flags: {
         useCaching: flags.enableCaching !== false ? "true" : "false",
-        needsToken: flags.requireToken === true ? "true" : "false"
+        needsToken: flags.requireToken === true ? "true" : "false",
+        cacheTableSheetData: flags.cacheTableSheetData !== false ? "true" : "false",
+        tableSheetCacheTTL: flags.tableSheetCacheTTL || 300
       },
       // AI metadata fields
       ...(service.aiDescription && { aiDescription: service.aiDescription }),

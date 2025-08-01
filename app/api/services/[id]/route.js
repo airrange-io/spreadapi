@@ -121,6 +121,7 @@ export async function PUT(request, { params }) {
     // Update simple fields
     const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration', 
                          'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching',
+                         'cacheTableSheetData', 'tableSheetCacheTTL',
                          'aiDescription', 'category'];
     simpleFields.forEach(field => {
       if (body[field] !== undefined) {

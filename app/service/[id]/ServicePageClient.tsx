@@ -56,6 +56,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     areas: [],
     enableCaching: true,
     requireToken: false,
+    cacheTableSheetData: true,
+    tableSheetCacheTTL: 300,
     aiDescription: '',
     aiUsageExamples: [],
     aiTags: [],
@@ -69,6 +71,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     areas: [],
     enableCaching: true,
     requireToken: false,
+    cacheTableSheetData: true,
+    tableSheetCacheTTL: 300,
     aiDescription: '',
     aiUsageExamples: [],
     aiTags: [],
@@ -168,6 +172,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       JSON.stringify(apiConfig.areas || []) !== JSON.stringify(savedConfig.areas || []) ||
       apiConfig.enableCaching !== savedConfig.enableCaching ||
       apiConfig.requireToken !== savedConfig.requireToken ||
+      apiConfig.cacheTableSheetData !== savedConfig.cacheTableSheetData ||
+      apiConfig.tableSheetCacheTTL !== savedConfig.tableSheetCacheTTL ||
       apiConfig.aiDescription !== savedConfig.aiDescription ||
       JSON.stringify(apiConfig.aiUsageExamples) !== JSON.stringify(savedConfig.aiUsageExamples) ||
       JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
@@ -243,6 +249,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               areas: data.service.areas || [],
               enableCaching: data.service.enableCaching !== false,
               requireToken: data.service.requireToken === true,
+              cacheTableSheetData: data.service.cacheTableSheetData !== false,
+              tableSheetCacheTTL: data.service.tableSheetCacheTTL || 300,
               aiDescription: data.service.aiDescription || '',
               aiUsageExamples: data.service.aiUsageExamples || [],
               aiTags: data.service.aiTags || [],
@@ -267,6 +275,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               areas: data.areas || [],
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
               requireToken: data.requireToken === 'true', // Redis stores as string
+              cacheTableSheetData: data.cacheTableSheetData !== 'false', // Default to true
+              tableSheetCacheTTL: parseInt(data.tableSheetCacheTTL) || 300,
               aiDescription: data.aiDescription || '',
               aiUsageExamples: data.aiUsageExamples || [],
               aiTags: data.aiTags || [],
@@ -328,6 +338,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             areas: [],
             enableCaching: true,
             requireToken: false,
+            cacheTableSheetData: true,
+            tableSheetCacheTTL: 300,
             aiDescription: '',
             aiUsageExamples: [],
             aiTags: [],
@@ -511,6 +523,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         {
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          cacheTableSheetData: apiConfig.cacheTableSheetData,
+          tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           tokens: [] // Will add token management later
         }
       );
@@ -736,6 +750,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           areas: apiConfig.areas || [],
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          cacheTableSheetData: apiConfig.cacheTableSheetData,
+          tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           aiDescription: apiConfig.aiDescription,
           aiUsageExamples: apiConfig.aiUsageExamples,
           aiTags: apiConfig.aiTags,

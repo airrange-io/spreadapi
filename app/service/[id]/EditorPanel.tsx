@@ -54,6 +54,8 @@ interface EditorPanelProps {
     outputs: OutputDefinition[];
     enableCaching?: boolean;
     requireToken?: boolean;
+    cacheTableSheetData?: boolean;
+    tableSheetCacheTTL?: number;
     aiDescription?: string;
     aiUsageExamples?: string[];
     aiTags?: string[];
@@ -120,6 +122,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
   const [originalTitle, setOriginalTitle] = useState<string>('');
   const [enableCaching, setEnableCaching] = useState<boolean>(initialConfig?.enableCaching !== false);
   const [requireToken, setRequireToken] = useState<boolean>(initialConfig?.requireToken === true);
+  const [cacheTableSheetData, setCacheTableSheetData] = useState<boolean>(initialConfig?.cacheTableSheetData !== false);
+  const [tableSheetCacheTTL, setTableSheetCacheTTL] = useState<number>(initialConfig?.tableSheetCacheTTL || 300);
   const [editingParameter, setEditingParameter] = useState<InputDefinition | OutputDefinition | null>(null);
   const [editingParameterType, setEditingParameterType] = useState<'input' | 'output'>('input');
   const [showAreaModal, setShowAreaModal] = useState(false);
@@ -181,6 +185,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
           areas,
           enableCaching,
           requireToken,
+          cacheTableSheetData,
+          tableSheetCacheTTL,
           aiDescription,
           aiUsageExamples,
           aiTags,
@@ -191,7 +197,7 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, requireToken, aiDescription, aiUsageExamples, aiTags, category]);
+  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, requireToken, cacheTableSheetData, tableSheetCacheTTL, aiDescription, aiUsageExamples, aiTags, category]);
 
   // Measure button area height
   useEffect(() => {
@@ -970,13 +976,15 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
         areas,
         enableCaching,
         requireToken: value,
+        cacheTableSheetData,
+        tableSheetCacheTTL,
         aiDescription,
         aiUsageExamples,
         aiTags,
         category
       });
     }
-  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, aiDescription, aiUsageExamples, aiTags, category, onConfigChange]);
+  }, [apiName, apiDescription, inputs, outputs, areas, enableCaching, cacheTableSheetData, tableSheetCacheTTL, aiDescription, aiUsageExamples, aiTags, category, onConfigChange]);
 
   const handleTokenCountChange = useCallback((count: number) => {
     setTokenCount(count);
@@ -1264,6 +1272,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   apiName={apiName}
                   apiDescription={apiDescription}
                   enableCaching={enableCaching}
+                  cacheTableSheetData={cacheTableSheetData}
+                  tableSheetCacheTTL={tableSheetCacheTTL}
                   aiDescription={aiDescription}
                   aiUsageExamples={aiUsageExamples}
                   aiTags={aiTags}
@@ -1271,6 +1281,8 @@ const EditorPanel: React.FC<EditorPanelProps> = observer(({
                   onApiNameChange={setApiName}
                   onApiDescriptionChange={setApiDescription}
                   onEnableCachingChange={setEnableCaching}
+                  onCacheTableSheetDataChange={setCacheTableSheetData}
+                  onTableSheetCacheTTLChange={setTableSheetCacheTTL}
                   onAiDescriptionChange={setAiDescription}
                   onAiUsageExamplesChange={setAiUsageExamples}
                   onAiTagsChange={setAiTags}

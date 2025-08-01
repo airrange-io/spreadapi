@@ -9,6 +9,8 @@ interface SettingsSectionProps {
   apiName: string;
   apiDescription: string;
   enableCaching: boolean;
+  cacheTableSheetData: boolean;
+  tableSheetCacheTTL: number;
   aiDescription: string;
   aiUsageExamples: string[];
   aiTags: string[];
@@ -16,6 +18,8 @@ interface SettingsSectionProps {
   onApiNameChange: (value: string) => void;
   onApiDescriptionChange: (value: string) => void;
   onEnableCachingChange: (checked: boolean) => void;
+  onCacheTableSheetDataChange: (checked: boolean) => void;
+  onTableSheetCacheTTLChange: (value: number) => void;
   onAiDescriptionChange: (value: string) => void;
   onAiUsageExamplesChange: (values: string[]) => void;
   onAiTagsChange: (values: string[]) => void;
@@ -26,6 +30,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   apiName,
   apiDescription,
   enableCaching,
+  cacheTableSheetData,
+  tableSheetCacheTTL,
   aiDescription,
   aiUsageExamples,
   aiTags,
@@ -33,6 +39,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   onApiNameChange,
   onApiDescriptionChange,
   onEnableCachingChange,
+  onCacheTableSheetDataChange,
+  onTableSheetCacheTTLChange,
   onAiDescriptionChange,
   onAiUsageExamplesChange,
   onAiTagsChange,
@@ -81,6 +89,35 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
                 </Tooltip>
               </Space>
+              
+              <Space align="center">
+                <Checkbox
+                  checked={cacheTableSheetData}
+                  onChange={(e) => onCacheTableSheetDataChange(e.target.checked)}
+                >
+                  Cache TableSheet data
+                </Checkbox>
+                <Tooltip title="Cache external TableSheet data for better performance. Disable for real-time data that changes frequently.">
+                  <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
+                </Tooltip>
+              </Space>
+              
+              {cacheTableSheetData && (
+                <Space align="center" style={{ marginLeft: '24px' }}>
+                  <span style={{ color: '#666' }}>Cache duration:</span>
+                  <Select 
+                    value={tableSheetCacheTTL} 
+                    onChange={onTableSheetCacheTTLChange}
+                    style={{ width: '120px' }}
+                  >
+                    <Select.Option value={60}>1 minute</Select.Option>
+                    <Select.Option value={300}>5 minutes</Select.Option>
+                    <Select.Option value={900}>15 minutes</Select.Option>
+                    <Select.Option value={1800}>30 minutes</Select.Option>
+                    <Select.Option value={3600}>1 hour</Select.Option>
+                  </Select>
+                </Space>
+              )}
             </Space>
           </div>
         </Space>
