@@ -66,7 +66,7 @@ const ProductPage: React.FC = () => {
                       Why AI Struggles with <span style={{ color: '#9333EA' }}>Spreadsheet Math</span>
                     </h2>
                     <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
-                      AI's honest confessions about Excel calculations
+                      AI's honest request for help
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
                       <div style={{ 
@@ -281,17 +281,106 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="feature-image-wrapper">
-                        <div className="feature-image-placeholder">
-                          <svg viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="600" height="400" fill="#F8F6FE" rx="12" />
-                            <rect x="40" y="40" width="520" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
-                            <rect x="70" y="70" width="460" height="40" rx="4" fill="#F8F6FE" />
-                            <rect x="70" y="130" width="140" height="80" rx="4" fill="#F8F6FE" />
-                            <rect x="230" y="130" width="140" height="80" rx="4" fill="#F8F6FE" />
-                            <rect x="390" y="130" width="140" height="80" rx="4" fill="#F8F6FE" />
-                            <rect x="70" y="230" width="140" height="80" rx="4" fill="#F8F6FE" />
-                            <rect x="230" y="230" width="140" height="80" rx="4" fill="#F8F6FE" />
-                          </svg>
+                        <div className="feature-image-placeholder" style={{ 
+                          background: 'white',
+                          borderRadius: '12px',
+                          padding: '30px',
+                          height: '450px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '16px',
+                          overflow: 'auto',
+                          border: '2px solid #E8E0FF'
+                        }}>
+                          {/* Customer Message */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <div style={{
+                              background: '#9333EA',
+                              color: 'white',
+                              padding: '12px 16px',
+                              borderRadius: '18px 18px 4px 18px',
+                              maxWidth: '85%',
+                              fontSize: '14px'
+                            }}>
+                              I need a quote for 500 units with our enterprise discount, shipped to 3 locations in California
+                            </div>
+                          </div>
+                          
+                          {/* AI Response */}
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: '#E8E0FF',
+                              flexShrink: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              color: '#9333EA',
+                              fontWeight: 'bold'
+                            }}>AI</div>
+                            <div style={{
+                              background: '#F8F6FE',
+                              padding: '16px',
+                              borderRadius: '4px 18px 18px 18px',
+                              maxWidth: '90%',
+                              fontSize: '14px'
+                            }}>
+                              <div style={{ marginBottom: '12px', color: '#374151' }}>
+                                I've calculated your quote using our Excel pricing model:
+                              </div>
+                              <div style={{
+                                background: 'white',
+                                border: '1px solid #E8E0FF',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                fontSize: '13px',
+                                fontFamily: 'monospace'
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span>Base Price (500 × $47.99):</span>
+                                  <strong>$23,995.00</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span>Enterprise Discount (15%):</span>
+                                  <strong style={{ color: '#16a34a' }}>-$3,599.25</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span>Volume Discount (500+):</span>
+                                  <strong style={{ color: '#16a34a' }}>-$1,199.75</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span>CA Shipping (3 locations):</span>
+                                  <strong>$485.00</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span>CA Sales Tax (7.25%):</span>
+                                  <strong>$1,431.88</strong>
+                                </div>
+                                <div style={{
+                                  borderTop: '1px solid #E8E0FF',
+                                  paddingTop: '8px',
+                                  marginTop: '8px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  fontWeight: 'bold',
+                                  color: '#9333EA'
+                                }}>
+                                  <span>Total Quote:</span>
+                                  <span>$21,112.88</span>
+                                </div>
+                              </div>
+                              <div style={{
+                                marginTop: '12px',
+                                fontSize: '12px',
+                                color: '#6b7280'
+                              }}>
+                                Calculated by Excel in 47ms • 100% accurate
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -312,7 +401,7 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-large">
-                        <h2>Real Excel Engine, <span className="text-color-primary">Not CSV Parsing</span></h2>
+                        <h2>Give AI <span className="text-color-primary">Your Excel Superpowers</span></h2>
                       </div>
                       
                       <div style={{ 
@@ -331,6 +420,25 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 6V14L20 20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5"/>
+                              <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Predictable Every Time</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            AI gives different answers each time. But Excel? Excel actually calculates. Every. Single. Time.
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5"/>
                               <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
                             </svg>
@@ -338,48 +446,6 @@ const ProductPage: React.FC = () => {
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>500+ Excel Functions</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
                             VLOOKUP, XLOOKUP, array formulas, financial functions - 500+ functions work exactly as in Excel
-                          </p>
-                        </div>
-                        
-                        <div style={{ 
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
-                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5"/>
-                              <circle cx="14" cy="17" r="1.5" fill="#9333EA"/>
-                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No File Uploads to AI</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Your Excel files stay on our servers. AI only receives calculation results, never your data
-                          </p>
-                        </div>
-                        
-                        <div style={{ 
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
-                              <circle cx="11" cy="13" r="1" fill="#9333EA"/>
-                              <circle cx="17" cy="13" r="1" fill="#9333EA"/>
-                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Native Model Context Protocol support for seamless ChatGPT and Claude integration
                           </p>
                         </div>
                         
@@ -408,14 +474,37 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="14" cy="14" r="9" stroke="#9333EA" strokeWidth="1.5"/>
-                              <path d="M14 10V14L17 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M20 4L22 6M22 6L24 4M22 6V2" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5"/>
+                              <circle cx="14" cy="17" r="1.5" fill="#9333EA"/>
+                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5"/>
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Version Control Built-In</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No Files Sent to OpenAI/Anthropic</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Update your Excel anytime. AI instantly uses the new version without any code changes
+                            Your Excel stays on SpreadAPI servers. AI only sees the specific inputs and outputs you define
+                          </p>
+                        </div>
+                        
+                        <div style={{ 
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
+                              <circle cx="11" cy="13" r="1" fill="#9333EA"/>
+                              <circle cx="17" cy="13" r="1" fill="#9333EA"/>
+                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            Native Model Context Protocol support for seamless ChatGPT and Claude integration
                           </p>
                         </div>
                         
