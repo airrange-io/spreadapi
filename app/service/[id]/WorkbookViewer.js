@@ -41,6 +41,8 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
   const handleZoomChangeRef = useRef(null);
+  const isLoadingData = useRef(false);
+  const changeCountRef = useRef(0);
 
   // Initialize ribbon configuration
   const initRibbon = useCallback((showRibbon) => {
@@ -153,8 +155,59 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         if (props.actionHandlerProc) {
           props.actionHandlerProc("edit-ended", info);
         }
-        setChangeCount((prev) => prev + 1);
+        setChangeCount((prev) => {
+          const newCount = prev + 1;
+          changeCountRef.current = newCount;
+          return newCount;
+        });
       });
+
+      // Track range changes to detect DELETE key
+      workbook.bind(GC.Spread.Sheets.Events.RangeChanged, (e, args) => {
+        // Ignore changes during data loading
+        if (isLoadingData.current) return;
+        
+        // Check if this is a clear action (delete key)
+        if (args.action === GC.Spread.Sheets.RangeChangedAction.clear) {
+          console.log("Delete key pressed - cells cleared");
+          setChangeCount((prev) => {
+            const newCount = prev + 1;
+            changeCountRef.current = newCount;
+            return newCount;
+          });
+          if (props.actionHandlerProc) {
+            props.actionHandlerProc("range-cleared", args);
+          }
+        }
+      });
+
+      // Track cell changes for format changes
+      workbook.bind(GC.Spread.Sheets.Events.CellChanged, (e, args) => {
+        // Ignore changes during data loading
+        if (isLoadingData.current) return;
+        
+        // Only track specific user-initiated property changes
+        // Ignore styleinfo which fires during load, focus on actual formatting changes
+        const trackedProperties = [
+          'style', 'formatter', 'font', 'backColor', 'foreColor', 
+          'borderLeft', 'borderTop', 'borderRight', 'borderBottom',
+          'locked', 'textIndent', 'wordWrap', 'shrinkToFit',
+          'backgroundImage', 'cellType', 'validator'
+        ];
+        
+        if (args.propertyName && trackedProperties.includes(args.propertyName)) {
+          console.log("Cell property changed:", args.propertyName);
+          setChangeCount((prev) => {
+            const newCount = prev + 1;
+            changeCountRef.current = newCount;
+            return newCount;
+          });
+          if (props.actionHandlerProc) {
+            props.actionHandlerProc("cell-changed", args);
+          }
+        }
+      });
+
       // Update record count
       const sheet = workbook.getActiveSheet();
       if (sheet) {
@@ -241,6 +294,9 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     });
 
     try {
+      // Set loading flag to ignore change events during load
+      isLoadingData.current = true;
+      
       // Load spreadsheet data if provided
       if (
         props.storeLocal.spread.type === "sjs" &&
@@ -254,6 +310,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.log("SJS file loaded successfully");
             setDataLoaded(true);
             setIsLoading(false);
+            isLoadingData.current = false; // Clear loading flag
             if (props.actionHandlerProc) {
               props.actionHandlerProc("workbook-loaded", spread);
             }
@@ -262,6 +319,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.error("Error loading SJS file:", error);
             setDataLoaded(true);
             setIsLoading(false);
+            isLoadingData.current = false; // Clear loading flag
           },
           {
             openMode: 1 // 1 = normal
@@ -287,6 +345,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
                     console.log("Excel file imported successfully (retry)");
                     setDataLoaded(true);
                     setIsLoading(false);
+                    isLoadingData.current = false; // Clear loading flag
                     if (props.actionHandlerProc) {
                       props.actionHandlerProc("file-loaded", spread);
                       props.actionHandlerProc("workbook-loaded", spread);
@@ -296,6 +355,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
                     console.error("Error importing Excel file:", error);
                     setDataLoaded(true);
                     setIsLoading(false);
+                    isLoadingData.current = false; // Clear loading flag
                   },
                   {
                     fileType: GC.Spread.Sheets.FileType.excel
@@ -323,6 +383,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.log("Excel file imported successfully");
             setDataLoaded(true);
             setIsLoading(false);
+            isLoadingData.current = false; // Clear loading flag
             if (props.actionHandlerProc) {
               props.actionHandlerProc("file-loaded", spread);
             }
@@ -331,6 +392,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.error("Error importing Excel file:", error);
             setDataLoaded(true);
             setIsLoading(false);
+            isLoadingData.current = false; // Clear loading flag
           },
           {
             fileType: GC.Spread.Sheets.FileType.excel
@@ -345,6 +407,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         console.log("JSON data loaded successfully");
         setDataLoaded(true);
         setIsLoading(false);
+        isLoadingData.current = false; // Clear loading flag
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
@@ -353,6 +416,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       console.error("Error loading spreadsheet data:", error);
       setDataLoaded(true);
       setIsLoading(false);
+      isLoadingData.current = false; // Clear loading flag
     }
     
     // If it's a default workbook, immediately mark as loaded
@@ -360,7 +424,14 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       console.log("Default workbook detected, marking as loaded");
       setDataLoaded(true);
       setIsLoading(false);
+      isLoadingData.current = false; // Clear loading flag
     }
+    
+    // Clear loading flag with a delay to ensure all initial events have fired
+    setTimeout(() => {
+      isLoadingData.current = false;
+      console.log("Loading flag cleared - ready to track changes");
+    }, 1000);
   }, [designer, spread, props.storeLocal?.spread, dataLoaded]);
 
   const getDesignerConfig = useMemo(() => {
@@ -398,9 +469,16 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     // Get spread instance
     getSpread: () => spread,
     // Check if workbook has changes
-    hasChanges: () => changeCount > 0,
+    hasChanges: () => {
+      console.log('Checking hasChanges:', changeCountRef.current > 0, 'count:', changeCountRef.current);
+      return changeCountRef.current > 0;
+    },
     // Reset change count
-    resetChangeCount: () => setChangeCount(0),
+    resetChangeCount: () => {
+      console.log('Resetting change count from', changeCountRef.current, 'to 0');
+      setChangeCount(0);
+      changeCountRef.current = 0;
+    },
     // Save workbook as SJS format (binary)
     saveWorkbookSJS: () => {
       return new Promise((resolve, reject) => {
@@ -588,7 +666,11 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             () => {
               console.log("Excel file imported successfully");
               // Mark workbook as changed after import
-              setChangeCount((prev) => prev + 1);
+              setChangeCount((prev) => {
+                const newCount = prev + 1;
+                changeCountRef.current = newCount;
+                return newCount;
+              });
               if (props.actionHandlerProc) {
                 props.actionHandlerProc("workbook-loaded", spread);
               }
@@ -607,7 +689,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
       });
     }
-  }), [spread, designer, changeCount, props]);
+  }), [spread, designer, props]);
 
   return (
     <div

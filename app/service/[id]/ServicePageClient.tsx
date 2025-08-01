@@ -79,13 +79,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     category: ''
   });
   const [configHasChanges, setConfigHasChanges] = useState(false);
-  const [workbookChangeState, setWorkbookChangeState] = useState(false);
+  const [workbookChangeCount, setWorkbookChangeCount] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(80);
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
   const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
-  // const sheetRef = useRef<any>(null); // Reference to the TableSheet - removed, using workbookRef instead
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
   // Custom hook for panel sizes
@@ -127,10 +126,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Computed property for any changes
   const hasAnyChanges = useMemo(() => {
-    // Check workbook changes only if workbookRef is initialized
-    const workbookHasChanges = workbookRef.current ? (workbookRef.current.hasChanges?.() || false) : false;
-    return configHasChanges || workbookChangeState || workbookHasChanges;
-  }, [configHasChanges, workbookChangeState]);
+    const result = configHasChanges || workbookChangeCount > 0;
+    
+    console.log('hasAnyChanges computed:', {
+      configHasChanges,
+      workbookChangeCount,
+      result
+    });
+    
+    return result;
+  }, [configHasChanges, workbookChangeCount]);
 
   // Memoize the default workbook structure to prevent recreation
   const defaultEmptyWorkbook = useMemo(() => workbookManager.createDefaultWorkbook(), []);
@@ -348,7 +353,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setApiConfig(newConfig);
           setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
           setConfigHasChanges(false); // Don't mark as changed until user actually makes changes
-          setWorkbookChangeState(false);
           setConfigLoaded(true); // Mark config as loaded for new service
 
           // Show empty state instead of default spreadsheet
@@ -628,7 +632,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setLoading(true);
       
       // Check what needs to be saved
-      const workbookNeedsSave = workbookChangeState || (workbookRef.current?.hasChanges?.() || false);
+      const workbookNeedsSave = workbookRef.current?.hasChanges?.() || false;
       const hasNoWorkbook = !serviceStatus?.urlData;
       const shouldSaveWorkbook = workbookNeedsSave || hasNoWorkbook;
       
@@ -831,7 +835,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Reset change count in workbook only if we saved the workbook
       if (workbookRef.current && shouldSaveWorkbook) {
         workbookRef.current.resetChangeCount();
-        setWorkbookChangeState(false);
+        setWorkbookChangeCount(0);
       }
     } catch (error) {
       console.error('Error saving service:', error);
@@ -864,10 +868,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } else if (action === 'zoom-handler') {
       zoomHandlerRef.current = data;
-    } else if (action === 'edit-ended' || action === 'selection-changed') {
-      // Mark as having changes when user edits
-      if (action === 'edit-ended') {
-        setWorkbookChangeState(true);
+    } else if (action === 'edit-ended' || action === 'selection-changed' || 
+               action === 'range-cleared' || action === 'cell-changed') {
+      // Update change count when workbook changes
+      if (action === 'edit-ended' || action === 'range-cleared' || action === 'cell-changed') {
+        console.log(`Workbook change detected: ${action}`);
+        setWorkbookChangeCount(prev => prev + 1);
       }
     } else if (action === 'workbook-loaded' || action === 'file-loaded') {
       console.log(action === 'workbook-loaded' ? 'Workbook loaded successfully' : 'File loaded successfully');
@@ -973,7 +979,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       if (workbookRef.current) {
         try {
           await workbookManager.importFromExcel(workbookRef.current, file);
-          setWorkbookChangeState(true); // Mark workbook as having changes
+          setWorkbookChangeCount(prev => prev + 1);
 
           let successMessage = 'Excel file imported successfully!';
 
@@ -1149,11 +1155,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             >
               <span>
                 Save
-                {(configHasChanges || workbookChangeState) && (
+                {(configHasChanges || workbookChangeCount > 0) && (
                   <span style={{ fontSize: '12px', marginLeft: '4px', opacity: 0.8 }}>
                     ({configHasChanges && 'Config'}
-                    {configHasChanges && workbookChangeState && ' + '}
-                    {workbookChangeState && 'Workbook'})
+                    {configHasChanges && workbookChangeCount > 0 && ' + '}
+                    {workbookChangeCount > 0 && 'Workbook'})
                   </span>
                 )}
               </span>
