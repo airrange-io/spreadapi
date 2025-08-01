@@ -74,7 +74,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiTags: [],
     category: ''
   });
-  const [hasChanges, setHasChanges] = useState(false);
+  const [configHasChanges, setConfigHasChanges] = useState(false);
+  const [workbookChangeState, setWorkbookChangeState] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(80);
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
@@ -119,6 +120,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   };
 
   const { panelSizes, handlePanelResize, sizesLoaded } = usePanelSizes();
+
+  // Computed property for any changes
+  const hasAnyChanges = useMemo(() => {
+    return configHasChanges || workbookChangeState || (workbookRef.current?.hasChanges?.() || false);
+  }, [configHasChanges, workbookChangeState]);
 
   // Memoize the default workbook structure to prevent recreation
   const defaultEmptyWorkbook = useMemo(() => workbookManager.createDefaultWorkbook(), []);
@@ -165,7 +171,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
       apiConfig.category !== savedConfig.category;
 
-    setHasChanges(configChanged);
+    setConfigHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
 
   // Load existing workbook or check for pre-uploaded file
@@ -327,7 +333,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           };
           setApiConfig(newConfig);
           setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
-          setHasChanges(false); // Don't mark as changed until user actually makes changes
+          setConfigHasChanges(false); // Don't mark as changed until user actually makes changes
+          setWorkbookChangeState(false);
           setConfigLoaded(true); // Mark config as loaded for new service
 
           // Show empty state instead of default spreadsheet
@@ -477,7 +484,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handlePublish = async () => {
     try {
       // First ensure everything is saved
-      if (hasChanges) {
+      if (hasAnyChanges) {
         message.warning('Please save your changes before publishing');
         return;
       }
@@ -541,7 +548,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   const handleUnpublish = async () => {
     try {
-      if (hasChanges) {
+      if (hasAnyChanges) {
         message.warning('Please save your changes before unpublishing');
         return;
       }
@@ -603,23 +610,38 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     try {
       setLoading(true);
-      setSavingWorkbook(true);
+      
+      // Check what needs to be saved
+      const workbookNeedsSave = workbookChangeState || (workbookRef.current?.hasChanges?.() || false);
+      const hasNoWorkbook = !serviceStatus?.urlData;
+      const shouldSaveWorkbook = workbookNeedsSave || hasNoWorkbook;
+      
+      // Check if there are any changes to save
+      if (!configHasChanges && !shouldSaveWorkbook) {
+        message.info('No changes to save');
+        setLoading(false);
+        return;
+      }
+      
+      // Show specific loading message
+      if (shouldSaveWorkbook && configHasChanges) {
+        setSavingWorkbook(true);
+        message.loading('Saving configuration and workbook...', 0);
+      } else if (shouldSaveWorkbook) {
+        setSavingWorkbook(true);
+        message.loading('Saving workbook...', 0);
+      } else if (configHasChanges) {
+        message.loading('Saving configuration...', 0);
+      }
 
-      // Check if workbook has changes before saving
       let workbookBlob = null;
-      let workbookHasChanges = false;
-      let shouldSaveWorkbook = false;
+      let saveStartTime = 0;
+      let saveEndTime = 0;
 
-      if (workbookRef.current) {
-        // Check if workbook has changes using the hasChanges method
-        workbookHasChanges = workbookRef.current.hasChanges && workbookRef.current.hasChanges();
-
-        // For services without a workbook URL, always save the workbook
-        const hasNoWorkbook = !serviceStatus?.urlData;
-        shouldSaveWorkbook = workbookHasChanges || hasNoWorkbook;
+      if (workbookRef.current && shouldSaveWorkbook) {
 
         console.log('Workbook save decision:', {
-          hasChanges: workbookHasChanges,
+          hasChanges: workbookNeedsSave,
           hasNoWorkbook,
           shouldSave: shouldSaveWorkbook
         });
@@ -627,14 +649,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Save workbook if needed
         if (shouldSaveWorkbook) {
           console.log('WorkbookRef exists and has changes, getting SJS blob...');
+          saveStartTime = performance.now();
+          
           try {
             workbookBlob = await workbookManager.saveWorkbookAsSJS(workbookRef.current);
+            saveEndTime = performance.now();
+            console.log(`Workbook SJS generation took ${(saveEndTime - saveStartTime).toFixed(0)}ms`);
+            
             if (!workbookBlob) {
               console.warn('No workbook blob available');
             } else {
               console.log('Got workbook blob:', {
                 hasData: !!workbookBlob,
                 size: workbookBlob.size,
+                sizeInMB: (workbookBlob.size / 1024 / 1024).toFixed(2),
                 type: workbookBlob.type
               });
             }
@@ -716,10 +744,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const formData = new FormData();
         formData.append('workbook', workbookBlob, `${serviceId}.sjs`);
 
+        const uploadStartTime = performance.now();
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
           method: 'PUT',
           body: formData
         });
+        const uploadEndTime = performance.now();
+        console.log(`Workbook upload took ${(uploadEndTime - uploadStartTime).toFixed(0)}ms`);
 
         if (!workbookResponse.ok) {
           const error = await workbookResponse.json();
@@ -727,29 +758,55 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
 
         const result = await workbookResponse.json();
-        console.log('Workbook saved successfully:', {
-          url: result.workbookUrl,
-          size: result.size,
-          timestamp: result.timestamp
-        });
+        
+        // Calculate total save time (from SJS generation start to upload end)
+        const totalSaveTime = uploadEndTime - saveStartTime;
+        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📊 WORKBOOK SAVE SUMMARY');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`📁 File Information:
+   • Size: ${result.size} (${workbookBlob.size.toLocaleString()} bytes)
+   • Format: SJS (SpreadJS native)
+   • Service ID: ${serviceId}`);
+        console.log(`⏱️  Performance Metrics:
+   • SJS Generation: ${(saveEndTime - saveStartTime).toFixed(0)}ms
+   • Upload to Blob: ${(uploadEndTime - uploadStartTime).toFixed(0)}ms
+   • Total Save Time: ${totalSaveTime.toFixed(0)}ms (${(totalSaveTime / 1000).toFixed(1)}s)`);
+        console.log(`🔗 Storage Details:
+   • URL: ${result.workbookUrl}
+   • Timestamp: ${result.timestamp}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // Update service status with the new workbook URL
+        setServiceStatus(prevStatus => ({
+          ...prevStatus,
+          urlData: result.workbookUrl
+        }));
       }
 
       // Show appropriate success message based on what was saved
-      if (workbookBlob) {
-        message.success('Service configuration and workbook saved successfully!');
+      message.destroy();
+      if (shouldSaveWorkbook && configHasChanges) {
+        message.success('Configuration and workbook saved successfully!');
+      } else if (shouldSaveWorkbook) {
+        message.success('Workbook saved successfully!');
       } else {
-        message.success('Service configuration saved successfully!');
+        message.success('Configuration saved successfully!');
       }
 
       // Update saved state to match current state
-      setSavedConfig({
-        ...apiConfig
-      });
-      setHasChanges(false);
+      if (configHasChanges) {
+        setSavedConfig({
+          ...apiConfig
+        });
+        setConfigHasChanges(false);
+      }
 
       // Reset change count in workbook only if we saved the workbook
-      if (workbookRef.current && workbookBlob) {
+      if (workbookRef.current && shouldSaveWorkbook) {
         workbookRef.current.resetChangeCount();
+        setWorkbookChangeState(false);
       }
     } catch (error) {
       console.error('Error saving service:', error);
@@ -785,7 +842,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } else if (action === 'edit-ended' || action === 'selection-changed') {
       // Mark as having changes when user edits
       if (action === 'edit-ended') {
-        setHasChanges(true);
+        setWorkbookChangeState(true);
       }
     } else if (action === 'workbook-loaded' || action === 'file-loaded') {
       console.log(action === 'workbook-loaded' ? 'Workbook loaded successfully' : 'File loaded successfully');
@@ -878,8 +935,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState, spreadsheetVisible]);
 
   const handleConfigChange = useCallback((config: any) => {
+    // Check if config actually changed
+    const hasActualChanges = JSON.stringify(config) !== JSON.stringify(savedConfig);
+    setConfigHasChanges(hasActualChanges);
     setApiConfig(config);
-  }, []);
+  }, [savedConfig]);
 
   const handleImportExcel = useCallback(async (file: File) => {
     try {
@@ -888,7 +948,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       if (workbookRef.current) {
         try {
           await workbookManager.importFromExcel(workbookRef.current, file);
-          setHasChanges(true); // Mark as having changes
+          setWorkbookChangeState(true); // Mark workbook as having changes
 
           let successMessage = 'Excel file imported successfully!';
 
@@ -901,6 +961,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               ...prev,
               name: filename
             }));
+            setConfigHasChanges(true); // Mark config as changed
             successMessage = `Excel file imported and service renamed to "${filename}"`;
           }
 
@@ -941,6 +1002,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setImportFileForEmptyState(null);
     }
   }, [importFileForEmptyState, spreadInstance, handleImportExcel]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasAnyChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasAnyChanges]);
 
   const configPanel = (
     <EditorPanel
@@ -1011,7 +1085,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         onChange: (value) => {
                           if (value && value.trim()) {
                             setApiConfig(prev => ({ ...prev, name: value.trim() }));
-                            setHasChanges(true);
+                            setConfigHasChanges(true);
                           }
                         },
                         tooltip: 'Click to edit service name',
@@ -1041,14 +1115,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               Configure
             </Button>
           )}
-          {hasChanges && !isDemoMode && (
+          {hasAnyChanges && !isDemoMode && (
             <Button
               type="primary"
               icon={<SaveOutlined />}
               onClick={handleSave}
               loading={loading}
             >
-              {savingWorkbook ? 'Saving Workbook...' : 'Save Changes'}
+              <span>
+                Save
+                {(configHasChanges || workbookChangeState) && (
+                  <span style={{ fontSize: '12px', marginLeft: '4px', opacity: 0.8 }}>
+                    ({configHasChanges && 'Config'}
+                    {configHasChanges && workbookChangeState && ' + '}
+                    {workbookChangeState && 'Workbook'})
+                  </span>
+                )}
+              </span>
             </Button>
           )}
           {!isDemoMode && (
@@ -1061,13 +1144,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     icon: <CloseCircleOutlined />,
                     danger: true,
                     onClick: handleUnpublish,
-                    disabled: hasChanges
+                    disabled: hasAnyChanges
                   } : {
                     key: 'publish',
                     label: 'Publish this service',
                     icon: <CheckCircleOutlined />,
                     onClick: handlePublish,
-                    disabled: hasChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
                   }
                 ]
               }}
