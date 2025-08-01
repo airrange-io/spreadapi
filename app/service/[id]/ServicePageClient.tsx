@@ -123,7 +123,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Computed property for any changes
   const hasAnyChanges = useMemo(() => {
-    return configHasChanges || workbookChangeState || (workbookRef.current?.hasChanges?.() || false);
+    // Check workbook changes only if workbookRef is initialized
+    const workbookHasChanges = workbookRef.current ? (workbookRef.current.hasChanges?.() || false) : false;
+    return configHasChanges || workbookChangeState || workbookHasChanges;
   }, [configHasChanges, workbookChangeState]);
 
   // Memoize the default workbook structure to prevent recreation
@@ -638,6 +640,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       let saveStartTime = 0;
       let saveEndTime = 0;
 
+      // Additional safety check for workbookRef
+      if (!workbookRef.current && shouldSaveWorkbook) {
+        console.error('Cannot save workbook - WorkbookViewer not initialized yet');
+        message.error('Please wait for the workbook to load before saving');
+        setLoading(false);
+        setSavingWorkbook(false);
+        return;
+      }
+
       if (workbookRef.current && shouldSaveWorkbook) {
 
         console.log('Workbook save decision:', {
@@ -683,8 +694,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         } else if (!shouldSaveWorkbook) {
           console.log('Workbook has no changes and already exists, skipping workbook save');
         }
-      } else {
-        console.error('WorkbookRef.current is null - cannot check workbook changes');
       }
 
       // Check if service exists first
