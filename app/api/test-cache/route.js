@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getApiDefinition } from '../../../utils/helperApi';
-import { DEMO_SERVICE_ID } from '@/lib/constants';
+import { DEMO_SERVICE_IDS } from '@/lib/constants';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const apiId = searchParams.get('api') || DEMO_SERVICE_ID; // Warming service
+    const apiId = searchParams.get('api') || DEMO_SERVICE_IDS[0]; // Warming service
     const iterations = parseInt(searchParams.get('iterations') || '5');
     
     const results = [];

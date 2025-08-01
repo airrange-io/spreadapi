@@ -5,7 +5,7 @@ import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
-import { DEMO_SERVICE_ID } from '@/lib/constants';
+import { DEMO_SERVICE_ID, DEMO_SERVICE_IDS, isDemoService } from '@/lib/constants';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -103,20 +103,32 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       loadingRef.current = true;
       setLoading(true);
 
-      // If not authenticated, show demo service
+      // If not authenticated, show demo services
       if (isAuthenticated === false) {
-        const demoService: Service = {
-          id: DEMO_SERVICE_ID,
-          name: 'Demo: Compound Interest Calculator',
-          description: 'Try our Excel API with this interactive compound interest calculator demo.',
-          status: 'published',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: new Date().toISOString(),
-          calls: 0,
-          lastUsed: null
-        };
-        setServices([demoService]);
-        setFilteredServices([demoService]);
+        const demoServices: Service[] = [
+          {
+            id: DEMO_SERVICE_IDS[0],
+            name: 'Demo: Compound Interest Calculator',
+            description: 'Try our Excel API with this interactive compound interest calculator demo.',
+            status: 'published',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: new Date().toISOString(),
+            calls: 0,
+            lastUsed: null
+          },
+          {
+            id: DEMO_SERVICE_IDS[1],
+            name: 'Demo: Orders Lookup',
+            description: 'Search and filter through order data with our TableSheet demo.',
+            status: 'published',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: new Date().toISOString(),
+            calls: 0,
+            lastUsed: null
+          }
+        ];
+        setServices(demoServices);
+        setFilteredServices(demoServices);
         setLoading(false);
         loadingRef.current = false;
         return;
@@ -147,19 +159,31 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         const data = await response.json();
         const loadedServices = data.services || [];
 
-        // If user has no services, add the demo service (unless hidden)
+        // If user has no services, add the demo services (unless hidden)
         if (loadedServices.length === 0 && !shouldHideDemo) {
-          const demoService: Service = {
-            id: DEMO_SERVICE_ID,
-            name: 'Demo: Compound Interest Calculator',
-            description: 'Try our Excel API with this interactive compound interest calculator demo.',
-            status: 'published',
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: new Date().toISOString(),
-            calls: 0,
-            lastUsed: null
-          };
-          loadedServices.push(demoService);
+          const demoServices: Service[] = [
+            {
+              id: DEMO_SERVICE_IDS[0],
+              name: 'Demo: Compound Interest Calculator',
+              description: 'Try our Excel API with this interactive compound interest calculator demo.',
+              status: 'published',
+              createdAt: '2025-01-01T00:00:00Z',
+              updatedAt: new Date().toISOString(),
+              calls: 0,
+              lastUsed: null
+            },
+            {
+              id: DEMO_SERVICE_IDS[1],
+              name: 'Demo: Orders Lookup',
+              description: 'Search and filter through order data with our TableSheet demo.',
+              status: 'published',
+              createdAt: '2025-01-01T00:00:00Z',
+              updatedAt: new Date().toISOString(),
+              calls: 0,
+              lastUsed: null
+            }
+          ];
+          loadedServices.push(...demoServices);
         }
 
         setServices(loadedServices);

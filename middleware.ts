@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { jwtVerify, createRemoteJWKSet } from "jose";
-import { DEMO_SERVICE_ID, DEMO_USER_ID } from "@/lib/constants";
+import { DEMO_SERVICE_IDS, DEMO_USER_ID, isDemoService } from "@/lib/constants";
 
 const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
@@ -42,17 +42,17 @@ export async function middleware(req: NextRequest) {
   // Services list endpoint should be public to allow service discovery
   const isServicesListEndpoint = pathname === '/api/v1/services';
   
-  // Allow unauthenticated access to demo service (both page and API routes)
-  const isDemoService = pathname === `/service/${DEMO_SERVICE_ID}` || 
-                        pathname.startsWith(`/service/${DEMO_SERVICE_ID}/`) ||
-                        pathname === `/api/services/${DEMO_SERVICE_ID}` ||
-                        pathname.startsWith(`/api/services/${DEMO_SERVICE_ID}/`) ||
-                        pathname === `/api/workbook/${DEMO_SERVICE_ID}`;
+  // Extract service ID from pathname
+  const serviceIdMatch = pathname.match(/\/(service|api\/services|api\/workbook)\/([^\/]+)/);
+  const serviceId = serviceIdMatch ? serviceIdMatch[2] : null;
+  
+  // Allow unauthenticated access to demo services (both page and API routes)
+  const isDemoServiceRequest = serviceId && isDemoService(serviceId);
   
   // Skip auth for public routes and demo service
-  if (!isProtectedRoute || isDemoService || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
     // For demo service, add a header to indicate read-only mode
-    if (isDemoService) {
+    if (isDemoServiceRequest) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-demo-mode', 'true');
       requestHeaders.set('x-user-id', DEMO_USER_ID);

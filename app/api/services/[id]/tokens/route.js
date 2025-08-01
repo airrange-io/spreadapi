@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { generateToken, generateTokenId, hashToken } from '@/utils/tokenUtils';
-import { DEMO_SERVICE_ID, DEMO_USER_ID } from '@/lib/constants';
+import { isDemoService, DEMO_USER_ID } from '@/lib/constants';
 
 // GET /api/services/[id]/tokens - List all tokens for a service
 export async function GET(request, { params }) {
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
     console.log(`[TOKENS] Service owner: ${serviceUserId}, Current user: ${currentUserId}`);
     
     // Allow demo user to access demo service tokens
-    const isDemoAccess = currentUserId === DEMO_USER_ID && id === DEMO_SERVICE_ID;
+    const isDemoAccess = currentUserId === DEMO_USER_ID && isDemoService(id);
     
     if (serviceUserId !== currentUserId && !isDemoAccess) {
       console.log(`[TOKENS] Access denied. Owner: ${serviceUserId}, User: ${currentUserId}, Demo: ${isDemoAccess}`);
