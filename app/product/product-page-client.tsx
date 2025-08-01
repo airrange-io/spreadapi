@@ -375,9 +375,20 @@ const ProductPage: React.FC = () => {
                               <div style={{
                                 marginTop: '12px',
                                 fontSize: '12px',
-                                color: '#6b7280'
+                                color: '#6b7280',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
                               }}>
-                                Calculated by Excel in 47ms • 100% accurate
+                                <span>Calculated by Excel in 47ms • 100% accurate</span>
+                                <a href="#" style={{
+                                  color: '#9333EA',
+                                  textDecoration: 'none',
+                                  fontSize: '11px',
+                                  opacity: 0.8
+                                }}>
+                                  Download PDF
+                                </a>
                               </div>
                             </div>
                           </div>

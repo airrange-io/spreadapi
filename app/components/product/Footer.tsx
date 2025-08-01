@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
                       <a href="/how-excel-api-works" className="footer-link">How it Works</a>
                       <a href="/excel-ai-integration" className="footer-link">AI Integration</a>
                       <a href="/product/editable-areas" className="footer-link">Editable Areas</a>
-                      <a href="/ai-security-control" className="footer-link">AI Security</a>
+                      {/* <a href="/ai-security-control" className="footer-link">AI Security</a> */}
                     </div>
                   </div>
                   {/* Use Cases & Examples - Disabled for now
