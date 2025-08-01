@@ -12,6 +12,7 @@ import { prepareServiceForPublish, publishService } from '@/utils/publishService
 import EmptyWorkbookState from './EmptyWorkbookState';
 import { appStore } from '@/stores/AppStore';
 import { DEMO_SERVICE_ID } from '@/lib/constants';
+import { workbookManager } from '@/utils/workbookManager';
 
 // Dynamically import WorkbookViewer to avoid SSR issues
 const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
@@ -120,46 +121,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const { panelSizes, handlePanelResize, sizesLoaded } = usePanelSizes();
 
   // Memoize the default workbook structure to prevent recreation
-  const defaultEmptyWorkbook = useMemo(() => ({
-    version: "18.0.7",
-    sheetCount: 1,
-    activeSheetIndex: 0,
-    sheets: {
-      Sheet1: {
-        name: "Sheet1",
-        isSelected: true,
-        activeRow: 0,
-        activeCol: 0,
-        rowCount: 200,
-        columnCount: 20,
-        theme: "Office",
-        data: {
-          dataTable: {}
-        },
-        rowHeaderData: {},
-        colHeaderData: {},
-        selections: {
-          0: {
-            row: 0,
-            col: 0,
-            rowCount: 1,
-            colCount: 1
-          },
-          length: 1
-        },
-        defaults: {
-          colHeaderRowHeight: 20,
-          colWidth: 64,
-          rowHeaderColWidth: 40,
-          rowHeight: 20
-        },
-        index: 0
-      }
-    },
-    namedStyles: {},
-    names: {},
-    customLists: []
-  }), []); // Empty dependency array since this never changes
+  const defaultEmptyWorkbook = useMemo(() => workbookManager.createDefaultWorkbook(), []);
 
   const setDefaultSpreadsheetData = useCallback(() => {
     console.log('Setting default empty workbook');
@@ -389,26 +351,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const processWorkbookData = (workbookResult: any) => {
       console.log('Processing workbook data:', workbookResult);
 
-      if (workbookResult.format === 'sjs' && workbookResult.workbookBlob) {
-        // Handle SJS format
-        const base64 = workbookResult.workbookBlob;
-        const binaryString = atob(base64);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+      const processedData = workbookManager.processWorkbookData(workbookResult);
+      
+      if (processedData) {
+        if (processedData.type === 'sjs') {
+          setSpreadsheetData({
+            type: 'sjs',
+            blob: processedData.blob,
+            format: 'sjs'
+          });
+          console.log('SJS workbook loaded');
+        } else if (processedData.type === 'json') {
+          setSpreadsheetData(processedData.data);
+          console.log('JSON workbook loaded');
         }
-        const blob = new Blob([bytes], { type: 'application/octet-stream' });
-
-        setSpreadsheetData({
-          type: 'sjs',
-          blob: blob,
-          format: 'sjs'
-        });
-        console.log('SJS workbook loaded');
-      } else if (workbookResult.workbookData) {
-        // Handle JSON format
-        setSpreadsheetData(workbookResult.workbookData);
-        console.log('JSON workbook loaded');
       }
 
       setInitialLoading(false);
@@ -630,35 +586,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       message.loading('Exporting to Excel...', 0);
       
-      // Use the spread instance's built-in export functionality
-      const exportOptions = {
-        includeBindingSource: true,
-        includeStyles: true,
-        includeFormulas: true,
-        saveAsView: false,
-        includeUnusedStyles: false,
-        includeAutoMergedCells: false
-      };
-
-      spreadInstance.export((blob) => {
-        // Create a download link
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${apiConfig.name || 'spreadsheet'}_${new Date().toISOString().split('T')[0]}.xlsx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        message.destroy();
-        message.success('Excel file exported successfully');
-      }, (error) => {
-        console.error('Export error:', error);
-        message.destroy();
-        message.error('Failed to export Excel file');
-      }, exportOptions);
-
+      await workbookManager.exportToExcel(
+        spreadInstance,
+        apiConfig.name || 'spreadsheet'
+      );
+      
+      message.destroy();
+      message.success('Excel file exported successfully');
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       message.destroy();
@@ -691,10 +625,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         });
 
         // Save workbook if needed
-        if (shouldSaveWorkbook && workbookRef.current.saveWorkbookSJS) {
+        if (shouldSaveWorkbook) {
           console.log('WorkbookRef exists and has changes, getting SJS blob...');
           try {
-            workbookBlob = await workbookRef.current.saveWorkbookSJS();
+            workbookBlob = await workbookManager.saveWorkbookAsSJS(workbookRef.current);
             if (!workbookBlob) {
               console.warn('No workbook blob available');
             } else {
@@ -707,11 +641,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           } catch (error) {
             console.error('Error getting workbook SJS:', error);
             // Fallback to JSON if SJS fails
-            const workbookData = workbookRef.current.getWorkbookJSON();
-            if (workbookData) {
-              // Convert JSON to blob
-              const jsonString = JSON.stringify(workbookData);
-              workbookBlob = new Blob([jsonString], { type: 'application/json' });
+            try {
+              const workbookData = workbookManager.getWorkbookJSON(workbookRef.current);
+              if (workbookData) {
+                // Convert JSON to blob
+                const jsonString = JSON.stringify(workbookData);
+                workbookBlob = new Blob([jsonString], { type: 'application/json' });
+              }
+            } catch (jsonError) {
+              console.error('Error getting workbook JSON:', jsonError);
             }
           }
         } else if (!shouldSaveWorkbook) {
@@ -947,9 +885,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       setSavingWorkbook(true);
 
-      if (workbookRef.current && workbookRef.current.importExcel) {
+      if (workbookRef.current) {
         try {
-          await workbookRef.current.importExcel(file);
+          await workbookManager.importFromExcel(workbookRef.current, file);
           setHasChanges(true); // Mark as having changes
 
           let successMessage = 'Excel file imported successfully!';
@@ -1150,7 +1088,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </Button>
             </Dropdown>
           )}
-          {!isDemoMode && (
             <Dropdown
               menu={{
                 items: [
@@ -1171,7 +1108,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 style={{ marginLeft: 8 }}
               />
             </Dropdown>
-          )}
         </Space>
       </div>
 
