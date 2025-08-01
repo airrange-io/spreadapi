@@ -47,22 +47,20 @@ const ListsPage: React.FC = observer(() => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [showMCPModal, setShowMCPModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
-    // Initialize with table view on server, will be updated on client
-    if (typeof window === 'undefined') return 'table';
-    const saved = localStorage.getItem('serviceViewMode');
-    return (saved === 'table' || saved === 'card') ? saved : 'table';
-  });
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
 
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true);
-    // Load saved view mode
+    // Load saved view mode only once on client
     const savedViewMode = localStorage.getItem('serviceViewMode');
     if (savedViewMode === 'table' || savedViewMode === 'card') {
       setViewMode(savedViewMode);
+    } else {
+      // If no saved preference, save the default
+      localStorage.setItem('serviceViewMode', 'card');
     }
   }, []);
 
