@@ -69,7 +69,7 @@ const ProductPage: React.FC = () => {
                       AI's honest request for help
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -78,10 +78,10 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 14H8M12 14H16M20 14H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <path d="M14 4V8M14 12V16M14 20V24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="14" cy="14" r="3" stroke="#9333EA" strokeWidth="1.5"/>
-                            <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M4 14H8M12 14H16M20 14H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M14 4V8M14 12V16M14 20V24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="14" cy="14" r="3" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Run Your Formulas"</h3>
@@ -92,7 +92,7 @@ const ProductPage: React.FC = () => {
                           - Claude, ChatGPT & Gemini
                         </p>
                       </div>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -101,10 +101,10 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="6" y="6" width="16" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
-                            <path d="M10 10H14M10 14H12M10 18H16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="20" cy="20" r="6" fill="white"/>
-                            <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <rect x="6" y="6" width="16" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M10 10H14M10 14H12M10 18H16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="20" cy="20" r="6" fill="white" />
+                            <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Only Know 50-100 Functions"</h3>
@@ -115,7 +115,7 @@ const ProductPage: React.FC = () => {
                           - Claude, being honest
                         </p>
                       </div>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -124,10 +124,10 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 14L12 14M12 14L16 14M12 14L12 10M12 14L12 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <path d="M16 10L20 10M20 10L20 14M20 10L24 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <path d="M16 18L20 18M20 18L20 14M20 18L24 22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <circle cx="12" cy="14" r="2" fill="#9333EA"/>
+                            <path d="M8 14L12 14M12 14L16 14M12 14L12 10M12 14L12 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M16 10L20 10M20 10L20 14M20 10L24 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M16 18L20 18M20 18L20 14M20 18L24 22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="12" cy="14" r="2" fill="#9333EA" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"My Errors Compound Fast"</h3>
@@ -138,7 +138,7 @@ const ProductPage: React.FC = () => {
                           - Every AI Model
                         </p>
                       </div>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -147,8 +147,8 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="14" cy="14" r="11" stroke="#9333EA" strokeWidth="1.5"/>
-                            <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <circle cx="14" cy="14" r="11" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Take Forever to Calculate"</h3>
@@ -159,7 +159,7 @@ const ProductPage: React.FC = () => {
                           - Every AI Model
                         </p>
                       </div>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -168,8 +168,8 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                            <path d="M16 14L24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M16 14L24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             <text x="14" y="17" textAnchor="middle" fontSize="12" fill="#9333EA">20%</text>
                           </svg>
                         </div>
@@ -181,7 +181,7 @@ const ProductPage: React.FC = () => {
                           - Claude & ChatGPT
                         </p>
                       </div>
-                      <div style={{ 
+                      <div style={{
                         background: 'white',
                         padding: '30px',
                         borderRadius: '12px',
@@ -190,12 +190,12 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="4" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
-                            <rect x="16" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
-                            <rect x="10" y="18" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5"/>
-                            <path d="M12 12L16 12M14 16L14 18" stroke="#9333EA" strokeWidth="1.5"/>
-                            <circle cx="22" cy="6" r="4" fill="white"/>
-                            <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5"/>
+                            <rect x="4" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <rect x="16" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <rect x="10" y="18" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M12 12L16 12M14 16L14 18" stroke="#9333EA" strokeWidth="1.5" />
+                            <circle cx="22" cy="6" r="4" fill="white" />
+                            <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Handle Dependencies"</h3>
@@ -207,7 +207,7 @@ const ProductPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div style={{ marginTop: '50px', textAlign: 'center' }}>
                       <p style={{ fontSize: '20px', color: '#374151', marginBottom: '30px' }}>
                         <strong style={{ color: '#9333EA' }}>SpreadAPI:</strong> Your Excel stays Excel. AI gets exact results. Always 100% accurate.
@@ -281,7 +281,7 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="feature-image-wrapper">
-                        <div className="feature-image-placeholder" style={{ 
+                        <div className="feature-image-placeholder" style={{
                           background: 'white',
                           borderRadius: '12px',
                           padding: '30px',
@@ -305,7 +305,7 @@ const ProductPage: React.FC = () => {
                               I need a quote for 500 units with our enterprise discount, shipped to 3 locations in California
                             </div>
                           </div>
-                          
+
                           {/* AI Response */}
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <div style={{
@@ -414,16 +414,16 @@ const ProductPage: React.FC = () => {
                       <div className="margin-bottom margin-large">
                         <h2>Give AI <span className="text-color-primary">Your Excel Superpowers</span></h2>
                       </div>
-                      
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
                         gap: '30px',
                         maxWidth: '1000px',
                         margin: '0 auto',
                         textAlign: 'left'
                       }}>
-                        <div style={{ 
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -431,9 +431,9 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 6V14L20 20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5"/>
-                              <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M14 6V14L20 20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Predictable Every Time</h3>
@@ -441,8 +441,8 @@ const ProductPage: React.FC = () => {
                             AI gives different answers each time. But Excel? Excel actually calculates. Every. Single. Time.
                           </p>
                         </div>
-                        
-                        <div style={{ 
+
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -450,8 +450,8 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5"/>
-                              <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>500+ Excel Functions</h3>
@@ -459,8 +459,8 @@ const ProductPage: React.FC = () => {
                             VLOOKUP, XLOOKUP, array formulas, financial functions - 500+ functions work exactly as in Excel
                           </p>
                         </div>
-                        
-                        <div style={{ 
+
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -468,7 +468,7 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Real-Time Calculations</h3>
@@ -476,8 +476,8 @@ const ProductPage: React.FC = () => {
                             50ms response times with intelligent caching and pre-warmed Excel engines
                           </p>
                         </div>
-                        
-                        <div style={{ 
+
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -485,10 +485,10 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
-                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5"/>
-                              <circle cx="14" cy="17" r="1.5" fill="#9333EA"/>
-                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5"/>
+                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5" />
+                              <circle cx="14" cy="17" r="1.5" fill="#9333EA" />
+                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No Files Sent to OpenAI/Anthropic</h3>
@@ -496,8 +496,8 @@ const ProductPage: React.FC = () => {
                             Your Excel stays on SpreadAPI servers. AI only sees the specific inputs and outputs you define
                           </p>
                         </div>
-                        
-                        <div style={{ 
+
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -505,12 +505,12 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5"/>
-                              <circle cx="11" cy="13" r="1" fill="#9333EA"/>
-                              <circle cx="17" cy="13" r="1" fill="#9333EA"/>
-                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
+                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                              <circle cx="11" cy="13" r="1" fill="#9333EA" />
+                              <circle cx="17" cy="13" r="1" fill="#9333EA" />
+                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
@@ -518,8 +518,8 @@ const ProductPage: React.FC = () => {
                             Native Model Context Protocol support for seamless ChatGPT and Claude integration
                           </p>
                         </div>
-                        
-                        <div style={{ 
+
+                        <div style={{
                           background: 'white',
                           padding: '30px',
                           borderRadius: '12px',
@@ -527,9 +527,9 @@ const ProductPage: React.FC = () => {
                         }}>
                           <div style={{ marginBottom: '15px' }}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round"/>
-                              <path d="M14 14L20 8M20 8H16M20 8V12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <circle cx="14" cy="14" r="2" fill="#9333EA"/>
+                              <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M14 14L20 8M20 8H16M20 8V12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="14" cy="14" r="2" fill="#9333EA" />
                             </svg>
                           </div>
                           <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Zero Learning Curve</h3>
@@ -562,30 +562,30 @@ const ProductPage: React.FC = () => {
                         }}>
                           <svg viewBox="0 0 500 340" fill="none" xmlns="http://www.w3.org/2000/svg">
                             {/* Spreadsheet Container */}
-                            <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-                            
+                            <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
+
                             {/* Column Headers */}
-                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8 8 0 0"/>
-                            <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="330" y1="10" x2="330" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="410" y1="10" x2="410" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8 8 0 0" />
+                            <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="330" y1="10" x2="330" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="410" y1="10" x2="410" y2="50" stroke="#E8E0FF" strokeWidth="1" />
                             <text x="50" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">A</text>
                             <text x="130" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">B</text>
                             <text x="210" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">C</text>
                             <text x="290" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">D</text>
                             <text x="370" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">E</text>
                             <text x="450" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">F</text>
-                            
+
                             {/* Row Numbers */}
-                            <rect x="10" y="50" width="80" height="280" fill="#F8F6FE"/>
-                            <line x1="10" y1="90" x2="490" y2="90" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="10" y1="130" x2="490" y2="130" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="10" y1="170" x2="490" y2="170" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="10" y1="210" x2="490" y2="210" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="10" y1="250" x2="490" y2="250" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="10" y1="290" x2="490" y2="290" stroke="#E8E0FF" strokeWidth="1"/>
+                            <rect x="10" y="50" width="80" height="280" fill="#F8F6FE" />
+                            <line x1="10" y1="90" x2="490" y2="90" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="130" x2="490" y2="130" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="170" x2="490" y2="170" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="210" x2="490" y2="210" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="250" x2="490" y2="250" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="290" x2="490" y2="290" stroke="#E8E0FF" strokeWidth="1" />
                             <text x="50" y="75" textAnchor="middle" fill="#6B7280" fontSize="14">1</text>
                             <text x="50" y="115" textAnchor="middle" fill="#6B7280" fontSize="14">2</text>
                             <text x="50" y="155" textAnchor="middle" fill="#6B7280" fontSize="14">3</text>
@@ -593,51 +593,51 @@ const ProductPage: React.FC = () => {
                             <text x="50" y="235" textAnchor="middle" fill="#6B7280" fontSize="14">5</text>
                             <text x="50" y="275" textAnchor="middle" fill="#6B7280" fontSize="14">6</text>
                             <text x="50" y="315" textAnchor="middle" fill="#6B7280" fontSize="14">7</text>
-                            
+
                             {/* Grid Lines */}
-                            <line x1="170" y1="50" x2="170" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="250" y1="50" x2="250" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="330" y1="50" x2="330" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
-                            <line x1="410" y1="50" x2="410" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
-                            
+                            <line x1="170" y1="50" x2="170" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="250" y1="50" x2="250" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="330" y1="50" x2="330" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="410" y1="50" x2="410" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+
                             {/* AI Access Area 1 - Input Area (Green) */}
-                            <rect x="90" y="90" width="160" height="80" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2" rx="4"/>
+                            <rect x="90" y="90" width="160" height="80" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2" rx="4" />
                             <text x="170" y="75" textAnchor="middle" fill="#10B981" fontSize="12" fontWeight="600">AI Can Edit</text>
-                            
+
                             {/* Sample Data in Input Area */}
                             <text x="130" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">Quantity</text>
                             <text x="210" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">500</text>
                             <text x="130" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">Discount</text>
                             <text x="210" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">15%</text>
-                            
+
                             {/* AI Access Area 2 - Read-Only Area (Blue) */}
-                            <rect x="250" y="210" width="240" height="80" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4 2" rx="4"/>
+                            <rect x="250" y="210" width="240" height="80" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4 2" rx="4" />
                             <text x="370" y="195" textAnchor="middle" fill="#3B82F6" fontSize="12" fontWeight="600">AI Read-Only</text>
-                            
+
                             {/* Sample Data in Read-Only Area */}
                             <text x="290" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">Total</text>
                             <text x="370" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">$21,112</text>
                             <text x="290" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">Tax</text>
                             <text x="370" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">$1,432</text>
-                            
+
                             {/* Protected Area (Gray with Lock) */}
-                            <rect x="330" y="90" width="160" height="80" fill="#6B7280" fillOpacity="0.1" rx="4"/>
+                            <rect x="330" y="90" width="160" height="80" fill="#6B7280" fillOpacity="0.1" rx="4" />
                             <g transform="translate(395, 120)">
-                              <rect x="-8" y="-4" width="16" height="12" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none"/>
-                              <path d="M-5 -4V-7C-5 -9.76142 -2.76142 -12 0 -12C2.76142 -12 5 -9.76142 5 -7V-4" stroke="#6B7280" strokeWidth="1.5" fill="none"/>
-                              <circle cx="0" cy="2" r="1.5" fill="#6B7280"/>
+                              <rect x="-8" y="-4" width="16" height="12" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none" />
+                              <path d="M-5 -4V-7C-5 -9.76142 -2.76142 -12 0 -12C2.76142 -12 5 -9.76142 5 -7V-4" stroke="#6B7280" strokeWidth="1.5" fill="none" />
+                              <circle cx="0" cy="2" r="1.5" fill="#6B7280" />
                             </g>
                             <text x="410" y="155" textAnchor="middle" fill="#6B7280" fontSize="11">Protected</text>
-                            
+
                             {/* Legend */}
                             <g transform="translate(20, 340)">
-                              <rect x="0" y="0" width="15" height="15" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="1.5" rx="2"/>
+                              <rect x="0" y="0" width="15" height="15" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="1.5" rx="2" />
                               <text x="20" y="12" fill="#374151" fontSize="12">AI can modify values</text>
-                              
-                              <rect x="150" y="0" width="15" height="15" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="1.5" rx="2"/>
+
+                              <rect x="150" y="0" width="15" height="15" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="1.5" rx="2" />
                               <text x="170" y="12" fill="#374151" fontSize="12">AI can read only</text>
-                              
-                              <rect x="280" y="0" width="15" height="15" fill="#6B7280" fillOpacity="0.1" stroke="#6B7280" strokeWidth="1.5" rx="2"/>
+
+                              <rect x="280" y="0" width="15" height="15" fill="#6B7280" fillOpacity="0.1" stroke="#6B7280" strokeWidth="1.5" rx="2" />
                               <text x="300" y="12" fill="#374151" fontSize="12">No AI access</text>
                             </g>
                           </svg>
@@ -902,7 +902,7 @@ const ProductPage: React.FC = () => {
                           <div className="testimonial-author-image-wrapper">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M24 14V24L30 27M33 24C33 28.9706 28.9706 33 24 33C19.0294 33 15 28.9706 15 24C15 19.0294 19.0294 15 24 15C28.9706 15 33 19.0294 33 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M24 14V24L30 27M33 24C33 28.9706 28.9706 33 24 33C19.0294 33 15 28.9706 15 24C15 19.0294 19.0294 15 24 15C28.9706 15 33 19.0294 33 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
                           <div className="testimonial-author-content-wrapper">
@@ -921,7 +921,7 @@ const ProductPage: React.FC = () => {
                           <div className="testimonial-author-image-wrapper">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M15 20H33M15 28H33M19 16V32M29 16V32M13 24C13 19.5817 16.5817 16 21 16H27C31.4183 16 35 19.5817 35 24C35 28.4183 31.4183 32 27 32H21C16.5817 32 13 28.4183 13 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M15 20H33M15 28H33M19 16V32M29 16V32M13 24C13 19.5817 16.5817 16 21 16H27C31.4183 16 35 19.5817 35 24C35 28.4183 31.4183 32 27 32H21C16.5817 32 13 28.4183 13 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
                           <div className="testimonial-author-content-wrapper">
@@ -1007,10 +1007,10 @@ const ProductPage: React.FC = () => {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button" style={{ 
+                          <a href="/" className="button" style={{
                             background: 'white',
                             color: '#1a1a1a',
-                            padding: '16px 32px', 
+                            padding: '16px 32px',
                             fontSize: '18px',
                             fontWeight: '600',
                             minWidth: '200px',
@@ -1018,11 +1018,11 @@ const ProductPage: React.FC = () => {
                           }}>
                             Get Instant API Access
                           </a>
-                          <a href="/pricing" className="button" style={{ 
+                          <a href="/pricing" className="button" style={{
                             background: 'transparent',
                             border: '2px solid white',
                             color: 'white',
-                            padding: '16px 32px', 
+                            padding: '16px 32px',
                             fontSize: '18px',
                             fontWeight: '600',
                             minWidth: '200px'
@@ -1059,7 +1059,7 @@ const ProductPage: React.FC = () => {
                     <div className="home-contact-component">
                       <div className="home-contact-item">
                         <p>
-                          Questions about SpreadAPI? We're here to help at <a href="mailto:hello@airrange.io">hello@airrange.io</a>.
+                          Questions about SpreadAPI? We're here to help at <a href="mailto:team@airrange.io">team@airrange.io</a>.
                         </p>
                       </div>
                     </div>

@@ -57,7 +57,7 @@ export default function ProductPage() {
     ],
     "contactPoint": {
       "@type": "ContactPoint",
-      "email": "hello@airrange.io",
+      "email": "team@airrange.io",
       "contactType": "customer support",
       "availableLanguage": ["en"]
     }

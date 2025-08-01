@@ -14,7 +14,7 @@ export async function GET() {
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${siteUrl}/blog/rss.xml" rel="self" type="application/rss+xml" />
     <generator>SpreadAPI</generator>
-    <webMaster>hello@airrange.io (SpreadAPI Team)</webMaster>
+    <webMaster>team@airrange.io (SpreadAPI Team)</webMaster>
     <copyright>© ${new Date().getFullYear()} Airrange.io. All rights reserved.</copyright>
     <category>Technology</category>
     <category>Software Development</category>
@@ -28,7 +28,7 @@ export async function GET() {
       <description><![CDATA[${post.excerpt}]]></description>
       <content:encoded><![CDATA[${post.content}]]></content:encoded>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <author>hello@airrange.io (${post.author})</author>
+      <author>team@airrange.io (${post.author})</author>
       ${post.tags.map(tag => `<category>${tag}</category>`).join('\n      ')}
     </item>`).join('')}
   </channel>
