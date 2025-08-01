@@ -225,7 +225,7 @@ const ProductPage: React.FC = () => {
                         fontWeight: '600',
                         transition: 'all 0.2s ease'
                       }}>
-                        Read the Full AI Confession →
+                        Here's What AI Told Us →
                       </Link>
                     </div>
                   </div>
@@ -551,17 +551,95 @@ const ProductPage: React.FC = () => {
                   <div className="padding-section-large">
                     <div className="feature-component reverse">
                       <div className="feature-image-wrapper">
-                        <div className="feature-image-placeholder">
-                          <svg viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="600" height="400" fill="#E6F4FF" rx="12" />
-                            <rect x="40" y="40" width="520" height="320" rx="8" fill="white" stroke="#B3E0FF" strokeWidth="2" />
-                            <circle cx="100" cy="100" r="20" fill="#E6F4FF" />
-                            <circle cx="500" cy="100" r="20" fill="#E6F4FF" />
-                            <rect x="70" y="140" width="460" height="180" rx="8" fill="#F0F9FF" />
-                            <rect x="90" y="160" width="420" height="40" rx="4" fill="#E6F4FF" />
-                            <rect x="90" y="220" width="320" height="20" rx="4" fill="#E6F4FF" />
-                            <rect x="90" y="250" width="280" height="20" rx="4" fill="#E6F4FF" />
-                            <rect x="90" y="280" width="360" height="20" rx="4" fill="#E6F4FF" />
+                        <div className="feature-image-placeholder" style={{
+                          background: '#F8F6FE',
+                          borderRadius: '12px',
+                          padding: '30px',
+                          height: '400px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <svg viewBox="0 0 500 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            {/* Spreadsheet Container */}
+                            <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            
+                            {/* Column Headers */}
+                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8 8 0 0"/>
+                            <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="330" y1="10" x2="330" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="410" y1="10" x2="410" y2="50" stroke="#E8E0FF" strokeWidth="1"/>
+                            <text x="50" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">A</text>
+                            <text x="130" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">B</text>
+                            <text x="210" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">C</text>
+                            <text x="290" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">D</text>
+                            <text x="370" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">E</text>
+                            <text x="450" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">F</text>
+                            
+                            {/* Row Numbers */}
+                            <rect x="10" y="50" width="80" height="280" fill="#F8F6FE"/>
+                            <line x1="10" y1="90" x2="490" y2="90" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="10" y1="130" x2="490" y2="130" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="10" y1="170" x2="490" y2="170" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="10" y1="210" x2="490" y2="210" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="10" y1="250" x2="490" y2="250" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="10" y1="290" x2="490" y2="290" stroke="#E8E0FF" strokeWidth="1"/>
+                            <text x="50" y="75" textAnchor="middle" fill="#6B7280" fontSize="14">1</text>
+                            <text x="50" y="115" textAnchor="middle" fill="#6B7280" fontSize="14">2</text>
+                            <text x="50" y="155" textAnchor="middle" fill="#6B7280" fontSize="14">3</text>
+                            <text x="50" y="195" textAnchor="middle" fill="#6B7280" fontSize="14">4</text>
+                            <text x="50" y="235" textAnchor="middle" fill="#6B7280" fontSize="14">5</text>
+                            <text x="50" y="275" textAnchor="middle" fill="#6B7280" fontSize="14">6</text>
+                            <text x="50" y="315" textAnchor="middle" fill="#6B7280" fontSize="14">7</text>
+                            
+                            {/* Grid Lines */}
+                            <line x1="170" y1="50" x2="170" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="250" y1="50" x2="250" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="330" y1="50" x2="330" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
+                            <line x1="410" y1="50" x2="410" y2="330" stroke="#E8E0FF" strokeWidth="1"/>
+                            
+                            {/* AI Access Area 1 - Input Area (Green) */}
+                            <rect x="90" y="90" width="160" height="80" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2" rx="4"/>
+                            <text x="170" y="75" textAnchor="middle" fill="#10B981" fontSize="12" fontWeight="600">AI Can Edit</text>
+                            
+                            {/* Sample Data in Input Area */}
+                            <text x="130" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">Quantity</text>
+                            <text x="210" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">500</text>
+                            <text x="130" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">Discount</text>
+                            <text x="210" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">15%</text>
+                            
+                            {/* AI Access Area 2 - Read-Only Area (Blue) */}
+                            <rect x="250" y="210" width="240" height="80" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4 2" rx="4"/>
+                            <text x="370" y="195" textAnchor="middle" fill="#3B82F6" fontSize="12" fontWeight="600">AI Read-Only</text>
+                            
+                            {/* Sample Data in Read-Only Area */}
+                            <text x="290" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">Total</text>
+                            <text x="370" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">$21,112</text>
+                            <text x="290" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">Tax</text>
+                            <text x="370" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">$1,432</text>
+                            
+                            {/* Protected Area (Gray with Lock) */}
+                            <rect x="330" y="90" width="160" height="80" fill="#6B7280" fillOpacity="0.1" rx="4"/>
+                            <g transform="translate(395, 120)">
+                              <rect x="-8" y="-4" width="16" height="12" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none"/>
+                              <path d="M-5 -4V-7C-5 -9.76142 -2.76142 -12 0 -12C2.76142 -12 5 -9.76142 5 -7V-4" stroke="#6B7280" strokeWidth="1.5" fill="none"/>
+                              <circle cx="0" cy="2" r="1.5" fill="#6B7280"/>
+                            </g>
+                            <text x="410" y="155" textAnchor="middle" fill="#6B7280" fontSize="11">Protected</text>
+                            
+                            {/* Legend */}
+                            <g transform="translate(20, 340)">
+                              <rect x="0" y="0" width="15" height="15" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="1.5" rx="2"/>
+                              <text x="20" y="12" fill="#374151" fontSize="12">AI can modify values</text>
+                              
+                              <rect x="150" y="0" width="15" height="15" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="1.5" rx="2"/>
+                              <text x="170" y="12" fill="#374151" fontSize="12">AI can read only</text>
+                              
+                              <rect x="280" y="0" width="15" height="15" fill="#6B7280" fillOpacity="0.1" stroke="#6B7280" strokeWidth="1.5" rx="2"/>
+                              <text x="300" y="12" fill="#374151" fontSize="12">No AI access</text>
+                            </g>
                           </svg>
                         </div>
                       </div>
