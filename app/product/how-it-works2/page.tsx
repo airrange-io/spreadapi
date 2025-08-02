@@ -654,7 +654,7 @@ const HowItWorks2Page: React.FC = () => {
           </section>
 
           {/* CTA Section */}
-          <section id="cta" className="section-home-cta">
+          {/* <section id="cta" className="section-home-cta">
             <div className="padding-global">
               <div className="container-large">
                 <div className="padding-section-large">
@@ -674,38 +674,9 @@ const HowItWorks2Page: React.FC = () => {
                 </div>
               </div>
             </div>
-          </section>
+          </section> */}
         </main>
 
-        {/* Footer */}
-        <footer className="footer">
-          <div className="padding-global">
-            <div className="container-large">
-              <div className="footer-component">
-                <div className="padding-section-medium">
-                  <div>
-                    <div className="footer-top-wrapper">
-                      <div className="footer-link-list">
-                        <a href="/product" className="footer-link">Overview</a>
-                        <a href="/product/how-it-works2" className="footer-link">How it Works</a>
-                        <a href="/product#faq" className="footer-link">FAQ</a>
-                        <a href="/docs" className="footer-link">Docs</a>
-                      </div>
-                      <a href="/" className="footer-logo-link">
-                        <img src="/logo-full.svg" alt="SpreadAPI" className="footer-logo" />
-                      </a>
-                      <div className="footer-social-list">
-                        <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
-                        <a href="/terms-of-service" className="footer-link">Terms of Service</a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
-        
         {/* Footer */}
         <Footer />
       </div>
