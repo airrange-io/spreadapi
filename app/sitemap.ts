@@ -3,7 +3,7 @@ import { getSortedPostsData } from '@/lib/blog';
 import { supportedLocales } from '@/lib/translations/blog-helpers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://spreadapi.com';
+  const baseUrl = 'https://spreadapi.io';
   const sitemapEntries: MetadataRoute.Sitemap = [];
   
   // Static pages
