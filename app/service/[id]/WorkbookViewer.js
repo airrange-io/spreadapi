@@ -7,6 +7,7 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
+import { Spin } from "antd";
 import * as GC from "@mescius/spread-sheets";
 import "@mescius/spread-sheets-io";
 // import "@mescius/spread-sheets-charts";
@@ -218,30 +219,32 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   );
 
   // Define the zoom handler
-  useEffect(() => {
-    handleZoomChangeRef.current = (newZoom) => {
-      if (spread) {
-        const zoomFactor = newZoom / 100;
-        spread.options.zoomFactor = zoomFactor;
+  const applyZoom = useCallback((newZoom) => {
+    if (spread) {
+      const zoomFactor = newZoom / 100;
+      spread.options.zoomFactor = zoomFactor;
 
-        // Apply zoom to all sheets
-        const sheetCount = spread.getSheetCount();
-        for (let i = 0; i < sheetCount; i++) {
-          const sheet = spread.getSheet(i);
-          if (sheet) {
-            sheet.zoom(zoomFactor);
-          }
+      // Apply zoom to all sheets
+      const sheetCount = spread.getSheetCount();
+      for (let i = 0; i < sheetCount; i++) {
+        const sheet = spread.getSheet(i);
+        if (sheet) {
+          sheet.zoom(zoomFactor);
         }
-
-        setZoomLevel(newZoom);
       }
-    };
+
+      setZoomLevel(newZoom);
+    }
+  }, [spread]);
+
+  useEffect(() => {
+    handleZoomChangeRef.current = applyZoom;
 
     // Notify parent that zoom handler is ready (only once when spread is available)
     if (props.actionHandlerProc && spread && handleZoomChangeRef.current) {
       props.actionHandlerProc("zoom-handler", handleZoomChangeRef.current);
     }
-  }, [spread, props]);
+  }, [spread, props, applyZoom]);
 
   const clearSelection = () => {
     if (spread) {
@@ -252,22 +255,8 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     }
   };
 
-  // Apply initial zoom if provided
-  useEffect(() => {
-    if (
-      spread &&
-      props.initialZoom &&
-      props.initialZoom !== 100 &&
-      handleZoomChangeRef.current
-    ) {
-      // Apply initial zoom after a short delay to ensure spread is fully initialized
-      setTimeout(() => {
-        if (handleZoomChangeRef.current) {
-          handleZoomChangeRef.current(props.initialZoom);
-        }
-      }, 100);
-    }
-  }, [spread]); // Only depend on spread to avoid re-running
+  // Note: Initial zoom is now applied immediately when data loads,
+  // so we don't need a separate effect for it
 
   useEffect(() => {
     if (!designer || !spread) return;
@@ -308,6 +297,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           props.storeLocal.spread.blob,
           () => {
             console.log("SJS file loaded successfully");
+            
+            // Apply initial zoom immediately after loading
+            if (props.initialZoom && props.initialZoom !== 100) {
+              console.log("Applying initial zoom:", props.initialZoom);
+              const zoomFactor = props.initialZoom / 100;
+              spread.options.zoomFactor = zoomFactor;
+              
+              // Apply zoom to all sheets
+              const sheetCount = spread.getSheetCount();
+              for (let i = 0; i < sheetCount; i++) {
+                const sheet = spread.getSheet(i);
+                if (sheet) {
+                  sheet.zoom(zoomFactor);
+                }
+              }
+              setZoomLevel(props.initialZoom);
+            }
+            
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
@@ -342,6 +349,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
                   props.storeLocal.spread.data,
                   (json) => {
                     spread.fromJSON(json);
+                    
+                    // Apply initial zoom immediately after loading
+                    if (props.initialZoom && props.initialZoom !== 100) {
+                      console.log("Applying initial zoom:", props.initialZoom);
+                      const zoomFactor = props.initialZoom / 100;
+                      spread.options.zoomFactor = zoomFactor;
+                      
+                      // Apply zoom to all sheets
+                      const sheetCount = spread.getSheetCount();
+                      for (let i = 0; i < sheetCount; i++) {
+                        const sheet = spread.getSheet(i);
+                        if (sheet) {
+                          sheet.zoom(zoomFactor);
+                        }
+                      }
+                      setZoomLevel(props.initialZoom);
+                    }
+                    
                     console.log("Excel file imported successfully (retry)");
                     setDataLoaded(true);
                     setIsLoading(false);
@@ -380,6 +405,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           props.storeLocal.spread.data,
           (json) => {
             spread.fromJSON(json);
+            
+            // Apply initial zoom immediately after loading
+            if (props.initialZoom && props.initialZoom !== 100) {
+              console.log("Applying initial zoom:", props.initialZoom);
+              const zoomFactor = props.initialZoom / 100;
+              spread.options.zoomFactor = zoomFactor;
+              
+              // Apply zoom to all sheets
+              const sheetCount = spread.getSheetCount();
+              for (let i = 0; i < sheetCount; i++) {
+                const sheet = spread.getSheet(i);
+                if (sheet) {
+                  sheet.zoom(zoomFactor);
+                }
+              }
+              setZoomLevel(props.initialZoom);
+            }
+            
             console.log("Excel file imported successfully");
             setDataLoaded(true);
             setIsLoading(false);
@@ -404,6 +447,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         // Load JSON data - don't check for specific properties, just try to load
         console.log("Loading JSON data into spread...");
         spread.fromJSON(props.storeLocal.spread);
+        
+        // Apply initial zoom immediately after loading data
+        if (props.initialZoom && props.initialZoom !== 100) {
+          console.log("Applying initial zoom:", props.initialZoom);
+          const zoomFactor = props.initialZoom / 100;
+          spread.options.zoomFactor = zoomFactor;
+          
+          // Apply zoom to all sheets
+          const sheetCount = spread.getSheetCount();
+          for (let i = 0; i < sheetCount; i++) {
+            const sheet = spread.getSheet(i);
+            if (sheet) {
+              sheet.zoom(zoomFactor);
+            }
+          }
+          setZoomLevel(props.initialZoom);
+        }
+        
         console.log("JSON data loaded successfully");
         setDataLoaded(true);
         setIsLoading(false);
@@ -723,20 +784,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               zIndex: 9999,
             }}
           >
-            <div style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  border: "3px solid #f3f3f3",
-                  borderTop: "3px solid #8A64C0",
-                  borderRadius: "50%",
-                  margin: "0 auto 16px",
-                }}
-                className="workbook-spinner"
-              />
-              <div style={{ color: "#666" }}>Loading workbook...</div>
-            </div>
+            <Spin size="default" tip="Loading workbook..." />
           </div>
         )}
       </div>

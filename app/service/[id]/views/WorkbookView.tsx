@@ -72,10 +72,9 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#999',
-        fontSize: '16px'
+        background: '#fafafa'
       }}>
-        Initializing spreadsheet...
+        <Spin size="default" tip="Initializing spreadsheet..." />
       </div>
     );
   }

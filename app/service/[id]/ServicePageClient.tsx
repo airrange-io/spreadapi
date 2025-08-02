@@ -920,9 +920,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#ffffff'
+          backgroundColor: 'rgba(255, 255, 255, 0.9)'
         }}>
-          <Spin size="default" />
+          <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                border: '3px solid #f3f3f3',
+                borderTop: '3px solid #8A64C0',
+                borderRadius: '50%',
+                margin: '0 auto 16px'
+              }}
+              className="workbook-spinner"
+            />
+            <div style={{ color: '#666' }}>Loading...</div>
+          </div>
         </div>
       );
     }
@@ -1114,7 +1127,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#ffffff',
+          backgroundColor: '#fafafa',
           gap: 16
         }}>
           <Spin size="default" />
