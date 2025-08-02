@@ -254,24 +254,49 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
   // Navigate to area
   const handleNavigateToArea = useCallback((area: AreaParameter) => {
-    if (!spreadInstance || !area.range) return;
+    if (!spreadInstance || !area.address) return;
 
     try {
       spreadInstance.suspendPaint();
       
-      const targetSheet = spreadInstance.getSheetFromName(area.range.sheetName);
-      if (targetSheet) {
-        spreadInstance.setActiveSheet(targetSheet);
+      // Parse the address string (e.g., "Sheet1!A1:B10" or "A1:B10")
+      let sheetName: string | undefined;
+      let rangeStr = area.address;
+      
+      // Check if address contains sheet name
+      const sheetSeparatorIndex = rangeStr.indexOf('!');
+      if (sheetSeparatorIndex > -1) {
+        sheetName = rangeStr.substring(0, sheetSeparatorIndex);
+        rangeStr = rangeStr.substring(sheetSeparatorIndex + 1);
       }
-
+      
+      // Switch to target sheet if specified
+      if (sheetName) {
+        const targetSheet = spreadInstance.getSheetFromName(sheetName);
+        if (targetSheet) {
+          spreadInstance.setActiveSheet(targetSheet);
+        }
+      }
+      
       const sheet = spreadInstance.getActiveSheet();
       if (sheet) {
-        sheet.setActiveCell(area.range.row, area.range.col);
-        sheet.showCell(area.range.row, area.range.col, 3, 3);
-        
-        sheet.getSelections().clear();
-        sheet.addSelection(area.range.row, area.range.col, area.range.rowCount, area.range.colCount);
+        // Use getRange to parse the range string
+        const range = sheet.getRange(rangeStr);
+        if (range) {
+          const row = range.row;
+          const col = range.col;
+          const rowCount = range.rowCount;
+          const colCount = range.colCount;
+          
+          sheet.setActiveCell(row, col);
+          sheet.showCell(row, col, 3, 3);
+          
+          sheet.getSelections().clear();
+          sheet.addSelection(row, col, rowCount, colCount);
+        }
       }
+    } catch (error) {
+      console.error('Error navigating to area:', error);
     } finally {
       spreadInstance.resumePaint();
     }
@@ -287,8 +312,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   }, []);
 
   // Remove area
-  const handleRemoveArea = useCallback((areaId: string) => {
-    setAreas(prev => prev.filter(a => a.id !== areaId));
+  const handleRemoveArea = useCallback((index: number) => {
+    setAreas(prev => prev.filter((_, i) => i !== index));
   }, []);
 
   // Handle parameter save from modal
@@ -484,12 +509,20 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     };
     
     for (const param of existingParams) {
+      // Extract sheet name from address if present
+      let paramSheetName = sheetName;
+      let paramAddress = param.address;
+      const sheetSeparatorIndex = paramAddress.indexOf('!');
+      if (sheetSeparatorIndex > -1) {
+        paramSheetName = paramAddress.substring(0, sheetSeparatorIndex);
+      }
+      
       const paramRange = {
-        sheetName: param.sheetName || sheetName,
+        sheetName: paramSheetName,
         row: param.row,
         col: param.col,
-        rowCount: param.rowCount || 1,
-        colCount: param.colCount || 1
+        rowCount: 1,
+        colCount: 1
       };
       
       if (checkRangeOverlap(newRange, paramRange)) {
@@ -544,18 +577,35 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     }
 
     const newId = generateParameterId();
+    // Convert selection to address string
+    const colToLetter = (col: number) => {
+      let letter = '';
+      while (col >= 0) {
+        letter = String.fromCharCode((col % 26) + 65) + letter;
+        col = Math.floor(col / 26) - 1;
+      }
+      return letter;
+    };
+    
+    const startCol = colToLetter(currentSelection.col);
+    const startRow = currentSelection.row + 1;
+    const endCol = colToLetter(currentSelection.col + currentSelection.colCount - 1);
+    const endRow = currentSelection.row + currentSelection.rowCount;
+    
+    const rangeAddress = (currentSelection.rowCount === 1 && currentSelection.colCount === 1)
+      ? `${startCol}${startRow}`
+      : `${startCol}${startRow}:${endCol}${endRow}`;
+    
+    const address = sheetName !== 'Sheet1' ? `${sheetName}!${rangeAddress}` : rangeAddress;
+    
     const newArea: AreaParameter = {
       id: newId,
       name: '',
+      alias: '',
+      address: address,
       description: '',
-      permissions: PERMISSION_PRESETS.valueOnly,
-      range: {
-        sheetName: sheetName,
-        row: currentSelection.row,
-        col: currentSelection.col,
-        rowCount: currentSelection.rowCount,
-        colCount: currentSelection.colCount
-      }
+      mode: 'editable',
+      permissions: PERMISSION_PRESETS.valueOnly
     };
 
     setEditingArea(newArea);

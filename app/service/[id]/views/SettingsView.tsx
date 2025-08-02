@@ -6,22 +6,24 @@ import { Skeleton } from 'antd';
 // Lazy load the section components
 const SettingsSection = lazy(() => import('../components/SettingsSection'));
 
+interface ApiConfig {
+  name: string;
+  description: string;
+  enableCaching?: boolean;
+  requireToken?: boolean;
+  cacheTableSheetData?: boolean;
+  tableSheetCacheTTL?: number;
+  aiDescription?: string;
+  aiUsageExamples?: string[];
+  aiTags?: string[];
+  category?: string;
+  inputs?: any[];
+  outputs?: any[];
+}
+
 interface SettingsViewProps {
   // Settings props
-  apiConfig: {
-    name: string;
-    description: string;
-    enableCaching?: boolean;
-    requireToken?: boolean;
-    cacheTableSheetData?: boolean;
-    tableSheetCacheTTL?: number;
-    aiDescription?: string;
-    aiUsageExamples?: string[];
-    aiTags?: string[];
-    category?: string;
-    inputs?: any[];
-    outputs?: any[];
-  };
+  apiConfig: ApiConfig;
 
   // Token props
   serviceId: string;
@@ -32,7 +34,7 @@ interface SettingsViewProps {
   isDemoMode?: boolean;
 
   // Event handlers
-  onConfigChange: (updates: Partial<typeof apiConfig>) => void;
+  onConfigChange: (updates: Partial<ApiConfig>) => void;
   onTokensChange?: (tokens: any[]) => void;
   onTokenCountChange?: (count: number) => void;
 }

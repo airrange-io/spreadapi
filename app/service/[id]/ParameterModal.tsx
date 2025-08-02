@@ -97,7 +97,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         initialValues={{
           name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
           title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
-          dataType: editingParameter?.dataType || editingParameter?.type || selectedCellInfo?.detectedDataType || 'string',
+          dataType: editingParameter?.type || selectedCellInfo?.detectedDataType || 'string',
           description: editingParameter?.description || '',
           mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
           min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
