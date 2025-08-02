@@ -61,11 +61,15 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
     
     const updateWidth = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
+        const width = containerRef.current.offsetWidth;
+        setContainerWidth(width);
       }
     };
 
     updateWidth();
+    // Measure again after a short delay to ensure layout is complete
+    const timeout = setTimeout(updateWidth, 100);
+    
     window.addEventListener('resize', updateWidth);
     
     // Also use ResizeObserver for more accurate tracking
@@ -75,10 +79,11 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
     }
 
     return () => {
+      clearTimeout(timeout);
       window.removeEventListener('resize', updateWidth);
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [configLoaded]); // Re-run when configLoaded changes
 
   const handleTestComplete = async () => {
     // Refresh token stats after successful test
@@ -87,35 +92,11 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
     }
   };
 
-  useLayoutEffect(() => {
-    const measureWidth = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.offsetWidth;
-        setContainerWidth(width);
-      }
-    };
-
-    measureWidth();
-    const timeout = setTimeout(measureWidth, 100);
-
-    const resizeObserver = new ResizeObserver(measureWidth);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    window.addEventListener('resize', measureWidth);
-
-    return () => {
-      clearTimeout(timeout);
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', measureWidth);
-    };
-  }, []);
 
   // Show skeleton until config is loaded to prevent status flicker
   if (!configLoaded) {
     return (
-      <div style={{ padding: '16px' }}>
+      <div ref={containerRef} style={{ padding: '16px' }}>
         <Skeleton active paragraph={{ rows: 4 }} />
         <div style={{ marginTop: 16 }}>
           <Skeleton active paragraph={{ rows: 6 }} />

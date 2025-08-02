@@ -24,6 +24,7 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
     message.success('Copied to clipboard');
   };
 
+  // Legacy API URL (deprecated)
   const buildUrl = () => {
     const baseUrl = 'https://spreadapi.io/api/getresults';
     
@@ -300,10 +301,10 @@ pm.test("Response has outputs", () => {
 
 // Method 1: WEBSERVICE Function (Excel 2013+)
 // For single output value, use plain text format:
-=WEBSERVICE("https://spreadapi.io/api/v1/services/${serviceId}/execute?${Object.entries(parameterValues).map(([k,v]) => `${k}=${v}`).join('&')}&_format=plain")
+=WEBSERVICE("https://spreadapi.io/api/v1/services/${serviceId}/execute?${Object.entries(parameterValues).map(([k,v]) => `${k}=${v}`).join('&')}${requireToken ? '&token=YOUR_TOKEN_HERE' : ''}&_format=plain")
 
 // Dynamic with cell references (assuming A1=${Object.values(parameterValues)[0] || 'value1'}, B1=${Object.values(parameterValues)[1] || 'value2'}, etc.):
-=WEBSERVICE("https://spreadapi.io/api/v1/services/${serviceId}/execute?" ${paramsList ? '& ' + paramsList : ''} & "&_format=plain")
+=WEBSERVICE("https://spreadapi.io/api/v1/services/${serviceId}/execute?" ${paramsList ? '& ' + paramsList : ''} ${requireToken ? '& "&token=YOUR_TOKEN_HERE"' : ''} & "&_format=plain")
 
 // Method 2: Power Query (Recommended for complex data)
 // 1. Data > Get Data > From Other Sources > From Web
@@ -355,7 +356,7 @@ End Sub
         return `// Google Sheets Integration
 
 // Method 1: IMPORTDATA Function (for CSV format)
-=IMPORTDATA("https://spreadapi.io/api/v1/services/${serviceId}/execute?${Object.entries(parameterValues).map(([k,v]) => `${k}=${v}`).join('&')}&_format=csv")
+=IMPORTDATA("https://spreadapi.io/api/v1/services/${serviceId}/execute?${Object.entries(parameterValues).map(([k,v]) => `${k}=${v}`).join('&')}${requireToken ? '&token=YOUR_TOKEN_HERE' : ''}&_format=csv")
 
 // Method 2: Custom Google Apps Script Function
 // Go to Extensions > Apps Script and add this code:

@@ -13,7 +13,7 @@ import WorkbookView from './views/WorkbookView';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
-import { appStore } from '@/stores/AppStore';
+import { appStore } from '../../stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
@@ -87,7 +87,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
-  const [saveProgress, setSaveProgress] = useState<{visible: boolean; percent: number; status: string}>({
+  const [saveProgress, setSaveProgress] = useState<{ visible: boolean; percent: number; status: string }>({
     visible: false,
     percent: 0,
     status: ''
@@ -670,14 +670,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   };
 
   const isSavingRef = useRef(false);
-  
+
   const handleSave = async () => {
     // Prevent concurrent saves
     if (isSavingRef.current) {
       message.warning('Save already in progress');
       return;
     }
-    
+
     try {
       isSavingRef.current = true;
       setLoading(true);
@@ -726,16 +726,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             // For large files, show progress modal
             // We can't detect size before saving, so we'll show progress based on save time
             const savePromise = workbookManager.saveWorkbookAsSJS(workbookRef.current);
-            
+
             // If save takes more than 500ms, show progress
             const progressTimeout = setTimeout(() => {
               message.destroy();
               setSaveProgress({ visible: true, percent: 30, status: 'Saving workbook data...' });
             }, 500);
-            
+
             workbookBlob = await savePromise;
             saveEndTime = performance.now();
-            
+
             // Clear timeout if save was fast
             clearTimeout(progressTimeout);
 
@@ -821,13 +821,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         formData.append('workbook', workbookBlob, `${serviceId}.sjs`);
 
         const uploadStartTime = performance.now();
-        
+
         // Update progress for large files during upload
         const sizeInMB = workbookBlob.size / 1024 / 1024;
         if (saveProgress.visible) {
           setSaveProgress({ visible: true, percent: 90, status: 'Finalizing...' });
         }
-        
+
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
           method: 'PUT',
           body: formData
@@ -854,7 +854,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Show appropriate success message based on what was saved
       message.destroy();
       setSaveProgress({ visible: false, percent: 0, status: '' });
-      
+
       if (shouldSaveWorkbook && configHasChanges) {
         message.success('Configuration and workbook saved successfully!');
       } else if (shouldSaveWorkbook) {
@@ -1254,9 +1254,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     >
                       {apiConfig.name || 'New Service'}
                     </Text>
-                    {isDemoMode && (
-                      <Tag color="blue" style={{ marginLeft: 8 }}>Demo Mode</Tag>
-                    )}
                   </Space>
                 ) : '...',
               }]),
@@ -1301,7 +1298,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </span>
             </Button>
           )}
-          {!isDemoMode && (
+          {isDemoMode ? (
+            <Button style={{
+              borderRadius: 6,
+              paddingLeft: 12,
+              paddingRight: 12,
+              minWidth: 108,
+              backgroundColor: '#E6F7FF',
+              borderColor: '#91D5FF',
+              color: '#1890FF',
+              cursor: 'default'
+            }}>
+              Demo Mode
+            </Button>
+          ) : (
             <Dropdown
               menu={{
                 items: [
@@ -1328,14 +1338,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 borderRadius: 6,
                 paddingLeft: 12,
                 paddingRight: 12,
+                minWidth: 108,
                 backgroundColor: serviceStatus?.published ? '#E4F2D4' : '#f5f5f5', //'#FFFBE6',
                 borderColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', // '#FFE58F',
                 // borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
                 color: serviceStatus?.published ? '#389E0E' : '#666666', //'#fa8c16'
               }}>
                 <Space size={4}>
-                  {serviceStatus?.published ? 'Published' : 'Draft'}
-                  {/* <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} /> */}
+                  {configLoaded ? (
+                    serviceStatus?.published ? 'Published' : 'Draft'
+                  ) : (
+                    <Spin size="small" />
+                  )}
                   <DownOutlined style={{ fontSize: 12 }} />
                 </Space>
               </Button>
@@ -1391,89 +1405,89 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </Splitter.Panel>
               <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="50%" max="80%">
                 <ErrorBoundary>
-                <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
-                  {/* Workbook View */}
-                  <div style={{
-                    display: activeView === 'Workbook' ? 'block' : 'none',
-                    height: '100%'
-                  }}>
-                    {workbookLoading ? (
-                      <div style={{
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#ffffff'
-                      }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <Spin size="default" />
-                          <div style={{ marginTop: 16, color: '#666' }}>Loading workbook...</div>
+                  <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+                    {/* Workbook View */}
+                    <div style={{
+                      display: activeView === 'Workbook' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      {workbookLoading ? (
+                        <div style={{
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#ffffff'
+                        }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Spin size="default" />
+                            <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <WorkbookView
-                        ref={workbookRef}
-                        spreadsheetData={spreadsheetData}
-                        showEmptyState={showEmptyState}
+                      ) : (
+                        <WorkbookView
+                          ref={workbookRef}
+                          spreadsheetData={spreadsheetData}
+                          showEmptyState={showEmptyState}
+                          isDemoMode={isDemoMode}
+                          zoomLevel={zoomLevel}
+                          onWorkbookInit={handleWorkbookInit}
+                          onEmptyStateAction={(action, file) => {
+                            if (action === 'start') {
+                              setShowEmptyState(false);
+                              setDefaultSpreadsheetData();
+                            } else if (action === 'import' && file) {
+                              setShowEmptyState(false);
+                              handleEmptyStateImport(file);
+                            }
+                          }}
+                          onZoomHandlerReady={setZoomHandlerRef}
+                          onEditableAreaAdd={handleEditableAreaAdd}
+                          onEditableAreaUpdate={handleEditableAreaUpdate}
+                          onEditableAreaRemove={handleEditableAreaRemove}
+                          onImportExcel={handleImportExcel}
+                          onWorkbookChange={handleWorkbookChange}
+                        />
+                      )}
+                    </div>
+
+                    {/* API Test View */}
+                    <div style={{
+                      display: activeView === 'API Test' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      <ApiTestView
+                        serviceId={serviceId}
+                        apiConfig={apiConfig}
+                        serviceStatus={serviceStatus}
+                        availableTokens={availableTokens}
                         isDemoMode={isDemoMode}
-                        zoomLevel={zoomLevel}
-                        onWorkbookInit={handleWorkbookInit}
-                        onEmptyStateAction={(action, file) => {
-                          if (action === 'start') {
-                            setShowEmptyState(false);
-                            setDefaultSpreadsheetData();
-                          } else if (action === 'import' && file) {
-                            setShowEmptyState(false);
-                            handleEmptyStateImport(file);
-                          }
+                        configLoaded={configLoaded}
+                        onRequireTokenChange={(value) => {
+                          handleConfigChange({ requireToken: value });
                         }}
-                        onZoomHandlerReady={setZoomHandlerRef}
-                        onEditableAreaAdd={handleEditableAreaAdd}
-                        onEditableAreaUpdate={handleEditableAreaUpdate}
-                        onEditableAreaRemove={handleEditableAreaRemove}
-                        onImportExcel={handleImportExcel}
-                        onWorkbookChange={handleWorkbookChange}
+                        onTokenCountChange={setTokenCount}
+                        onTokensChange={setAvailableTokens}
                       />
-                    )}
-                  </div>
+                    </div>
 
-                  {/* API Test View */}
-                  <div style={{
-                    display: activeView === 'API Test' ? 'block' : 'none',
-                    height: '100%'
-                  }}>
-                    <ApiTestView
-                      serviceId={serviceId}
-                      apiConfig={apiConfig}
-                      serviceStatus={serviceStatus}
-                      availableTokens={availableTokens}
-                      isDemoMode={isDemoMode}
-                      configLoaded={configLoaded}
-                      onRequireTokenChange={(value) => {
-                        handleConfigChange({ requireToken: value });
-                      }}
-                      onTokenCountChange={setTokenCount}
-                      onTokensChange={setAvailableTokens}
-                    />
+                    {/* Settings View */}
+                    <div style={{
+                      display: activeView === 'Settings' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      <SettingsView
+                        apiConfig={apiConfig}
+                        serviceId={serviceId}
+                        serviceStatus={serviceStatus}
+                        availableTokens={availableTokens}
+                        isDemoMode={isDemoMode}
+                        onConfigChange={handleConfigChange}
+                        onTokensChange={setAvailableTokens}
+                        onTokenCountChange={setTokenCount}
+                      />
+                    </div>
                   </div>
-
-                  {/* Settings View */}
-                  <div style={{
-                    display: activeView === 'Settings' ? 'block' : 'none',
-                    height: '100%'
-                  }}>
-                    <SettingsView
-                      apiConfig={apiConfig}
-                      serviceId={serviceId}
-                      serviceStatus={serviceStatus}
-                      availableTokens={availableTokens}
-                      isDemoMode={isDemoMode}
-                      onConfigChange={handleConfigChange}
-                      onTokensChange={setAvailableTokens}
-                      onTokenCountChange={setTokenCount}
-                    />
-                  </div>
-                </div>
                 </ErrorBoundary>
               </Splitter.Panel>
             </Splitter>
@@ -1508,7 +1522,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     }}>
                       <div style={{ textAlign: 'center' }}>
                         <Spin size="default" />
-                        <div style={{ marginTop: 16, color: '#666' }}>Loading workbook...</div>
+                        <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
                       </div>
                     </div>
                   ) : (
@@ -1614,7 +1628,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         zoomLevel={zoomLevel}
         onZoomChange={handleZoomChange}
       />
-      
+
       {/* Save Progress Modal */}
       <Modal
         title="Saving Large File"

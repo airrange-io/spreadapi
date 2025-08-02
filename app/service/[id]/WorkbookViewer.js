@@ -805,7 +805,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               zIndex: 9999,
             }}
           >
-            <Spin size="default" tip="Loading workbook..." />
+            <Spin size="default" tip="Loading spreadsheet..." />
           </div>
         )}
       </div>
