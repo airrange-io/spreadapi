@@ -3,6 +3,7 @@
 import React, { lazy, Suspense, useRef, useState, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton, Space, Alert } from 'antd';
+import { useContainerWidth } from '@/hooks/useContainerWidth';
 
 // Dynamically import components to avoid any SSR issues
 const ServiceTester = dynamic(() => import('../ServiceTester'), {
@@ -50,40 +51,20 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   onTokensChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
   const [mounted, setMounted] = useState(false);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
+  
+  // Use robust container width measurement
+  const { width: containerWidth } = useContainerWidth(containerRef, {
+    fallbackWidth: 800, // Reasonable default for 2-column layout
+    debounceMs: 100,
+    maxRetries: 10 // Try harder to get the width
+  });
 
-  // Track container width and trigger fade-in
+  // Track fade-in effect separately
   useLayoutEffect(() => {
-    // Trigger fade-in effect
     setMounted(true);
-    
-    const updateWidth = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.offsetWidth;
-        setContainerWidth(width);
-      }
-    };
-
-    updateWidth();
-    // Measure again after a short delay to ensure layout is complete
-    const timeout = setTimeout(updateWidth, 100);
-    
-    window.addEventListener('resize', updateWidth);
-    
-    // Also use ResizeObserver for more accurate tracking
-    const resizeObserver = new ResizeObserver(updateWidth);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener('resize', updateWidth);
-      resizeObserver.disconnect();
-    };
-  }, [configLoaded]); // Re-run when configLoaded changes
+  }, []);
 
   const handleTestComplete = async () => {
     // Refresh token stats after successful test

@@ -181,14 +181,23 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   // Get column span based on container width
   const getColumnSpan = () => {
-    // For debugging
+    // Fallback to a reasonable default if width measurement fails
+    const effectiveWidth = containerWidth || 800;
     
-    if (!containerWidth || containerWidth === 0) return 24; // 1 column - full width
-    if (containerWidth < 600) return 24; // 1 column for small containers
-    if (containerWidth < 900) return 12; // 2 columns for medium containers
-    if (containerWidth < 1200) return 8; // 3 columns for large containers
+    if (effectiveWidth < 600) return 24; // 1 column for small containers
+    if (effectiveWidth < 900) return 12; // 2 columns for medium containers
+    if (effectiveWidth < 1200) return 8; // 3 columns for large containers
     return 6; // 4 columns for extra large containers
   };
+
+  // Alternative: CSS Grid approach (for future refactoring)
+  // <div style={{
+  //   display: 'grid',
+  //   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+  //   gap: '16px'
+  // }}>
+  //   {inputs.map(input => <div key={input.id}>...</div>)}
+  // </div>
 
   // Get column span for statistics
   const getStatColumnSpan = () => {
