@@ -36,6 +36,10 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   };
 
   const getAddButtonInfo = () => {
+    if (!spreadInstance) {
+      return { text: 'Switch to Workbook view to add parameters', disabled: true };
+    }
+    
     if (!spreadsheetReady) {
       return { text: 'Loading spreadsheet...', disabled: true };
     }

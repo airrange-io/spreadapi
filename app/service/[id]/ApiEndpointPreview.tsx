@@ -30,7 +30,8 @@ export default function ApiEndpointPreview({
 
   return (
     <div style={{
-      background: isPublished ? '#E4F2D4' : '#f5f5f5',
+      background: isPublished ? '#E4F2D4' : '#FFFBE6',
+      border: '1px solid #FFE58F', //#b7eb8f
       // border: `1px solid ${isPublished ? '#f0f0f0' : '#d9d9d9'}`, //#b7eb8f
       borderRadius: '8px',
       padding: '8px 16px',
@@ -47,7 +48,7 @@ export default function ApiEndpointPreview({
           <Text 
             strong
             style={{ 
-              color: isPublished ? '#389E0E' : '#8c8c8c',
+              color: isPublished ? '#389E0E' : '#FAAD14',
               fontSize: '14px',
               fontWeight: 600,
               cursor: 'help',

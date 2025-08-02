@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented } from 'antd';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
@@ -15,6 +15,7 @@ import { prepareServiceForPublish, publishService } from '@/utils/publishService
 import { appStore } from '@/stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
+import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
@@ -25,7 +26,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const { message } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings'>('Workbook');
+  // Initialize activeView from localStorage or default based on context
+  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings'>(() => {
+    const savedView = getSavedView(serviceId);
+    if (savedView && ['Workbook', 'API Test', 'Settings'].includes(savedView)) {
+      return savedView as 'Workbook' | 'API Test' | 'Settings';
+    }
+    // Default to Workbook for now, will update based on service status once loaded
+    return 'Workbook';
+  });
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
   const [showEmptyState, setShowEmptyState] = useState(false); // Show empty state for new services
   const [importFileForEmptyState, setImportFileForEmptyState] = useState<File | null>(null); // File to import after workbook is ready
@@ -70,6 +79,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [serviceStatus, setServiceStatus] = useState<any>({ published: false, status: 'draft' });
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
   const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
+  const [hasSetSmartDefault, setHasSetSmartDefault] = useState(false); // Track if we've set smart default
+  const [workbookLoading, setWorkbookLoading] = useState(false); // Track workbook loading state
+  const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
@@ -115,13 +127,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Computed property for any changes
   const hasAnyChanges = useMemo(() => {
     const result = configHasChanges || workbookChangeCount > 0;
-    
+
     console.log('hasAnyChanges computed:', {
       configHasChanges,
       workbookChangeCount,
       result
     });
-    
+
     return result;
   }, [configHasChanges, workbookChangeCount]);
 
@@ -175,6 +187,124 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     setConfigHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
 
+  // Set smart default view based on service status
+  useEffect(() => {
+    // Only set smart default once, and only if user hasn't already chosen a view
+    if (!hasSetSmartDefault && configLoaded) {
+      const savedView = getSavedView(serviceId);
+
+      // If no saved preference for this service, set smart default
+      if (!savedView) {
+        // Use smart default based on service status and workbook availability
+        const hasWorkbook = !!apiConfig.inputs?.length || !!apiConfig.outputs?.length || !!spreadsheetData;
+        const smartDefault = getSmartDefaultView(serviceStatus?.published, hasWorkbook);
+        setActiveView(smartDefault);
+
+        // Don't save this as a preference - let user's first manual choice be saved
+        console.log(`Setting smart default view: ${smartDefault} (service is ${serviceStatus?.published ? 'published' : 'draft'})`);
+      }
+
+      setHasSetSmartDefault(true);
+    }
+  }, [configLoaded, serviceStatus, serviceId, hasSetSmartDefault]);
+
+  // Helper function to process workbook data
+  const processWorkbookData = useCallback((workbookResult: any) => {
+    console.log('Processing workbook data:', workbookResult);
+
+    const processedData = workbookManager.processWorkbookData(workbookResult);
+
+    if (processedData) {
+      if (processedData.type === 'sjs') {
+        setSpreadsheetData({
+          type: 'sjs',
+          blob: processedData.blob,
+          format: 'sjs'
+        });
+        console.log('SJS workbook loaded');
+      } else if (processedData.type === 'json') {
+        setSpreadsheetData(processedData.data);
+        console.log('JSON workbook loaded');
+      }
+    }
+
+    setWorkbookLoaded(true);
+    setWorkbookLoading(false);
+  }, []);
+
+  // Load workbook on demand (when switching to Workbook view)
+  const loadWorkbookOnDemand = useCallback(async () => {
+    // Don't reload if already loaded or loading
+    if (workbookLoaded || workbookLoading || !serviceId) {
+      console.log('Workbook already loaded/loading or no serviceId');
+      return;
+    }
+
+    console.log('Loading workbook on demand...');
+    setWorkbookLoading(true);
+    const controller = new AbortController();
+
+    try {
+      const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
+        signal: controller.signal,
+        headers: {
+          'X-Expected-404': 'true',
+          'If-None-Match': localStorage.getItem(`workbook-etag-${serviceId}`) || ''
+        }
+      });
+
+      if (workbookResponse.status === 304) {
+        // Workbook hasn't changed, use cached version
+        console.log('Workbook unchanged (304), using cached version');
+        const cachedWorkbook = localStorage.getItem(`workbook-data-${serviceId}`);
+        if (cachedWorkbook) {
+          const workbookResult = JSON.parse(cachedWorkbook);
+          processWorkbookData(workbookResult);
+        } else {
+          // Cache miss, need to reload
+          setWorkbookLoading(false);
+        }
+      } else if (workbookResponse.ok && workbookResponse.status !== 204) {
+        try {
+          const workbookResult = await workbookResponse.json();
+
+          // Store ETag and data for future requests
+          const etag = workbookResponse.headers.get('etag');
+          if (etag) {
+            localStorage.setItem(`workbook-etag-${serviceId}`, etag);
+            localStorage.setItem(`workbook-data-${serviceId}`, JSON.stringify(workbookResult));
+          }
+
+          processWorkbookData(workbookResult);
+        } catch (error) {
+          console.error('Error processing workbook response:', error);
+          setWorkbookLoading(false);
+        }
+      } else {
+        // No workbook available
+        console.log('No workbook available for this service');
+        setWorkbookLoading(false);
+        if (!spreadsheetData) {
+          setShowEmptyState(true);
+        }
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Failed to load workbook:', error);
+        message.error('Failed to load workbook');
+      }
+      setWorkbookLoading(false);
+    }
+  }, [serviceId, workbookLoaded, workbookLoading, spreadsheetData, message, processWorkbookData]);
+
+  // Load workbook when switching to Workbook view
+  useEffect(() => {
+    if (activeView === 'Workbook' && !workbookLoaded && !workbookLoading && configLoaded) {
+      console.log('Switching to Workbook view - loading workbook...');
+      loadWorkbookOnDemand();
+    }
+  }, [activeView, workbookLoaded, workbookLoading, configLoaded, loadWorkbookOnDemand]);
+
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
     let mounted = true;
@@ -188,33 +318,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setLoadingMessage('Loading service data...');
 
       try {
-        // Start all requests in parallel with abort signal
-        const [fullDataResponse, workbookResponse] = await Promise.all([
-          // Get all service data in one call (service + status)
-          fetch(`/api/services/${serviceId}/full`, {
-            signal: controller.signal
-          }).then(async (res) => {
-            // If full endpoint fails, try regular endpoint as fallback
-            if (!res.ok && res.status === 404) {
-              console.log('Full endpoint not found, trying regular service endpoint');
-              return fetch(`/api/services/${serviceId}`, {
-                signal: controller.signal
-              });
-            }
-            return res;
-          }),
-          // Workbook data (with error handling for 404s)
-          fetch(`/api/workbook/${serviceId}`, {
-            signal: controller.signal,
-            headers: {
-              'X-Expected-404': 'true',
-              'If-None-Match': localStorage.getItem(`workbook-etag-${serviceId}`) || ''
-            }
-          }).catch(err => ({
-            ok: false,
-            error: err
-          }))
-        ]);
+        // Only load service data initially - NOT workbook
+        const fullDataResponse = await fetch(`/api/services/${serviceId}/full`, {
+          signal: controller.signal
+        }).then(async (res) => {
+          // If full endpoint fails, try regular endpoint as fallback
+          if (!res.ok && res.status === 404) {
+            console.log('Full endpoint not found, trying regular service endpoint');
+            return fetch(`/api/services/${serviceId}`, {
+              signal: controller.signal
+            });
+          }
+          return res;
+        });
 
         if (!mounted) return;
 
@@ -281,39 +397,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             setConfigLoaded(true); // Mark config as loaded
           }
 
-          // Process workbook data if available
-          if ('status' in workbookResponse && workbookResponse.status === 304) {
-            // Workbook hasn't changed, use cached version
-            console.log('Workbook unchanged (304), using cached version');
-            const cachedWorkbook = localStorage.getItem(`workbook-data-${serviceId}`);
-            if (cachedWorkbook) {
-              setLoadingMessage('Loading cached workbook...');
-              const workbookResult = JSON.parse(cachedWorkbook);
-              processWorkbookData(workbookResult);
-            }
-          } else if (workbookResponse.ok && 'status' in workbookResponse && workbookResponse.status !== 204) {
-            setLoadingMessage('Processing workbook...');
-            try {
-              const workbookResult = await workbookResponse.json();
-
-              // Store ETag and data for future requests
-              if ('headers' in workbookResponse) {
-                const etag = workbookResponse.headers.get('etag');
-                if (etag) {
-                  localStorage.setItem(`workbook-etag-${serviceId}`, etag);
-                  // Cache the workbook data too
-                  localStorage.setItem(`workbook-data-${serviceId}`, JSON.stringify(workbookResult));
-                }
-              }
-              processWorkbookData(workbookResult);
-            } catch (error) {
-              console.error('Error processing workbook response:', error);
-            }
-          } else {
-            // No workbook or empty response
-            setInitialLoading(false);
-            setLoadingMessage('');
-          }
+          // Don't load workbook initially - will load when switching to Workbook view
+          setInitialLoading(false);
+          setLoadingMessage('');
         } else if (fullDataResponse.status === 404 || fullDataResponse.status === 204) {
           // 204 No Content is expected for new services
           console.log('Creating new service');
@@ -358,30 +444,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
         setInitialLoading(false);
       }
-    };
-
-    // Helper function to process workbook data
-    const processWorkbookData = (workbookResult: any) => {
-      console.log('Processing workbook data:', workbookResult);
-
-      const processedData = workbookManager.processWorkbookData(workbookResult);
-      
-      if (processedData) {
-        if (processedData.type === 'sjs') {
-          setSpreadsheetData({
-            type: 'sjs',
-            blob: processedData.blob,
-            format: 'sjs'
-          });
-          console.log('SJS workbook loaded');
-        } else if (processedData.type === 'json') {
-          setSpreadsheetData(processedData.data);
-          console.log('JSON workbook loaded');
-        }
-      }
-
-      setInitialLoading(false);
-      setLoadingMessage('');
     };
 
     // Check for pre-uploaded file from drag & drop
@@ -495,8 +557,28 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
+      // If workbook not loaded, we need to load it first
       if (!spreadInstance) {
-        message.error('Spreadsheet not loaded');
+        // Check if we even have a workbook to load
+        const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
+
+        if (!hasWorkbook) {
+          message.error('Cannot publish: No parameters defined. Please add inputs or outputs first.');
+          return;
+        }
+
+        // Show modal asking user to switch to Workbook view
+        Modal.confirm({
+          title: 'Workbook Required for Publishing',
+          content: 'Publishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try publishing again.',
+          okText: 'Switch to Workbook',
+          cancelText: 'Cancel',
+          onOk: () => {
+            setActiveView('Workbook');
+            message.info('Please wait for the workbook to load, then click Publish again.');
+          }
+        });
+
         return;
       }
 
@@ -600,12 +682,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       message.loading('Exporting to Excel...', 0);
-      
+
       await workbookManager.exportToExcel(
         spreadInstance,
         apiConfig.name || 'spreadsheet'
       );
-      
+
       message.destroy();
       message.success('Excel file exported successfully');
     } catch (error) {
@@ -618,19 +700,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     try {
       setLoading(true);
-      
+
       // Check what needs to be saved
       const workbookNeedsSave = workbookRef.current?.hasChanges?.() || false;
       const hasNoWorkbook = !serviceStatus?.urlData;
       const shouldSaveWorkbook = workbookNeedsSave || hasNoWorkbook;
-      
+
       // Check if there are any changes to save
       if (!configHasChanges && !shouldSaveWorkbook) {
         message.info('No changes to save');
         setLoading(false);
         return;
       }
-      
+
       // Show specific loading message
       if (shouldSaveWorkbook && configHasChanges) {
         setSavingWorkbook(true);
@@ -667,12 +749,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         if (shouldSaveWorkbook) {
           console.log('WorkbookRef exists and has changes, getting SJS blob...');
           saveStartTime = performance.now();
-          
+
           try {
             workbookBlob = await workbookManager.saveWorkbookAsSJS(workbookRef.current);
             saveEndTime = performance.now();
             console.log(`Workbook SJS generation took ${(saveEndTime - saveStartTime).toFixed(0)}ms`);
-            
+
             if (!workbookBlob) {
               console.warn('No workbook blob available');
             } else {
@@ -775,10 +857,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
 
         const result = await workbookResponse.json();
-        
+
         // Calculate total save time (from SJS generation start to upload end)
         const totalSaveTime = uploadEndTime - saveStartTime;
-        
+
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('📊 WORKBOOK SAVE SUMMARY');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -794,7 +876,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
    • URL: ${result.workbookUrl}
    • Timestamp: ${result.timestamp}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        
+
         // Update service status with the new workbook URL
         setServiceStatus(prevStatus => ({
           ...prevStatus,
@@ -856,8 +938,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } else if (action === 'zoom-handler') {
       zoomHandlerRef.current = data;
-    } else if (action === 'edit-ended' || action === 'selection-changed' || 
-               action === 'range-cleared' || action === 'cell-changed') {
+    } else if (action === 'edit-ended' || action === 'selection-changed' ||
+      action === 'range-cleared' || action === 'cell-changed') {
       // Update change count when workbook changes
       if (action === 'edit-ended' || action === 'range-cleared' || action === 'cell-changed') {
         console.log(`Workbook change detected: ${action}`);
@@ -1002,10 +1084,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleConfigChange = useCallback((updates: any) => {
     // If updates contain all config fields, it's a full replacement
     // Otherwise, it's a partial update
-    const isFullConfig = updates.hasOwnProperty('name') && 
-                        updates.hasOwnProperty('description') && 
-                        updates.hasOwnProperty('inputs');
-    
+    const isFullConfig = updates.hasOwnProperty('name') &&
+      updates.hasOwnProperty('description') &&
+      updates.hasOwnProperty('inputs');
+
     if (isFullConfig) {
       // Full config replacement
       const hasActualChanges = JSON.stringify(updates) !== JSON.stringify(savedConfig);
@@ -1092,7 +1174,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
       }
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasAnyChanges]);
@@ -1127,7 +1209,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#fafafa',
+          backgroundColor: '#ffffff',
           gap: 16
         }}>
           <Spin size="default" />
@@ -1196,7 +1278,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <Segmented
           value={activeView}
           // shape="round"
-          onChange={(value) => setActiveView(value as 'Workbook' | 'API Test' | 'Settings')}
+          onChange={(value) => {
+            const newView = value as 'Workbook' | 'API Test' | 'Settings';
+            setActiveView(newView);
+            // Save view preference using helper
+            saveViewPreference(serviceId, newView);
+          }}
           options={isMobile ? [
             { value: 'Workbook', icon: <TableOutlined /> },
             { value: 'API Test', icon: <CaretRightOutlined /> },
@@ -1252,44 +1339,45 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 borderRadius: 6,
                 paddingLeft: 12,
                 paddingRight: 12,
-                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#fff7e6',
-                borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
+                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#FFFBE6',
+                borderColor: serviceStatus?.published ? '#f6ffed' : '#FFE58F',
+                // borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
                 color: serviceStatus?.published ? '#52c41a' : '#fa8c16'
               }}>
                 <Space size={4}>
                   {serviceStatus?.published ? 'Published' : 'Draft'}
-                  <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} />
+                  {/* <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} /> */}
                   <DownOutlined />
                 </Space>
               </Button>
             </Dropdown>
           )}
-            {isMobile && (
-              <Button 
-                type="text" 
-                icon={<MenuFoldOutlined />}
-                onClick={() => setDrawerVisible(!drawerVisible)}
-              />
-            )}
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: 'export-excel',
-                    label: 'Export to Excel',
-                    icon: <FileExcelOutlined />,
-                    onClick: () => handleExportToExcel()
-                  }
-                ]
-              }}
-              trigger={['click']}
-              placement="bottomRight"
-            >
-              <Button 
-                type="text" 
-                icon={<MoreOutlined />}
-              />
-            </Dropdown>
+          {isMobile && (
+            <Button
+              type="text"
+              icon={<MenuFoldOutlined />}
+              onClick={() => setDrawerVisible(!drawerVisible)}
+            />
+          )}
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'export-excel',
+                  label: 'Export to Excel',
+                  icon: <FileExcelOutlined />,
+                  onClick: () => handleExportToExcel()
+                }
+              ]
+            }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+            />
+          </Dropdown>
         </Space>
       </div>
 
@@ -1315,37 +1403,52 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
                 <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                   {/* Workbook View */}
-                  <div style={{ 
+                  <div style={{
                     display: activeView === 'Workbook' ? 'block' : 'none',
                     height: '100%'
                   }}>
-                    <WorkbookView
-                      ref={workbookRef}
-                      spreadsheetData={spreadsheetData}
-                      showEmptyState={showEmptyState}
-                      isDemoMode={isDemoMode}
-                      zoomLevel={zoomLevel}
-                      onWorkbookInit={handleWorkbookInit}
-                      onEmptyStateAction={(action, file) => {
-                        if (action === 'start') {
-                          setShowEmptyState(false);
-                          setDefaultSpreadsheetData();
-                        } else if (action === 'import' && file) {
-                          setShowEmptyState(false);
-                          handleEmptyStateImport(file);
-                        }
-                      }}
-                      onZoomHandlerReady={setZoomHandlerRef}
-                      onEditableAreaAdd={handleEditableAreaAdd}
-                      onEditableAreaUpdate={handleEditableAreaUpdate}
-                      onEditableAreaRemove={handleEditableAreaRemove}
-                      onImportExcel={handleImportExcel}
-                      onWorkbookChange={handleWorkbookChange}
-                    />
+                    {workbookLoading ? (
+                      <div style={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#ffffff'
+                      }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <Spin size="default" />
+                          <div style={{ marginTop: 16, color: '#666' }}>Loading workbook...</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <WorkbookView
+                        ref={workbookRef}
+                        spreadsheetData={spreadsheetData}
+                        showEmptyState={showEmptyState}
+                        isDemoMode={isDemoMode}
+                        zoomLevel={zoomLevel}
+                        onWorkbookInit={handleWorkbookInit}
+                        onEmptyStateAction={(action, file) => {
+                          if (action === 'start') {
+                            setShowEmptyState(false);
+                            setDefaultSpreadsheetData();
+                          } else if (action === 'import' && file) {
+                            setShowEmptyState(false);
+                            handleEmptyStateImport(file);
+                          }
+                        }}
+                        onZoomHandlerReady={setZoomHandlerRef}
+                        onEditableAreaAdd={handleEditableAreaAdd}
+                        onEditableAreaUpdate={handleEditableAreaUpdate}
+                        onEditableAreaRemove={handleEditableAreaRemove}
+                        onImportExcel={handleImportExcel}
+                        onWorkbookChange={handleWorkbookChange}
+                      />
+                    )}
                   </div>
-                  
+
                   {/* API Test View */}
-                  <div style={{ 
+                  <div style={{
                     display: activeView === 'API Test' ? 'block' : 'none',
                     height: '100%'
                   }}>
@@ -1362,9 +1465,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       onTokensChange={setAvailableTokens}
                     />
                   </div>
-                  
+
                   {/* Settings View */}
-                  <div style={{ 
+                  <div style={{
                     display: activeView === 'Settings' ? 'block' : 'none',
                     height: '100%'
                   }}>
@@ -1399,37 +1502,52 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               {/* Mobile View Switching */}
               <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                 {/* Workbook View */}
-                <div style={{ 
+                <div style={{
                   display: activeView === 'Workbook' ? 'block' : 'none',
                   height: '100%'
                 }}>
-                  <WorkbookView
-                    ref={workbookRef}
-                    spreadsheetData={spreadsheetData}
-                    showEmptyState={showEmptyState}
-                    isDemoMode={isDemoMode}
-                    zoomLevel={zoomLevel}
-                    onWorkbookInit={handleWorkbookInit}
-                    onEmptyStateAction={(action, file) => {
-                      if (action === 'start') {
-                        setShowEmptyState(false);
-                        setDefaultSpreadsheetData();
-                      } else if (action === 'import' && file) {
-                        setShowEmptyState(false);
-                        handleEmptyStateImport(file);
-                      }
-                    }}
-                    onZoomHandlerReady={setZoomHandlerRef}
-                    onEditableAreaAdd={handleEditableAreaAdd}
-                    onEditableAreaUpdate={handleEditableAreaUpdate}
-                    onEditableAreaRemove={handleEditableAreaRemove}
-                    onImportExcel={handleImportExcel}
-                    onWorkbookChange={handleWorkbookChange}
-                  />
+                  {workbookLoading ? (
+                    <div style={{
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#ffffff'
+                    }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <Spin size="default" />
+                        <div style={{ marginTop: 16, color: '#666' }}>Loading workbook...</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <WorkbookView
+                      ref={workbookRef}
+                      spreadsheetData={spreadsheetData}
+                      showEmptyState={showEmptyState}
+                      isDemoMode={isDemoMode}
+                      zoomLevel={zoomLevel}
+                      onWorkbookInit={handleWorkbookInit}
+                      onEmptyStateAction={(action, file) => {
+                        if (action === 'start') {
+                          setShowEmptyState(false);
+                          setDefaultSpreadsheetData();
+                        } else if (action === 'import' && file) {
+                          setShowEmptyState(false);
+                          handleEmptyStateImport(file);
+                        }
+                      }}
+                      onZoomHandlerReady={setZoomHandlerRef}
+                      onEditableAreaAdd={handleEditableAreaAdd}
+                      onEditableAreaUpdate={handleEditableAreaUpdate}
+                      onEditableAreaRemove={handleEditableAreaRemove}
+                      onImportExcel={handleImportExcel}
+                      onWorkbookChange={handleWorkbookChange}
+                    />
+                  )}
                 </div>
-                
+
                 {/* API Test View */}
-                <div style={{ 
+                <div style={{
                   display: activeView === 'API Test' ? 'block' : 'none',
                   height: '100%'
                 }}>
@@ -1446,9 +1564,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     onTokensChange={setAvailableTokens}
                   />
                 </div>
-                
+
                 {/* Settings View */}
-                <div style={{ 
+                <div style={{
                   display: activeView === 'Settings' ? 'block' : 'none',
                   height: '100%'
                 }}>

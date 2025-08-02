@@ -17,7 +17,7 @@ const WorkbookViewer = dynamic(
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#fafafa'
+        background: '#ffffff'
       }}>
         <Spin size="default" tip="Loading spreadsheet..." />
       </div>
@@ -77,9 +77,12 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#fafafa'
+        background: '#ffffff'
       }}>
-        <Spin size="default" tip="Initializing spreadsheet..." />
+        <div style={{ textAlign: 'center' }}>
+          <Spin size="default" />
+          <div style={{ marginTop: 16, color: '#666' }}>Initializing spreadsheet...</div>
+        </div>
       </div>
     );
   }

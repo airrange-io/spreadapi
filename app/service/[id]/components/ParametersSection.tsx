@@ -101,6 +101,8 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   onNavigateToArea,
   onShowHowItWorks,
 }) => {
+  // Check if we can interact with parameters (requires workbook to be loaded)
+  const canInteract = !!onNavigateToParameter;
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'readonly': return 'Read Only';

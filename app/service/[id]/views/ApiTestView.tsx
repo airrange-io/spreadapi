@@ -99,6 +99,8 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           <Alert
             message="Service must be published to test"
             type="warning"
+            style={{ borderRadius: 8 }}
+            // banner
             showIcon
           />
         )}
