@@ -204,18 +204,52 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   };
 
   const renderParameterInput = (input: any) => {
+    // Debug log to check what types we're getting
+    console.log('Rendering input:', input.name, 'type:', input.type, 'dataType:', input.dataType);
+    
     const commonProps = {
       style: { width: '100%' }
     };
 
-    switch (input.type) {
+    // Helper function to determine smart step size
+    const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
+      // If we have min and max, calculate step based on range
+      if (min !== undefined && max !== undefined) {
+        const range = max - min;
+        if (range <= 1) return 0.01;
+        if (range <= 10) return 0.1;
+        if (range <= 100) return 1;
+        if (range <= 1000) return 10;
+        return 100;
+      }
+      
+      // Otherwise, base step on current value
+      const currentValue = value || form.getFieldValue(input.alias || input.name) || 0;
+      const absValue = Math.abs(currentValue);
+      
+      if (absValue === 0) return 1;
+      if (absValue < 1) return 0.01;
+      if (absValue < 10) return 0.1;
+      if (absValue < 100) return 1;
+      if (absValue < 1000) return 10;
+      return 100;
+    };
+
+    // Check both type and dataType properties
+    const inputType = input.type || input.dataType;
+    
+    switch (inputType) {
       case 'number':
         return (
           <InputNumber
             {...commonProps}
             min={input.min}
             max={input.max}
+            step={getSmartStep(input.value, input.min, input.max)}
             placeholder={`Enter ${input.name}`}
+            keyboard={true}
+            controls={true}
+            precision={input.min !== undefined && input.max !== undefined && (input.max - input.min) <= 1 ? 2 : undefined}
           />
         );
       case 'boolean':
