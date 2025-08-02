@@ -10,6 +10,7 @@ interface AddParameterButtonProps {
   spreadInstance: any;
   inputs: any[];
   outputs: any[];
+  isCompact?: boolean;
   onAddFromSelection: () => void;
   onAddAsEditableArea: () => void;
 }
@@ -20,6 +21,7 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   spreadInstance,
   inputs,
   outputs,
+  isCompact = false,
   onAddFromSelection,
   onAddAsEditableArea,
 }) => {
@@ -37,7 +39,10 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
 
   const getAddButtonInfo = () => {
     if (!spreadInstance) {
-      return { text: 'Switch to Workbook view to add parameters', disabled: true };
+      return { 
+        text: isCompact ? 'Switch to Workbook' : 'Switch to Workbook view to add parameters', 
+        disabled: true 
+      };
     }
     
     if (!spreadsheetReady) {

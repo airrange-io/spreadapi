@@ -686,8 +686,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             spreadInstance={spreadInstance}
             inputs={inputs}
             outputs={outputs}
-            areas={areas}
-            isDemoMode={isDemoMode}
+            isCompact={panelWidth < 380}
             onAddFromSelection={handleAddParameterFromSelection}
             onAddAsEditableArea={handleAddAreaFromSelection}
           />

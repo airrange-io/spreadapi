@@ -1,6 +1,6 @@
 'use client';
 
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Skeleton } from 'antd';
 
 // Lazy load the section components
@@ -47,6 +47,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   onTokensChange,
   onTokenCountChange
 }) => {
+  const [mounted, setMounted] = useState(false);
+  
+  // Add fade-in effect
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   return (
     <div style={{
       height: '100%',
@@ -54,7 +61,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       padding: '16px',
       paddingTop: '6px',
       paddingLeft: '5px',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      opacity: mounted ? 1 : 0,
+      transition: 'opacity 0.3s ease-in-out'
     }}>
       <Suspense fallback={<Skeleton active paragraph={{ rows: 10 }} />}>
         <SettingsSection

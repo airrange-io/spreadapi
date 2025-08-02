@@ -49,10 +49,14 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [mounted, setMounted] = useState(false);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
 
-  // Track container width
+  // Track container width and trigger fade-in
   useLayoutEffect(() => {
+    // Trigger fade-in effect
+    setMounted(true);
+    
     const updateWidth = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
@@ -114,7 +118,9 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
         overflow: 'auto',
         padding: '16px',
         paddingTop: '14px',
-        paddingLeft: '5px'
+        paddingLeft: '5px',
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out'
       }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size={16}>

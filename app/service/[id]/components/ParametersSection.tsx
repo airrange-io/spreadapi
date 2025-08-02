@@ -399,7 +399,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
           size="small"
           icon={<InfoCircleOutlined />}
           onClick={onShowHowItWorks}
-          style={{ padding: 0, fontSize: '12px' }}
+          style={{ padding: 0, fontSize: '12px', color: '#4F2D7F' }}
         >
           How it works
         </Button>

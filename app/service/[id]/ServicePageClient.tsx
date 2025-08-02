@@ -1246,7 +1246,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               {
                 title: <a onClick={() => router.push('/')}>Services</a>,
               },
-              {
+              ...(isMobile ? [] : [{
                 title: configLoaded ? (
                   <Space>
                     <Text
@@ -1270,7 +1270,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     )}
                   </Space>
                 ) : '...',
-              },
+              }]),
             ]}
           />
         </Space>
@@ -1497,8 +1497,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </div>
           )
         ) : (
-          <Layout style={{ height: '100%', overflow: 'auto' }}>
-            <Content style={{ overflow: 'auto', position: 'relative' }}>
+          <Layout style={{ height: '100%', overflow: 'auto', backgroundColor: '#ffffff' }}>
+            <Content style={{ overflow: 'auto', position: 'relative', backgroundColor: '#ffffff' }}>
               {/* Mobile View Switching */}
               <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                 {/* Workbook View */}
