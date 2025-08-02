@@ -12,16 +12,12 @@ import WorkbookView from './views/WorkbookView';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
-import EmptyWorkbookState from './EmptyWorkbookState';
 import { appStore } from '@/stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 
-// Removed WorkbookViewer dynamic import - now using WorkbookView component
-
 const { Content, Sider } = Layout;
 const { Text } = Typography;
-// const { Dragger } = Upload;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
