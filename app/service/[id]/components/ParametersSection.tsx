@@ -94,6 +94,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   isLoading,
   hasInitialized,
   isDemoMode,
+  panelWidth,
   onNavigateToParameter,
   onEditParameter,
   onDeleteParameter,
@@ -104,6 +105,9 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
 }) => {
   // Check if we can interact with parameters (requires workbook to be loaded)
   const canInteract = !!onNavigateToParameter;
+  
+  // Determine if cards should use compact layout
+  const useCompactLayout = panelWidth && panelWidth < 380;
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'readonly': return 'Read Only';
@@ -122,7 +126,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
     }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
         {/* Input Parameters */}
-        <CollapsibleSection title="Input Parameters" defaultOpen={true}>
+        <CollapsibleSection title={`Input Parameters ${panelWidth ? `(${panelWidth}px)` : ''}`} defaultOpen={true}>
         {isLoading || !hasInitialized ? (
           <Skeleton active paragraph={{ rows: 2 }} />
         ) : inputs.length === 0 ? (
@@ -152,8 +156,14 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                         <strong>{input.name}</strong>
                       </Space>
                       <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                        {input.title && input.title !== input.name && (
-                          <div style={{ color: '#888', fontSize: '11px' }}>{input.title}, {input.type}</div>
+                        {useCompactLayout ? (
+                          // In compact layout, show address instead of title
+                          <div style={{ color: '#888', fontSize: '11px' }}>{input.address}</div>
+                        ) : (
+                          // In normal layout, show title if different from name
+                          input.title && input.title !== input.name && (
+                            <div style={{ color: '#888', fontSize: '11px' }}>{input.title}</div>
+                          )
                         )}
                         {(input.min !== undefined || input.max !== undefined) && (
                           <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
@@ -171,7 +181,9 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     </Space>
                   </div>
                   <Space size="small">
-                    <Tag color='purple' onClick={() => onNavigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
+                    {!useCompactLayout && (
+                      <Tag color='purple' onClick={() => onNavigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
+                    )}
                     <Button
                       size="small"
                       type="text"
@@ -234,8 +246,14 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                         <strong>{output.name}</strong>
                       </Space>
                       <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                        {output.title && output.title !== output.name && (
-                          <div style={{ color: '#888', fontSize: '11px' }}>{output.title}, {output.type}</div>
+                        {useCompactLayout ? (
+                          // In compact layout, show address instead of title
+                          <div style={{ color: '#888', fontSize: '11px' }}>{output.address}</div>
+                        ) : (
+                          // In normal layout, show title if different from name
+                          output.title && output.title !== output.name && (
+                            <div style={{ color: '#888', fontSize: '11px' }}>{output.title}</div>
+                          )
                         )}
                         {output.description && (
                           <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
@@ -246,7 +264,9 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     </Space>
                   </div>
                   <Space size="small">
-                    <Tag onClick={() => onNavigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
+                    {!useCompactLayout && (
+                      <Tag onClick={() => onNavigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
+                    )}
                     <Button
                       size="small"
                       type="text"
