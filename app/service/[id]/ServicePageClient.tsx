@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import ParametersPanel from './components/ParametersPanel';
@@ -1459,9 +1459,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       {/* Mobile Drawer */}
       <Drawer
         title="Parameters"
-        placement="right"
+        placement="left"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
+        closeIcon={false}
+        extra={
+          <Button
+            type="text"
+            icon={<CloseOutlined />}
+            onClick={() => setDrawerVisible(false)}
+          />
+        }
         // width={400}
         styles={{
           body: { padding: 0 },

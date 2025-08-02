@@ -563,12 +563,44 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           sheetName = 'Sheet1';
         }
         
+        // Check if the selected cell has a formula
+        let hasFormula = false;
+        const isSingleCell = sel.rowCount === 1 && sel.colCount === 1;
+        const isRange = !isSingleCell;
+        
+        if (isSingleCell) {
+          try {
+            // Try multiple methods to get formula
+            let formula = null;
+            
+            // Method 1: getFormula
+            if (sheet.getFormula) {
+              formula = sheet.getFormula(sel.row, sel.col);
+            }
+            
+            // Method 2: getCell().formula()
+            if (!formula && sheet.getCell) {
+              const cell = sheet.getCell(sel.row, sel.col);
+              if (cell && cell.formula) {
+                formula = cell.formula();
+              }
+            }
+            
+            hasFormula = formula ? true : false;
+          } catch (e) {
+            console.log('Could not check formula:', e);
+          }
+        }
+        
         setCurrentSelection({
           row: sel.row,
           col: sel.col,
           rowCount: sel.rowCount,
           colCount: sel.colCount,
-          sheetName: sheetName
+          sheetName: sheetName,
+          isSingleCell,
+          hasFormula,
+          isRange
         });
       } else {
         setCurrentSelection(null);
