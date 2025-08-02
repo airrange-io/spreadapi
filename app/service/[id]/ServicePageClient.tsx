@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Progress } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import ParametersPanel from './components/ParametersPanel';
 import ApiTestView from './views/ApiTestView';
 import SettingsView from './views/SettingsView';
+import UsageView from './views/UsageView';
 import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
 import StatusBar from './StatusBar';
@@ -28,10 +29,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
-  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings'>(() => {
+  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings' | 'Usage'>(() => {
     const savedView = getSavedView(serviceId);
-    if (savedView && ['Workbook', 'API Test', 'Settings'].includes(savedView)) {
-      return savedView as 'Workbook' | 'API Test' | 'Settings';
+    if (savedView && ['Workbook', 'API Test', 'Settings', 'Usage'].includes(savedView)) {
+      return savedView as 'Workbook' | 'API Test' | 'Settings' | 'Usage';
     }
     // Default to Workbook for now, will update based on service status once loaded
     return 'Workbook';
@@ -1265,7 +1266,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           value={activeView}
           // shape="round"
           onChange={(value) => {
-            const newView = value as 'Workbook' | 'API Test' | 'Settings';
+            const newView = value as 'Workbook' | 'API Test' | 'Settings' | 'Usage';
             setActiveView(newView);
             // Save view preference using helper
             saveViewPreference(serviceId, newView);
@@ -1273,8 +1274,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           options={isMobile ? [
             { value: 'Workbook', icon: <TableOutlined /> },
             { value: 'API Test', icon: <CaretRightOutlined /> },
-            { value: 'Settings', icon: <SettingOutlined /> }
-          ] : ['Workbook', 'API Test', 'Settings']}
+            { value: 'Settings', icon: <SettingOutlined /> },
+            { value: 'Usage', icon: <BarChartOutlined /> }
+          ] : ['Workbook', 'API Test', 'Settings', 'Usage']}
           style={{ marginLeft: 'auto', marginRight: 'auto' }}
         />
 
@@ -1335,6 +1337,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               disabled={loading}
             >
               <Button style={{
+
+                
                 borderRadius: 6,
                 paddingLeft: 12,
                 paddingRight: 12,
@@ -1487,6 +1491,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         onTokenCountChange={setTokenCount}
                       />
                     </div>
+
+                    {/* Usage View */}
+                    <div style={{
+                      display: activeView === 'Usage' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      <UsageView
+                        serviceId={serviceId}
+                        serviceStatus={serviceStatus}
+                        configLoaded={configLoaded}
+                      />
+                    </div>
                   </div>
                 </ErrorBoundary>
               </Splitter.Panel>
@@ -1586,6 +1602,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     onConfigChange={handleConfigChange}
                     onTokensChange={setAvailableTokens}
                     onTokenCountChange={setTokenCount}
+                  />
+                </div>
+
+                {/* Usage View */}
+                <div style={{
+                  display: activeView === 'Usage' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <UsageView
+                    serviceId={serviceId}
+                    serviceStatus={serviceStatus}
+                    configLoaded={configLoaded}
                   />
                 </div>
               </div>
