@@ -77,6 +77,7 @@ interface ParametersSectionProps {
   isLoading: boolean;
   hasInitialized: boolean;
   isDemoMode?: boolean;
+  panelWidth?: number;
   onNavigateToParameter: (param: InputDefinition | OutputDefinition) => void;
   onEditParameter: (type: 'input' | 'output', parameter: InputDefinition | OutputDefinition) => void;
   onDeleteParameter: (type: 'input' | 'output', id: string) => void;

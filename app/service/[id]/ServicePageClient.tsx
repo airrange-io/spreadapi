@@ -89,7 +89,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Custom hook for panel sizes
   const usePanelSizes = () => {
-    const [sizes, setSizes] = useState<number[]>([70, 30]); // Default sizes
+    const [sizes, setSizes] = useState<number[]>([30, 70]); // Default sizes - parameters panel 30%, content 70%
     const [sizesLoaded, setSizesLoaded] = useState(false);
 
     // Load sizes from localStorage after mount to prevent hydration issues
@@ -1339,15 +1339,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 borderRadius: 6,
                 paddingLeft: 12,
                 paddingRight: 12,
-                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#FFFBE6',
-                borderColor: serviceStatus?.published ? '#f6ffed' : '#FFE58F',
+                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', //'#FFFBE6',
+                borderColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', // '#FFE58F',
                 // borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
-                color: serviceStatus?.published ? '#52c41a' : '#fa8c16'
+                color: serviceStatus?.published ? '#52c41a' : '#666666', //'#fa8c16'
               }}>
                 <Space size={4}>
                   {serviceStatus?.published ? 'Published' : 'Draft'}
                   {/* <Divider type="vertical" style={{ marginRight: 5, borderColor: serviceStatus?.published ? '#52c41a' : '#fa8c16' }} /> */}
-                  <DownOutlined />
+                  <DownOutlined style={{ fontSize: 12 }} />
                 </Space>
               </Button>
             </Dropdown>
@@ -1389,7 +1389,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               style={{ height: '100%' }}
               onResize={handlePanelResize}
             >
-              <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} style={{ backgroundColor: '#ffffff' }}>
+              <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} min="20%" max="50%" style={{ backgroundColor: '#ffffff' }}>
                 <div style={{
                   height: '100%',
                   background: 'white',
@@ -1400,7 +1400,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   {parametersPanel}
                 </div>
               </Splitter.Panel>
-              <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
+              <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="50%" max="80%">
                 <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                   {/* Workbook View */}
                   <div style={{

@@ -51,6 +51,29 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
 
+  // Track container width
+  useLayoutEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    
+    // Also use ResizeObserver for more accurate tracking
+    const resizeObserver = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const handleTestComplete = async () => {
     // Refresh token stats after successful test
     if (tokenManagementRef.current) {

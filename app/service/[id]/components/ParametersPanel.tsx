@@ -96,6 +96,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const [currentSelection, setCurrentSelection] = useState<any>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Modal states
   const [showParameterModal, setShowParameterModal] = useState(false);
@@ -138,9 +140,26 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     }
   }, [initialConfig, isLoading]);
 
-  // Add fade-in effect
+  // Add fade-in effect and track width
   useEffect(() => {
     setMounted(true);
+    
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setPanelWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    
+    const resizeObserver = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Notify parent of changes
@@ -621,7 +640,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   }, [spreadInstance, spreadsheetReady]);
 
   return (
-    <div style={{
+    <div ref={containerRef} style={{
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -646,6 +665,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             isLoading={isLoading}
             hasInitialized={hasInitialized}
             isDemoMode={isDemoMode}
+            panelWidth={panelWidth}
             onNavigateToParameter={navigateToParameter}
             onEditParameter={handleEditParameter}
             onDeleteParameter={handleDeleteParameter}

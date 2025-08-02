@@ -185,10 +185,14 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   // Get column span based on container width
   const getColumnSpan = () => {
-    if (containerWidth === 0 || containerWidth < 400) return 24; // 1 column
-    if (containerWidth < 600) return 12; // 2 columns
-    if (containerWidth < 900) return 8; // 3 columns
-    return 6; // 4 columns
+    // For debugging
+    console.log('Container width for column calculation:', containerWidth);
+    
+    if (!containerWidth || containerWidth === 0) return 24; // 1 column - full width
+    if (containerWidth < 600) return 24; // 1 column for small containers
+    if (containerWidth < 900) return 12; // 2 columns for medium containers
+    if (containerWidth < 1200) return 8; // 3 columns for large containers
+    return 6; // 4 columns for extra large containers
   };
 
   // Get column span for statistics
@@ -232,7 +236,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     <>
       {/* Quick Test Section */}
       <CollapsibleSection 
-        title="Quick Test"
+        title={`Quick Test ${propsContainerWidth ? `(Container: ${propsContainerWidth}px)` : ''}`}
         defaultOpen={false}
       >
         <div style={{ width: '100%' }}>
@@ -257,8 +261,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               >
                 <Row gutter={[16, 8]}>
                   {inputs.map((input) => {
-                    // For text inputs or inputs with descriptions, span full width
-                    const shouldSpanFull = input.type !== 'number' && input.type !== 'boolean';
+                    // Only span full width if the input has a description or is a text area
+                    const shouldSpanFull = false; // Allow all inputs to use responsive columns
                     const colSpan = shouldSpanFull ? 24 : getColumnSpan();
                     
                     return (
