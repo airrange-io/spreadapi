@@ -240,11 +240,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   };
 
 
-  const handleUsage = (serviceId: string) => {
-    // Navigate to usage/analytics page
-    router.push(`/analytics/${serviceId}`);
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -326,13 +321,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           <Dropdown
             menu={{
               items: [
-                {
-                  key: 'usage',
-                  icon: <LineChartOutlined />,
-                  label: 'View Usage',
-                  onClick: () => handleUsage(record.id),
-                  disabled: record.status === 'draft',
-                },
                 {
                   key: 'copy',
                   icon: <CopyOutlined />,
@@ -526,14 +514,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                 //   </Button>
                 // </div>,
                 <div onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    type="text"
-                    icon={<LineChartOutlined />}
-                    onClick={() => handleUsage(service.id)}
-                    disabled={service.status === 'draft' || service.id === DEMO_SERVICE_ID}
-                  >
-                    Usage
-                  </Button>
                 </div>
               ]}
             >
