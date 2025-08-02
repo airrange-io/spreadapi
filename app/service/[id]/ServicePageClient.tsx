@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import EditorPanel from './EditorPanel';
@@ -40,6 +40,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const { message } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [activeView, setActiveView] = useState('Spreadsheet');
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
   const [showEmptyState, setShowEmptyState] = useState(false); // Show empty state for new services
   const [importFileForEmptyState, setImportFileForEmptyState] = useState<File | null>(null); // File to import after workbook is ready
@@ -1138,14 +1139,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         </Space>
 
         <Space>
-          {isMobile && (
-            <Button
-              icon={<SettingOutlined />}
-              onClick={() => setDrawerVisible(!drawerVisible)}
-            >
-              Configure
-            </Button>
-          )}
           {hasAnyChanges && !isDemoMode && (
             <Button
               type="primary"
@@ -1204,6 +1197,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </Button>
             </Dropdown>
           )}
+            <Button 
+              type="text" 
+              icon={<MenuFoldOutlined />}
+              onClick={() => setDrawerVisible(!drawerVisible)}
+            />
             <Dropdown
               menu={{
                 items: [
