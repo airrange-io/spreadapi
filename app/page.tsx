@@ -21,14 +21,23 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
 const ServiceList = dynamic(() => import('@/components/ServiceList'), {
   ssr: true
 });
-import { IntercomProvider } from './components/IntercomProvider';
-import { IntercomScript } from './components/IntercomScript';
+
+// Lazy load Intercom components
+const IntercomProvider = dynamic(() => import('./components/IntercomProvider').then(mod => ({ default: mod.IntercomProvider })), {
+  ssr: false
+});
+
+const IntercomScript = dynamic(() => import('./components/IntercomScript').then(mod => ({ default: mod.IntercomScript })), {
+  ssr: false
+});
 
 // Lazy load the MCP Settings Modal
 const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), {
   ssr: false,
   loading: () => null
 });
+
+
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -186,7 +195,7 @@ const ListsPage: React.FC = observer(() => {
   };
 
   return (
-    <IntercomProvider>
+    <>
       <Layout style={{ height: '100vh' }}>
         <Sidebar />
 
@@ -205,31 +214,35 @@ const ListsPage: React.FC = observer(() => {
             {isDragging && (
               <div
                 style={{
-                  position: 'absolute',
+                  position: 'fixed',
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
                   backgroundColor: 'rgba(79, 45, 127, 0.1)',
-                  border: '3px dashed #4F2D7F',
-                  borderRadius: '8px',
-                  zIndex: 1000,
+                  border: '2px dashed #4F2D7F',
+                  borderRadius: 8,
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  pointerEvents: 'none',
+                  zIndex: 1000,
+                  pointerEvents: 'none'
                 }}
               >
-                <InboxOutlined style={{ fontSize: '64px', color: '#4F2D7F', marginBottom: '16px' }} />
-                <Text style={{ fontSize: '20px', color: '#4F2D7F', fontWeight: 500 }}>
-                  Datei hier ablegen
-                </Text>
-                <Text style={{ fontSize: '16px', color: '#6B4A99', marginTop: '8px' }}>
-                  CSV, Excel oder JSON
-                </Text>
+                <div style={{ 
+                  background: 'white', 
+                  padding: '24px 48px', 
+                  borderRadius: 8,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}>
+                  <InboxOutlined style={{ fontSize: 48, color: '#4F2D7F', marginBottom: 16, display: 'block' }} />
+                  <Typography.Title level={4} style={{ margin: 0, color: '#4F2D7F' }}>
+                    Drop your Excel, CSV or JSON file here
+                  </Typography.Title>
+                </div>
               </div>
             )}
+            
             {/* Header */}
             <div className="lists-page-header">
               {/* Left side */}
@@ -441,13 +454,20 @@ const ListsPage: React.FC = observer(() => {
         </Layout>
 
         {/* MCP Settings Modal */}
-        <MCPSettingsModal
-          visible={showMCPModal}
-          onClose={() => setShowMCPModal(false)}
-        />
+        {showMCPModal && (
+          <MCPSettingsModal
+            visible={showMCPModal}
+            onClose={() => setShowMCPModal(false)}
+          />
+        )}
       </Layout>
-      <IntercomScript />
-    </IntercomProvider>
+      {isClient && (
+        <>
+          <IntercomProvider />
+          <IntercomScript />
+        </>
+      )}
+    </>
   );
 });
 
