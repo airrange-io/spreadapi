@@ -95,6 +95,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const [spreadsheetReady, setSpreadsheetReady] = useState(false);
   const [currentSelection, setCurrentSelection] = useState<any>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Modal states
   const [showParameterModal, setShowParameterModal] = useState(false);
@@ -136,6 +137,11 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       setHasInitialized(true);
     }
   }, [initialConfig, isLoading]);
+
+  // Add fade-in effect
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Notify parent of changes
   useEffect(() => {
@@ -619,7 +625,9 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      background: '#ffffff'
+      background: '#ffffff',
+      opacity: mounted ? 1 : 0,
+      transition: 'opacity 0.3s ease-in-out'
     }}>
       {/* Scrollable content area */}
       <div style={{
@@ -630,7 +638,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         paddingBottom: buttonAreaHeight + 12,
         minHeight: 0
       }}>
-        <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+        <Suspense fallback={null}>
           <ParametersSection
             inputs={inputs}
             outputs={outputs}
@@ -650,7 +658,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       </div>
 
       {/* Fixed button at bottom */}
-      <Suspense fallback={<div style={{ padding: '12px' }}><Skeleton.Button active block /></div>}>
+      <Suspense fallback={null}>
         <div ref={buttonAreaRef}>
           <AddParameterButton
             currentSelection={currentSelection}
