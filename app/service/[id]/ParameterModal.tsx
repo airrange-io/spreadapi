@@ -73,6 +73,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  // Debug logging
+  React.useEffect(() => {
+    if (open && editingParameter) {
+      console.log('ParameterModal - editingParameter:', editingParameter);
+      console.log('ParameterModal - type:', editingParameter.type);
+    }
+  }, [open, editingParameter]);
+
   return (
     <Modal
       title={`${editingParameter ? 'Edit' : 'Add'} ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
@@ -82,14 +90,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
       centered
     >
       <Form
-        key={`${selectedCellInfo?.address}-${Date.now()}-${editingParameter?.id || ''}`}
+        key={`${editingParameter?.id || 'new'}-${Date.now()}`}
         layout="vertical"
         variant={'filled'}
         onFinish={onSubmit}
         initialValues={{
           name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
           title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
-          dataType: editingParameter ? editingParameter.type : (selectedCellInfo?.detectedDataType || 'string'),
+          dataType: editingParameter?.dataType || editingParameter?.type || selectedCellInfo?.detectedDataType || 'string',
           description: editingParameter?.description || '',
           mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
           min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,

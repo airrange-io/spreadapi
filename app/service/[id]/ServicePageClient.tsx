@@ -1339,10 +1339,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 borderRadius: 6,
                 paddingLeft: 12,
                 paddingRight: 12,
-                backgroundColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', //'#FFFBE6',
+                backgroundColor: serviceStatus?.published ? '#E4F2D4' : '#f5f5f5', //'#FFFBE6',
                 borderColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', // '#FFE58F',
                 // borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
-                color: serviceStatus?.published ? '#52c41a' : '#666666', //'#fa8c16'
+                color: serviceStatus?.published ? '#389E0E' : '#666666', //'#fa8c16'
               }}>
                 <Space size={4}>
                   {serviceStatus?.published ? 'Published' : 'Draft'}

@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Space, Tag, Button, Skeleton, Popconfirm, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, EyeOutlined } from '@ant-design/icons';
+import { Space, Tag, Button, Skeleton, Tooltip, Dropdown, Modal } from 'antd';
+import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
 
 export interface InputDefinition {
@@ -126,7 +126,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
     }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
         {/* Input Parameters */}
-        <CollapsibleSection title={`Input Parameters ${panelWidth ? `(${panelWidth}px)` : ''}`} defaultOpen={true}>
+        <CollapsibleSection title="Input Parameters" defaultOpen={true}>
         {isLoading || !hasInitialized ? (
           <Skeleton active paragraph={{ rows: 2 }} />
         ) : inputs.length === 0 ? (
@@ -180,7 +180,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                       </Space>
                     </Space>
                   </div>
-                  <Space size="small">
+                  <Space size={4}>
                     {!useCompactLayout && (
                       <Tag color='purple' onClick={() => onNavigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
                     )}
@@ -191,21 +191,36 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                       onClick={() => onEditParameter('input', input)}
                     />
                     {!isDemoMode && (
-                      <Popconfirm
-                        title="Delete this parameter?"
-                        description="This action cannot be undone."
-                        onConfirm={() => onDeleteParameter('input', input.id)}
-                        okText="Yes"
-                        cancelText="No"
-                        okButtonProps={{ danger: true }}
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: 'delete',
+                              label: 'Delete',
+                              icon: <DeleteOutlined />,
+                              danger: true,
+                              onClick: () => {
+                                Modal.confirm({
+                                  title: 'Delete this parameter?',
+                                  content: 'This action cannot be undone.',
+                                  okText: 'Yes',
+                                  cancelText: 'No',
+                                  okButtonProps: { danger: true },
+                                  onOk: () => onDeleteParameter('input', input.id),
+                                });
+                              },
+                            },
+                          ],
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
                       >
                         <Button
                           size="small"
                           type="text"
-                          danger
-                          icon={<DeleteOutlined />}
+                          icon={<MoreOutlined />}
                         />
-                      </Popconfirm>
+                      </Dropdown>
                     )}
                   </Space>
                 </div>
@@ -263,7 +278,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                       </Space>
                     </Space>
                   </div>
-                  <Space size="small">
+                  <Space size={4}>
                     {!useCompactLayout && (
                       <Tag onClick={() => onNavigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
                     )}
@@ -274,21 +289,36 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                       onClick={() => onEditParameter('output', output)}
                     />
                     {!isDemoMode && (
-                      <Popconfirm
-                        title="Delete this parameter?"
-                        description="This action cannot be undone."
-                        onConfirm={() => onDeleteParameter('output', output.id)}
-                        okText="Yes"
-                        cancelText="No"
-                        okButtonProps={{ danger: true }}
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: 'delete',
+                              label: 'Delete',
+                              icon: <DeleteOutlined />,
+                              danger: true,
+                              onClick: () => {
+                                Modal.confirm({
+                                  title: 'Delete this parameter?',
+                                  content: 'This action cannot be undone.',
+                                  okText: 'Yes',
+                                  cancelText: 'No',
+                                  okButtonProps: { danger: true },
+                                  onOk: () => onDeleteParameter('output', output.id),
+                                });
+                              },
+                            },
+                          ],
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
                       >
                         <Button
                           size="small"
                           type="text"
-                          danger
-                          icon={<DeleteOutlined />}
+                          icon={<MoreOutlined />}
                         />
-                      </Popconfirm>
+                      </Dropdown>
                     )}
                   </Space>
                 </div>

@@ -198,7 +198,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   }, []);
 
   // Handle parameter editing
-  const handleEditParameter = useCallback((param: any) => {
+  const handleEditParameter = useCallback((type: 'input' | 'output', param: any) => {
     // Create cell info from existing parameter
     const cellInfo = {
       address: param.address,
@@ -209,7 +209,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       hasFormula: param.direction === 'output',
       value: param.value,
       isSingleCell: (param.rowCount || 1) === 1 && (param.colCount || 1) === 1,
-      detectedDataType: param.type,
+      detectedDataType: param.dataType || param.type, // Use dataType if available, fallback to type
       suggestedName: param.name,
       suggestedTitle: param.title || param.name
     };
@@ -708,9 +708,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               setSelectedCellInfo(null);
             }}
             onSubmit={(values) => {
+              // Map dataType from form to type in parameter
+              const { dataType, ...otherValues } = values;
               const newParam = {
                 ...selectedCellInfo,
-                ...values,
+                ...otherValues,
+                type: dataType, // Map dataType to type
                 id: editingParameter?.id || generateParameterId(),
                 direction: parameterType
               };

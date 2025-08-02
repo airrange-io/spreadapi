@@ -236,7 +236,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     <>
       {/* Quick Test Section */}
       <CollapsibleSection 
-        title={`Quick Test ${propsContainerWidth ? `(Container: ${propsContainerWidth}px)` : ''}`}
+        title="Quick Test"
         defaultOpen={false}
       >
         <div style={{ width: '100%' }}>

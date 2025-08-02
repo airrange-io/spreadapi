@@ -31,7 +31,7 @@ export default function ApiEndpointPreview({
   return (
     <div style={{
       background: isPublished ? '#E4F2D4' : '#FFFBE6',
-      border: '1px solid #FFE58F', //#b7eb8f
+      border: isPublished ? '1px solid #E4F2D4' : '1px solid #FFE58F', //#b7eb8f
       // border: `1px solid ${isPublished ? '#f0f0f0' : '#d9d9d9'}`, //#b7eb8f
       borderRadius: '8px',
       padding: '8px 16px',
