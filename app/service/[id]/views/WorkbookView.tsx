@@ -19,7 +19,10 @@ const WorkbookViewer = dynamic(
         justifyContent: 'center',
         background: '#ffffff'
       }}>
-        <Spin size="default" tip="Loading spreadsheet..." />
+        <div style={{ textAlign: 'center' }}>
+          <Spin size="default" />
+          <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
+        </div>
       </div>
     )
   }

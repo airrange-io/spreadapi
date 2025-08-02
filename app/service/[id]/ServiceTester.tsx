@@ -83,9 +83,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
     // Get current form values and build URL
     const currentFormValues = form.getFieldsValue();
-    console.log('Form values at test time:', currentFormValues);
     const testUrl = buildWizardUrl(currentFormValues);
-    console.log('Test URL:', testUrl);
     
     const startTime = Date.now();
 
@@ -134,7 +132,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     const baseUrl = `${window.location.origin}/api/v1/services/${serviceId}/execute`;
     const urlParams = new URLSearchParams();
 
-    console.log('Building URL with params:', params); // Debug log
 
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -149,7 +146,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     }
 
     const finalUrl = `${baseUrl}?${urlParams.toString()}`;
-    console.log('Final URL:', finalUrl); // Debug log
     return finalUrl;
   };
 
@@ -186,7 +182,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   // Get column span based on container width
   const getColumnSpan = () => {
     // For debugging
-    console.log('Container width for column calculation:', containerWidth);
     
     if (!containerWidth || containerWidth === 0) return 24; // 1 column - full width
     if (containerWidth < 600) return 24; // 1 column for small containers
@@ -205,7 +200,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   const renderParameterInput = (input: any) => {
     // Debug log to check what types we're getting
-    console.log('Rendering input:', input.name, 'type:', input.type, 'dataType:', input.dataType);
     
     const commonProps = {
       style: { width: '100%' }
@@ -279,7 +273,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {inputs.length > 0 && (
             <div style={{ width: '100%' }}>
               <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                Input Parameters {containerWidth > 0 && `(${containerWidth}px)`}
+                Input Parameters
               </Typography.Text>
               <Form
                 form={form}
@@ -287,7 +281,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                 initialValues={parameterValues}
                 style={{ width: '100%' }}
                 onValuesChange={(changedValues, allValues) => {
-                  console.log('Form values changed:', changedValues, 'All values:', allValues);
                   setParameterValues(allValues);
                   // Update URL immediately when values change
                   setWizardUrl(buildWizardUrl(allValues));

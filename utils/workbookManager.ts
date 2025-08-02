@@ -97,7 +97,6 @@ class WorkbookManagerImpl implements WorkbookManager {
           resolve();
         },
         (error: any) => {
-          console.error('Export error:', error);
           reject(new Error('Failed to export Excel file'));
         },
         exportOptions
@@ -128,7 +127,6 @@ class WorkbookManagerImpl implements WorkbookManager {
       const blob = await workbookRef.saveWorkbookSJS();
       return blob;
     } catch (error) {
-      console.error('Error saving workbook as SJS:', error);
       return null;
     }
   }

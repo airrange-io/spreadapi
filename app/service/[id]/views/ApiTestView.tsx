@@ -32,6 +32,7 @@ interface ApiTestViewProps {
   };
   availableTokens?: any[];
   isDemoMode?: boolean;
+  configLoaded?: boolean;
   onRequireTokenChange?: (value: boolean) => void;
   onTokenCountChange?: (count: number) => void;
   onTokensChange?: (tokens: any[]) => void;
@@ -43,6 +44,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   serviceStatus,
   availableTokens = [],
   isDemoMode = false,
+  configLoaded = false,
   onRequireTokenChange,
   onTokenCountChange,
   onTokensChange
@@ -109,6 +111,21 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
       window.removeEventListener('resize', measureWidth);
     };
   }, []);
+
+  // Show skeleton until config is loaded to prevent status flicker
+  if (!configLoaded) {
+    return (
+      <div style={{ padding: '16px' }}>
+        <Skeleton active paragraph={{ rows: 4 }} />
+        <div style={{ marginTop: 16 }}>
+          <Skeleton active paragraph={{ rows: 6 }} />
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <Skeleton active paragraph={{ rows: 3 }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 

@@ -96,7 +96,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       const startTime = performance.now();
       const response = await fetch(`/api/services/${serviceId}/tokens`);
       const endTime = performance.now();
-      console.log(`[TokenManagement] API call took ${endTime - startTime}ms`);
 
       if (response.ok) {
         const data = await response.json();
@@ -121,7 +120,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Handle 403 for demo mode as expected
         // Handle 404 for new services that don't exist yet
         if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
-          console.error('Failed to load tokens');
           message.error('Failed to load tokens');
         }
         // Still update count to 0 on error
@@ -132,7 +130,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
     } catch (error: any) {
       // Only log unexpected errors (not 401/unauthorized)
       if (error?.status !== 401 && error?.code !== 'unauthorized') {
-        console.error('Error loading tokens:', error);
         message.error('Error loading tokens');
       }
       if (onTokenCountChange) {
@@ -175,7 +172,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         message.error(error.error || 'Failed to create token');
       }
     } catch (error) {
-      console.error('Error creating token:', error);
       message.error('Failed to create token');
     } finally {
       setCreating(false);
@@ -202,7 +198,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         message.error(error.error || 'Failed to revoke token');
       }
     } catch (error) {
-      console.error('Error deleting token:', error);
       message.error('Failed to revoke token');
     }
   };

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal } from 'antd';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Progress } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
 import ParametersPanel from './components/ParametersPanel';
 import ApiTestView from './views/ApiTestView';
 import SettingsView from './views/SettingsView';
+import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
@@ -86,6 +87,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
+  const [saveProgress, setSaveProgress] = useState<{visible: boolean; percent: number; status: string}>({
+    visible: false,
+    percent: 0,
+    status: ''
+  }); // Save progress for large files
 
   // Custom hook for panel sizes
   const usePanelSizes = () => {
@@ -102,7 +108,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             setSizes(parsedSizes);
           }
         } catch (e) {
-          console.error('Failed to parse saved panel sizes');
         }
       }
       setSizesLoaded(true);
@@ -127,13 +132,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Computed property for any changes
   const hasAnyChanges = useMemo(() => {
     const result = configHasChanges || workbookChangeCount > 0;
-
-    console.log('hasAnyChanges computed:', {
-      configHasChanges,
-      workbookChangeCount,
-      result
-    });
-
     return result;
   }, [configHasChanges, workbookChangeCount]);
 
@@ -141,7 +139,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const defaultEmptyWorkbook = useMemo(() => workbookManager.createDefaultWorkbook(), []);
 
   const setDefaultSpreadsheetData = useCallback(() => {
-    console.log('Setting default empty workbook');
     setSpreadsheetData(defaultEmptyWorkbook);
   }, [defaultEmptyWorkbook]);
 
@@ -201,7 +198,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setActiveView(smartDefault);
 
         // Don't save this as a preference - let user's first manual choice be saved
-        console.log(`Setting smart default view: ${smartDefault} (service is ${serviceStatus?.published ? 'published' : 'draft'})`);
       }
 
       setHasSetSmartDefault(true);
@@ -210,7 +206,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Helper function to process workbook data
   const processWorkbookData = useCallback((workbookResult: any) => {
-    console.log('Processing workbook data:', workbookResult);
 
     const processedData = workbookManager.processWorkbookData(workbookResult);
 
@@ -221,10 +216,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           blob: processedData.blob,
           format: 'sjs'
         });
-        console.log('SJS workbook loaded');
       } else if (processedData.type === 'json') {
         setSpreadsheetData(processedData.data);
-        console.log('JSON workbook loaded');
       }
     }
 
@@ -236,11 +229,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const loadWorkbookOnDemand = useCallback(async () => {
     // Don't reload if already loaded or loading
     if (workbookLoaded || workbookLoading || !serviceId) {
-      console.log('Workbook already loaded/loading or no serviceId');
       return;
     }
 
-    console.log('Loading workbook on demand...');
     setWorkbookLoading(true);
     const controller = new AbortController();
 
@@ -255,7 +246,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       if (workbookResponse.status === 304) {
         // Workbook hasn't changed, use cached version
-        console.log('Workbook unchanged (304), using cached version');
         const cachedWorkbook = localStorage.getItem(`workbook-data-${serviceId}`);
         if (cachedWorkbook) {
           const workbookResult = JSON.parse(cachedWorkbook);
@@ -277,12 +267,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           processWorkbookData(workbookResult);
         } catch (error) {
-          console.error('Error processing workbook response:', error);
           setWorkbookLoading(false);
         }
       } else {
         // No workbook available
-        console.log('No workbook available for this service');
         setWorkbookLoading(false);
         if (!spreadsheetData) {
           setShowEmptyState(true);
@@ -290,7 +278,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('Failed to load workbook:', error);
         message.error('Failed to load workbook');
       }
       setWorkbookLoading(false);
@@ -300,7 +287,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Load workbook when switching to Workbook view
   useEffect(() => {
     if (activeView === 'Workbook' && !workbookLoaded && !workbookLoading && configLoaded) {
-      console.log('Switching to Workbook view - loading workbook...');
       loadWorkbookOnDemand();
     }
   }, [activeView, workbookLoaded, workbookLoading, configLoaded, loadWorkbookOnDemand]);
@@ -324,7 +310,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }).then(async (res) => {
           // If full endpoint fails, try regular endpoint as fallback
           if (!res.ok && res.status === 404) {
-            console.log('Full endpoint not found, trying regular service endpoint');
             return fetch(`/api/services/${serviceId}`, {
               signal: controller.signal
             });
@@ -337,7 +322,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Process combined service data
         if (fullDataResponse.ok && fullDataResponse.status !== 204) {
           const data = await fullDataResponse.json();
-          console.log('Service data loaded:', data);
 
           // Check if this is a demo service
           const isDemo = isDemoService(serviceId);
@@ -365,7 +349,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiTags: data.service.aiTags || [],
               category: data.service.category || ''
             };
-            console.log('Loaded config from full endpoint:', loadedConfig);
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
             setConfigLoaded(true); // Mark config as loaded
@@ -391,7 +374,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiTags: data.aiTags || [],
               category: data.category || ''
             };
-            console.log('Loaded config from regular endpoint:', loadedConfig);
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
             setConfigLoaded(true); // Mark config as loaded
@@ -402,7 +384,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setLoadingMessage('');
         } else if (fullDataResponse.status === 404 || fullDataResponse.status === 204) {
           // 204 No Content is expected for new services
-          console.log('Creating new service');
 
           // Generate automatic name for new service
           const date = new Date();
@@ -440,7 +421,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       } catch (error) {
         // Ignore abort errors - they're expected when component unmounts
         if (error.name !== 'AbortError') {
-          console.error('Failed to load service:', error);
         }
         setInitialLoading(false);
       }
@@ -514,13 +494,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               message.success(`${info.file.name} loaded successfully.`);
             }
           } catch (error) {
-            console.error('Error processing file:', error);
             message.error('Failed to process the file');
           }
         };
         reader.readAsArrayBuffer(originFileObj);
       } catch (error) {
-        console.error('Error reading file:', error);
         message.error('Failed to read the file');
       }
     } else if (status === 'error') {
@@ -545,7 +523,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Back button clicked');
     router.push('/');
   };
 
@@ -602,7 +579,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           tokens: [] // Will add token management later
         }
       );
-      console.log("🚀 ~ handlePublish ~ publishData:", publishData)
 
       // Publish the service
       const result = await publishService(serviceId, publishData);
@@ -612,7 +588,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       message.success('Service published successfully!');
-      console.log('Publish result:', result);
 
       // Set a flag to refresh the service list
       if (typeof window !== 'undefined') {
@@ -629,7 +604,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       });
 
     } catch (error) {
-      console.error('Error publishing service:', error);
       message.error('Failed to publish service: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
@@ -667,7 +641,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       });
 
     } catch (error) {
-      console.error('Error unpublishing service:', error);
       message.error('Failed to unpublish: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
@@ -691,14 +664,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       message.destroy();
       message.success('Excel file exported successfully');
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
       message.destroy();
       message.error('Failed to export: ' + (error.message || 'Unknown error'));
     }
   };
 
+  const isSavingRef = useRef(false);
+  
   const handleSave = async () => {
+    // Prevent concurrent saves
+    if (isSavingRef.current) {
+      message.warning('Save already in progress');
+      return;
+    }
+    
     try {
+      isSavingRef.current = true;
       setLoading(true);
 
       // Check what needs to be saved
@@ -730,7 +711,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Additional safety check for workbookRef
       if (!workbookRef.current && shouldSaveWorkbook) {
-        console.error('Cannot save workbook - WorkbookViewer not initialized yet');
         message.error('Please wait for the workbook to load before saving');
         setLoading(false);
         setSavingWorkbook(false);
@@ -738,35 +718,36 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (workbookRef.current && shouldSaveWorkbook) {
-
-        console.log('Workbook save decision:', {
-          hasChanges: workbookNeedsSave,
-          hasNoWorkbook,
-          shouldSave: shouldSaveWorkbook
-        });
-
         // Save workbook if needed
         if (shouldSaveWorkbook) {
-          console.log('WorkbookRef exists and has changes, getting SJS blob...');
           saveStartTime = performance.now();
 
           try {
-            workbookBlob = await workbookManager.saveWorkbookAsSJS(workbookRef.current);
+            // For large files, show progress modal
+            // We can't detect size before saving, so we'll show progress based on save time
+            const savePromise = workbookManager.saveWorkbookAsSJS(workbookRef.current);
+            
+            // If save takes more than 500ms, show progress
+            const progressTimeout = setTimeout(() => {
+              message.destroy();
+              setSaveProgress({ visible: true, percent: 30, status: 'Saving workbook data...' });
+            }, 500);
+            
+            workbookBlob = await savePromise;
             saveEndTime = performance.now();
-            console.log(`Workbook SJS generation took ${(saveEndTime - saveStartTime).toFixed(0)}ms`);
+            
+            // Clear timeout if save was fast
+            clearTimeout(progressTimeout);
 
             if (!workbookBlob) {
-              console.warn('No workbook blob available');
             } else {
-              console.log('Got workbook blob:', {
-                hasData: !!workbookBlob,
-                size: workbookBlob.size,
-                sizeInMB: (workbookBlob.size / 1024 / 1024).toFixed(2),
-                type: workbookBlob.type
-              });
+              const sizeInMB = workbookBlob.size / 1024 / 1024;
+              // Update progress if it's a large file and we're showing progress
+              if (sizeInMB > 2 && saveProgress.visible) {
+                setSaveProgress({ visible: true, percent: 60, status: `Uploading ${sizeInMB.toFixed(1)}MB file...` });
+              }
             }
           } catch (error) {
-            console.error('Error getting workbook SJS:', error);
             // Fallback to JSON if SJS fails
             try {
               const workbookData = workbookManager.getWorkbookJSON(workbookRef.current);
@@ -776,11 +757,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 workbookBlob = new Blob([jsonString], { type: 'application/json' });
               }
             } catch (jsonError) {
-              console.error('Error getting workbook JSON:', jsonError);
             }
           }
         } else if (!shouldSaveWorkbook) {
-          console.log('Workbook has no changes and already exists, skipping workbook save');
         }
       }
 
@@ -801,12 +780,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         if (!createResponse.ok) {
           const error = await createResponse.json();
-          console.error('Failed to create service:', error);
           throw new Error(error.error || 'Failed to create service');
         }
 
         const createResult = await createResponse.json();
-        console.log('Service created successfully:', createResult);
       } else if (!checkResponse.ok) {
         throw new Error('Failed to check service existence');
       }
@@ -844,12 +821,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         formData.append('workbook', workbookBlob, `${serviceId}.sjs`);
 
         const uploadStartTime = performance.now();
+        
+        // Update progress for large files during upload
+        const sizeInMB = workbookBlob.size / 1024 / 1024;
+        if (saveProgress.visible) {
+          setSaveProgress({ visible: true, percent: 90, status: 'Finalizing...' });
+        }
+        
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
           method: 'PUT',
           body: formData
         });
         const uploadEndTime = performance.now();
-        console.log(`Workbook upload took ${(uploadEndTime - uploadStartTime).toFixed(0)}ms`);
 
         if (!workbookResponse.ok) {
           const error = await workbookResponse.json();
@@ -861,22 +844,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Calculate total save time (from SJS generation start to upload end)
         const totalSaveTime = uploadEndTime - saveStartTime;
 
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📊 WORKBOOK SAVE SUMMARY');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`📁 File Information:
-   • Size: ${result.size} (${workbookBlob.size.toLocaleString()} bytes)
-   • Format: SJS (SpreadJS native)
-   • Service ID: ${serviceId}`);
-        console.log(`⏱️  Performance Metrics:
-   • SJS Generation: ${(saveEndTime - saveStartTime).toFixed(0)}ms
-   • Upload to Blob: ${(uploadEndTime - uploadStartTime).toFixed(0)}ms
-   • Total Save Time: ${totalSaveTime.toFixed(0)}ms (${(totalSaveTime / 1000).toFixed(1)}s)`);
-        console.log(`🔗 Storage Details:
-   • URL: ${result.workbookUrl}
-   • Timestamp: ${result.timestamp}`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
         // Update service status with the new workbook URL
         setServiceStatus(prevStatus => ({
           ...prevStatus,
@@ -886,6 +853,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Show appropriate success message based on what was saved
       message.destroy();
+      setSaveProgress({ visible: false, percent: 0, status: '' });
+      
       if (shouldSaveWorkbook && configHasChanges) {
         message.success('Configuration and workbook saved successfully!');
       } else if (shouldSaveWorkbook) {
@@ -908,11 +877,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setWorkbookChangeCount(0);
       }
     } catch (error) {
-      console.error('Error saving service:', error);
       message.error('Failed to save: ' + (error.message || 'Unknown error'));
     } finally {
+      isSavingRef.current = false;
       setLoading(false);
       setSavingWorkbook(false);
+      setSaveProgress({ visible: false, percent: 0, status: '' });
     }
   };
 
@@ -926,7 +896,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, []);
 
   const handleWorkbookAction = useCallback((action, data) => {
-    // console.log('Workbook action:', action, data);
     if (action === 'spread-changed') {
       // This is the workbook/spread instance
       setSpreadInstance(data);
@@ -942,11 +911,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       action === 'range-cleared' || action === 'cell-changed') {
       // Update change count when workbook changes
       if (action === 'edit-ended' || action === 'range-cleared' || action === 'cell-changed') {
-        console.log(`Workbook change detected: ${action}`);
         setWorkbookChangeCount(prev => prev + 1);
       }
     } else if (action === 'workbook-loaded' || action === 'file-loaded') {
-      console.log(action === 'workbook-loaded' ? 'Workbook loaded successfully' : 'File loaded successfully');
       // Don't mark as changed when loading existing workbook
       // Only user actions should set hasChanges to true
       setSavingWorkbook(false); // Clear loading state
@@ -969,7 +936,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, []);
 
   const handleWorkbookChange = useCallback(() => {
-    console.log('Workbook change detected');
     setWorkbookChangeCount(prev => prev + 1);
   }, []);
 
@@ -979,17 +945,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   const handleEditableAreaAdd = useCallback((area: any) => {
     // This would be handled by the ParametersPanel
-    console.log('Editable area added:', area);
   }, []);
 
   const handleEditableAreaUpdate = useCallback((area: any) => {
     // This would be handled by the ParametersPanel
-    console.log('Editable area updated:', area);
   }, []);
 
   const handleEditableAreaRemove = useCallback((areaId: string) => {
     // This would be handled by the ParametersPanel
-    console.log('Editable area removed:', areaId);
   }, []);
 
   // Remove this as we're using WorkbookView component now
@@ -1073,7 +1036,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             initialZoom={zoomLevel}
             actionHandlerProc={handleWorkbookAction}
           // createNewShareProc={(selection) => {
-          //   console.log('Share selection:', selection);
           // }}
           />
         </div>
@@ -1108,6 +1070,35 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       setSavingWorkbook(true);
 
+      // File validation
+      const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB for free tier (will be updated with licenses)
+      const ALLOWED_EXCEL_TYPES = [
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel.sheet.macroEnabled.12'
+      ];
+      const ALLOWED_EXTENSIONS = ['.xls', '.xlsx', '.xlsm'];
+
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        message.error(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please use a smaller file.`);
+        setSavingWorkbook(false);
+        return;
+      }
+
+      // Check file type and extension
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      if (!ALLOWED_EXTENSIONS.includes(fileExtension) && !ALLOWED_EXCEL_TYPES.includes(file.type)) {
+        message.error('Only Excel files (.xls, .xlsx, .xlsm) are supported');
+        setSavingWorkbook(false);
+        return;
+      }
+
+      // Check for macro-enabled files
+      if (fileExtension === '.xlsm' || file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12') {
+        message.warning('This file contains macros (.xlsm), but macros are not supported. Only the spreadsheet data will be imported.');
+      }
+
       if (workbookRef.current) {
         try {
           await workbookManager.importFromExcel(workbookRef.current, file);
@@ -1130,14 +1121,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           message.success(successMessage);
         } catch (error: any) {
-          console.error('Error importing Excel file:', error);
           message.error('Failed to import Excel file: ' + (error.message || 'Unknown error'));
         }
       } else {
         message.error('Spreadsheet not initialized. Please wait for the workbook to load.');
       }
     } catch (error) {
-      console.error('Error handling Excel import:', error);
       message.error('Failed to import Excel file');
     } finally {
       setSavingWorkbook(false);
@@ -1401,6 +1390,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 </div>
               </Splitter.Panel>
               <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="50%" max="80%">
+                <ErrorBoundary>
                 <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                   {/* Workbook View */}
                   <div style={{
@@ -1458,6 +1448,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       serviceStatus={serviceStatus}
                       availableTokens={availableTokens}
                       isDemoMode={isDemoMode}
+                      configLoaded={configLoaded}
                       onRequireTokenChange={(value) => {
                         handleConfigChange({ requireToken: value });
                       }}
@@ -1483,6 +1474,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     />
                   </div>
                 </div>
+                </ErrorBoundary>
               </Splitter.Panel>
             </Splitter>
           ) : (
@@ -1557,6 +1549,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     serviceStatus={serviceStatus}
                     availableTokens={availableTokens}
                     isDemoMode={isDemoMode}
+                    configLoaded={configLoaded}
                     onRequireTokenChange={(value) => {
                       handleConfigChange({ requireToken: value });
                     }}
@@ -1610,7 +1603,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           }
         }}
       >
-        {parametersPanel}
+        <ErrorBoundary>
+          {parametersPanel}
+        </ErrorBoundary>
       </Drawer>
       {/* Status Bar */}
       <StatusBar
@@ -1619,6 +1614,31 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         zoomLevel={zoomLevel}
         onZoomChange={handleZoomChange}
       />
+      
+      {/* Save Progress Modal */}
+      <Modal
+        title="Saving Large File"
+        open={saveProgress.visible}
+        footer={null}
+        closable={false}
+        centered
+        width={400}
+      >
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <Progress
+            percent={saveProgress.percent}
+            status="active"
+            strokeColor={{
+              '0%': '#108ee9',
+              '100%': '#87d068',
+            }}
+          />
+          <p style={{ marginTop: 16, color: '#666' }}>{saveProgress.status}</p>
+          <p style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+            Large files may take a moment to save...
+          </p>
+        </div>
+      </Modal>
     </Layout>
   );
 }
