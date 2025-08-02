@@ -54,6 +54,11 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   onImportExcel,
   onWorkbookChange
 }, ref) => {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
   // Show empty state for new services
   if (showEmptyState && !spreadsheetData) {
     return (
@@ -80,13 +85,20 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   }
 
   return (
-    <WorkbookViewer
-      ref={ref}
-      storeLocal={{ spread: spreadsheetData }}
-      readOnly={isDemoMode}
-      workbookLayout="default"
-      initialZoom={zoomLevel}
-      actionHandlerProc={(action, data) => {
+    <div
+      style={{
+        height: '100%',
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out'
+      }}
+    >
+      <WorkbookViewer
+        ref={ref}
+        storeLocal={{ spread: spreadsheetData }}
+        readOnly={isDemoMode}
+        workbookLayout="default"
+        initialZoom={zoomLevel}
+        actionHandlerProc={(action, data) => {
         if (action === 'spread-changed') {
           onWorkbookInit(data);
         } else if (action === 'designer-initialized' && data && typeof data.getWorkbook === 'function') {
@@ -106,6 +118,7 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         }
       }}
     />
+    </div>
   );
 });
 

@@ -41,6 +41,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [changeCount, setChangeCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
   const handleZoomChangeRef = useRef(null);
   const isLoadingData = useRef(false);
   const changeCountRef = useRef(0);
@@ -257,6 +258,17 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
 
   // Note: Initial zoom is now applied immediately when data loads,
   // so we don't need a separate effect for it
+
+  // Handle fade-in effect after loading completes
+  useEffect(() => {
+    if (!isLoading && spread) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        setFadeIn(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, spread]);
 
   useEffect(() => {
     if (!designer || !spread) return;
@@ -763,11 +775,20 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       }}
     >
       <div style={{ flex: 1, position: "relative", marginTop: 8 }}>
-        <Designer
-          styleInfo={{ width: "100%", height: "100%" }}
-          config={getDesignerConfig}
-          designerInitialized={initDesigner}
-        />
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            opacity: fadeIn ? 1 : 0,
+            transition: "opacity 0.5s ease-in-out",
+          }}
+        >
+          <Designer
+            styleInfo={{ width: "100%", height: "100%" }}
+            config={getDesignerConfig}
+            designerInitialized={initDesigner}
+          />
+        </div>
         {/* Loading overlay */}
         {isLoading && (
           <div
