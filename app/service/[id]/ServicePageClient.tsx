@@ -169,10 +169,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setIsMobile(mobile);
 
       // Auto-manage drawer visibility based on screen size
-      if (!mobile) {
-        // Desktop: close drawer (use sider instead)
-        setDrawerVisible(false);
-      } else if (mobile && !wasMobile) {
+      // Only auto-show on mobile when transitioning from desktop
+      if (mobile && !wasMobile) {
         // Just became mobile: show drawer
         setDrawerVisible(true);
       }
@@ -468,10 +466,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     // Initial loading will be handled in a separate effect
 
-    // Show drawer on mobile after initial load
-    if (isMobile) {
-      setDrawerVisible(true);
-    }
+    // Drawer is now controlled by user interaction only
 
     loadWorkbook();
 
@@ -1247,7 +1242,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Button
             type="text"
             icon={<MenuOutlined />}
-            onClick={appStore.toggleSidebar}
+            onClick={() => setDrawerVisible(!drawerVisible)}
           />
           <Breadcrumb
             items={[
