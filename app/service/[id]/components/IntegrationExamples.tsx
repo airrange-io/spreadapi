@@ -3,6 +3,8 @@
 import React from 'react';
 import { Tabs, Button, Typography, message } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 const { Text } = Typography;
 
@@ -410,31 +412,43 @@ function SPREADAPI(serviceId, ...args) {
     }
   };
 
-  const CodeBlock: React.FC<{ language: string; code: string }> = ({ language, code }) => (
-    <div style={{ position: 'relative' }}>
-      <Button
-        icon={<CopyOutlined />}
-        size="small"
-        onClick={() => copyToClipboard(code)}
-        style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
-      >
-        Copy
-      </Button>
-      <pre style={{
-        background: '#1e1e1e',
-        color: '#d4d4d4',
-        padding: '16px',
-        paddingTop: '40px',
-        borderRadius: '4px',
-        overflow: 'auto',
-        fontSize: '13px',
-        lineHeight: '1.5',
-        margin: 0
-      }}>
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
+  const CodeBlock: React.FC<{ language: string; code: string }> = ({ language, code }) => {
+    // Map language names to syntax highlighter language identifiers
+    const languageMap: Record<string, string> = {
+      'vb': 'vbnet',
+      'text': 'plaintext',
+      'curl': 'bash'
+    };
+    
+    const highlighterLanguage = languageMap[language] || language;
+    
+    return (
+      <div style={{ position: 'relative' }}>
+        <Button
+          icon={<CopyOutlined />}
+          size="small"
+          onClick={() => copyToClipboard(code)}
+          style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
+        >
+          Copy
+        </Button>
+        <SyntaxHighlighter
+          language={highlighterLanguage}
+          style={vs2015}
+          customStyle={{
+            padding: '16px',
+            paddingTop: '40px',
+            borderRadius: '6px',
+            fontSize: '13px',
+            lineHeight: '1.5',
+            margin: 0
+          }}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </div>
+    );
+  };
 
   const tabItems = [
     {

@@ -1,36 +1,51 @@
 'use client';
 
-import React, { useRef, useState, useLayoutEffect } from 'react';
-import { Space, Alert } from 'antd';
-import ApiEndpointPreview from '../ApiEndpointPreview';
-import ServiceTester from '../ServiceTester';
-import TokenManagement from '../TokenManagement';
-import { InputDefinition, OutputDefinition } from './ParametersSection';
+import React, { lazy, Suspense, useRef, useState, useLayoutEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { Skeleton, Space, Alert } from 'antd';
 
-interface TokensSectionProps {
+// Dynamically import components to avoid any SSR issues
+const ServiceTester = dynamic(() => import('../ServiceTester'), {
+  loading: () => <Skeleton active paragraph={{ rows: 8 }} />,
+  ssr: false
+});
+
+const ApiEndpointPreview = dynamic(() => import('../ApiEndpointPreview'), {
+  loading: () => <Skeleton active paragraph={{ rows: 2 }} />,
+  ssr: false
+});
+
+const TokenManagement = dynamic(() => import('../TokenManagement'), {
+  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
+  ssr: false
+});
+
+interface ApiTestViewProps {
   serviceId: string;
-  isPublished: boolean;
-  requireToken: boolean;
-  inputs: InputDefinition[];
-  outputs: OutputDefinition[];
-  availableTokens: any[];
+  apiConfig: {
+    inputs: any[];
+    outputs: any[];
+    requireToken?: boolean;
+  };
+  serviceStatus?: {
+    published?: boolean;
+  };
+  availableTokens?: any[];
   isDemoMode?: boolean;
-  onRequireTokenChange: (value: boolean) => void;
-  onTokenCountChange: (count: number) => void;
-  onTokensChange: (tokens: any[]) => void;
+  onRequireTokenChange?: (value: boolean) => void;
+  onTokenCountChange?: (count: number) => void;
+  onTokensChange?: (tokens: any[]) => void;
 }
 
-const TokensSection: React.FC<TokensSectionProps> = ({
+const ApiTestView: React.FC<ApiTestViewProps> = ({
   serviceId,
-  isPublished,
-  requireToken,
-  inputs,
-  outputs,
-  availableTokens,
-  isDemoMode,
+  apiConfig,
+  serviceStatus,
+  availableTokens = [],
+  isDemoMode = false,
   onRequireTokenChange,
   onTokenCountChange,
-  onTokensChange,
+  onTokensChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -72,40 +87,46 @@ const TokensSection: React.FC<TokensSectionProps> = ({
     <div 
       ref={containerRef}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
         height: '100%',
-        marginTop: '8px',
-        minHeight: 0
-      }}>
-      <Space direction="vertical" style={{ width: '100%' }} size={12}>
-        {!isPublished && (
+        overflow: 'auto',
+        padding: '16px',
+        paddingTop: '14px',
+        paddingLeft: '5px'
+      }}
+    >
+      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+        {!serviceStatus?.published && (
           <Alert
             message="Service must be published to test"
             type="warning"
             showIcon
           />
         )}
+        
+        {/* API Endpoint Preview */}
         <ApiEndpointPreview
           serviceId={serviceId}
-          isPublished={isPublished}
-          requireToken={requireToken}
+          isPublished={serviceStatus?.published || false}
+          requireToken={apiConfig.requireToken || false}
         />
+        
+        {/* Service Tester */}
         <ServiceTester
           serviceId={serviceId}
-          isPublished={isPublished}
-          inputs={inputs}
-          outputs={outputs}
-          requireToken={requireToken}
+          isPublished={serviceStatus?.published || false}
+          inputs={apiConfig.inputs || []}
+          outputs={apiConfig.outputs || []}
+          requireToken={apiConfig.requireToken}
           existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
           containerWidth={containerWidth}
           onTestComplete={handleTestComplete}
         />
+        
+        {/* Token Management */}
         <TokenManagement
           ref={tokenManagementRef}
           serviceId={serviceId}
-          requireToken={requireToken}
+          requireToken={apiConfig.requireToken || false}
           isDemoMode={isDemoMode}
           onRequireTokenChange={onRequireTokenChange}
           onTokenCountChange={onTokenCountChange}
@@ -116,4 +137,4 @@ const TokensSection: React.FC<TokensSectionProps> = ({
   );
 };
 
-export default TokensSection;
+export default ApiTestView;

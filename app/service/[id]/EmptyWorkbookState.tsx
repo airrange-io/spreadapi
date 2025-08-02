@@ -53,7 +53,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
       }}>
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           <Button
-            type="primary"
+            type="default"
             size="large"
             // icon={<FileAddOutlined />}
             onClick={onStartFromScratch}
@@ -62,9 +62,10 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               width: '100%',
               height: '25vh',
               minHeight: 160,
-              fontSize: 20,
+              fontSize: 16,
+              fontWeight: 500,
               borderRadius: 8,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+              // boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'

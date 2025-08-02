@@ -119,7 +119,8 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       } else {
         // Handle 401 as expected - user not authenticated
         // Handle 403 for demo mode as expected
-        if (response.status !== 401 && !(response.status === 403 && isDemoMode)) {
+        // Handle 404 for new services that don't exist yet
+        if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
           console.error('Failed to load tokens');
           message.error('Failed to load tokens');
         }

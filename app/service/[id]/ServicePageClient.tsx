@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS } from '@/constants/theme';
-import EditorPanel from './EditorPanel';
+import ParametersPanel from './components/ParametersPanel';
+import ApiTestView from './views/ApiTestView';
+import SettingsView from './views/SettingsView';
+import WorkbookView from './views/WorkbookView';
 import StatusBar from './StatusBar';
 import dynamic from 'next/dynamic';
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
@@ -14,21 +17,7 @@ import { appStore } from '@/stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 
-// Dynamically import WorkbookViewer to avoid SSR issues
-const WorkbookViewer = dynamic(() => import('./WorkbookViewer').then(mod => mod.WorkbookViewer), {
-  ssr: false,
-  loading: () => (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}>
-      <Spin size="default" />
-    </div>
-  )
-}) as any;
+// Removed WorkbookViewer dynamic import - now using WorkbookView component
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
@@ -40,7 +29,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const { message } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [activeView, setActiveView] = useState('Spreadsheet');
+  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings'>('Workbook');
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
   const [showEmptyState, setShowEmptyState] = useState(false); // Show empty state for new services
   const [importFileForEmptyState, setImportFileForEmptyState] = useState<File | null>(null); // File to import after workbook is ready
@@ -86,6 +75,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
   const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
+  const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
+  const [tokenCount, setTokenCount] = useState(0); // Total token count
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
 
   // Custom hook for panel sizes
@@ -891,7 +882,40 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, [spreadsheetVisible]);
 
-  const renderSpreadsheet = useMemo(() => {
+  // Workbook event handlers
+  const handleWorkbookInit = useCallback((instance: any) => {
+    if (workbookRef.current !== instance) {
+      workbookRef.current = instance;
+    }
+    setSpreadInstance(instance);
+  }, []);
+
+  const handleWorkbookChange = useCallback(() => {
+    console.log('Workbook change detected');
+    setWorkbookChangeCount(prev => prev + 1);
+  }, []);
+
+  const setZoomHandlerRef = useCallback((handler: (zoom: number) => void) => {
+    zoomHandlerRef.current = handler;
+  }, []);
+
+  const handleEditableAreaAdd = useCallback((area: any) => {
+    // This would be handled by the ParametersPanel
+    console.log('Editable area added:', area);
+  }, []);
+
+  const handleEditableAreaUpdate = useCallback((area: any) => {
+    // This would be handled by the ParametersPanel
+    console.log('Editable area updated:', area);
+  }, []);
+
+  const handleEditableAreaRemove = useCallback((areaId: string) => {
+    // This would be handled by the ParametersPanel
+    console.log('Editable area removed:', areaId);
+  }, []);
+
+  // Remove this as we're using WorkbookView component now
+  /* const renderSpreadsheet = useMemo(() => {
     // Show loading spinner during initial load
     if (initialLoading) {
       return (
@@ -964,13 +988,29 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         </div>
       </div>
     );
-  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState, spreadsheetVisible]);
+  }, [spreadsheetData, loading, zoomLevel, handleWorkbookAction, initialLoading, showEmptyState, spreadsheetVisible]); */
 
-  const handleConfigChange = useCallback((config: any) => {
-    // Check if config actually changed
-    const hasActualChanges = JSON.stringify(config) !== JSON.stringify(savedConfig);
-    setConfigHasChanges(hasActualChanges);
-    setApiConfig(config);
+  const handleConfigChange = useCallback((updates: any) => {
+    // If updates contain all config fields, it's a full replacement
+    // Otherwise, it's a partial update
+    const isFullConfig = updates.hasOwnProperty('name') && 
+                        updates.hasOwnProperty('description') && 
+                        updates.hasOwnProperty('inputs');
+    
+    if (isFullConfig) {
+      // Full config replacement
+      const hasActualChanges = JSON.stringify(updates) !== JSON.stringify(savedConfig);
+      setConfigHasChanges(hasActualChanges);
+      setApiConfig(updates);
+    } else {
+      // Partial update - merge with existing config
+      setApiConfig(prev => {
+        const newConfig = { ...prev, ...updates };
+        const hasActualChanges = JSON.stringify(newConfig) !== JSON.stringify(savedConfig);
+        setConfigHasChanges(hasActualChanges);
+        return newConfig;
+      });
+    }
   }, [savedConfig]);
 
   const handleImportExcel = useCallback(async (file: File) => {
@@ -1048,15 +1088,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasAnyChanges]);
 
-  const configPanel = (
-    <EditorPanel
+  const parametersPanel = (
+    <ParametersPanel
       spreadInstance={spreadInstance}
       serviceId={serviceId}
-      serviceStatus={serviceStatus}
-      onConfigChange={handleConfigChange}
-      onImportExcel={handleImportExcel}
-      initialConfig={apiConfig}
-      showEmptyState={showEmptyState}
+      onConfigChange={(updates) => {
+        // Only update parameters-related fields
+        if (updates.inputs !== undefined || updates.outputs !== undefined || updates.areas !== undefined) {
+          handleConfigChange(updates);
+        }
+      }}
+      initialConfig={{
+        inputs: apiConfig.inputs,
+        outputs: apiConfig.outputs,
+        areas: apiConfig.areas
+      }}
       isLoading={!configLoaded}
       isDemoMode={isDemoMode}
     />
@@ -1138,6 +1184,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           />
         </Space>
 
+        <Segmented
+          value={activeView}
+          // shape="round"
+          onChange={(value) => setActiveView(value as 'Workbook' | 'API Test' | 'Settings')}
+          options={isMobile ? [
+            { value: 'Workbook', icon: <TableOutlined /> },
+            { value: 'API Test', icon: <CaretRightOutlined /> },
+            { value: 'Settings', icon: <SettingOutlined /> }
+          ] : ['Workbook', 'API Test', 'Settings']}
+          style={{ marginLeft: 'auto', marginRight: 'auto' }}
+        />
+
         <Space>
           {hasAnyChanges && !isDemoMode && (
             <Button
@@ -1197,11 +1255,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </Button>
             </Dropdown>
           )}
-            <Button 
-              type="text" 
-              icon={<MenuFoldOutlined />}
-              onClick={() => setDrawerVisible(!drawerVisible)}
-            />
+            {isMobile && (
+              <Button 
+                type="text" 
+                icon={<MenuFoldOutlined />}
+                onClick={() => setDrawerVisible(!drawerVisible)}
+              />
+            )}
             <Dropdown
               menu={{
                 items: [
@@ -1240,22 +1300,77 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   display: 'flex',
                   flexDirection: 'column'
                 }}>
-                  {configPanel}
+                  {parametersPanel}
                 </div>
               </Splitter.Panel>
               <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="35%" max="70%">
-                {showEmptyState && !spreadsheetData ? (
-                  <EmptyWorkbookState
-                    onStartFromScratch={() => {
-                      setShowEmptyState(false);
-                      setDefaultSpreadsheetData();
-                    }}
-                    onImportFile={(file) => {
-                      setShowEmptyState(false);
-                      handleEmptyStateImport(file);
-                    }}
-                  />
-                ) : renderSpreadsheet}
+                <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+                  {/* Workbook View */}
+                  <div style={{ 
+                    display: activeView === 'Workbook' ? 'block' : 'none',
+                    height: '100%'
+                  }}>
+                    <WorkbookView
+                      ref={workbookRef}
+                      spreadsheetData={spreadsheetData}
+                      showEmptyState={showEmptyState}
+                      isDemoMode={isDemoMode}
+                      zoomLevel={zoomLevel}
+                      onWorkbookInit={handleWorkbookInit}
+                      onEmptyStateAction={(action, file) => {
+                        if (action === 'start') {
+                          setShowEmptyState(false);
+                          setDefaultSpreadsheetData();
+                        } else if (action === 'import' && file) {
+                          setShowEmptyState(false);
+                          handleEmptyStateImport(file);
+                        }
+                      }}
+                      onZoomHandlerReady={setZoomHandlerRef}
+                      onEditableAreaAdd={handleEditableAreaAdd}
+                      onEditableAreaUpdate={handleEditableAreaUpdate}
+                      onEditableAreaRemove={handleEditableAreaRemove}
+                      onImportExcel={handleImportExcel}
+                      onWorkbookChange={handleWorkbookChange}
+                    />
+                  </div>
+                  
+                  {/* API Test View */}
+                  <div style={{ 
+                    display: activeView === 'API Test' ? 'block' : 'none',
+                    height: '100%'
+                  }}>
+                    <ApiTestView
+                      serviceId={serviceId}
+                      apiConfig={apiConfig}
+                      serviceStatus={serviceStatus}
+                      availableTokens={availableTokens}
+                      isDemoMode={isDemoMode}
+                      onRequireTokenChange={(value) => {
+                        handleConfigChange({ requireToken: value });
+                      }}
+                      onTokenCountChange={setTokenCount}
+                      onTokensChange={setAvailableTokens}
+                    />
+                  </div>
+                  
+                  {/* Settings View */}
+                  <div style={{ 
+                    display: activeView === 'Settings' ? 'block' : 'none',
+                    height: '100%'
+                  }}>
+                    <SettingsView
+                      apiConfig={apiConfig}
+                      serviceId={serviceId}
+                      serviceStatus={serviceStatus}
+                      availableTokens={availableTokens}
+                      isDemoMode={isDemoMode}
+                      onConfigChange={handleConfigChange}
+                      onTokensChange={setAvailableTokens}
+                      onTokenCountChange={setTokenCount}
+                    />
+                  </div>
+                </div>
               </Splitter.Panel>
             </Splitter>
           ) : (
@@ -1271,19 +1386,75 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           )
         ) : (
           <Layout style={{ height: '100%', overflow: 'auto' }}>
-            <Content style={{ overflow: 'auto' }}>
-              {showEmptyState && !spreadsheetData ? (
-                <EmptyWorkbookState
-                  onStartFromScratch={() => {
-                    setShowEmptyState(false);
-                    setDefaultSpreadsheetData();
-                  }}
-                  onImportFile={(file) => {
-                    setShowEmptyState(false);
-                    handleEmptyStateImport(file);
-                  }}
-                />
-              ) : renderSpreadsheet}
+            <Content style={{ overflow: 'auto', position: 'relative' }}>
+              {/* Mobile View Switching */}
+              <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+                {/* Workbook View */}
+                <div style={{ 
+                  display: activeView === 'Workbook' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <WorkbookView
+                    ref={workbookRef}
+                    spreadsheetData={spreadsheetData}
+                    showEmptyState={showEmptyState}
+                    isDemoMode={isDemoMode}
+                    zoomLevel={zoomLevel}
+                    onWorkbookInit={handleWorkbookInit}
+                    onEmptyStateAction={(action, file) => {
+                      if (action === 'start') {
+                        setShowEmptyState(false);
+                        setDefaultSpreadsheetData();
+                      } else if (action === 'import' && file) {
+                        setShowEmptyState(false);
+                        handleEmptyStateImport(file);
+                      }
+                    }}
+                    onZoomHandlerReady={setZoomHandlerRef}
+                    onEditableAreaAdd={handleEditableAreaAdd}
+                    onEditableAreaUpdate={handleEditableAreaUpdate}
+                    onEditableAreaRemove={handleEditableAreaRemove}
+                    onImportExcel={handleImportExcel}
+                    onWorkbookChange={handleWorkbookChange}
+                  />
+                </div>
+                
+                {/* API Test View */}
+                <div style={{ 
+                  display: activeView === 'API Test' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <ApiTestView
+                    serviceId={serviceId}
+                    apiConfig={apiConfig}
+                    serviceStatus={serviceStatus}
+                    availableTokens={availableTokens}
+                    isDemoMode={isDemoMode}
+                    onRequireTokenChange={(value) => {
+                      handleConfigChange({ requireToken: value });
+                    }}
+                    onTokenCountChange={setTokenCount}
+                    onTokensChange={setAvailableTokens}
+                  />
+                </div>
+                
+                {/* Settings View */}
+                <div style={{ 
+                  display: activeView === 'Settings' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <SettingsView
+                    apiConfig={apiConfig}
+                    serviceId={serviceId}
+                    serviceStatus={serviceStatus}
+                    availableTokens={availableTokens}
+                    isDemoMode={isDemoMode}
+                    onConfigChange={handleConfigChange}
+                    onTokensChange={setAvailableTokens}
+                    onTokenCountChange={setTokenCount}
+                  />
+                </div>
+              </div>
             </Content>
           </Layout>
         )}
@@ -1291,7 +1462,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       {/* Mobile Drawer */}
       <Drawer
-        title="Configure API"
+        title="Parameters"
         placement="right"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
@@ -1304,7 +1475,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           }
         }}
       >
-        {configPanel}
+        {parametersPanel}
       </Drawer>
       {/* Status Bar */}
       <StatusBar
