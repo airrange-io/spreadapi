@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
 import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
@@ -216,7 +216,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     }
   };
 
-  const handleDelete = async (serviceId: string, serviceName: string) => {
+  const handleDelete = useCallback(async (serviceId: string, serviceName: string) => {
     try {
       const response = await fetch(`/api/services?id=${serviceId}`, {
         method: 'DELETE',
@@ -232,15 +232,15 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       console.error('Error deleting service:', error);
       message.error('Failed to delete service');
     }
-  };
+  }, [message]);
 
-  const handleEdit = (serviceId: string) => {
+  const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
     router.push(`/service/${serviceId}`);
-  };
+  }, [router]);
 
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -249,9 +249,9 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
 
-  const getTableColumns = () => [
+  const tableColumns = useMemo(() => [
     {
       title: 'Name',
       dataIndex: 'name',
@@ -381,7 +381,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </Space>
       ),
     },
-  ];
+  ], [clickedServiceId, formatDate, handleDelete, handleEdit, message, setHideDemoService]);
 
   if (loading) {
     return (
@@ -458,7 +458,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     return (
       <div style={{ padding: '20px 0' }}>
         <Table
-          columns={getTableColumns()}
+          columns={tableColumns}
           dataSource={filteredServices}
           rowKey="id"
           pagination={false}

@@ -4,15 +4,33 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Progress } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
 import ParametersPanel from './components/ParametersPanel';
-import ApiTestView from './views/ApiTestView';
-import SettingsView from './views/SettingsView';
-import UsageView from './views/UsageView';
 import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
-import StatusBar from './StatusBar';
-import dynamic from 'next/dynamic';
+
+// Lazy load views that are not immediately visible
+const ApiTestView = dynamic(() => import('./views/ApiTestView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
+const SettingsView = dynamic(() => import('./views/SettingsView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
+const UsageView = dynamic(() => import('./views/UsageView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
+// Lazy load StatusBar as it's not critical for initial render
+const StatusBar = dynamic(() => import('./StatusBar'), {
+  loading: () => null,
+  ssr: false
+});
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 import { appStore } from '../../stores/AppStore';
 import { isDemoService } from '@/lib/constants';

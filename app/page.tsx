@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
@@ -96,13 +96,13 @@ const ListsPage: React.FC = observer(() => {
     }
   }, [appStore.authChecked, appStore.user.isRegistered]);
 
-  // Search for public lists when query changes
-  const handleHomeClick = () => {
+  // Memoized handlers
+  const handleHomeClick = useCallback(() => {
     router.push('/');
-  };
+  }, [router]);
 
   // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -114,9 +114,9 @@ const ListsPage: React.FC = observer(() => {
         e.dataTransfer.dropEffect = 'copy';
       }
     }
-  };
+  }, []);
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -125,9 +125,9 @@ const ListsPage: React.FC = observer(() => {
     if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
       setIsDragging(false);
     }
-  };
+  }, []);
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
@@ -192,7 +192,82 @@ const ListsPage: React.FC = observer(() => {
     };
 
     reader.readAsArrayBuffer(file);
-  };
+  }, [isAuthenticated, messageApi, router, user?.id]);
+
+  // Memoized dropdown menu items
+  const dropdownMenuItems = useMemo(() => {
+    if (isAuthenticated) {
+      return [
+        {
+          key: 'profile',
+          icon: <SettingOutlined />,
+          label: 'Profile Settings',
+          onClick: () => router.push('/profile'),
+        },
+        { type: 'divider' as const },
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          label: 'Logout',
+          onClick: async () => {
+            document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            router.push('/');
+            setIsAuthenticated(false);
+          },
+        },
+      ];
+    }
+    return [
+      {
+        key: 'login',
+        label: 'Login',
+        onClick: () => router.push('/login'),
+      },
+    ];
+  }, [isAuthenticated, router, setIsAuthenticated]);
+
+  // Memoized new service handler
+  const handleNewService = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check authentication
+    if (!isAuthenticated) {
+      router.push('/login?returnTo=/');
+      return;
+    }
+
+    // Set loading state
+    setIsCreatingService(true);
+
+    // Generate a new service ID and navigate
+    const newId = generateServiceId(user?.id || 'test1234');
+    router.push(`/service/${newId}`);
+  }, [isAuthenticated, router, user?.id]);
+
+  // Memoized styles
+  const dragOverlayStyle = useMemo(() => ({
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(79, 45, 127, 0.1)',
+    border: '2px dashed #4F2D7F',
+    borderRadius: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    pointerEvents: 'none' as const
+  }), []);
+
+  const dragOverlayContentStyle = useMemo(() => ({
+    background: 'white',
+    padding: '24px 48px',
+    borderRadius: 8,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+  }), []);
 
   return (
     <>
@@ -212,29 +287,8 @@ const ListsPage: React.FC = observer(() => {
           <Content style={{ background: '#ffffff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Drag and drop overlay */}
             {isDragging && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(79, 45, 127, 0.1)',
-                  border: '2px dashed #4F2D7F',
-                  borderRadius: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1000,
-                  pointerEvents: 'none'
-                }}
-              >
-                <div style={{ 
-                  background: 'white', 
-                  padding: '24px 48px', 
-                  borderRadius: 8,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}>
+              <div style={dragOverlayStyle}>
+                <div style={dragOverlayContentStyle}>
                   <InboxOutlined style={{ fontSize: 48, color: '#4F2D7F', marginBottom: 16, display: 'block' }} />
                   <Typography.Title level={4} style={{ margin: 0, color: '#4F2D7F' }}>
                     Drop your Excel, CSV or JSON file here
@@ -282,23 +336,7 @@ const ListsPage: React.FC = observer(() => {
                   type="primary"
                   icon={isCreatingService ? <LoadingOutlined /> : <PlusOutlined />}
                   loading={isCreatingService}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Check authentication
-                    if (!isAuthenticated) {
-                      router.push('/login?returnTo=/');
-                      return;
-                    }
-
-                    // Set loading state
-                    setIsCreatingService(true);
-
-                    // Generate a new service ID and navigate
-                    const newId = generateServiceId(user?.id || 'test1234');
-                    router.push(`/service/${newId}`);
-                  }}
+                  onClick={handleNewService}
                   className="new-list-button"
                 >
                   <span className="desktop-text">New Service</span>
@@ -307,33 +345,7 @@ const ListsPage: React.FC = observer(() => {
 
                 {/* User Menu - Always visible */}
                 <Dropdown
-                  menu={{
-                    items: isAuthenticated ? [
-                      {
-                        key: 'profile',
-                        icon: <SettingOutlined />,
-                        label: 'Profile Settings',
-                        onClick: () => router.push('/profile'),
-                      },
-                      { type: 'divider' },
-                      {
-                        key: 'logout',
-                        icon: <LogoutOutlined />,
-                        label: 'Logout',
-                        onClick: async () => {
-                          document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                          router.push('/');
-                          setIsAuthenticated(false);
-                        },
-                      },
-                    ] : [
-                      {
-                        key: 'login',
-                        label: 'Login',
-                        onClick: () => router.push('/login'),
-                      },
-                    ],
-                  }}
+                  menu={{ items: dropdownMenuItems }}
                   placement="bottomRight"
                 >
                   <Button

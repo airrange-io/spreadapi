@@ -53,7 +53,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
-  
+
   // Use robust container width measurement
   const { width: containerWidth } = useContainerWidth(containerRef, {
     fallbackWidth: 800, // Reasonable default for 2-column layout
@@ -79,18 +79,18 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
     return (
       <div ref={containerRef} style={{ padding: '16px' }}>
         <Skeleton active paragraph={{ rows: 4 }} />
-        <div style={{ marginTop: 16 }}>
+        {/* <div style={{ marginTop: 16 }}>
           <Skeleton active paragraph={{ rows: 6 }} />
         </div>
         <div style={{ marginTop: 16 }}>
           <Skeleton active paragraph={{ rows: 3 }} />
-        </div>
+        </div> */}
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       style={{
         height: '100%',
@@ -112,14 +112,14 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
             showIcon
           />
         )}
-        
+
         {/* API Endpoint Preview */}
         <ApiEndpointPreview
           serviceId={serviceId}
           isPublished={serviceStatus?.published || false}
           requireToken={apiConfig.requireToken || false}
         />
-        
+
         {/* Service Tester */}
         <ServiceTester
           serviceId={serviceId}
@@ -131,7 +131,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           containerWidth={containerWidth}
           onTestComplete={handleTestComplete}
         />
-        
+
         {/* Token Management */}
         <TokenManagement
           ref={tokenManagementRef}
