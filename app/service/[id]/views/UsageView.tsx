@@ -35,20 +35,17 @@ import {
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 
-// Dynamic imports for chart components
-const Line = dynamic(
-  () => import('@ant-design/plots').then((mod) => mod.Line),
-  { ssr: false, loading: () => <Spin /> }
-);
-
-const Column = dynamic(
-  () => import('@ant-design/plots').then((mod) => mod.Column),
-  { ssr: false, loading: () => <Spin /> }
-);
-
-const Pie = dynamic(
-  () => import('@ant-design/plots').then((mod) => mod.Pie),
-  { ssr: false, loading: () => <Spin /> }
+// Lazy load Recharts components
+const RechartsComponents = dynamic(
+  () => import('./RechartsComponents'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin />
+      </div>
+    )
+  }
 );
 
 const { Title, Text } = Typography;
@@ -206,12 +203,13 @@ const UsageView: React.FC<UsageViewProps> = ({
       height: '100%',
       overflow: 'auto',
       padding: '16px',
-      paddingTop: '14px',
+      paddingLeft: '4px',
+      paddingTop: '13px',
       opacity: mounted ? 1 : 0,
       transition: 'opacity 0.3s ease-in-out'
     }}>
       {/* Summary Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card size="small">
             <Statistic
@@ -249,7 +247,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               value={analytics.summary.successRate}
               suffix="%"
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#389E0E', fontSize: '20px' }}
+              valueStyle={{ color: '#9334E9', fontSize: '20px' }}
             />
           </Card>
         </Col>
@@ -262,7 +260,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               suffix="ms"
               prefix={<ThunderboltOutlined />}
               valueStyle={{ 
-                color: analytics.summary.avgResponseTime < 500 ? '#389E0E' : '#faad14',
+                color: analytics.summary.avgResponseTime < 500 ? '#9334E9' : '#faad14',
                 fontSize: '20px'
               }}
             />
@@ -275,201 +273,14 @@ const UsageView: React.FC<UsageViewProps> = ({
         </Col>
       </Row>
 
-      {/* Charts Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {/* Daily Calls Chart */}
-        <Col xs={24} lg={12}>
-          <Card 
-            size="small"
-            title={
-              <Space>
-                <LineChartOutlined />
-                <span>API Calls (Last 7 Days)</span>
-              </Space>
-            }
-          >
-            {dailyChartData.length > 0 ? (
-              <Line
-                data={dailyChartData}
-                xField="date"
-                yField="calls"
-                height={200}
-                smooth
-                padding="auto"
-                scale={{
-                  color: {
-                    type: 'identity',
-                    range: ['#4F2D7F']
-                  }
-                }}
-                style={{
-                  lineWidth: 2,
-                  stroke: '#4F2D7F'
-                }}
-                point={{
-                  size: 4,
-                  shape: 'circle',
-                  style: {
-                    fill: '#4F2D7F',
-                    stroke: '#4F2D7F'
-                  }
-                }}
-              />
-            ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No data" />
-            )}
-          </Card>
-        </Col>
-        
-        {/* Today's Hourly Distribution */}
-        <Col xs={24} lg={12}>
-          <Card 
-            size="small"
-            title={
-              <Space>
-                <ClockCircleOutlined />
-                <span>Today's Hourly Distribution</span>
-              </Space>
-            }
-          >
-            {hourlyChartData.length > 0 ? (
-              <Column
-                data={hourlyChartData}
-                xField="hour"
-                yField="calls"
-                height={200}
-                theme={{
-                  color: '#4F2D7F'
-                }}
-                columnStyle={{
-                  radius: [4, 4, 0, 0]
-                }}
-                yAxis={{
-                  label: {
-                    formatter: (v: string) => `${v}`
-                  }
-                }}
-              />
-            ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No data for today" />
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Additional Charts Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {/* Response Time Distribution */}
-        <Col xs={24} lg={12}>
-          <Card 
-            size="small"
-            title={
-              <Space>
-                <BarChartOutlined />
-                <span>Response Time Distribution</span>
-              </Space>
-            }
-          >
-            {analytics.responseTimeDistribution && analytics.responseTimeDistribution.length > 0 ? (
-              <Column
-                data={analytics.responseTimeDistribution}
-                xField="range"
-                yField="count"
-                height={200}
-                theme={{
-                  color: '#389E0E'
-                }}
-                columnStyle={{
-                  radius: [4, 4, 0, 0]
-                }}
-                xAxis={{
-                  label: {
-                    autoRotate: true,
-                    style: {
-                      fontSize: 11
-                    }
-                  }
-                }}
-                yAxis={{
-                  label: {
-                    formatter: (v: string) => `${v} calls`
-                  }
-                }}
-              />
-            ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No distribution data available" />
-            )}
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Cache Performance */}
-      {analytics.cache.breakdown && (
-        <Row gutter={[16, 16]}>
-          <Col xs={24}>
-            <Card 
-              size="small"
-              title={
-                <Space>
-                  <DatabaseOutlined />
-                  <span>Cache Performance</span>
-                </Space>
-              }
-            >
-              <Row gutter={[16, 16]}>
-                <Col xs={24} md={12}>
-                  <Pie
-                    data={[
-                      { type: 'Process Cache', value: analytics.cache.breakdown.process },
-                      { type: 'Redis Cache', value: analytics.cache.breakdown.redis },
-                      { type: 'Blob Storage', value: analytics.cache.breakdown.blob }
-                    ]}
-                    angleField="value"
-                    colorField="type"
-                    radius={0.8}
-                    height={200}
-                    label={{
-                      type: 'outer',
-                      formatter: (datum: any) => 
-                        `${datum.type}: ${((datum.value / analytics.summary.totalCalls) * 100).toFixed(1)}%`
-                    }}
-                  />
-                </Col>
-                <Col xs={24} md={12}>
-                  <Space direction="vertical" style={{ width: '100%', padding: '20px' }}>
-                    <div>
-                      <Text type="secondary">Process Cache: </Text>
-                      <Text strong>
-                        {((analytics.cache.breakdown.process / analytics.summary.totalCalls) * 100).toFixed(1)}%
-                      </Text>
-                      <Tag color="#389E0E" style={{ marginLeft: 8 }}>Fastest</Tag>
-                    </div>
-                    <div>
-                      <Text type="secondary">Redis Cache: </Text>
-                      <Text strong>
-                        {((analytics.cache.breakdown.redis / analytics.summary.totalCalls) * 100).toFixed(1)}%
-                      </Text>
-                      <Tag style={{ marginLeft: 8, backgroundColor: COLORS.primary, color: 'white' }}>Fast</Tag>
-                    </div>
-                    <div>
-                      <Text type="secondary">Blob Storage: </Text>
-                      <Text strong>
-                        {((analytics.cache.breakdown.blob / analytics.summary.totalCalls) * 100).toFixed(1)}%
-                      </Text>
-                      <Tag color="orange" style={{ marginLeft: 8 }}>Slower</Tag>
-                    </div>
-                    <div style={{ marginTop: 16 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        Cache Hit Rate: <strong>{analytics.cache.hitRate.toFixed(1)}%</strong>
-                      </Text>
-                    </div>
-                  </Space>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-        </Row>
-      )}
+      {/* Charts - Lazy loaded */}
+      <RechartsComponents
+        dailyChartData={dailyChartData}
+        hourlyChartData={hourlyChartData}
+        responseTimeDistribution={analytics.responseTimeDistribution}
+        cacheBreakdown={analytics.cache.breakdown}
+        totalCalls={analytics.summary.totalCalls}
+      />
 
       {/* Last Updated and Refresh */}
       <div style={{ textAlign: 'center', marginTop: 24 }}>
