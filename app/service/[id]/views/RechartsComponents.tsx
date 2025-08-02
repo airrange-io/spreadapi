@@ -54,7 +54,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
   totalCalls
 }) => {
   // Colors matching your brand
-  const PURPLE = '#4F2D7F';
+  const PURPLE = '#4F2D7F';  // Primary color
   const GREEN = '#389E0E';
   const CACHE_COLORS = {
     process: GREEN,

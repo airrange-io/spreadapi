@@ -805,7 +805,10 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               zIndex: 9999,
             }}
           >
-            <Spin size="default" tip="Loading spreadsheet..." />
+            <div style={{ textAlign: 'center' }}>
+              <Spin size="default" />
+              <div style={{ marginTop: 8, color: '#666' }}>Loading spreadsheet...</div>
+            </div>
           </div>
         )}
       </div>

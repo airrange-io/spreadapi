@@ -1301,18 +1301,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </Button>
           )}
           {isDemoMode ? (
-            <Button style={{
-              borderRadius: 6,
-              paddingLeft: 12,
-              paddingRight: 12,
-              minWidth: 108,
-              backgroundColor: '#E6F7FF',
-              borderColor: '#91D5FF',
-              color: '#1890FF',
-              cursor: 'default'
+            <Tag color='geekblue' style={{ 
+              cursor: 'default',
+              fontSize: '12px',
+              padding: '4px 12px',
+              marginRight: 0
             }}>
               Demo Mode
-            </Button>
+            </Tag>
           ) : (
             <Dropdown
               menu={{

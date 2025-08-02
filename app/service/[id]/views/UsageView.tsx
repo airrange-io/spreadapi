@@ -247,7 +247,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               value={analytics.summary.successRate}
               suffix="%"
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#9334E9', fontSize: '20px' }}
+              valueStyle={{ color: COLORS.primary, fontSize: '20px' }}
             />
           </Card>
         </Col>
@@ -260,7 +260,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               suffix="ms"
               prefix={<ThunderboltOutlined />}
               valueStyle={{ 
-                color: analytics.summary.avgResponseTime < 500 ? '#9334E9' : '#faad14',
+                color: analytics.summary.avgResponseTime < 500 ? COLORS.primary : '#faad14',
                 fontSize: '20px'
               }}
             />
