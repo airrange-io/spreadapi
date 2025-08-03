@@ -1254,35 +1254,37 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             icon={<MenuOutlined />}
             onClick={appStore.toggleSidebar}
           />
-          <Breadcrumb
-            items={[
-              {
-                title: <a onClick={() => router.push('/')}>Services</a>,
-              },
-              ...(isMobile ? [] : [{
-                title: configLoaded ? (
-                  <Space>
-                    <Text
-                      editable={!isDemoMode && {
-                        onChange: (value) => {
-                          if (value && value.trim()) {
-                            setApiConfig(prev => ({ ...prev, name: value.trim() }));
-                            setConfigHasChanges(true);
-                          }
-                        },
-                        tooltip: 'Click to edit service name',
-                        enterIcon: null,
-                        maxLength: 100,
-                      }}
-                      style={{ margin: 0 }}
-                    >
-                      {apiConfig.name || 'New Service'}
-                    </Text>
-                  </Space>
-                ) : '...',
-              }]),
-            ]}
-          />
+          {!isMobile && (
+            <Breadcrumb
+              items={[
+                {
+                  title: <a onClick={() => router.push('/')}>Services</a>,
+                },
+                {
+                  title: configLoaded ? (
+                    <Space>
+                      <Text
+                        editable={!isDemoMode && {
+                          onChange: (value) => {
+                            if (value && value.trim()) {
+                              setApiConfig(prev => ({ ...prev, name: value.trim() }));
+                              setConfigHasChanges(true);
+                            }
+                          },
+                          tooltip: 'Click to edit service name',
+                          enterIcon: null,
+                          maxLength: 100,
+                        }}
+                        style={{ margin: 0 }}
+                      >
+                        {apiConfig.name || 'New Service'}
+                      </Text>
+                    </Space>
+                  ) : '...',
+                },
+              ]}
+            />
+          )}
         </Space>
 
         <Segmented

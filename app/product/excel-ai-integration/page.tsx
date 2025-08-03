@@ -521,7 +521,23 @@ export default function AIIntegrationPage() {
                           <div style={{ flex: 1 }}>
                             <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Generate Your API Token</h3>
                             <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              In SpreadAPI, go to MCP Settings and create a new token. Give it a name like "Claude Desktop" and select which services it can access.
+                              In SpreadAPI, click the <strong>MCP</strong> button in the top toolbar (next to "New Service"). This opens the MCP Integration modal where you can create tokens.
+                            </p>
+                            <div style={{
+                              background: '#f0f0f0',
+                              padding: '16px',
+                              borderRadius: '8px',
+                              marginBottom: '16px'
+                            }}>
+                              <strong>Where to find it:</strong>
+                              <ol style={{ marginTop: '8px', marginBottom: 0, paddingLeft: '20px' }}>
+                                <li>Go to your SpreadAPI dashboard</li>
+                                <li>Look for the <strong>MCP</strong> button in the top toolbar</li>
+                                <li>Click it to open the MCP Integration modal</li>
+                              </ol>
+                            </div>
+                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
+                              In the modal, generate a new token:
                             </p>
                             <div style={{
                               background: '#f8f6fe',
@@ -561,77 +577,33 @@ export default function AIIntegrationPage() {
                             flexShrink: 0
                           }}>3</div>
                           <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Install the MCP Bridge</h3>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              Open your terminal and run this single command:
-                            </p>
-                            <div style={{
-                              background: '#1a1a1a',
-                              color: '#22c55e',
-                              padding: '16px',
-                              borderRadius: '8px',
-                              fontFamily: 'monospace',
-                              fontSize: '14px',
-                              marginBottom: '12px'
-                            }}>
-                              npm install -g spreadapi-mcp
-                            </div>
-                            <p style={{ fontSize: '14px', color: '#999' }}>
-                              This installs the bridge that connects Claude to SpreadAPI
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '40px', 
-                        borderRadius: '16px',
-                        marginBottom: '24px',
-                        border: '1px solid #e8e8e8'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
-                          <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: '#502D80',
-                            color: 'white',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            flexShrink: 0
-                          }}>4</div>
-                          <div style={{ flex: 1 }}>
                             <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Configure Claude Desktop</h3>
                             <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              Find your Claude Desktop config file:
+                              Open the configuration file in Claude Desktop:
                             </p>
-                            <div style={{ marginBottom: '20px' }}>
-                              <div style={{ 
-                                background: '#f0f0f0', 
-                                padding: '12px 16px', 
-                                borderRadius: '8px',
-                                marginBottom: '8px',
-                                fontSize: '14px'
-                              }}>
-                                <strong>Mac:</strong> ~/Library/Application Support/Claude/claude_desktop_config.json
-                              </div>
-                              <div style={{ 
-                                background: '#f0f0f0', 
-                                padding: '12px 16px', 
-                                borderRadius: '8px',
-                                marginBottom: '8px',
-                                fontSize: '14px'
-                              }}>
-                                <strong>Windows:</strong> %APPDATA%\Claude\claude_desktop_config.json
-                              </div>
+                            <div style={{
+                              background: '#f0f0f0',
+                              padding: '20px',
+                              borderRadius: '8px',
+                              marginBottom: '20px'
+                            }}>
+                              <ol style={{ marginTop: 0, marginBottom: 0, paddingLeft: '20px' }}>
+                                <li style={{ marginBottom: '12px' }}>
+                                  Open Claude Desktop
+                                </li>
+                                <li style={{ marginBottom: '12px' }}>
+                                  Click on <strong>Claude → Settings</strong> (Mac) or <strong>File → Settings</strong> (Windows)
+                                </li>
+                                <li style={{ marginBottom: '12px' }}>
+                                  Select <strong>Developer</strong> tab
+                                </li>
+                                <li style={{ marginBottom: '12px' }}>
+                                  Click <strong>Edit Config</strong> button
+                                </li>
+                              </ol>
                             </div>
                             <p style={{ marginBottom: '12px', color: '#666', fontSize: '16px' }}>
-                              Add this configuration (replace YOUR_TOKEN with your actual token):
+                              Add this configuration to the file (replace YOUR_TOKEN with your actual token):
                             </p>
                             <pre style={{
                               background: '#1a1a1a',
@@ -655,11 +627,21 @@ export default function AIIntegrationPage() {
   }
 }`}
                             </pre>
+                            <div style={{
+                              background: '#e6f7ff',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              marginTop: '16px',
+                              fontSize: '14px',
+                              color: '#0050b3'
+                            }}>
+                              <strong>Note:</strong> Using "npx" means the MCP bridge will be automatically downloaded when Claude starts. No manual installation needed!
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Step 5 */}
+                      {/* Step 4 */}
                       <div style={{ 
                         background: 'white', 
                         padding: '40px', 
@@ -679,7 +661,7 @@ export default function AIIntegrationPage() {
                             fontSize: '24px',
                             fontWeight: 'bold',
                             flexShrink: 0
-                          }}>5</div>
+                          }}>4</div>
                           <div style={{ flex: 1 }}>
                             <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Start Using Excel in Claude!</h3>
                             <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
