@@ -171,8 +171,6 @@ export default function AIIntegrationPage() {
                         </div>
                       </div>
                     </div>
-
-                    <ProcessSteps />
                   </div>
                 </div>
               </div>
