@@ -21,13 +21,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/how-excel-api-works`,
+      url: `${baseUrl}/product/how-excel-api-works`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/excel-ai-integration`,
+      url: `${baseUrl}/product/excel-ai-integration`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,

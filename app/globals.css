@@ -8,11 +8,19 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  height: 100%;
+}
+
+/* iOS viewport fix */
+html {
+  height: -webkit-fill-available;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 a {

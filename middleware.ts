@@ -7,6 +7,19 @@ const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   
+  // Handle redirects for old URLs
+  const redirects: Record<string, string> = {
+    '/how-excel-api-works': '/product/how-excel-api-works',
+    '/excel-ai-integration': '/product/excel-ai-integration',
+    // Also redirect the temporary generic URLs if anyone uses them
+    '/product/how-it-works': '/product/how-excel-api-works',
+    '/product/ai-integration': '/product/excel-ai-integration',
+  };
+  
+  if (redirects[pathname]) {
+    return NextResponse.redirect(new URL(redirects[pathname], req.url), 301);
+  }
+  
   // Define protected routes
   const protectedRoutes = [
     '/service/',

@@ -2,9 +2,9 @@
 
 import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Button, Typography, Tooltip, App, Dropdown, Popconfirm } from 'antd';
+import { Button, Typography, Tooltip, App, Dropdown, Popconfirm, Divider } from 'antd';
 import type { MenuProps } from 'antd';
-import { PlusOutlined, MenuOutlined, LoadingOutlined, AppstoreOutlined, DeleteOutlined, LeftOutlined } from '@ant-design/icons';
+import { PlusOutlined, MenuOutlined, LoadingOutlined, AppstoreOutlined, DeleteOutlined, LeftOutlined, InfoCircleOutlined, RocketOutlined, RobotOutlined, ReadOutlined, DollarOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { appStore } from '@/stores/AppStore';
@@ -114,7 +114,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       //   router.push('/');
       // }
     } catch (error) {
-      messageApi.error('Fehler beim Löschen der Liste');
+      messageApi.error('Error deleting the list');
     }
   };
 
@@ -124,12 +124,12 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       icon: <DeleteOutlined />,
       label: (
         <Popconfirm
-          title="Liste löschen"
+          title="Delete list"
           description={(
             <>
-              Möchten Sie die Liste "{list.name}" wirklich löschen?
+              Are you sure you want to delete "{list.name}"?
               <br />
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              This action cannot be undone.
             </>
           )}
           onConfirm={(e) => {
@@ -139,11 +139,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           onCancel={(e) => {
             e?.stopPropagation();
           }}
-          okText="Ja, löschen"
-          cancelText="Abbrechen"
+          okText="Yes, delete"
+          cancelText="Cancel"
           okButtonProps={{ danger: true }}
         >
-          <div onClick={(e) => e.stopPropagation()}>Liste löschen</div>
+          <div onClick={(e) => e.stopPropagation()}>Delete list</div>
         </Popconfirm>
       ),
       danger: true,
@@ -205,7 +205,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               style={{ width: '32px', height: '32px', minWidth: '32px', flexShrink: 0 }}
             />
             <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>Spreadsheet APIs</Text>
-            <Tooltip title="Sidebar einklappen" placement="top">
+            <Tooltip title="Collapse sidebar" placement="top">
               <Button
                 type="text"
                 icon={<LeftOutlined />}
@@ -236,7 +236,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         boxSizing: 'border-box'
       }}>
         {isCollapsed ? (
-          <Tooltip title="Neue Liste" placement="right">
+          <Tooltip title="New Service" placement="right">
             <Button
               type="primary"
               shape="circle"
@@ -360,6 +360,226 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           </div>
         ) : (
           <div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Links Section */}
+      <div style={{
+        padding: isCollapsed ? '8px' : '16px',
+        marginTop: 'auto'
+      }}>
+        <Divider style={{ margin: isCollapsed ? '8px 0' : '0 0 16px 0' }} />
+        {isCollapsed ? (
+          <>
+            <Tooltip title="Product" placement="right">
+              <Link href="/product">
+                <Button
+                  type="text"
+                  icon={<RocketOutlined style={{ fontSize: '18px' }} />}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 8px',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      appStore.toggleSidebar();
+                    }
+                  }}
+                />
+              </Link>
+            </Tooltip>
+            <Tooltip title="How it works" placement="right">
+              <Link href="/product/how-excel-api-works">
+                <Button
+                  type="text"
+                  icon={<InfoCircleOutlined style={{ fontSize: '18px' }} />}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 8px',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      appStore.toggleSidebar();
+                    }
+                  }}
+                />
+              </Link>
+            </Tooltip>
+            <Tooltip title="AI Integration" placement="right">
+              <Link href="/product/excel-ai-integration">
+                <Button
+                  type="text"
+                  icon={<RobotOutlined style={{ fontSize: '18px' }} />}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 8px',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      appStore.toggleSidebar();
+                    }
+                  }}
+                />
+              </Link>
+            </Tooltip>
+            <Tooltip title="Blog" placement="right">
+              <Link href="/blog">
+                <Button
+                  type="text"
+                  icon={<ReadOutlined style={{ fontSize: '18px' }} />}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 8px',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      appStore.toggleSidebar();
+                    }
+                  }}
+                />
+              </Link>
+            </Tooltip>
+            <Tooltip title="Pricing" placement="right">
+              <Link href="/pricing">
+                <Button
+                  type="text"
+                  icon={<DollarOutlined style={{ fontSize: '18px' }} />}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isMobile) {
+                      appStore.toggleSidebar();
+                    }
+                  }}
+                />
+              </Link>
+            </Tooltip>
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Link href="/product" style={{ textDecoration: 'none' }}>
+              <Button
+                type="text"
+                icon={<RocketOutlined />}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  if (isMobile) {
+                    appStore.toggleSidebar();
+                  }
+                }}
+              >
+                Product
+              </Button>
+            </Link>
+            <Link href="/product/how-excel-api-works" style={{ textDecoration: 'none' }}>
+              <Button
+                type="text"
+                icon={<InfoCircleOutlined />}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  if (isMobile) {
+                    appStore.toggleSidebar();
+                  }
+                }}
+              >
+                How it works
+              </Button>
+            </Link>
+            <Link href="/product/excel-ai-integration" style={{ textDecoration: 'none' }}>
+              <Button
+                type="text"
+                icon={<RobotOutlined />}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  if (isMobile) {
+                    appStore.toggleSidebar();
+                  }
+                }}
+              >
+                AI Integration
+              </Button>
+            </Link>
+            <Link href="/blog" style={{ textDecoration: 'none' }}>
+              <Button
+                type="text"
+                icon={<ReadOutlined />}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  if (isMobile) {
+                    appStore.toggleSidebar();
+                  }
+                }}
+              >
+                Blog
+              </Button>
+            </Link>
+            <Link href="/pricing" style={{ textDecoration: 'none' }}>
+              <Button
+                type="text"
+                icon={<DollarOutlined />}
+                style={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  if (isMobile) {
+                    appStore.toggleSidebar();
+                  }
+                }}
+              >
+                Pricing
+              </Button>
+            </Link>
           </div>
         )}
       </div>

@@ -35,8 +35,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   // Define menu items with their labels and paths
   const menuItems = [
     { label: 'Overview', path: '/product', key: 'product' },
-    { label: 'How it Works', path: '/how-excel-api-works', key: 'how-excel-api-works' },
-    { label: 'AI Integration', path: '/excel-ai-integration', key: 'excel-ai-integration' },
+    { label: 'How it Works', path: '/product/how-excel-api-works', key: 'how-excel-api-works' },
+    { label: 'AI Integration', path: '/product/excel-ai-integration', key: 'excel-ai-integration' },
     { label: 'Blog', path: '/blog', key: 'blog' },
     { label: 'Pricing', path: '/pricing', key: 'pricing' },
     { label: 'Docs', path: '/docs', key: 'docs' },

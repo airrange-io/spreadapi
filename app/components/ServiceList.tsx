@@ -127,6 +127,24 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             lastUsed: null
           }
         ];
+        
+        // Fetch actual analytics for demo services
+        try {
+          const analyticsResponse = await fetch(`/api/getanalytics?serviceIds=${DEMO_SERVICE_IDS.join(',')}`);
+          if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json();
+            // Update demo services with actual call counts
+            demoServices.forEach((service) => {
+              const analytics = analyticsData.services?.[service.id];
+              if (analytics?.summary?.totalCalls) {
+                service.calls = analytics.summary.totalCalls;
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching demo service analytics:', error);
+        }
+        
         setServices(demoServices);
         setFilteredServices(demoServices);
         setLoading(false);
@@ -183,6 +201,24 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
               lastUsed: null
             }
           ];
+          
+          // Fetch actual analytics for demo services
+          try {
+            const analyticsResponse = await fetch(`/api/getanalytics?serviceIds=${DEMO_SERVICE_IDS.join(',')}`);
+            if (analyticsResponse.ok) {
+              const analyticsData = await analyticsResponse.json();
+              // Update demo services with actual call counts
+              demoServices.forEach((service) => {
+                const analytics = analyticsData.services?.[service.id];
+                if (analytics?.summary?.totalCalls) {
+                  service.calls = analytics.summary.totalCalls;
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching demo service analytics:', error);
+          }
+          
           loadedServices.push(...demoServices);
         }
 
@@ -389,7 +425,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '400px'
+        padding: '40px 0'
       }}>
         <Spin size="default" />
       </div>
@@ -404,7 +440,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '400px'
+          padding: '40px 0'
         }}>
           <Spin size="default" />
         </div>

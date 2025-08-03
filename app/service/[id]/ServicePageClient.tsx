@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Progress } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuFoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
@@ -1330,7 +1330,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               padding: '4px 12px',
               marginRight: 0
             }}>
-              Demo Mode
+              {isMobile ? 'Demo' : 'Demo Mode'}
             </Tag>
           ) : (
             <Dropdown
@@ -1381,7 +1381,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           {isMobile && (
             <Button
               type="text"
-              icon={<MenuFoldOutlined />}
+              icon={<MenuUnfoldOutlined />}
               onClick={() => setDrawerVisible(!drawerVisible)}
             />
           )}

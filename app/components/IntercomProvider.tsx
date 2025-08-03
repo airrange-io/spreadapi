@@ -17,9 +17,27 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
   const searchParams = useSearchParams();
   const appId = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || 'vt5lp0iv';
   const [shouldInitialize, setShouldInitialize] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isMobileDevice || isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Sync initialization with script loading
   useEffect(() => {
+    // Don't initialize on mobile
+    if (isMobile) return;
+    
     const checkIntercomLoaded = () => {
       if (typeof window !== 'undefined' && window.Intercom) {
         setShouldInitialize(true);
@@ -41,9 +59,12 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
+    // Don't boot on mobile
+    if (isMobile) return;
+    
     if (shouldInitialize && typeof window !== 'undefined' && window.Intercom) {
       const bootData: any = {
         app_id: appId,
@@ -59,21 +80,27 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
 
       window.Intercom('boot', bootData);
     }
-  }, [shouldInitialize, appId, appStore.user.isRegistered, appStore.user.userId]);
+  }, [shouldInitialize, appId, appStore.user.isRegistered, appStore.user.userId, isMobile]);
 
   useEffect(() => {
+    // Don't update on mobile
+    if (isMobile) return;
+    
     if (typeof window !== 'undefined' && window.Intercom) {
       window.Intercom('update');
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, isMobile]);
 
   useEffect(() => {
     return () => {
+      // Don't shutdown on mobile (it was never initialized)
+      if (isMobile) return;
+      
       if (typeof window !== 'undefined' && window.Intercom) {
         window.Intercom('shutdown');
       }
     };
-  }, []);
+  }, [isMobile]);
 
   return <>{children}</>;
 });

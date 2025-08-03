@@ -7,9 +7,26 @@ export function IntercomScript() {
   const appId = process.env.NEXT_PUBLIC_INTERCOM_APP_ID || 'vt5lp0iv';
   const [shouldLoad, setShouldLoad] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Load Intercom on first user interaction or after 10 seconds
+  // Check if device is mobile
   useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isMobileDevice || isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Load Intercom on first user interaction or after 10 seconds (but not on mobile)
+  useEffect(() => {
+    // Don't load on mobile devices
+    if (isMobile) return;
     // Set up interaction listener
     const handleInteraction = () => {
       setHasInteracted(true);
@@ -38,9 +55,10 @@ export function IntercomScript() {
       window.removeEventListener('scroll', handleInteraction);
       window.removeEventListener('keydown', handleInteraction);
     };
-  }, [hasInteracted]);
+  }, [hasInteracted, isMobile]);
 
-  if (!shouldLoad) return null;
+  // Don't render on mobile or if not ready to load
+  if (!shouldLoad || isMobile) return null;
   
   return (
     <>
