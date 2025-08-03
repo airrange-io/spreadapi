@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Modal, Button, Input, Card, Alert, Typography, Space,
-  Tag, Divider, Empty, List, Spin, App, Checkbox
+  Tag, Divider, Empty, List, Spin, App, Checkbox, Collapse
 } from 'antd';
 import {
   CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined,
@@ -30,6 +30,9 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [loadingServices, setLoadingServices] = useState(false);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
+  const [generateActiveKey, setGenerateActiveKey] = useState<string[]>(['generate']);
+  const [tokensActiveKey, setTokensActiveKey] = useState<string[]>([]);
+  const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>(['instructions']);
 
   const { message: messageApi } = App.useApp();
 
@@ -170,17 +173,22 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
         Create secure tokens for AI assistants like Claude to access your spreadsheet calculations.
       </Paragraph>
 
-      {/* Token Generation */}
-      <Card
-        title={
-          <Space>
-            <LockOutlined />
-            <span>Generate API Token</span>
-          </Space>
-        }
+      {/* Generate Token - Collapsible */}
+      <Collapse 
+        activeKey={generateActiveKey}
+        onChange={setGenerateActiveKey}
         style={{ marginBottom: 24 }}
-      >
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+        items={[
+          {
+            key: 'generate',
+            label: (
+              <Space>
+                <LockOutlined />
+                <span>Generate API Token</span>
+              </Space>
+            ),
+            children: (
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <div>
             <Text strong>Token Name</Text>
             <Input
@@ -315,114 +323,133 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
               style={{ marginTop: 16 }}
             />
           )}
-        </Space>
-      </Card>
+              </Space>
+            )
+          }
+        ]}
+      />
 
-      {/* Existing Tokens */}
-      <Card
-        title="Your API Tokens"
+      {/* Existing Tokens - Collapsible */}
+      <Collapse
+        activeKey={tokensActiveKey}
+        onChange={setTokensActiveKey}
         style={{ marginBottom: 24 }}
-        extra={
-          <Button onClick={loadTokens} size="small" loading={loadingTokens}>
-            Refresh
-          </Button>
-        }
-      >
-        {loadingTokens ? (
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            <Spin />
-          </div>
-        ) : existingTokens.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Generate your first token above to get started" />
-          // <Alert
-          //   message="No tokens yet"
-          //   description="Generate your first token above to get started"
-          //   type="info"
-          // />
-        ) : (
-          <List
-            dataSource={existingTokens}
-            renderItem={(token) => (
-              <List.Item
-                actions={[
-                  <Button
-                    key="delete"
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    onClick={() => setShowDeleteConfirm(token.id)}
-                  >
-                    Revoke
-                  </Button>
-                ]}
+        items={[
+          {
+            key: 'tokens',
+            label: (
+              <Space>
+                <span>Your API Tokens</span>
+                {existingTokens.length > 0 && (
+                  <Tag>{existingTokens.length}</Tag>
+                )}
+              </Space>
+            ),
+            extra: (
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  loadTokens();
+                }} 
+                size="small" 
+                loading={loadingTokens}
               >
-                <List.Item.Meta
-                  title={
-                    <Space>
-                      <Text strong>{token.name}</Text>
-                      <Tag color="green">Active</Tag>
-                    </Space>
-                  }
-                  description={
-                    <Space direction="vertical" size="small">
-                      {token.description && <Text>{token.description}</Text>}
-                      <Space size="small" style={{ fontSize: 12 }}>
-                        <CalendarOutlined />
-                        <Text type="secondary">Created {new Date(token.createdAt).toLocaleDateString()}</Text>
-                        {token.lastUsedAt && (
-                          <>
-                            <Divider type="vertical" />
-                            <Text type="secondary">Last used {new Date(token.lastUsedAt).toLocaleDateString()}</Text>
-                          </>
-                        )}
-                      </Space>
-                      {token.serviceIds && token.serviceIds.length > 0 && (
-                        <Space size="small" wrap>
-                          <Text type="secondary" style={{ fontSize: 12 }}>Services:</Text>
-                          {token.serviceIds.map(serviceId => {
-                            const service = availableServices.find(s => s.id === serviceId);
-                            return service ? (
-                              <Tag key={serviceId} style={{ fontSize: 11 }}>
-                                {service.name}
-                              </Tag>
-                            ) : null;
-                          })}
-                        </Space>
-                      )}
-                    </Space>
-                  }
-                />
-                <Modal
-                  title="Confirm Token Revocation"
-                  open={showDeleteConfirm === token.id}
-                  onOk={() => deleteToken(token.id)}
-                  onCancel={() => setShowDeleteConfirm(null)}
-                  okText="Revoke"
-                  okButtonProps={{ danger: true }}
-                >
-                  <p>Are you sure you want to revoke the token "{token.name}"?</p>
-                  <p>This action cannot be undone and any applications using this token will stop working.</p>
-                </Modal>
-              </List.Item>
-            )}
-          />
-        )}
-      </Card>
+                Refresh
+              </Button>
+            ),
+            children: (
+              <>
+                {loadingTokens ? (
+                  <div style={{ textAlign: 'center', padding: 40 }}>
+                    <Spin />
+                  </div>
+                ) : existingTokens.length === 0 ? (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Generate your first token above to get started" />
+                ) : (
+                  <List
+                    dataSource={existingTokens}
+                    renderItem={(token) => (
+                      <List.Item
+                        actions={[
+                          <Button
+                            key="delete"
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => setShowDeleteConfirm(token.id)}
+                          >
+                            Revoke
+                          </Button>
+                        ]}
+                      >
+                        <List.Item.Meta
+                          title={
+                            <Space>
+                              <Text strong>{token.name}</Text>
+                              <Tag color="green">Active</Tag>
+                            </Space>
+                          }
+                          description={
+                            <Space direction="vertical" size="small">
+                              {token.description && <Text>{token.description}</Text>}
+                              <Space size="small" style={{ fontSize: 12 }}>
+                                <CalendarOutlined />
+                                <Text type="secondary">Created {new Date(token.createdAt).toLocaleDateString()}</Text>
+                                {token.lastUsedAt && (
+                                  <>
+                                    <Divider type="vertical" />
+                                    <Text type="secondary">Last used {new Date(token.lastUsedAt).toLocaleDateString()}</Text>
+                                  </>
+                                )}
+                              </Space>
+                              {token.serviceIds && token.serviceIds.length > 0 && (
+                                <Space size="small" wrap>
+                                  <Text type="secondary" style={{ fontSize: 12 }}>Services:</Text>
+                                  {token.serviceIds.map(serviceId => {
+                                    const service = availableServices.find(s => s.id === serviceId);
+                                    return service ? (
+                                      <Tag key={serviceId} style={{ fontSize: 11 }}>
+                                        {service.name}
+                                      </Tag>
+                                    ) : null;
+                                  })}
+                                </Space>
+                              )}
+                            </Space>
+                          }
+                        />
+                        <Modal
+                          title="Confirm Token Revocation"
+                          open={showDeleteConfirm === token.id}
+                          onOk={() => deleteToken(token.id)}
+                          onCancel={() => setShowDeleteConfirm(null)}
+                          okText="Revoke"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <p>Are you sure you want to revoke the token "{token.name}"?</p>
+                          <p>This action cannot be undone and any applications using this token will stop working.</p>
+                        </Modal>
+                      </List.Item>
+                    )}
+                  />
+                )}
+              </>
+            )
+          }
+        ]}
+      />
 
-      {/* Configuration Guide */}
-      <Card
-        title="How to Connect Claude Desktop"
-        extra={
-          <Button
-            size="small"
-            onClick={() => setShowConfig(!showConfig)}
-          >
-            {showConfig ? 'Hide' : 'Show'} Instructions
-          </Button>
-        }
-      >
-        {showConfig && (
-          <Space direction="vertical" style={{ width: '100%' }} size="large">
+      {/* Configuration Guide - Collapsible */}
+      <Collapse
+        activeKey={instructionsActiveKey}
+        onChange={setInstructionsActiveKey}
+        style={{ marginBottom: 24 }}
+        items={[
+          {
+            key: 'instructions',
+            label: 'How to Connect Claude Desktop',
+            children: (
+        <Space direction="vertical" style={{ width: '100%' }} size="large">
             {/* Step 1 */}
             <div>
               <Title level={5}>Step 1: Generate an API Token</Title>
@@ -431,49 +458,54 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
 
             {/* Step 2 */}
             <div>
-              <Title level={5}>Step 2: Configure Claude Desktop</Title>
-              <Text>Choose one of the following methods:</Text>
+              <Title level={5}>Step 2: Open Claude Desktop Settings</Title>
+              <div style={{ 
+                background: '#f5f5f5', 
+                padding: 16, 
+                borderRadius: 8,
+                marginTop: 12 
+              }}>
+                <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
+                  <li>Open Claude Desktop</li>
+                  <li>Click <strong>Claude → Settings</strong> (Mac) or <strong>File → Settings</strong> (Windows)</li>
+                  <li>Select the <strong>Developer</strong> tab</li>
+                  <li>Click <strong>Edit Config</strong> button</li>
+                </ol>
+              </div>
             </div>
 
-            {/* Method 1: Bridge/stdio */}
-            <div style={{ marginTop: 16 }}>
-              <Title level={5} style={{ marginBottom: 8 }}>Method 1: Bridge Package (Recommended)</Title>
-              <Text>Install and configure the SpreadAPI MCP bridge:</Text>
-
-              <Text strong style={{ display: 'block', marginTop: 12 }}>First, install the bridge package:</Text>
-              <pre style={{
-                background: '#f5f5f5',
-                padding: 12,
-                borderRadius: 4,
-                marginTop: 8,
-                overflow: 'auto'
-              }}>
-                {`npm install -g spreadapi-mcp`}
-              </pre>
-
-              <Text strong style={{ display: 'block', marginTop: 16 }}>Then add this to your Claude Desktop config:</Text>
-
-              <Alert
-                style={{ marginTop: 12, marginBottom: 12 }}
-                message="Config file location"
-                description={
-                  <Space direction="vertical" size="small">
-                    <Text><strong>macOS:</strong> ~/Library/Application Support/Claude/claude_desktop_config.json</Text>
-                    <Text><strong>Windows:</strong> %APPDATA%\Claude\claude_desktop_config.json</Text>
-                    <Text><strong>Linux:</strong> ~/.config/Claude/claude_desktop_config.json</Text>
-                  </Space>
-                }
-                type="info"
-              />
-
-              <Text>Add this to your config file (merge with existing mcpServers if any):</Text>
+            {/* Step 3 */}
+            <div>
+              <Title level={5}>Step 3: Add SpreadAPI Configuration</Title>
+              <Text>Add this to your config file (replace YOUR_TOKEN_HERE with the token from Step 1):</Text>
+              
               <pre style={{
                 background: '#f5f5f5',
                 padding: 12,
                 borderRadius: 4,
                 overflow: 'auto',
-                marginTop: 12
+                marginTop: 12,
+                position: 'relative'
               }}>
+                <Button
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={() => copyToClipboard(JSON.stringify({
+                    mcpServers: {
+                      spreadapi: {
+                        command: "npx",
+                        args: ["spreadapi-mcp"],
+                        env: {
+                          SPREADAPI_URL: `${mcpUrl}/v1`,
+                          SPREADAPI_TOKEN: "YOUR_TOKEN_HERE"
+                        }
+                      }
+                    }
+                  }, null, 2))}
+                  style={{ position: 'absolute', top: 8, right: 8 }}
+                >
+                  Copy
+                </Button>
                 {`{
   "mcpServers": {
     "spreadapi": {
@@ -488,76 +520,47 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
 }`}
               </pre>
 
-              <Space style={{ marginTop: 12 }} wrap>
-                <Button
-                  icon={<CopyOutlined />}
-                  onClick={() => copyToClipboard(JSON.stringify({
-                    mcpServers: {
-                      spreadapi: {
-                        command: "npx",
-                        args: ["spreadapi-mcp"],
-                        env: {
-                          SPREADAPI_URL: `${mcpUrl}/v1`,
-                          SPREADAPI_TOKEN: "YOUR_TOKEN_HERE"
-                        }
-                      }
-                    }
-                  }, null, 2))}
-                >
-                  Copy Config
-                </Button>
-              </Space>
-
               <Alert
                 style={{ marginTop: 12 }}
-                message="Important"
-                description="Replace YOUR_TOKEN_HERE with the actual token you generated in Step 1"
-                type="warning"
-              />
-            </div>
-
-            {/* Method 2: Direct HTTP (Currently not supported) */}
-            <div style={{ marginTop: 24 }}>
-              <Title level={5} style={{ marginBottom: 8 }}>Method 2: Direct HTTP Connection</Title>
-              <Alert
-                message="Not Currently Supported"
-                description="Direct HTTP connections require server-side CORS and MCP protocol support. Please use the bridge method above."
+                message="No installation needed!"
+                description='Using "npx" means the MCP bridge will be automatically downloaded when Claude starts.'
                 type="info"
                 showIcon
-                style={{ marginBottom: 12 }}
               />
-            </div>
-
-            {/* Step 3 */}
-            <div>
-              <Title level={5}>Step 3: Restart Claude Desktop</Title>
-              <Text>After configuring, restart Claude Desktop for the changes to take effect.</Text>
             </div>
 
             {/* Step 4 */}
             <div>
-              <Title level={5}>Step 4: Verify Connection</Title>
-              <Text>In Claude Desktop, you should now be able to:</Text>
-              <ul style={{ marginTop: 8 }}>
-                <li>Ask Claude to list available SpreadAPI tools</li>
-                <li>Use your spreadsheet calculations by referencing your service names</li>
-                <li>Example: "Calculate mortgage payment using my mortgage calculator"</li>
+              <Title level={5}>Step 4: Save and Restart</Title>
+              <Text>Save the config file and restart Claude Desktop for the changes to take effect.</Text>
+            </div>
+
+            {/* Step 5 */}
+            <div>
+              <Title level={5}>Step 5: Start Using Your Excel APIs!</Title>
+              <Text>Try these example prompts in Claude:</Text>
+              <ul style={{ marginTop: 8, marginLeft: 20 }}>
+                <li>"What Excel calculations can you help me with?"</li>
+                <li>"Calculate the monthly payment for a $300,000 loan"</li>
+                <li>"Help me analyze different pricing scenarios"</li>
               </ul>
             </div>
 
             {/* Troubleshooting */}
             <Divider />
             <div>
-              <Title level={5}>Troubleshooting</Title>
-              <Space direction="vertical" size="small">
-                <Text>• <strong>No tools showing:</strong> Check that your services are published and the token has access to them</Text>
-                <Text>• <strong>Authentication errors:</strong> Verify your token is correctly copied in the config</Text>
-                <Text>• <strong>Connection issues:</strong> Ensure Claude Desktop has internet access and can reach {new URL(mcpUrl).hostname}</Text>
-              </Space>
+              <Title level={5}>Need Help?</Title>
+              <ul style={{ marginTop: 8, marginLeft: 20 }}>
+                <li><strong>Claude not finding tools?</strong> Make sure you restarted Claude Desktop</li>
+                <li><strong>Authentication error?</strong> Double-check your token is copied correctly</li>
+                <li><strong>Services not showing?</strong> Ensure your services are published first</li>
+              </ul>
             </div>
-          </Space>
-        )}
-      </Card>
+              </Space>
+            )
+          }
+        ]}
+      />
     </Modal>
   );
 });
