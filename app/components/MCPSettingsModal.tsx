@@ -11,15 +11,17 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
+import { useRouter } from 'next/navigation';
 
 const { Title, Text, Paragraph } = Typography;
 
 interface MCPSettingsModalProps {
   visible: boolean;
   onClose: () => void;
+  isAuthenticated?: boolean | null;
 }
 
-const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, onClose }) => {
+const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, onClose, isAuthenticated }) => {
   const [tokenName, setTokenName] = useState('');
   const [loading, setLoading] = useState(false);
   const [existingTokens, setExistingTokens] = useState<any[]>([]);
@@ -35,6 +37,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>(['instructions']);
 
   const { message: messageApi } = App.useApp();
+  const router = useRouter();
 
   useEffect(() => {
     if (visible) {
@@ -170,11 +173,38 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       }}
     >
       <Paragraph>
-        Create secure tokens for AI assistants like Claude to access your spreadsheet calculations.
+        {isAuthenticated ? 
+          'Create secure tokens for AI assistants like Claude to access your spreadsheet calculations.' :
+          'Learn how to connect Claude Desktop to your Excel APIs. Sign in to generate API tokens.'
+        }
       </Paragraph>
 
-      {/* Generate Token - Collapsible */}
-      <Collapse 
+      {/* Show sign-in notice for non-authenticated users */}
+      {!isAuthenticated && (
+        <Alert
+          message="Sign in to Generate Tokens"
+          description="You need to be signed in to create API tokens. The tokens allow Claude Desktop and other AI assistants to securely access your spreadsheet APIs."
+          type="info"
+          showIcon
+          action={
+            <Button 
+              type="primary" 
+              size="small" 
+              onClick={() => {
+                onClose();
+                router.push('/login?returnTo=/');
+              }}
+            >
+              Sign In
+            </Button>
+          }
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      {/* Generate Token - Collapsible - Only for authenticated users */}
+      {isAuthenticated && (
+        <Collapse 
         activeKey={generateActiveKey}
         onChange={setGenerateActiveKey}
         style={{ marginBottom: 24 }}
@@ -328,9 +358,11 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
           }
         ]}
       />
+      )}
 
-      {/* Existing Tokens - Collapsible */}
-      <Collapse
+      {/* Existing Tokens - Collapsible - Only for authenticated users */}
+      {isAuthenticated && (
+        <Collapse
         activeKey={tokensActiveKey}
         onChange={setTokensActiveKey}
         style={{ marginBottom: 24 }}
@@ -438,8 +470,9 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
           }
         ]}
       />
+      )}
 
-      {/* Configuration Guide - Collapsible */}
+      {/* Configuration Guide - Collapsible - Always visible */}
       <Collapse
         activeKey={instructionsActiveKey}
         onChange={setInstructionsActiveKey}
@@ -453,7 +486,12 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             {/* Step 1 */}
             <div>
               <Title level={5}>Step 1: Generate an API Token</Title>
-              <Text>Create a token above with access to your published services.</Text>
+              <Text>
+                {isAuthenticated ? 
+                  'Create a token above with access to your published services.' :
+                  'Sign in to generate an API token for your published services.'
+                }
+              </Text>
             </div>
 
             {/* Step 2 */}
@@ -477,7 +515,12 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             {/* Step 3 */}
             <div>
               <Title level={5}>Step 3: Add SpreadAPI Configuration</Title>
-              <Text>Add this to your config file (replace YOUR_TOKEN_HERE with the token from Step 1):</Text>
+              <Text>
+                {isAuthenticated ? 
+                  'Add this to your config file (replace YOUR_TOKEN_HERE with the token from Step 1):' :
+                  'Add this to your config file (you\'ll need to sign in first to get a real token):'
+                }
+              </Text>
               
               <pre style={{
                 background: '#f5f5f5',

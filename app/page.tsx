@@ -318,18 +318,16 @@ const ListsPage: React.FC = observer(() => {
 
               {/* Right side - Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
-                {/* MCP Settings Button - Only for authenticated users */}
-                {isAuthenticated && (
-                  <Button
-                    variant='filled'
-                    color="default"
-                    icon={<AppstoreOutlined />}
-                    onClick={() => setShowMCPModal(true)}
-                    title="MCP Integration"
-                  >
-                    <span className="desktop-text">MCP</span>
-                  </Button>
-                )}
+                {/* MCP Settings Button */}
+                <Button
+                  variant='filled'
+                  color="default"
+                  icon={<AppstoreOutlined />}
+                  onClick={() => setShowMCPModal(true)}
+                  title="MCP Integration"
+                >
+                  <span className="desktop-text">MCP</span>
+                </Button>
 
                 {/* New Service Button */}
                 <Button
@@ -611,6 +609,7 @@ const ListsPage: React.FC = observer(() => {
           <MCPSettingsModal
             visible={showMCPModal}
             onClose={() => setShowMCPModal(false)}
+            isAuthenticated={isAuthenticated}
           />
         )}
       </Layout>
