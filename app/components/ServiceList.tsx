@@ -6,6 +6,7 @@ import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, Bar
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { DEMO_SERVICE_ID, DEMO_SERVICE_IDS, isDemoService } from '@/lib/constants';
+import { DEMO_SERVICES } from '@/lib/demoServices';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -105,28 +106,16 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
       // If not authenticated, show demo services
       if (isAuthenticated === false) {
-        const demoServices: Service[] = [
-          {
-            id: DEMO_SERVICE_IDS[0],
-            name: 'Demo: Compound Interest Calculator',
-            description: 'Try our Excel API with this interactive compound interest calculator demo.',
-            status: 'published',
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: new Date().toISOString(),
-            calls: 0,
-            lastUsed: null
-          },
-          {
-            id: DEMO_SERVICE_IDS[1],
-            name: 'Demo: Orders Lookup',
-            description: 'Get customer and order summary based on external data.',
-            status: 'published',
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: new Date().toISOString(),
-            calls: 0,
-            lastUsed: null
-          }
-        ];
+        const demoServices: Service[] = DEMO_SERVICES.map(demo => ({
+          id: demo.id,
+          name: demo.name,
+          description: demo.description,
+          status: 'published' as const,
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: new Date().toISOString(),
+          calls: 0,
+          lastUsed: null
+        }));
         
         // Fetch actual analytics for demo services
         try {
@@ -179,28 +168,16 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
         // If user has no services, add the demo services (unless hidden)
         if (loadedServices.length === 0 && !shouldHideDemo) {
-          const demoServices: Service[] = [
-            {
-              id: DEMO_SERVICE_IDS[0],
-              name: 'Demo: Compound Interest Calculator',
-              description: 'Try our Excel API with this interactive compound interest calculator demo.',
-              status: 'published',
-              createdAt: '2025-01-01T00:00:00Z',
-              updatedAt: new Date().toISOString(),
-              calls: 0,
-              lastUsed: null
-            },
-            {
-              id: DEMO_SERVICE_IDS[1],
-              name: 'Demo: Orders Lookup',
-              description: 'Get customer and order summary based on external data.',
-              status: 'published',
-              createdAt: '2025-01-01T00:00:00Z',
-              updatedAt: new Date().toISOString(),
-              calls: 0,
-              lastUsed: null
-            }
-          ];
+          const demoServices: Service[] = DEMO_SERVICES.map(demo => ({
+            id: demo.id,
+            name: demo.name,
+            description: demo.description,
+            status: 'published' as const,
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: new Date().toISOString(),
+            calls: 0,
+            lastUsed: null
+          }));
           
           // Fetch actual analytics for demo services
           try {

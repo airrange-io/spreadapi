@@ -3,9 +3,7 @@ import { streamText, convertToCoreMessages, tool } from 'ai';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import redis from '../../../lib/redis';
-
-// Demo service IDs
-const DEMO_SERVICES = ['mortgage_calc', 'investment_calc'];
+import { DEMO_SERVICE_IDS } from '../../../lib/constants';
 
 // Get user ID from Hanko cookie
 async function getUserIdFromCookie() {
@@ -86,20 +84,19 @@ async function getAvailableServices(userId) {
   
   if (!userId) {
     // Return demo services for unauthenticated users
-    return [
-      {
-        id: 'mortgage_calc',
-        name: 'Mortgage Calculator',
-        description: 'Calculate monthly mortgage payments',
-        isDemo: true
-      },
-      {
-        id: 'investment_calc',
-        name: 'Investment Calculator',
-        description: 'Calculate future value of investments',
-        isDemo: true
+    const demoServices = [];
+    for (const demoId of DEMO_SERVICE_IDS) {
+      const publishedData = await redis.hGetAll(`service:${demoId}:published`);
+      if (publishedData && publishedData.title) {
+        demoServices.push({
+          id: demoId,
+          name: publishedData.title,
+          description: publishedData.description || '',
+          isDemo: true
+        });
       }
-    ];
+    }
+    return demoServices;
   }
   
   // Get user's published services
@@ -144,40 +141,17 @@ export async function POST(request) {
     let serviceDetails = null;
     let isDemo = false;
     
-    if (DEMO_SERVICES.includes(serviceId)) {
+    if (DEMO_SERVICE_IDS.includes(serviceId)) {
       isDemo = true;
-      if (serviceId === 'investment_calc') {
+      // For demo services, get the actual service details from Redis
+      const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+      if (publishedData && publishedData.title) {
         serviceDetails = {
-          id: 'investment_calc',
-          name: 'Investment Calculator',
-          description: 'Calculate compound interest and future value of investments',
-          inputs: [
-            { name: 'principal', type: 'number', description: 'Initial investment amount' },
-            { name: 'rate', type: 'number', description: 'Annual return rate (as decimal, e.g., 0.08 for 8%)' },
-            { name: 'years', type: 'number', description: 'Investment period in years' },
-            { name: 'monthlyContribution', type: 'number', description: 'Optional monthly contribution', mandatory: false }
-          ],
-          outputs: [
-            { name: 'futureValue', description: 'Total value at the end of the investment period' },
-            { name: 'totalContributions', description: 'Total amount contributed' },
-            { name: 'totalEarnings', description: 'Total investment earnings' }
-          ]
-        };
-      } else if (serviceId === 'mortgage_calc') {
-        serviceDetails = {
-          id: 'mortgage_calc',
-          name: 'Mortgage Calculator',
-          description: 'Calculate monthly mortgage payments and total costs',
-          inputs: [
-            { name: 'loanAmount', type: 'number', description: 'The loan amount' },
-            { name: 'interestRate', type: 'number', description: 'Annual interest rate (as decimal, e.g., 0.065 for 6.5%)' },
-            { name: 'loanTerm', type: 'number', description: 'Loan term in years' }
-          ],
-          outputs: [
-            { name: 'monthlyPayment', description: 'Monthly payment amount' },
-            { name: 'totalPayment', description: 'Total amount paid over the loan term' },
-            { name: 'totalInterest', description: 'Total interest paid' }
-          ]
+          id: serviceId,
+          name: publishedData.title,
+          description: publishedData.description || publishedData.aiDescription || '',
+          inputs: publishedData.inputs ? JSON.parse(publishedData.inputs) : [],
+          outputs: publishedData.outputs ? JSON.parse(publishedData.outputs) : []
         };
       }
     } else if (userId) {

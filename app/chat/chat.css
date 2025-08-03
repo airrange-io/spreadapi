@@ -1,0 +1,10 @@
+/* Chat page specific styles */
+
+/* Override Select component font size */
+.chat-service-select .ant-select-selector {
+  font-size: 14px !important;
+}
+
+.chat-service-select .ant-select-selection-item {
+  font-size: 14px !important;
+}

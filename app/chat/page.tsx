@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Layout, Button, Typography, Space, Spin, Tag, App, Select, Avatar, Breadcrumb, Dropdown } from 'antd';
+import './chat.css';
 import { MenuOutlined, RobotOutlined, AppstoreOutlined, UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { Conversations, Bubble, Sender } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useAppStore } from '@/shared/hooks/useAppStore';
+import { DEMO_SERVICES } from '@/lib/demoServices';
 import dynamic from 'next/dynamic';
 
 // Dynamically import Sidebar
@@ -19,47 +21,26 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
 const { Content } = Layout;
 const { Title, Text } = Typography;
 
-// Demo services
-const DEMO_SERVICES = [
-  {
-    id: 'investment_calc',
-    name: 'Investment Calculator (Demo)',
-    description: 'Calculate compound interest and future value',
-    icon: '📈'
-  },
-  {
-    id: 'mortgage_calc', 
-    name: 'Mortgage Calculator (Demo)',
-    description: 'Calculate monthly mortgage payments',
-    icon: '🏠'
-  }
-];
-
 export default function ChatPage() {
   const router = useRouter();
   const appStore = useAppStore();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { message: messageApi } = App.useApp();
-  const [inputValue, setInputValue] = useState('');
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [userServices, setUserServices] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
 
-  // Load user services
+  // Load services (user services or demo services)
   useEffect(() => {
     const loadServices = async () => {
-      if (!isAuthenticated) {
-        // Set default demo service for non-authenticated users
-        setSelectedService('investment_calc');
-        setLoadingServices(false);
-        return;
-      }
-
       try {
-        const res = await fetch('/api/services');
+        const res = await fetch('/api/services', {
+          credentials: 'include'
+        });
+        
         if (res.ok) {
           const data = await res.json();
-          const publishedServices = (data.services || [])
+          let loadedServices = (data.services || [])
             .filter(s => s.status === 'published')
             .map(s => ({
               id: s.id,
@@ -68,10 +49,16 @@ export default function ChatPage() {
               icon: '📊'
             }));
           
-          setUserServices(publishedServices);
+          // If user has no services and not authenticated, add demo services
+          if (loadedServices.length === 0 && !isAuthenticated) {
+            loadedServices = DEMO_SERVICES;
+          }
+          
+          setUserServices(loadedServices);
+          
           // Select first service by default
-          if (publishedServices.length > 0) {
-            setSelectedService(publishedServices[0].id);
+          if (loadedServices.length > 0) {
+            setSelectedService(loadedServices[0].id);
           }
         }
       } catch (error) {
@@ -86,122 +73,118 @@ export default function ChatPage() {
     }
   }, [isAuthenticated, authLoading]);
 
-  const { messages, append, isLoading, error, setMessages } = useChat({
+  const { messages, sendMessage, status, error, setMessages, stop } = useChat({
     api: '/api/chat',
-    body: {
-      serviceId: selectedService
-    },
     onError: (error) => {
       console.error('Chat error:', error);
       messageApi.error('Failed to send message. Please try again.');
     },
   });
 
-  const handleSubmit = async (text: string) => {
-    if (!text.trim() || isLoading || !selectedService) return;
-    
-    await append({
-      role: 'user',
-      content: text,
-    });
-  };
+  // Local input state for the Sender component
+  const [input, setInput] = useState('');
 
-  // Clear messages when service changes
+  // Clear messages and input when service changes
   useEffect(() => {
     if (selectedService) {
       setMessages([]);
+      setInput('');
     }
   }, [selectedService, setMessages]);
-
-  // Show loading spinner while checking auth status
-  if (authLoading || loadingServices) {
-    return (
-      <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" />
-      </Layout>
-    );
-  }
 
   // Get available services
   const availableServices = isAuthenticated ? userServices : DEMO_SERVICES;
   const currentService = availableServices.find(s => s.id === selectedService);
 
-  // Convert messages to Conversations format
-  const conversationItems = messages.map((message) => ({
-    key: message.id,
-    label: message.role === 'user' ? 'You' : currentService?.name || 'Assistant',
-    children: (
-      <Bubble
-        content={message.content}
-        variant={message.role === 'user' ? 'filled' : 'outlined'}
-        style={{
-          maxWidth: '70%'
-        }}
-      />
-    ),
-  }));
-
-  // Add welcome message if no messages
-  if (conversationItems.length === 0 && currentService) {
-    conversationItems.push({
-      key: 'welcome',
-      label: currentService.name,
+  // Convert messages to Conversations format with memoization
+  const conversationItems = React.useMemo(() => {
+    const items = messages.map((message) => ({
+      key: message.id,
+      label: message.role === 'user' ? 'You' : currentService?.name || 'Assistant',
       children: (
         <Bubble
-          content={
-            <Space direction="vertical" size="small">
-              <Text>
-                {currentService.icon} Hi! I'm ready to help you with {currentService.name}.
-              </Text>
-              <Text type="secondary">{currentService.description}</Text>
-              
-              {currentService.id === 'investment_calc' && (
-                <>
-                  <Text type="secondary" style={{ marginTop: 8 }}>Try asking:</Text>
-                  <ul style={{ marginTop: 4, paddingLeft: 20 }}>
-                    <li>"Calculate $10,000 invested at 8% for 20 years"</li>
-                    <li>"What if I add $200 monthly?"</li>
-                    <li>"Compare 6% vs 8% returns"</li>
-                  </ul>
-                </>
-              )}
-              
-              {currentService.id === 'mortgage_calc' && (
-                <>
-                  <Text type="secondary" style={{ marginTop: 8 }}>Try asking:</Text>
-                  <ul style={{ marginTop: 4, paddingLeft: 20 }}>
-                    <li>"Monthly payment for $300,000 at 6.5%"</li>
-                    <li>"Compare 15 vs 30 year terms"</li>
-                    <li>"How much interest will I pay?"</li>
-                  </ul>
-                </>
-              )}
-              
-              {!isAuthenticated && (
-                <Tag color="blue" style={{ marginTop: 8 }}>Demo Mode</Tag>
-              )}
-            </Space>
-          }
-          variant="outlined"
-          style={{ maxWidth: '90%' }}
+          content={message.content}
+          variant={message.role === 'user' ? 'filled' : 'outlined'}
+          style={{
+            maxWidth: '70%'
+          }}
         />
       ),
-    });
-  }
+    }));
 
-  // Add loading indicator if AI is thinking
-  if (isLoading) {
-    conversationItems.push({
-      key: 'loading',
-      label: currentService?.name || 'Assistant',
-      children: (
-        <Bubble
-          loading
-          variant="outlined"
-          content="Calculating..."
-        />
-      ),
-    });
+    // Add welcome message if no messages
+    if (items.length === 0 && currentService) {
+      items.push({
+        key: 'welcome',
+        label: currentService.name,
+        children: (
+          <Bubble
+            content={
+              <Space direction="vertical" size="small">
+                <Text>
+                  {currentService.icon} Hi! I'm ready to help you with {currentService.name}.
+                </Text>
+                <Text type="secondary">{currentService.description}</Text>
+                
+                {currentService.id === DEMO_SERVICES[0].id && (
+                  <>
+                    <Text type="secondary" style={{ marginTop: 8 }}>Try asking:</Text>
+                    <ul style={{ marginTop: 4, paddingLeft: 20 }}>
+                      <li>"Calculate $10,000 invested at 8% for 20 years"</li>
+                      <li>"What if I add $200 monthly?"</li>
+                      <li>"Compare 6% vs 8% returns"</li>
+                    </ul>
+                  </>
+                )}
+                
+                {currentService.id === DEMO_SERVICES[1].id && (
+                  <>
+                    <Text type="secondary" style={{ marginTop: 8 }}>Try asking:</Text>
+                    <ul style={{ marginTop: 4, paddingLeft: 20 }}>
+                      <li>"Find order #12345"</li>
+                      <li>"Show all orders for customer John Doe"</li>
+                      <li>"What orders were placed in January?"</li>
+                    </ul>
+                  </>
+                )}
+                
+                {!isAuthenticated && (
+                  <Tag color="blue" style={{ marginTop: 8 }}>Demo Mode</Tag>
+                )}
+              </Space>
+            }
+            variant="outlined"
+            style={{ maxWidth: '90%' }}
+          />
+        ),
+      });
+    }
+
+    // Add loading indicator if AI is thinking
+    if (status === 'loading') {
+      items.push({
+        key: 'loading',
+        label: currentService?.name || 'Assistant',
+        children: (
+          <Bubble
+            loading
+            variant="outlined"
+            content="Calculating..."
+          />
+        ),
+      });
+    }
+
+    return items;
+  }, [messages, currentService, status, isAuthenticated]);
+
+  // Show loading spinner while checking auth status
+  if (authLoading || loadingServices) {
+    return (
+      <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin size="default" />
+      </Layout>
+    );
   }
 
   return (
@@ -315,13 +298,14 @@ export default function ChatPage() {
         height: 'calc(100vh - 56px)'
       }}>
         {/* Service Selector */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 16 }}>
           <div style={{ marginBottom: 8 }}>
             <Text strong>Select a service to chat with:</Text>
           </div>
           <Select
             value={selectedService}
             onChange={setSelectedService}
+            className="chat-service-select"
             style={{ width: '100%' }}
             size="large"
             placeholder="Choose a service..."
@@ -332,9 +316,9 @@ export default function ChatPage() {
               title: `${service.icon} ${service.name}`,
               label: (
                 <Space>
-                  <span style={{ fontSize: 16 }}>{service.icon}</span>
+                  <span style={{ fontSize: 14 }}>{service.icon}</span>
                   <div>
-                    <div style={{ fontWeight: 500 }}>{service.name}</div>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>{service.name}</div>
                     <div style={{ fontSize: 12, color: '#8c8c8c' }}>{service.description}</div>
                   </div>
                 </Space>
@@ -391,14 +375,46 @@ export default function ChatPage() {
               borderTop: '1px solid #f0f0f0',
               background: 'white'
             }}>
+              {status === 'loading' && (
+                <div style={{ marginBottom: 8, textAlign: 'center' }}>
+                  <Button 
+                    size="small" 
+                    onClick={() => stop()}
+                    type="default"
+                  >
+                    Stop generating
+                  </Button>
+                </div>
+              )}
               <Sender
-                value={inputValue}
-                onChange={setInputValue}
+                value={input}
+                onChange={setInput}
                 placeholder={`Ask ${currentService?.name} anything...`}
-                onSubmit={handleSubmit}
-                loading={isLoading}
-                disabled={isLoading || !selectedService}
-                style={{ marginBottom: 0 }}
+                onSubmit={async (text) => {
+                  if (!text.trim() || status === 'loading' || !selectedService) return;
+                  
+                  try {
+                    // Send the message using the new API with serviceId in body
+                    await sendMessage({
+                      content: text,
+                      role: 'user'
+                    }, {
+                      body: {
+                        serviceId: selectedService
+                      }
+                    });
+                    
+                    // Clear the input after successful send
+                    setInput('');
+                  } catch (err) {
+                    console.error('Failed to send message:', err);
+                    // Keep input on error so user can retry
+                  }
+                }}
+                loading={status === 'loading'}
+                disabled={status === 'loading' || !selectedService}
+                style={{ marginBottom: 5, marginTop: 5 }}
+                aria-label="Message input"
               />
             </div>
           </div>
