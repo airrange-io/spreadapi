@@ -28,29 +28,38 @@ async function debugLog(type, data) {
 
 export async function POST(req) {
   try {
-    const { messages, serviceId } = await req.json();
+    const body = await req.json();
+    const { messages, serviceId, initialGreeting } = body;
     
-    await debugLog('request', { serviceId, messageCount: messages.length });
+    await debugLog('request', { serviceId, messageCount: messages.length, initialGreeting });
     
-    // Check if this is an initial greeting request
-    const isInitialGreeting = req.body?.isInitialGreeting || false;
+    let formattedMessages;
     
-    // Convert messages to proper format for the AI SDK
-    const formattedMessages = messages.map(msg => {
-      // Handle messages with parts array (from UI)
-      if (msg.parts && Array.isArray(msg.parts)) {
-        const textPart = msg.parts.find(p => p.type === 'text');
+    // If this is an initial greeting, replace the trigger message
+    if (initialGreeting || (messages.length === 1 && messages[0]?.content === '[GREETING]')) {
+      // Create system context for initial greeting
+      formattedMessages = [{
+        role: 'user',
+        content: 'Hello, I just selected this service. What can it do?'
+      }];
+    } else {
+      // Convert messages to proper format for the AI SDK
+      formattedMessages = messages.map(msg => {
+        // Handle messages with parts array (from UI)
+        if (msg.parts && Array.isArray(msg.parts)) {
+          const textPart = msg.parts.find(p => p.type === 'text');
+          return {
+            role: msg.role,
+            content: textPart?.text || ''
+          };
+        }
+        // Handle regular messages
         return {
           role: msg.role,
-          content: textPart?.text || ''
+          content: msg.content || ''
         };
-      }
-      // Handle regular messages
-      return {
-        role: msg.role,
-        content: msg.content || ''
-      };
-    }).filter(msg => msg.content); // Remove empty messages
+      }).filter(msg => msg.content); // Remove empty messages
+    }
     
     // Limit conversation history to prevent token overflow
     // Keep last 20 messages (10 exchanges) for context
@@ -359,7 +368,7 @@ ${(() => {
 Remember: You exist solely to help users with ${serviceDetails.name} calculations. Every interaction should move toward executing a calculation or clarifying results.
 
 ### Initial Greeting
-When user says "Hello", provide a brief, friendly introduction that includes:
+When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
 1. Welcome to the service
 2. A simple list of parameters (mark optional ones)
 3. Ask what they'd like to calculate

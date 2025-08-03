@@ -148,11 +148,12 @@ export default function ChatWrapperBubbles() {
             if (messages.length === 0 && !hasGreetedRef.current) {
               hasGreetedRef.current = true;
               setTimeout(async () => {
+                console.log('Sending initial greeting for auto-selected service:', loadedServices[0].id);
                 await sendMessage({ 
-                  content: 'Hello', 
+                  content: '[GREETING]', 
                   role: 'user' 
                 }, {
-                  body: { serviceId: loadedServices[0].id }
+                  body: { serviceId: loadedServices[0].id, initialGreeting: true }
                 });
               }, 500);
             }
@@ -377,15 +378,17 @@ export default function ChatWrapperBubbles() {
                 if (value !== 'general') {
                   fetchServiceDetails(value);
                   
-                  // Send initial greeting only once
+                  // Trigger AI greeting without user message
                   if (messages.length === 0 && !hasGreetedRef.current) {
                     hasGreetedRef.current = true;
                     setTimeout(async () => {
+                      // Send a hidden system message to trigger greeting
+                      console.log('Sending initial greeting request for service:', value);
                       await sendMessage({ 
-                        content: 'Hello', 
+                        content: '[GREETING]', 
                         role: 'user' 
                       }, {
-                        body: { serviceId: value }
+                        body: { serviceId: value, initialGreeting: true }
                       });
                     }, 100);
                   }
@@ -485,8 +488,8 @@ export default function ChatWrapperBubbles() {
                 const isUser = m.role === 'user';
                 const content = m.content || (m.parts && m.parts.find(p => p.type === 'text')?.text) || '';
                 
-                // Skip empty messages
-                if (!content) return null;
+                // Skip empty messages and greeting trigger
+                if (!content || content === '[GREETING]') return null;
                 
                 return (
                   <div 
