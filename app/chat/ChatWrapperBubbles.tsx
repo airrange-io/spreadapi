@@ -94,6 +94,7 @@ export default function ChatWrapperBubbles() {
   const [selectedService, setSelectedService] = useState<string>('general');
   const [userServices, setUserServices] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
+  const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Simple useChat hook usage following Vercel's example
@@ -176,6 +177,9 @@ export default function ChatWrapperBubbles() {
     }, {
       body: selectedService === 'general' ? {} : { serviceId: selectedService }
     });
+    
+    // Clear the input after sending
+    setInputValue('');
   };
 
   if (authLoading || loadingServices) {
@@ -422,6 +426,8 @@ export default function ChatWrapperBubbles() {
               borderTop: '1px solid #f0f0f0'
             }}>
               <Sender
+                value={inputValue}
+                onChange={setInputValue}
                 placeholder={`Ask ${currentService.name} anything...`}
                 onSubmit={handleSend}
                 loading={isLoading}
