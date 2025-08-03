@@ -5,11 +5,13 @@ import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
 import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
+import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import { DEMO_SERVICES } from '@/lib/demoServices';
 import dynamic from 'next/dynamic';
+import markdownit from 'markdown-it';
 import './chat.css';
 
 const Sidebar = dynamic(() => import('@/components/Sidebar'), {
@@ -19,6 +21,71 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
 
 const { Content } = Layout;
 const { Text } = Typography;
+
+// Initialize markdown renderer
+const md = markdownit({ 
+  html: true, 
+  breaks: true,
+  linkify: true,
+  typographer: true
+});
+
+// Custom markdown renderer for Bubble component
+const renderMarkdown: BubbleProps['messageRender'] = (content) => {
+  return (
+    <Typography>
+      <div 
+        dangerouslySetInnerHTML={{ __html: md.render(content) }}
+        style={{
+          // Style for markdown content
+          '& h1, & h2, & h3, & h4, & h5, & h6': {
+            marginTop: '0.5em',
+            marginBottom: '0.5em',
+          },
+          '& p': {
+            marginBottom: '0.5em',
+            '&:last-child': {
+              marginBottom: 0,
+            },
+          },
+          '& pre': {
+            background: '#f6f8fa',
+            padding: '12px',
+            borderRadius: '6px',
+            overflow: 'auto',
+          },
+          '& code': {
+            background: '#f6f8fa',
+            padding: '2px 4px',
+            borderRadius: '3px',
+            fontSize: '0.9em',
+          },
+          '& pre code': {
+            background: 'transparent',
+            padding: 0,
+          },
+          '& blockquote': {
+            borderLeft: '4px solid #e4e4e7',
+            paddingLeft: '16px',
+            marginLeft: 0,
+            color: '#666',
+          },
+          '& ul, & ol': {
+            paddingLeft: '20px',
+            marginBottom: '0.5em',
+          },
+          '& a': {
+            color: '#502D80',
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          },
+        } as any}
+      />
+    </Typography>
+  );
+};
 
 export default function ChatWrapperBubbles() {
   const router = useRouter();
@@ -288,6 +355,7 @@ export default function ChatWrapperBubbles() {
                     <Bubble
                       placement={isUser ? 'end' : 'start'}
                       content={content}
+                      messageRender={!isUser ? renderMarkdown : undefined}
                       avatar={
                         isUser ? (
                           <Avatar

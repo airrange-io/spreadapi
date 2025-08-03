@@ -10,9 +10,26 @@ export async function POST(req) {
   try {
     const { messages, serviceId } = await req.json();
     
+    // Convert messages to proper format for the AI SDK
+    const formattedMessages = messages.map(msg => {
+      // Handle messages with parts array (from UI)
+      if (msg.parts && Array.isArray(msg.parts)) {
+        const textPart = msg.parts.find(p => p.type === 'text');
+        return {
+          role: msg.role,
+          content: textPart?.text || ''
+        };
+      }
+      // Handle regular messages
+      return {
+        role: msg.role,
+        content: msg.content || ''
+      };
+    });
+    
     // Limit conversation history to prevent token overflow
     // Keep last 20 messages (10 exchanges) for context
-    const recentMessages = messages.slice(-20);
+    const recentMessages = formattedMessages.slice(-20);
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
