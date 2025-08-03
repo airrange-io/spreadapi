@@ -9,29 +9,13 @@ const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
 });
 
-// Helper to send debug logs
-async function debugLog(type, data) {
-  try {
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    
-    await fetch(`${baseUrl}/api/chat/debug`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ log: { type, data } })
-    });
-  } catch (e) {
-    // Ignore debug log errors
-  }
-}
 
 export async function POST(req) {
   try {
     const body = await req.json();
     const { messages, serviceId, initialGreeting } = body;
     
-    await debugLog('request', { serviceId, messageCount: messages.length, initialGreeting });
+    
     
     let formattedMessages;
     
@@ -95,34 +79,15 @@ export async function POST(req) {
     
     // Fetch service details
     let serviceDetails = null;
-    console.log('=== Fetching service details ===');
-    console.log('Service ID:', serviceId);
-    await debugLog('fetchingService', { serviceId });
     
     try {
       // Get auth from current request
       const userId = req.headers.get('x-user-id');
-      console.log('Current request userId:', userId);
       
       // Use the centralized helper function
       serviceDetails = await getServiceDetails(serviceId, userId);
       
       if (serviceDetails) {
-        console.log('=== SERVICE LOADED VIA HELPER ===');
-        console.log('Service details:', {
-          name: serviceDetails.name,
-          inputCount: serviceDetails.inputs.length,
-          outputCount: serviceDetails.outputs.length,
-          inputs: serviceDetails.inputs,
-          outputs: serviceDetails.outputs
-        });
-        
-        await debugLog('serviceLoaded', {
-          name: serviceDetails.name,
-          inputCount: serviceDetails.inputs.length,
-          outputCount: serviceDetails.outputs.length,
-          inputs: serviceDetails.inputs
-        });
       } else {
         console.error('Service not found or unauthorized');
         
@@ -164,7 +129,11 @@ Your ONLY purpose is to help users use this specific service. You should:
 2. Extract parameters from user queries for calculations
 3. Ask for missing required parameters  
 4. Execute calculations using the provided tool
-5. Present results clearly
+5. When you receive tool results, incorporate them into a natural response
+
+CRITICAL: This is a two-step process:
+- Step 1: Call the tool to get results
+- Step 2: Present those results to the user in a helpful message
 
 CRITICAL: Pay attention to input formats - especially percentage values which must be converted to decimals.
 
@@ -189,8 +158,6 @@ You have access to a calculation tool for this service. Focus on helping users u
     let tools = {};
     
     if (serviceDetails) {
-      console.log('Building tools for service:', serviceDetails.name);
-      console.log('Service inputs:', serviceDetails.inputs?.length || 0);
       
       // Only add calculate tool if we have inputs
       if (serviceDetails.inputs && serviceDetails.inputs.length > 0) {
@@ -199,7 +166,6 @@ You have access to a calculation tool for this service. Focus on helping users u
         
         serviceDetails.inputs.forEach(input => {
           const inputType = getItemType(input);
-          console.log(`Processing input: ${input.alias} - type: ${inputType}, format: ${input.format}`);
           
           let schema;
           if (isNumberType(input)) {
@@ -218,17 +184,12 @@ You have access to a calculation tool for this service. Focus on helping users u
         
         // Create Zod object schema
         const toolZodSchema = z.object(inputSchemas);
-        console.log('Created Zod schema with inputs:', Object.keys(inputSchemas));
         
         tools.calculate = tool({
-          description: `Calculate ${serviceDetails.name}. Use this tool when the user asks for calculations related to ${serviceDetails.name}.`,
+          description: `Calculate ${serviceDetails.name}. Use this tool when the user asks for calculations related to ${serviceDetails.name}. IMPORTANT: After calling this tool, you MUST continue your response and include the tool's output in your message.`,
           inputSchema: toolZodSchema, // Use inputSchema, not parameters
           execute: async (params) => {
-            console.log('Tool executing with params:', params);
             try {
-              console.log('=== TOOL EXECUTION ===');
-              console.log('Service:', serviceDetails.name);
-              console.log('Params received:', params);
               
               // Execute calculation via internal API
               const baseUrl = process.env.VERCEL_URL 
@@ -243,11 +204,9 @@ You have access to a calculation tool for this service. Focus on helping users u
               Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
                   queryParams.append(key, String(value));
-                  console.log(`Adding param: ${key} = ${value}`);
                 }
               });
               
-              console.log('API URL:', `${baseUrl}/api/getresults?${queryParams.toString()}`);
               const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
               const data = await response.json();
               
@@ -255,10 +214,9 @@ You have access to a calculation tool for this service. Focus on helping users u
                 throw new Error(data.error || 'Calculation failed');
               }
               
-              console.log('Calculation response:', data);
               
               // Format results
-              let resultText = `### Calculation Results:\n\n`;
+              let resultText = ``;
               
               if (data.outputs && Array.isArray(data.outputs)) {
                 data.outputs.forEach(output => {
@@ -286,13 +244,15 @@ You have access to a calculation tool for this service. Focus on helping users u
                   
                   resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
                 });
+                
+                // Trim any trailing newline
+                resultText = resultText.trim();
               } else {
                 // Handle different response format
-                console.log('Non-standard output format:', data);
-                resultText += 'Result: ' + JSON.stringify(data, null, 2);
+                resultText = 'Result: ' + JSON.stringify(data, null, 2);
               }
               
-              console.log('Tool execution result:', resultText);
+              // Return the formatted text directly as the tool expects
               return resultText;
             } catch (error) {
               return `Error executing calculation: ${error.message}`;
@@ -302,18 +262,6 @@ You have access to a calculation tool for this service. Focus on helping users u
       }
     }
     
-    // Log tools before passing to AI
-    console.log('=== Tools available ===');
-    console.log('Tool count:', Object.keys(tools).length);
-    console.log('Tools:', tools);
-    
-    // If no tools were built, log why
-    if (Object.keys(tools).length === 0) {
-      console.log('NO TOOLS BUILT - Reasons:');
-      console.log('- serviceDetails exists?', !!serviceDetails);
-      console.log('- serviceDetails.inputs exists?', !!serviceDetails?.inputs);
-      console.log('- serviceDetails.inputs length?', serviceDetails?.inputs?.length);
-    }
     
     // Update system prompt to be more explicit about using tools
     if (Object.keys(tools).length > 0) {
@@ -332,7 +280,10 @@ You MUST use the 'calculate' tool to perform calculations. This is not optional 
 2. For REQUIRED parameters: If missing, ask the user for them
 3. For OPTIONAL parameters: If user doesn't mention them, use the default value (usually 0)
 4. NEVER perform calculations manually - always use the tool
-5. After calculation, explain the results clearly
+5. AFTER calling the tool, you MUST generate a text response that includes the tool output
+6. Example workflow:
+   - User asks for calculation → You call tool → Tool returns "**total**: 4,038.74" → You MUST respond with text like "Here are your results:\n\n**total**: 4,038.74\n\nThis shows..."
+7. NEVER end your response after just calling the tool - always continue with a text message
 
 ### Key Parameter Rules:
 ${(() => {
@@ -367,6 +318,8 @@ ${(() => {
 
 Remember: You exist solely to help users with ${serviceDetails.name} calculations. Every interaction should move toward executing a calculation or clarifying results.
 
+GOLDEN RULE: After you call the calculate tool and get a result, you MUST continue generating a response that includes that result. DO NOT stop after calling the tool. Always provide a complete response with the calculation results.
+
 ### Initial Greeting
 When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
 1. Welcome to the service
@@ -384,32 +337,18 @@ Example format:
 What would you like to calculate?"`;
     }
     
-    // Use streamText from Vercel AI SDK with enhanced parameters
-    const streamConfig = {
+    // Use streamText from Vercel AI SDK with multi-step support
+    const result = await streamText({
       model: openai('gpt-4o-mini'),
       messages: recentMessages,
       system: systemPrompt,
-      temperature: 0.3, // Lower temperature for more consistent, concise responses
-      maxTokens: 500, // Smaller limit to encourage brevity
-    };
-    
-    // Add tools if available
-    if (Object.keys(tools).length > 0) {
-      streamConfig.tools = tools;
-      // For service-specific chat, we want to use tools when appropriate
-      // but not force it for every single message (e.g., when asking for clarification)
-      streamConfig.toolChoice = 'auto';
-      
-      console.log('=== STREAM CONFIG ===');
-      console.log('Tool choice:', streamConfig.toolChoice);
-      console.log('Tools provided:', Object.keys(tools));
-    }
-    
-    const result = await streamText(streamConfig);
-    
-    console.log('=== STREAM RESULT ===');
-    console.log('Result type:', typeof result);
-    console.log('Has toUIMessageStreamResponse:', typeof result.toUIMessageStreamResponse);
+      temperature: 0.3,
+      maxTokens: 1500,
+      tools: Object.keys(tools).length > 0 ? tools : undefined,
+      toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
+      // Enable multi-step tool calls - this is crucial!
+      maxSteps: 5, // Allow up to 5 steps (tool call + response)
+    });
     
     // Return the stream response in the format expected by useChat
     return result.toUIMessageStreamResponse();

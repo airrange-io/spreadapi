@@ -100,16 +100,38 @@ export default function ChatWrapperBubbles() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Simple useChat hook usage following Vercel's example
-  const { messages, sendMessage, isLoading, stop } = useChat({
+  const { messages, sendMessage, isLoading, stop, error } = useChat({
     api: '/api/chat',
-    streamProtocol: 'text',
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     },
+    onError: (error) => {
+      console.error('Chat error:', error);
+    },
   });
+  
+
+  // Send greeting when service is selected
+  useEffect(() => {
+    if (selectedService && selectedService !== 'general' && !hasGreetedRef.current && !loadingServices) {
+      // Only send greeting if we have no messages
+      if (messages.length === 0) {
+        hasGreetedRef.current = true;
+        // Send greeting message
+        setTimeout(async () => {
+          await sendMessage({ 
+            content: '[GREETING]', 
+            role: 'user' 
+          }, {
+            body: { serviceId: selectedService, initialGreeting: true }
+          });
+        }, 500);
+      }
+    }
+  }, [selectedService, loadingServices]);
 
   // Load services
   useEffect(() => {
@@ -142,18 +164,6 @@ export default function ChatWrapperBubbles() {
             // Fetch details for auto-selected service
             fetchServiceDetails(loadedServices[0].id);
             
-            // Send greeting for auto-selected service
-            if (messages.length === 0 && !hasGreetedRef.current) {
-              hasGreetedRef.current = true;
-              setTimeout(async () => {
-                await sendMessage({ 
-                  content: '[GREETING]', 
-                  role: 'user' 
-                }, {
-                  body: { serviceId: loadedServices[0].id, initialGreeting: true }
-                });
-              }, 500);
-            }
           }
         } else {
           // If API fails and user is not authenticated, use demo services
@@ -409,7 +419,30 @@ export default function ChatWrapperBubbles() {
                 )
                 .map((m, index) => {
                 const isUser = m.role === 'user';
-                const content = m.content || (m.parts && m.parts.find(p => p.type === 'text')?.text) || '';
+                // Extract content from message
+                let content = '';
+                
+                // First try to get content directly
+                if (m.content) {
+                  content = m.content;
+                }
+                // If no direct content, check parts
+                else if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
+                  const textParts = [];
+                  
+                  // Process each part
+                  m.parts.forEach((part) => {
+                    if (part.type === 'text' && part.text) {
+                      textParts.push(part.text);
+                    }
+                  });
+                  
+                  if (textParts.length > 0) {
+                    content = textParts.join('\n');
+                  }
+                }
+                
+                
                 
                 // Skip empty messages and greeting trigger
                 if (!content || content === '[GREETING]') return null;
