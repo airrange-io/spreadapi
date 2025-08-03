@@ -370,10 +370,18 @@ Remember: You exist solely to help users with ${serviceDetails.name} calculation
 ### Initial Greeting
 When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
 1. Welcome to the service
-2. A simple list of parameters (mark optional ones)
+2. List each parameter on a new line with bullet points, formatted as: • <span style="color: #502D80; font-weight: bold;">Parameter Name</span> (required/optional)
 3. Ask what they'd like to calculate
 
-Keep it conversational but concise - one short paragraph.`;
+Example format:
+"Welcome! This service helps you calculate [description]. I'll need:
+
+• <span style="color: #502D80; font-weight: bold;">Interest Rate</span> (required)
+• <span style="color: #502D80; font-weight: bold;">Monthly Deposit</span> (required)
+• <span style="color: #502D80; font-weight: bold;">Months of Payment</span> (required)
+• <span style="color: #502D80; font-weight: bold;">Starting Amount</span> (optional)
+
+What would you like to calculate?"`;
     }
     
     // Use streamText from Vercel AI SDK with enhanced parameters
