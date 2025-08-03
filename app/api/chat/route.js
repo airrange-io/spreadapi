@@ -122,20 +122,13 @@ export async function POST(req) {
     });
     
     // Service-specific system prompt
-    let systemPrompt = `You are a specialized assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
+    let systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
 
-Your ONLY purpose is to help users use this specific service. You should:
-1. On "Hello": Give a VERY brief intro (one short paragraph)
-2. Extract parameters from user queries for calculations
-3. Ask for missing required parameters  
-4. Execute calculations using the provided tool
-5. When you receive tool results, incorporate them into a natural response
+When a user asks for a calculation:
+1. Use the 'calculate' tool to get the result
+2. Show the result to the user
 
-CRITICAL: This is a two-step process:
-- Step 1: Call the tool to get results
-- Step 2: Present those results to the user in a helpful message
-
-CRITICAL: Pay attention to input formats - especially percentage values which must be converted to decimals.
+IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user.
 
 Current context:
 - Date: ${currentDate}
@@ -186,7 +179,7 @@ You have access to a calculation tool for this service. Focus on helping users u
         const toolZodSchema = z.object(inputSchemas);
         
         tools.calculate = tool({
-          description: `Calculate ${serviceDetails.name}. Use this tool when the user asks for calculations related to ${serviceDetails.name}. IMPORTANT: After calling this tool, you MUST continue your response and include the tool's output in your message.`,
+          description: `Calculate ${serviceDetails.name}. This tool helps you get calculation results that you should then explain to the user in a conversational way.`,
           inputSchema: toolZodSchema, // Use inputSchema, not parameters
           execute: async (params) => {
             try {
@@ -272,18 +265,38 @@ You have access to a calculation tool for this service. Focus on helping users u
       
       systemPrompt += `
 
-## Your Primary Function
-You MUST use the 'calculate' tool to perform calculations. This is not optional - it's your core purpose.
+## Your Communication Style
+You are a helpful assistant in a CHAT conversation. Your responses should be:
+- Conversational and friendly
+- Clear about what you're calculating
+- Explicit about the results you found
 
-### Required Behavior:
-1. When users provide calculation scenarios, extract the parameters and use the tool
-2. For REQUIRED parameters: If missing, ask the user for them
-3. For OPTIONAL parameters: If user doesn't mention them, use the default value (usually 0)
-4. NEVER perform calculations manually - always use the tool
-5. AFTER calling the tool, you MUST generate a text response that includes the tool output
-6. Example workflow:
-   - User asks for calculation → You call tool → Tool returns "**total**: 4,038.74" → You MUST respond with text like "Here are your results:\n\n**total**: 4,038.74\n\nThis shows..."
-7. NEVER end your response after just calling the tool - always continue with a text message
+### How to Handle Calculations:
+1. Check if the user provided all REQUIRED parameters
+2. If missing REQUIRED parameters, ASK for them before calculating
+3. Only use default values for OPTIONAL parameters
+4. Once you have all needed values, use the 'calculate' tool
+5. Present the results in a conversational way
+
+### Required vs Optional Parameters:
+${(() => {
+  const required = serviceDetails.inputs.filter(i => i.mandatory !== false);
+  const optional = serviceDetails.inputs.filter(i => i.mandatory === false);
+  
+  let text = 'REQUIRED (must ask if missing):\n';
+  required.forEach(input => {
+    text += `- ${input.alias} (${input.title || input.name})\n`;
+  });
+  
+  if (optional.length > 0) {
+    text += '\nOPTIONAL (can use default if not provided):\n';
+    optional.forEach(input => {
+      text += `- ${input.alias} (${input.title || input.name}) - default: 0\n`;
+    });
+  }
+  
+  return text;
+})()}
 
 ### Key Parameter Rules:
 ${(() => {
@@ -311,14 +324,14 @@ ${(() => {
 })()}
 
 ### Quick Examples:
-- If user provides all values → Calculate immediately
-- If missing required values → Ask for them
+- If user provides ALL required values → Calculate immediately
+- If missing ANY required values → ASK for them (don't assume)
 - If missing optional values → Use defaults (usually 0)
-- "Show me an example" → Use sample values
+- Example: "Show me $1000 at 7% over 20 years" → Missing monthly deposit (required) → ASK: "What monthly deposit amount would you like to use?"
 
 Remember: You exist solely to help users with ${serviceDetails.name} calculations. Every interaction should move toward executing a calculation or clarifying results.
 
-GOLDEN RULE: After you call the calculate tool and get a result, you MUST continue generating a response that includes that result. DO NOT stop after calling the tool. Always provide a complete response with the calculation results.
+GOLDEN RULE: You are in a CONVERSATION. When you use a tool, you must TELL THE USER what you discovered. Think of tools as a way to get information that you then SHARE with the user in a friendly message.
 
 ### Initial Greeting
 When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
@@ -337,7 +350,7 @@ Example format:
 What would you like to calculate?"`;
     }
     
-    // Use streamText from Vercel AI SDK with multi-step support
+    // Use streamText with v5 features for better tool handling
     const result = await streamText({
       model: openai('gpt-4o-mini'),
       messages: recentMessages,
@@ -346,8 +359,16 @@ What would you like to calculate?"`;
       maxTokens: 1500,
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
-      // Enable multi-step tool calls - this is crucial!
-      maxSteps: 5, // Allow up to 5 steps (tool call + response)
+      maxSteps: 5,
+      // Use stopWhen to ensure the AI continues after tool calls
+      stopWhen: ({ finishReason, usage, stepCount }) => {
+        // Don't stop after tool calls - continue to generate a response
+        if (finishReason === 'tool-calls' && stepCount < 3) {
+          return false; // Continue
+        }
+        // Stop after we've had a chance to respond with the tool results
+        return finishReason === 'stop' || stepCount >= 3;
+      },
     });
     
     // Return the stream response in the format expected by useChat
