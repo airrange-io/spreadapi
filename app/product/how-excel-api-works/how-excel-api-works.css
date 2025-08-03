@@ -1,0 +1,516 @@
+/* Three Simple Building Blocks Grid */
+.concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+@media (min-width: 992px) {
+  .concepts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.concept-card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.concept-card:hover {
+  border-color: #502D80;
+  box-shadow: 0 4px 12px rgba(80, 45, 128, 0.1);
+  transform: translateY(-2px);
+}
+
+.concept-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.concept-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.concept-card p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.concept-example {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+  font-size: 14px;
+  color: #333;
+  text-align: left;
+}
+
+/* Process Steps Grid (for AI Integration page) */
+.process-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+@media (min-width: 768px) {
+  .process-steps-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.process-step {
+  text-align: center;
+  padding: 24px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #502D80;
+  color: white;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.process-step h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #000;
+}
+
+.process-step p {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* API Flow Section */
+.api-flow-card {
+  background: #f8f6fe;
+  border-radius: 16px;
+  padding: 48px;
+  margin-top: 48px;
+}
+
+.api-flow-card h3 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: #000;
+}
+
+.api-flow-diagram {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+
+@media (max-width: 768px) {
+  .api-flow-diagram {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.api-flow-item {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.api-flow-item:hover {
+  border-color: #502D80;
+  box-shadow: 0 4px 12px rgba(80, 45, 128, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Add step numbers to API flow items */
+.api-flow-item::before {
+  content: attr(data-step);
+  position: absolute;
+  top: -12px;
+  left: 24px;
+  background: #502D80;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.api-flow-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.api-flow-item h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #000;
+}
+
+.api-flow-item p {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Remove arrows since we're using grid */
+.api-flow-arrow {
+  display: none;
+}
+
+/* Workflow Steps Grid */
+.workflow-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+@media (min-width: 992px) {
+  .workflow-steps-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.workflow-step {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.workflow-step:hover {
+  border-color: #502D80;
+  box-shadow: 0 4px 12px rgba(80, 45, 128, 0.1);
+  transform: translateY(-2px);
+}
+
+.workflow-step-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.workflow-step h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.workflow-step p {
+  color: #666;
+  line-height: 1.6;
+}
+
+/* AI Features Grid */
+.ai-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+}
+
+@media (min-width: 768px) {
+  .ai-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .ai-features-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ai-feature-card {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.ai-feature-card:hover {
+  border-color: #502D80;
+  box-shadow: 0 4px 12px rgba(80, 45, 128, 0.1);
+  transform: translateY(-2px);
+}
+
+.ai-feature-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.ai-feature-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.ai-feature-card p {
+  color: #666;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* AI Example Card */
+.ai-example-card {
+  background: #f8f6fe;
+  border-radius: 16px;
+  padding: 48px;
+  margin-top: 80px !important;
+  margin-bottom: -32px;
+}
+
+.ai-example-card h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: #000;
+  text-align: center;
+}
+
+.ai-conversation {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ai-message {
+  margin-bottom: 24px;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.ai-message.user {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.ai-message.assistant {
+  background: #f0f0f0;
+  border: 1px solid #d9d9d9;
+}
+
+.ai-message strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.ai-code {
+  background: #1a1a1a;
+  color: #22c55e;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+  font-size: 14px;
+  margin: 16px 0;
+  line-height: 1.6;
+}
+
+/* Best Practices Section */
+.practices-component {
+  background: white;
+  border-radius: 16px;
+  padding: 48px;
+  border: 1px solid #e8e8e8;
+}
+
+.practices-content-wrapper h2 {
+  margin-bottom: 32px;
+}
+
+.practices-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.practice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.practice-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #22c55e20;
+  border-radius: 50%;
+}
+
+.practice-item strong {
+  color: #000;
+  font-weight: 600;
+}
+
+.practice-item div:last-child {
+  flex: 1;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* Code Example Wrapper */
+.code-example-wrapper {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.code-example-header {
+  background: #2a2a2a;
+  padding: 12px 20px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.code-example-header span {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.code-example {
+  padding: 20px;
+  color: #e0e0e0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* Feature List */
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.feature-item-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.feature-item-content-wrapper h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.feature-item-content-wrapper p {
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Workflow Section */
+.workflow-steps {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  margin-top: 48px;
+}
+
+@media (max-width: 768px) {
+  .workflow-steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.workflow-step {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.workflow-step:hover {
+  border-color: #502D80;
+  box-shadow: 0 4px 12px rgba(80, 45, 128, 0.1);
+  transform: translateY(-2px);
+}
+
+.workflow-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #502D80;
+  color: white;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.workflow-step-content h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #000;
+}
+
+.workflow-step-content p {
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Remove workflow connectors since we're using grid */
+.workflow-connector {
+  display: none;
+}

@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import '../product.css';
+import './how-excel-api-works.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 
@@ -333,7 +334,7 @@ export default function HowItWorksPage() {
                     <div className="api-flow-card">
                       <h3 className="text-align-center margin-bottom margin-medium">The API Flow</h3>
                       <div className="api-flow-diagram">
-                        <div className="api-flow-item">
+                        <div className="api-flow-item" data-step="1">
                           <div className="api-flow-icon">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
@@ -344,8 +345,7 @@ export default function HowItWorksPage() {
                           <h4>API Call Received</h4>
                           <p>Your service receives a request with input values</p>
                         </div>
-                        <div className="api-flow-arrow">→</div>
-                        <div className="api-flow-item">
+                        <div className="api-flow-item" data-step="2">
                           <div className="api-flow-icon">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
@@ -357,8 +357,7 @@ export default function HowItWorksPage() {
                           <h4>Inputs Applied</h4>
                           <p>Values placed into designated cells</p>
                         </div>
-                        <div className="api-flow-arrow">→</div>
-                        <div className="api-flow-item">
+                        <div className="api-flow-item" data-step="3">
                           <div className="api-flow-icon">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
@@ -369,8 +368,7 @@ export default function HowItWorksPage() {
                           <h4>Calculation</h4>
                           <p>Formulas automatically recalculate</p>
                         </div>
-                        <div className="api-flow-arrow">→</div>
-                        <div className="api-flow-item">
+                        <div className="api-flow-item" data-step="4">
                           <div className="api-flow-icon">
                             <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
