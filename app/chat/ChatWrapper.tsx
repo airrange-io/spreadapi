@@ -28,8 +28,17 @@ export default function ChatWrapper() {
   const [loadingServices, setLoadingServices] = useState(true);
 
   // Simple useChat hook usage following Vercel's example
-  const { messages, sendMessage, isLoading } = useChat({
+  const { messages, sendMessage, isLoading, stop } = useChat({
     api: '/api/chat',
+    onFinish: () => {
+      // Auto-scroll to bottom when new message arrives
+      setTimeout(() => {
+        const messagesDiv = document.getElementById('chat-messages');
+        if (messagesDiv) {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+      }, 100);
+    },
   });
   
   // Local input state
@@ -231,11 +240,13 @@ export default function ChatWrapper() {
             overflow: 'hidden'
           }}>
             {/* Messages */}
-            <div style={{ 
-              flex: 1,
-              overflow: 'auto',
-              padding: '24px'
-            }}>
+            <div 
+              id="chat-messages"
+              style={{ 
+                flex: 1,
+                overflow: 'auto',
+                padding: '24px'
+              }}>
               {messages.length === 0 && (
                 <div style={{ 
                   textAlign: 'center',
@@ -338,6 +349,13 @@ export default function ChatWrapper() {
                 placeholder={`Ask ${currentService.name} anything...`}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
+                autoFocus
+                onKeyDown={(e) => {
+                  // Stop generation with Escape key
+                  if (e.key === 'Escape' && isLoading) {
+                    stop();
+                  }
+                }}
               />
               <button
                 type="submit"
