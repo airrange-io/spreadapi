@@ -37,6 +37,12 @@ import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 
+// Import the main sidebar
+const Sidebar = dynamic(() => import('@/components/Sidebar'), {
+  ssr: false,
+  loading: () => null
+});
+
 const { Content, Sider } = Layout;
 const { Text } = Typography;
 
@@ -466,7 +472,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     // Initial loading will be handled in a separate effect
 
-    // Drawer is now controlled by user interaction only
+    // Show drawer on mobile after initial load
+    if (isMobile) {
+      setDrawerVisible(true);
+    }
 
     loadWorkbook();
 
@@ -1224,6 +1233,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Sidebar />
       {/* Header */}
       <div style={{
         minHeight: 56,
@@ -1242,7 +1252,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Button
             type="text"
             icon={<MenuOutlined />}
-            onClick={() => setDrawerVisible(!drawerVisible)}
+            onClick={appStore.toggleSidebar}
           />
           <Breadcrumb
             items={[
