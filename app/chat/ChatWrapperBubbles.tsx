@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
-import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, BugOutlined } from '@ant-design/icons';
+import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
@@ -95,8 +95,6 @@ export default function ChatWrapperBubbles() {
   const [userServices, setUserServices] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [inputValue, setInputValue] = useState('');
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<any[]>([]);
   const [serviceDetails, setServiceDetails] = useState<any>(null);
   const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -148,7 +146,6 @@ export default function ChatWrapperBubbles() {
             if (messages.length === 0 && !hasGreetedRef.current) {
               hasGreetedRef.current = true;
               setTimeout(async () => {
-                console.log('Sending initial greeting for auto-selected service:', loadedServices[0].id);
                 await sendMessage({ 
                   content: '[GREETING]', 
                   role: 'user' 
@@ -191,21 +188,17 @@ export default function ChatWrapperBubbles() {
   // Fetch detailed service information
   const fetchServiceDetails = async (serviceId: string) => {
     try {
-      console.log('Fetching details for service:', serviceId);
       const res = await fetch(`/api/services/${serviceId}/full`, {
         credentials: 'include'
       });
       
       if (res.ok) {
         const data = await res.json();
-        console.log('Service full details:', data);
         setServiceDetails(data.service);
       } else {
-        console.error('Failed to fetch service details');
         setServiceDetails(null);
       }
     } catch (error) {
-      console.error('Error fetching service details:', error);
       setServiceDetails(null);
     }
   };
@@ -229,14 +222,6 @@ export default function ChatWrapperBubbles() {
   const handleSend = async (nextMessage: string) => {
     if (!nextMessage.trim() || isLoading) return;
     
-    // Log service information when sending message
-    if (selectedService !== 'general') {
-      console.log('=== Sending message with service ===');
-      console.log('Service ID:', selectedService);
-      console.log('Current Service:', currentService);
-      console.log('Request body:', { serviceId: selectedService });
-    }
-    
     await sendMessage({ 
       content: nextMessage, 
       role: 'user' 
@@ -246,19 +231,6 @@ export default function ChatWrapperBubbles() {
     
     // Clear the input after sending
     setInputValue('');
-    
-    // Fetch debug logs after sending
-    if (showDebug) {
-      setTimeout(async () => {
-        try {
-          const res = await fetch('/api/chat/debug');
-          const data = await res.json();
-          setDebugLogs(data.logs || []);
-        } catch (e) {
-          console.error('Failed to fetch debug logs:', e);
-        }
-      }, 1000);
-    }
   };
 
   if (authLoading || loadingServices) {
@@ -367,11 +339,6 @@ export default function ChatWrapperBubbles() {
             <Select
               value={selectedService}
               onChange={async (value) => {
-                console.log('=== Service Selected ===');
-                console.log('Service ID:', value);
-                const selected = availableServices.find(s => s.id === value);
-                console.log('Service Details:', selected);
-                console.log('Available Services:', availableServices);
                 setSelectedService(value);
                 
                 // Fetch service details when selected
@@ -382,8 +349,6 @@ export default function ChatWrapperBubbles() {
                   if (messages.length === 0 && !hasGreetedRef.current) {
                     hasGreetedRef.current = true;
                     setTimeout(async () => {
-                      // Send a hidden system message to trigger greeting
-                      console.log('Sending initial greeting request for service:', value);
                       await sendMessage({ 
                         content: '[GREETING]', 
                         role: 'user' 
@@ -402,46 +367,20 @@ export default function ChatWrapperBubbles() {
               optionLabelProp="label"
               options={availableServices.map(service => ({
                 value: service.id,
-                label: `${service.icon} ${service.name}`,
+                label: (
+                  <span style={{ fontSize: 14 }}>{service.icon} {service.name}</span>
+                ),
                 children: (
                   <Space>
                     <span>{service.icon}</span>
                     <div>
-                      <div style={{ fontWeight: 500 }}>{service.name}</div>
+                      <div style={{ fontWeight: 500, fontSize: 14 }}>{service.name}</div>
                       <div style={{ fontSize: 12, color: '#8c8c8c' }}>{service.description}</div>
                     </div>
                   </Space>
                 )
               }))}
             />
-            {selectedService !== 'general' && (
-              <Button 
-                size="small" 
-                icon={<BugOutlined />}
-                onClick={async () => {
-                  console.log('Testing service endpoint...');
-                  try {
-                    const res = await fetch(`/api/test-service?id=${selectedService}`);
-                    const data = await res.json();
-                    console.log('=== SERVICE TEST RESULT ===');
-                    console.log(JSON.stringify(data, null, 2));
-                    
-                    // Show inputs/outputs specifically
-                    if (data.fullEndpoint?.data?.service) {
-                      console.log('=== SERVICE INPUTS ===');
-                      console.log(data.fullEndpoint.data.service.inputs);
-                      console.log('=== SERVICE OUTPUTS ===');
-                      console.log(data.fullEndpoint.data.service.outputs);
-                    }
-                  } catch (e) {
-                    console.error('Test failed:', e);
-                  }
-                }}
-                style={{ marginTop: 8 }}
-              >
-                Test Service Data
-              </Button>
-            )}
           </div>
 
           {/* Chat Container */}
@@ -462,22 +401,6 @@ export default function ChatWrapperBubbles() {
               flexDirection: 'column',
               gap: 16
             }}>
-              {messages.length === 0 && (
-                <div style={{ 
-                  textAlign: 'center',
-                  color: '#8c8c8c',
-                  padding: '40px 20px',
-                  margin: 'auto'
-                }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>{currentService.icon}</div>
-                  <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
-                    {currentService.name}
-                  </div>
-                  <div style={{ fontSize: 14, marginBottom: 16 }}>
-                    {currentService.description}
-                  </div>
-                </div>
-              )}
               
               {/* Deduplicate messages based on ID */}
               {messages
