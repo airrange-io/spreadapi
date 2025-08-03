@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
-import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined } from '@ant-design/icons';
+import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, BugOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
@@ -95,11 +95,16 @@ export default function ChatWrapperBubbles() {
   const [userServices, setUserServices] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [inputValue, setInputValue] = useState('');
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<any[]>([]);
+  const [serviceDetails, setServiceDetails] = useState<any>(null);
+  const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Simple useChat hook usage following Vercel's example
   const { messages, sendMessage, isLoading, stop } = useChat({
     api: '/api/chat',
+    streamProtocol: 'text',
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
       setTimeout(() => {
@@ -132,10 +137,36 @@ export default function ChatWrapperBubbles() {
           }
           
           setUserServices(loadedServices);
+          
+          // Auto-select if only one service available
+          if (loadedServices.length === 1) {
+            setSelectedService(loadedServices[0].id);
+            // Fetch details for auto-selected service
+            fetchServiceDetails(loadedServices[0].id);
+            
+            // Send greeting for auto-selected service
+            if (messages.length === 0 && !hasGreetedRef.current) {
+              hasGreetedRef.current = true;
+              setTimeout(async () => {
+                await sendMessage({ 
+                  content: 'Hello', 
+                  role: 'user' 
+                }, {
+                  body: { serviceId: loadedServices[0].id }
+                });
+              }, 500);
+            }
+          }
         } else {
           // If API fails and user is not authenticated, use demo services
           if (!isAuthenticated) {
             setUserServices(DEMO_SERVICES);
+            // Auto-select if only one demo service
+            if (DEMO_SERVICES.length === 1) {
+              setSelectedService(DEMO_SERVICES[0].id);
+              
+              // No auto-greeting
+            }
           }
         }
       } catch (error) {
@@ -143,6 +174,10 @@ export default function ChatWrapperBubbles() {
         // On error, use demo services for non-authenticated users
         if (!isAuthenticated) {
           setUserServices(DEMO_SERVICES);
+          // Auto-select if only one demo service
+          if (DEMO_SERVICES.length === 1) {
+            setSelectedService(DEMO_SERVICES[0].id);
+          }
         }
       } finally {
         setLoadingServices(false);
@@ -152,11 +187,33 @@ export default function ChatWrapperBubbles() {
     loadServices();
   }, [isAuthenticated]);
 
+  // Fetch detailed service information
+  const fetchServiceDetails = async (serviceId: string) => {
+    try {
+      console.log('Fetching details for service:', serviceId);
+      const res = await fetch(`/api/services/${serviceId}/full`, {
+        credentials: 'include'
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Service full details:', data);
+        setServiceDetails(data.service);
+      } else {
+        console.error('Failed to fetch service details');
+        setServiceDetails(null);
+      }
+    } catch (error) {
+      console.error('Error fetching service details:', error);
+      setServiceDetails(null);
+    }
+  };
+
   const generalAIOption = {
     id: 'general',
-    name: 'General AI Assistant',
-    description: 'Chat with AI about anything',
-    icon: '🤖'
+    name: 'Select a Service',
+    description: 'Choose a calculation service to start',
+    icon: '📊'
   };
   
   const availableServices = [
@@ -171,6 +228,14 @@ export default function ChatWrapperBubbles() {
   const handleSend = async (nextMessage: string) => {
     if (!nextMessage.trim() || isLoading) return;
     
+    // Log service information when sending message
+    if (selectedService !== 'general') {
+      console.log('=== Sending message with service ===');
+      console.log('Service ID:', selectedService);
+      console.log('Current Service:', currentService);
+      console.log('Request body:', { serviceId: selectedService });
+    }
+    
     await sendMessage({ 
       content: nextMessage, 
       role: 'user' 
@@ -180,6 +245,19 @@ export default function ChatWrapperBubbles() {
     
     // Clear the input after sending
     setInputValue('');
+    
+    // Fetch debug logs after sending
+    if (showDebug) {
+      setTimeout(async () => {
+        try {
+          const res = await fetch('/api/chat/debug');
+          const data = await res.json();
+          setDebugLogs(data.logs || []);
+        } catch (e) {
+          console.error('Failed to fetch debug logs:', e);
+        }
+      }, 1000);
+    }
   };
 
   if (authLoading || loadingServices) {
@@ -287,7 +365,34 @@ export default function ChatWrapperBubbles() {
             </div>
             <Select
               value={selectedService}
-              onChange={setSelectedService}
+              onChange={async (value) => {
+                console.log('=== Service Selected ===');
+                console.log('Service ID:', value);
+                const selected = availableServices.find(s => s.id === value);
+                console.log('Service Details:', selected);
+                console.log('Available Services:', availableServices);
+                setSelectedService(value);
+                
+                // Fetch service details when selected
+                if (value !== 'general') {
+                  fetchServiceDetails(value);
+                  
+                  // Send initial greeting only once
+                  if (messages.length === 0 && !hasGreetedRef.current) {
+                    hasGreetedRef.current = true;
+                    setTimeout(async () => {
+                      await sendMessage({ 
+                        content: 'Hello', 
+                        role: 'user' 
+                      }, {
+                        body: { serviceId: value }
+                      });
+                    }, 100);
+                  }
+                } else {
+                  setServiceDetails(null);
+                }
+              }}
               className="chat-service-select"
               style={{ width: '100%' }}
               size="large"
@@ -306,6 +411,34 @@ export default function ChatWrapperBubbles() {
                 )
               }))}
             />
+            {selectedService !== 'general' && (
+              <Button 
+                size="small" 
+                icon={<BugOutlined />}
+                onClick={async () => {
+                  console.log('Testing service endpoint...');
+                  try {
+                    const res = await fetch(`/api/test-service?id=${selectedService}`);
+                    const data = await res.json();
+                    console.log('=== SERVICE TEST RESULT ===');
+                    console.log(JSON.stringify(data, null, 2));
+                    
+                    // Show inputs/outputs specifically
+                    if (data.fullEndpoint?.data?.service) {
+                      console.log('=== SERVICE INPUTS ===');
+                      console.log(data.fullEndpoint.data.service.inputs);
+                      console.log('=== SERVICE OUTPUTS ===');
+                      console.log(data.fullEndpoint.data.service.outputs);
+                    }
+                  } catch (e) {
+                    console.error('Test failed:', e);
+                  }
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Test Service Data
+              </Button>
+            )}
           </div>
 
           {/* Chat Container */}
@@ -334,18 +467,26 @@ export default function ChatWrapperBubbles() {
                   margin: 'auto'
                 }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>{currentService.icon}</div>
-                  <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>
                     {currentService.name}
                   </div>
-                  <div style={{ fontSize: 14 }}>
+                  <div style={{ fontSize: 14, marginBottom: 16 }}>
                     {currentService.description}
                   </div>
                 </div>
               )}
               
-              {messages.map(m => {
+              {/* Deduplicate messages based on ID */}
+              {messages
+                .filter((m, index, self) => 
+                  index === self.findIndex(msg => msg.id === m.id)
+                )
+                .map((m, index) => {
                 const isUser = m.role === 'user';
                 const content = m.content || (m.parts && m.parts.find(p => p.type === 'text')?.text) || '';
+                
+                // Skip empty messages
+                if (!content) return null;
                 
                 return (
                   <div 
@@ -428,13 +569,14 @@ export default function ChatWrapperBubbles() {
               <Sender
                 value={inputValue}
                 onChange={setInputValue}
-                placeholder={`Ask ${currentService.name} anything...`}
+                placeholder={selectedService === 'general' ? 'Select a service to start' : 'Type your calculation request...'}
                 onSubmit={handleSend}
                 loading={isLoading}
                 onCancel={isLoading ? stop : undefined}
                 style={{ width: '100%' }}
                 allowSpeech={false}
                 submitType="enter"
+                disabled={selectedService === 'general'}
               />
             </div>
           </div>
