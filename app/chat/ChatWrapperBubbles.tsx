@@ -232,15 +232,15 @@ export default function ChatWrapperBubbles() {
   const handleSend = async (nextMessage: string) => {
     if (!nextMessage.trim() || isLoading) return;
     
+    // Clear the input immediately
+    setInputValue('');
+    
     await sendMessage({ 
       content: nextMessage, 
       role: 'user' 
     }, {
       body: selectedService === 'general' ? {} : { serviceId: selectedService }
     });
-    
-    // Clear the input after sending
-    setInputValue('');
   };
 
   if (authLoading || loadingServices) {

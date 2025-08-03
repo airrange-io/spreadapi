@@ -125,10 +125,17 @@ export async function POST(req) {
     let systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
 
 When a user asks for a calculation:
-1. Use the 'calculate' tool to get the result
-2. Show the result to the user
+1. Extract ALL provided values from their message
+2. If they mention percentages (like "5%"), automatically convert to decimals (0.05)
+3. Use the 'calculate' tool to get the result
+4. Show the result to the user
 
 IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user.
+
+CRITICAL: When users say percentages like "5%", "7%", etc:
+- Automatically convert them (5% → 0.05)
+- Do NOT ask for confirmation
+- Just use the converted value directly
 
 Current context:
 - Date: ${currentDate}
@@ -272,11 +279,13 @@ You are a helpful assistant in a CHAT conversation. Your responses should be:
 - Explicit about the results you found
 
 ### How to Handle Calculations:
-1. Check if the user provided all REQUIRED parameters
-2. If missing REQUIRED parameters, ASK for them before calculating
-3. Only use default values for OPTIONAL parameters
-4. Once you have all needed values, use the 'calculate' tool
+1. Extract ALL values from the user's message (including percentages)
+2. If user says "5%" for interest rate, that's 0.05 - don't ask again!
+3. Only ask for parameters that are ACTUALLY missing
+4. Once you have all needed values, use the 'calculate' tool immediately
 5. Present the results in a conversational way
+
+NEVER ask for clarification on values the user already provided!
 
 ### Required vs Optional Parameters:
 ${(() => {
@@ -305,7 +314,7 @@ ${(() => {
   // Check for percentage inputs
   const hasPercentage = serviceDetails.inputs.some(i => i.format === 'percentage');
   if (hasPercentage) {
-    rules.push('- **Percentages**: Convert to decimals (7% → 0.07, 10% → 0.10)');
+    rules.push('- **Percentages**: ALWAYS convert to decimals (5% → 0.05, 7% → 0.07, 10% → 0.10) - NEVER use whole numbers like 5 for 5%!');
   }
   
   // Check for optional parameters
@@ -328,6 +337,7 @@ ${(() => {
 - If missing ANY required values → ASK for them (don't assume)
 - If missing optional values → Use defaults (usually 0)
 - Example: "Show me $1000 at 7% over 20 years" → Missing monthly deposit (required) → ASK: "What monthly deposit amount would you like to use?"
+- CRITICAL: "5% interest" → Use interestrate: 0.05 (NOT 5!)
 
 Remember: You exist solely to help users with ${serviceDetails.name} calculations. Every interaction should move toward executing a calculation or clarifying results.
 
