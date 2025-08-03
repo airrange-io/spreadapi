@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import './main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -318,6 +318,17 @@ const ListsPage: React.FC = observer(() => {
 
               {/* Right side - Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
+                {/* Chat Button */}
+                <Button
+                  variant='filled'
+                  color="default"
+                  icon={<MessageOutlined />}
+                  onClick={() => router.push('/chat')}
+                  title="Chat with services"
+                >
+                  <span className="desktop-text">Chat</span>
+                </Button>
+
                 {/* MCP Settings Button */}
                 <Button
                   variant='filled'
