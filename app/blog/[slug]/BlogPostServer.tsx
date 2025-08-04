@@ -168,7 +168,7 @@ export default function BlogPostServer({ post, relatedPosts, locale = 'en' }: Bl
   
   return (
     <>
-      <Navigation />
+      <Navigation currentPage="blog" />
       <BreadcrumbNav title={post.title} locale={locale} />
       
       <article className="blog-post">
