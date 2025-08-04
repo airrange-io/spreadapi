@@ -101,7 +101,6 @@ export default function ChatWrapperBubbles() {
 
   // Simple useChat hook usage following Vercel's example
   const { messages, sendMessage, status, stop, error } = useChat({
-    api: '/api/chat',
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
       setTimeout(() => {
