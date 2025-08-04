@@ -418,15 +418,10 @@ export default function ChatWrapperBubbles() {
                 )
                 .map((m, index) => {
                 const isUser = m.role === 'user';
-                // Extract content from message
+                // Extract content from message parts
                 let content = '';
                 
-                // First try to get content directly
-                if (m.content) {
-                  content = m.content;
-                }
-                // If no direct content, check parts
-                else if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
+                if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
                   const textParts = [];
                   
                   // Process each part
