@@ -252,10 +252,10 @@ export default function ChatWrapperBubbles() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: 'white' }}>
       <Sidebar />
       
-      <Layout style={{ marginLeft: 0 }}>
+      <Layout style={{ marginLeft: 0, background: 'white' }}>
         {/* Header */}
         <div style={{
           background: 'white',
@@ -343,9 +343,6 @@ export default function ChatWrapperBubbles() {
         }}>
           {/* Service Selector */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ marginBottom: 8 }}>
-              <Text strong>Select a mode:</Text>
-            </div>
             <Select
               value={selectedService}
               onChange={async (value) => {
@@ -395,11 +392,12 @@ export default function ChatWrapperBubbles() {
           {/* Chat Container */}
           <div style={{
             flex: 1,
-            background: 'white',
+            background: '#fdfdfd',
             borderRadius: 8,
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            border: '1px solid #f0f0f0'
           }}>
             {/* Messages with Bubble component */}
             <div style={{ 
