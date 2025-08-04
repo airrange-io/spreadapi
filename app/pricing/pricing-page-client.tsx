@@ -275,7 +275,7 @@ export default function PricingPageClient() {
                         Custom integrations
                       </li>
                     </ul>
-                    <a href="mailto:sales@spreadapi.com" style={{
+                    <a href="mailto:sales@spreadapi.io" style={{
                       display: 'block',
                       textAlign: 'center',
                       padding: '12px 24px',
@@ -307,7 +307,7 @@ export default function PricingPageClient() {
                     Custom pricing for large organizations with specific requirements, 
                     dedicated support, and unlimited usage.
                   </p>
-                  <a href="mailto:sales@spreadapi.com" style={{
+                  <a href="mailto:sales@spreadapi.io" style={{
                     display: 'inline-block',
                     padding: '14px 32px',
                     background: '#9333EA',

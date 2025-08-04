@@ -12,8 +12,8 @@ export default function HreflangTags({ currentLocale, currentSlug, isBlogList }:
   const getHreflangUrl = (locale: string): string => {
     if (isBlogList) {
       return locale === 'en' 
-        ? `https://spreadapi.com/blog` 
-        : `https://spreadapi.com/blog/${locale}`;
+        ? `https://spreadapi.io/blog` 
+        : `https://spreadapi.io/blog/${locale}`;
     }
     
     if (currentSlug) {
@@ -21,8 +21,8 @@ export default function HreflangTags({ currentLocale, currentSlug, isBlogList }:
       const translatedSlug = translations[locale] || currentSlug;
       
       return locale === 'en'
-        ? `https://spreadapi.com/blog/${translatedSlug}`
-        : `https://spreadapi.com/blog/${locale}/${translatedSlug}`;
+        ? `https://spreadapi.io/blog/${translatedSlug}`
+        : `https://spreadapi.io/blog/${locale}/${translatedSlug}`;
     }
     
     return '';

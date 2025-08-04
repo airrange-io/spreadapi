@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const url = `https://spreadapi.com/blog/${slug}`;
+  const url = `https://spreadapi.io/blog/${slug}`;
 
   return {
     title: post.seoTitle || post.title,
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       siteName: 'SpreadAPI',
       images: [{
-        url: `https://spreadapi.com/api/og?title=${encodeURIComponent(post.title)}`,
+        url: `https://spreadapi.io/api/og?title=${encodeURIComponent(post.title)}`,
         width: 1200,
         height: 630,
         alt: post.title,
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: post.seoDescription || post.excerpt,
       site: '@spreadapi',
       creator: '@spreadapi',
-      images: [`https://spreadapi.com/api/og?title=${encodeURIComponent(post.title)}`],
+      images: [`https://spreadapi.io/api/og?title=${encodeURIComponent(post.title)}`],
     },
     alternates: {
       canonical: url,

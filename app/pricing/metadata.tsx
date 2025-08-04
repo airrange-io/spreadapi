@@ -8,6 +8,6 @@ export const metadata: Metadata = {
     title: 'SpreadAPI Pricing - Simple Plans for Every Need',
     description: 'Transform Excel into APIs with transparent pricing. Free tier available.',
     type: 'website',
-    url: 'https://spreadapi.com/pricing',
+    url: 'https://spreadapi.io/pricing',
   },
 };
