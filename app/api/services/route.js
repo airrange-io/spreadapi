@@ -257,7 +257,6 @@ export async function DELETE(request) {
     let workbookDeleted = false;
     if (serviceData.workbookUrl) {
       try {
-        console.log(`Attempting to delete workbook blob: ${serviceData.workbookUrl}`);
         
         // Check if we have the blob token
         const token = process.env.VERCEL_BLOB_READ_WRITE_TOKEN || 

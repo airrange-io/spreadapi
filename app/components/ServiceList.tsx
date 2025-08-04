@@ -131,7 +131,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             });
           }
         } catch (error) {
-          console.error('Error fetching demo service analytics:', error);
+          // Error fetching demo service analytics
         }
         
         setServices(demoServices);
@@ -193,7 +193,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
               });
             }
           } catch (error) {
-            console.error('Error fetching demo service analytics:', error);
+            // Error fetching demo service analytics
           }
           
           loadedServices.push(...demoServices);
@@ -220,7 +220,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     } catch (error: any) {
       // Only log non-401 errors
       if (error?.status !== 401) {
-        console.error('Error loading services:', error);
+        // Error loading services
         message.error('Failed to load services');
       }
     } finally {
@@ -242,7 +242,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         message.error('Failed to delete service');
       }
     } catch (error) {
-      console.error('Error deleting service:', error);
+      // Error deleting service
       message.error('Failed to delete service');
     }
   }, [message]);
@@ -435,7 +435,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           <Space direction="vertical" align="center">
             <Button type="primary" onClick={() => {
               const newId = generateServiceId(userId || 'test1234');
-              console.log('[ServiceList] Generated service ID:', newId);
               router.push(`/service/${newId}`);
             }}>
               Create Your First Service

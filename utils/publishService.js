@@ -21,7 +21,6 @@ function optimizeForService(fileData) {
 
   try {
     const sizeBefore = getObjectSize(data);
-    console.log("Size before optimization:", sizeBefore);
 
     // Remove named styles (not needed for calculations)
     if (data.namedStyles) {
@@ -77,12 +76,10 @@ function optimizeForService(fileData) {
     });
 
     sizeAfter = getObjectSize(data);
-    console.log("Size after optimization:", sizeAfter);
-    console.log("Size reduction:", ((sizeBefore - sizeAfter) / sizeBefore * 100).toFixed(1) + "%");
 
     return { data, dataSize: sizeAfter };
   } catch (error) {
-    console.error("Error optimizing for service:", error);
+    // Error optimizing for service
     return { data: fileData, dataSize: getObjectSize(fileData) };
   }
 }
@@ -174,8 +171,6 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     fileJson: optimizedWorkbook // The optimized spreadsheet data
   };
 
-  console.log(`Prepared service for publishing: ${service.inputs.length} inputs, ${service.outputs.length} outputs`);
-  console.log(`Workbook size: ${(optimized.dataSize / 1024).toFixed(1)}KB`);
 
   return publishData;
 }
@@ -203,15 +198,10 @@ export async function publishService(serviceId, publishData, tenant = 'test1234'
     
     const result = await response.json();
     
-    console.log(`Service ${result.status} successfully:`, {
-      apiId: result.apiId,
-      size: result.fileSize,
-      url: result.fileUrl
-    });
     
     return result;
   } catch (error) {
-    console.error('Error publishing service:', error);
+    // Error publishing service
     throw error;
   }
 }

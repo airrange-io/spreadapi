@@ -549,10 +549,7 @@ async function getResults(requestInfo) {
               value: input.value,
             });
           } catch (cellError) {
-            console.error(
-              `Error setting cell value for ${input.name}:`,
-              cellError
-            );
+            // Error setting cell value
             return getError(`error setting value for ${input.name}`);
           }
         }

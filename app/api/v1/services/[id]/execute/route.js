@@ -377,17 +377,7 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
       }
     };
     
-    // Log performance metrics for monitoring
-    if (process.env.NODE_ENV !== 'production' || withTables) {
-      console.log(`[calculateDirect] Performance metrics for ${serviceId}:`, {
-        totalTime: Date.now() - timeAll,
-        spreadJSLoad: timeSpreadJSLoad,
-        tableSheetLoad: timeTableSheetLoad,
-        hasTableSheets: withTables,
-        fromCache: fromProcessCache || fromRedisCache,
-        memory: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
-      });
-    }
+    // Performance metrics logging removed for production
     
     // Cache result if caching enabled
     if (useCaching) {

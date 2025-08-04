@@ -87,16 +87,7 @@ export async function POST(req) {
       // Use the centralized helper function
       serviceDetails = await getServiceDetails(serviceId, userId);
       
-      if (serviceDetails) {
-        console.log('Service details for chat:', {
-          id: serviceDetails.id,
-          name: serviceDetails.name,
-          hasInputs: !!serviceDetails.inputs,
-          inputCount: serviceDetails.inputs?.length || 0,
-          hasOutputs: !!serviceDetails.outputs
-        });
-      } else {
-        console.error('Service not found or unauthorized');
+      if (!serviceDetails) {
         
         // Return error response for missing services
         return new Response(
@@ -111,7 +102,7 @@ export async function POST(req) {
         );
       }
     } catch (error) {
-      console.error('Error fetching service details:', error);
+      // Error fetching service details
     }
 
     // Get current date and time with timezone
@@ -410,7 +401,7 @@ The button text should clearly show what calculation will be performed with the 
     return result.toUIMessageStreamResponse();
     
   } catch (error) {
-    console.error('API Error:', error);
+    // API Error occurred
     
     // Handle specific error types
     let errorMessage = 'An error occurred while processing your request.';

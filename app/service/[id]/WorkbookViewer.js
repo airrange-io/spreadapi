@@ -435,7 +435,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               setZoomLevel(props.initialZoom);
             }
             
-            console.log("Excel file imported successfully");
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
@@ -737,8 +736,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           spread.import(
             file,
             () => {
-              console.log("Excel file imported successfully");
-              // Mark workbook as changed after import
+                // Mark workbook as changed after import
               setChangeCount((prev) => {
                 const newCount = prev + 1;
                 changeCountRef.current = newCount;
@@ -750,7 +748,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               resolve(true);
             },
             (error) => {
-              console.error("Error importing Excel:", error);
+              // Error importing Excel
               reject(error);
             },
             {
