@@ -100,7 +100,7 @@ export default function ChatWrapperBubbles() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Simple useChat hook usage following Vercel's example
-  const { messages, sendMessage, isLoading, stop, error } = useChat({
+  const { messages, sendMessage, status, stop, error } = useChat({
     api: '/api/chat',
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
@@ -112,6 +112,9 @@ export default function ChatWrapperBubbles() {
       console.error('Chat error:', error);
     },
   });
+  
+  // Derive isLoading from status
+  const isLoading = status === 'submitted' || status === 'streaming';
   
 
   // Send greeting when service is selected
