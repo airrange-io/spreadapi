@@ -35,8 +35,8 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Verify ownership (allow demo-user to access demo service)
-    const isDemoAccess = userId === DEMO_USER_ID && isDemoService(id);
+    // Verify ownership (allow demo-user or unauthenticated users to access demo service)
+    const isDemoAccess = isDemoService(id) && (!userId || userId === DEMO_USER_ID);
     if (serviceData.userId !== userId && !isDemoAccess) {
       return NextResponse.json(
         { error: 'Unauthorized' },

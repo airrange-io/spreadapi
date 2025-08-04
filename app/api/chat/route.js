@@ -88,6 +88,13 @@ export async function POST(req) {
       serviceDetails = await getServiceDetails(serviceId, userId);
       
       if (serviceDetails) {
+        console.log('Service details for chat:', {
+          id: serviceDetails.id,
+          name: serviceDetails.name,
+          hasInputs: !!serviceDetails.inputs,
+          inputCount: serviceDetails.inputs?.length || 0,
+          hasOutputs: !!serviceDetails.outputs
+        });
       } else {
         console.error('Service not found or unauthorized');
         
@@ -384,7 +391,7 @@ The button text should clearly show what calculation will be performed with the 
       messages: recentMessages,
       system: systemPrompt,
       temperature: 0.3,
-      maxTokens: 1500,
+      maxTokens: 2000,
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
       maxSteps: 5,

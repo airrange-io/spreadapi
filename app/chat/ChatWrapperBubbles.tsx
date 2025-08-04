@@ -100,7 +100,7 @@ export default function ChatWrapperBubbles() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Simple useChat hook usage following Vercel's example
-  const { messages, sendMessage, status, stop, error } = useChat({
+  const { messages, sendMessage, status, stop, error, setMessages } = useChat({
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
       setTimeout(() => {
@@ -116,23 +116,20 @@ export default function ChatWrapperBubbles() {
   const isLoading = status === 'submitted' || status === 'streaming';
   
 
-  // Send greeting when service is selected
+  // Send greeting when service is auto-selected (single service scenario)
   useEffect(() => {
-    if (selectedService && selectedService !== 'general' && !hasGreetedRef.current && !loadingServices) {
-      // Only send greeting if we have no messages
-      if (messages.length === 0) {
-        hasGreetedRef.current = true;
-        // Send greeting message
-        setTimeout(async () => {
-          await sendMessage({
-            text: '[GREETING]'
-          }, {
-            body: { serviceId: selectedService, initialGreeting: true }
-          });
-        }, 500);
-      }
+    if (selectedService && selectedService !== 'general' && !hasGreetedRef.current && !loadingServices && messages.length === 0 && userServices.length === 1) {
+      hasGreetedRef.current = true;
+      // Send greeting message for auto-selected single service
+      setTimeout(async () => {
+        await sendMessage({
+          text: '[GREETING]'
+        }, {
+          body: { serviceId: selectedService, initialGreeting: true }
+        });
+      }, 500);
     }
-  }, [selectedService, loadingServices]);
+  }, [selectedService, loadingServices, userServices.length]);
 
   // Load services
   useEffect(() => {
@@ -370,21 +367,25 @@ export default function ChatWrapperBubbles() {
               onChange={async (value) => {
                 setSelectedService(value);
                 
+                // Clear messages when switching services
+                setMessages([]);
+                
+                // Reset greeting flag to allow new greeting
+                hasGreetedRef.current = false;
+                
                 // Fetch service details when selected
                 if (value !== 'general') {
                   fetchServiceDetails(value);
                   
-                  // Trigger AI greeting without user message
-                  if (messages.length === 0 && !hasGreetedRef.current) {
+                  // Always trigger AI greeting for non-general services
+                  setTimeout(async () => {
                     hasGreetedRef.current = true;
-                    setTimeout(async () => {
-                      await sendMessage({
-                        text: '[GREETING]'
-                      }, {
-                        body: { serviceId: value, initialGreeting: true }
-                      });
-                    }, 100);
-                  }
+                    await sendMessage({
+                      text: '[GREETING]'
+                    }, {
+                      body: { serviceId: value, initialGreeting: true }
+                    });
+                  }, 100);
                 } else {
                   setServiceDetails(null);
                 }
@@ -392,6 +393,7 @@ export default function ChatWrapperBubbles() {
               className="chat-service-select"
               style={{ width: '100%' }}
               size="large"
+              disabled={userServices.length === 1}
               optionLabelProp="label"
               options={availableServices.map(service => ({
                 value: service.id,
@@ -454,7 +456,11 @@ export default function ChatWrapperBubbles() {
                   if (textParts.length > 0) {
                     content = textParts.join('\n');
                   }
+                } else if (m.content) {
+                  // Fallback to direct content if no parts
+                  content = m.content;
                 }
+                
                 
                 
                 
