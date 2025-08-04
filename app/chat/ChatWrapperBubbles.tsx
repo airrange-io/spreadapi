@@ -359,9 +359,8 @@ export default function ChatWrapperBubbles() {
                   if (messages.length === 0 && !hasGreetedRef.current) {
                     hasGreetedRef.current = true;
                     setTimeout(async () => {
-                      await sendMessage({ 
-                        content: '[GREETING]', 
-                        role: 'user' 
+                      await sendMessage({
+                        text: '[GREETING]'
                       }, {
                         body: { serviceId: value, initialGreeting: true }
                       });
@@ -493,12 +492,8 @@ export default function ChatWrapperBubbles() {
                 <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   <Bubble
                     placement="start"
-                    content={
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Spin size="small" />
-                        <span>Thinking...</span>
-                      </div>
-                    }
+                    loading={true}
+                    content="..."
                     avatar={
                       <Avatar
                         style={{ backgroundColor: '#f0f0f0', color: '#333' }}
