@@ -347,21 +347,39 @@ GOLDEN RULE: You are in a CONVERSATION. When you use a tool, you must TELL THE U
 When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
 1. Welcome to the service
 2. List each parameter on a new line with bullet points, formatted as: • <span style="color: #502D80; font-weight: bold;">Parameter Name</span> (required/optional)
-3. Ask what they'd like to calculate
+3. Provide 2-3 clickable examples with realistic values based on the service type
+4. Ask what they'd like to calculate
 
-Example format:
-"Welcome! This service helps you calculate [description]. I'll need:
+Create 2-3 example buttons with concrete, realistic values based on the service parameters. Each button should:
+- Show actual numbers, not generic text
+- Use realistic values that make sense for the calculation type
+- Include all required parameters in the example text
 
-• <span style="color: #502D80; font-weight: bold;">Interest Rate</span> (required)
-• <span style="color: #502D80; font-weight: bold;">Monthly Deposit</span> (required)
-• <span style="color: #502D80; font-weight: bold;">Months of Payment</span> (required)
-• <span style="color: #502D80; font-weight: bold;">Starting Amount</span> (optional)
+IMPORTANT: Use natural language in the data-example attribute, not parameter names. Examples:
+- For compound interest: "Calculate $5,000 starting amount with 7% interest rate, $200 monthly deposits for 10 years"
+- For mortgages: "Calculate monthly payment for $300,000 loan at 6.5% for 30 years"
+- For investments: "Show returns on $10,000 investment at 8% annual return over 20 years"
 
-What would you like to calculate?"`;
+Format:
+<button class="example-btn" data-example="[Natural language with specific values]">📊 [Label]: [Actual values shown]</button>
+
+Based on the service parameters, generate appropriate example buttons. Each example should:
+- Include concrete, realistic values for ALL required parameters
+- Use natural, conversational language in the data-example attribute
+- Show the actual values prominently in the button text
+
+For numeric parameters, use these realistic ranges:
+- Interest rates: 4-8% (show as percentages)
+- Initial amounts: $500-$10,000
+- Monthly deposits: $50-$500
+- Time periods: 5-30 years (convert to months if needed)
+- Loan amounts: $100,000-$500,000
+
+The button text should clearly show what calculation will be performed with the specific values.`;
     }
     
     // Use streamText with v5 features for better tool handling
-    const result = await streamText({
+    const result = streamText({
       model: openai('gpt-4o-mini'),
       messages: recentMessages,
       system: systemPrompt,
@@ -371,7 +389,7 @@ What would you like to calculate?"`;
       toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
       maxSteps: 5,
       // Use stopWhen to ensure the AI continues after tool calls
-      stopWhen: ({ finishReason, usage, stepCount }) => {
+      stopWhen: ({ finishReason, stepCount }) => {
         // Don't stop after tool calls - continue to generate a response
         if (finishReason === 'tool-calls' && stepCount < 3) {
           return false; // Continue

@@ -243,6 +243,28 @@ export default function ChatWrapperBubbles() {
     });
   };
 
+  // Handle clicks on example buttons
+  useEffect(() => {
+    const handleExampleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.classList.contains('example-btn')) {
+        const example = target.getAttribute('data-example');
+        if (example && !isLoading) {
+          setInputValue(example);
+          // Automatically send the message
+          setTimeout(() => handleSend(example), 100);
+        }
+      }
+    };
+
+    // Add event listener for bubble content clicks
+    document.addEventListener('click', handleExampleClick);
+    
+    return () => {
+      document.removeEventListener('click', handleExampleClick);
+    };
+  }, [isLoading, selectedService]);
+
   if (authLoading || loadingServices) {
     return (
       <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

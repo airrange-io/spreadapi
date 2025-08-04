@@ -90,3 +90,32 @@
 .chat-service-select .ant-select-selection-item {
   font-size: 14px !important;
 }
+
+/* Example button styles */
+.example-btn {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  margin: 8px 0;
+  background: #f8f6fc;
+  border: 1px solid #e8e5f0;
+  border-radius: 12px;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.example-btn:hover {
+  background: #f0ebf8;
+  border-color: #502D80;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(80, 45, 128, 0.1);
+}
+
+.example-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
