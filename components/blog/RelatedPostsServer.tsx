@@ -4,10 +4,11 @@ import React from 'react';
 interface RelatedPost {
   slug: string;
   title: string;
-  excerpt: string;
-  date: string;
-  readTime: string;
-  tags: string[];
+  excerpt?: string;
+  date?: string;
+  readTime?: string;
+  tags?: string[];
+  category?: string;
 }
 
 interface RelatedPostsProps {
