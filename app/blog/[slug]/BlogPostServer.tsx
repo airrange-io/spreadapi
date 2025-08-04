@@ -13,10 +13,11 @@ import '../blog.css';
 interface RelatedPost {
   slug: string;
   title: string;
-  excerpt: string;
-  date: string;
-  readTime: string;
-  tags: string[];
+  excerpt?: string;
+  date?: string;
+  readTime?: string;
+  tags?: string[];
+  category?: string;
 }
 
 interface BlogPostServerProps {
@@ -209,7 +210,7 @@ export default function BlogPostServer({ post, relatedPosts, locale = 'en' }: Bl
                 day: 'numeric' 
               })}</time>
               <span>•</span>
-              <span>{post.readTime}</span>
+              <span>{post.readingTime} min read</span>
             </div>
           </div>
         </div>

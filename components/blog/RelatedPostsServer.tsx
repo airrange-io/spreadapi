@@ -76,29 +76,37 @@ export default function RelatedPostsServer({ posts, currentSlug }: RelatedPostsP
                   lineHeight: 1.4
                 }}>{post.title}</h3>
                 
-                <p style={{
-                  color: '#6b7280',
-                  lineHeight: 1.6,
-                  marginBottom: '1rem',
-                  flex: 1
-                }}>{post.excerpt}</p>
+                {post.excerpt && (
+                  <p style={{
+                    color: '#6b7280',
+                    lineHeight: 1.6,
+                    marginBottom: '1rem',
+                    flex: 1
+                  }}>{post.excerpt}</p>
+                )}
                 
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  fontSize: '0.875rem',
-                  color: '#9ca3af',
-                  marginTop: 'auto'
-                }}>
-                  <time>{new Date(post.date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}</time>
-                  <span>•</span>
-                  <span>{post.readTime}</span>
-                </div>
+                {(post.date || post.readTime) && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    fontSize: '0.875rem',
+                    color: '#9ca3af',
+                    marginTop: 'auto'
+                  }}>
+                    {post.date && (
+                      <>
+                        <time>{new Date(post.date).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}</time>
+                        {post.readTime && <span>•</span>}
+                      </>
+                    )}
+                    {post.readTime && <span>{post.readTime}</span>}
+                  </div>
+                )}
               </Link>
             </article>
           ))}
