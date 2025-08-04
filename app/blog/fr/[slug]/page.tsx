@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import BlogPostClient from '../../[slug]/BlogPostClient';
+import BlogPostServer from '../../[slug]/BlogPostServer';
 import { getPostData, getSortedPostsData } from '@/lib/blog';
 import { getSlugTranslations } from '@/lib/translations/slug-mapping';
 import RelatedPosts from '@/components/blog/RelatedPosts';
@@ -93,5 +93,5 @@ export default async function FrenchBlogPostPage({ params }: Props) {
       excerpt: p.excerpt
     }));
 
-  return <BlogPostClient post={post} relatedPosts={relatedPosts} locale="fr" />;
+  return <BlogPostServer post={post} relatedPosts={relatedPosts} locale="fr" />;
 }

@@ -1,7 +1,4 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React from 'react';
 
 interface TocItem {
   id: string;
@@ -9,84 +6,50 @@ interface TocItem {
   level: number;
 }
 
-interface TableOfContentsProps {
+interface TableOfContentsStaticProps {
   content: string;
 }
 
-export default function TableOfContents({ content }: TableOfContentsProps) {
-  const [tocItems, setTocItems] = useState<TocItem[]>([]);
-  const [activeId, setActiveId] = useState<string>('');
-  useEffect(() => {
-    // Extract headings from content
-    const extractHeadings = () => {
-      const headingRegex = /^(#{2,3})\s+(.+)$/gm;
-      const items: TocItem[] = [];
-      const idCounts: { [key: string]: number } = {};
-      let match;
+// Server component - no client-side JavaScript needed for initial render
+export default function TableOfContentsStatic({ content }: TableOfContentsStaticProps) {
+  // Extract headings at render time (server-side)
+  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+  const items: TocItem[] = [];
+  const idCounts: { [key: string]: number } = {};
+  let match;
 
-      while ((match = headingRegex.exec(content)) !== null) {
-        const level = match[1].length;
-        const text = match[2].trim();
-        let id = text
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-');
-        
-        // Make IDs unique by adding a counter if duplicate
-        if (idCounts[id]) {
-          idCounts[id]++;
-          id = `${id}-${idCounts[id]}`;
-        } else {
-          idCounts[id] = 1;
-        }
-        
-        items.push({ id, text, level });
-      }
+  while ((match = headingRegex.exec(content)) !== null) {
+    const level = match[1].length;
+    const text = match[2].trim();
+    let id = text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-');
+    
+    // Make IDs unique by adding a counter if duplicate
+    if (idCounts[id]) {
+      idCounts[id]++;
+      id = `${id}-${idCounts[id]}`;
+    } else {
+      idCounts[id] = 1;
+    }
+    
+    items.push({ id, text, level });
+  }
 
-      setTocItems(items);
-    };
-
-    extractHeadings();
-  }, [content]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        });
-      },
-      {
-        rootMargin: '-20% 0% -70% 0%',
-      }
-    );
-
-    // Observe all headings
-    tocItems.forEach((item) => {
-      const element = document.getElementById(item.id);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [tocItems]);
-
-  if (tocItems.length < 3) {
+  if (items.length < 3) {
     // Don't show TOC for short articles
     return null;
   }
 
   return (
-    <nav className="table-of-contents">
+    <nav className="table-of-contents" data-toc-items={JSON.stringify(items)}>
       <h3 className="toc-title">Table of Contents</h3>
       <ul className="toc-list">
-        {tocItems.map((item) => (
+        {items.map((item) => (
           <li
             key={item.id}
-            className={`toc-item toc-level-${item.level} ${
-              activeId === item.id ? 'active' : ''
-            }`}
+            className={`toc-item toc-level-${item.level}`}
           >
             <a href={`#${item.id}`} className="toc-link">
               {item.text}
@@ -147,6 +110,7 @@ export default function TableOfContents({ content }: TableOfContentsProps) {
           color: #9333EA;
         }
 
+        /* Active state will be handled by client-side enhancement */
         .toc-item.active .toc-link {
           color: #9333EA;
           font-weight: 600;

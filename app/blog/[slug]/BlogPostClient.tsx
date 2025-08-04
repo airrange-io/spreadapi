@@ -4,7 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { BlogPost } from '@/lib/blog';
 import RelatedPosts from '@/components/blog/RelatedPosts';
-import TableOfContents from '@/components/blog/TableOfContents';
+import TableOfContentsStatic from '@/components/blog/TableOfContentsStatic';
+import TableOfContentsEnhancer from '@/components/blog/TableOfContentsEnhancer';
 import Navigation from '@/components/Navigation';
 import '../blog.css';
 
@@ -345,7 +346,9 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
             backgroundColor: 'white',
             padding: '48px',
             borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            minWidth: 0,
+            overflow: 'hidden'
           }}>
             {formatContent(post.content)}
             
@@ -373,11 +376,10 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
             borderRadius: '12px',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             maxHeight: 'calc(100vh - 120px)',
-            overflowY: 'hidden'
+            overflowY: 'auto'
           }}>
-            <div style={{ overflowY: 'hidden' }}>
-              <TableOfContents content={post.content} />
-            </div>
+            <TableOfContentsStatic content={post.content} />
+            <TableOfContentsEnhancer />
           </aside>
         </div>
       </div>

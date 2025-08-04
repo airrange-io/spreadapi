@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPostData, getSortedPostsData } from '@/lib/blog';
 import { getRecommendedPosts } from '@/lib/related-posts';
-import BlogPostClient from './BlogPostClient';
+import BlogPostServer from './BlogPostServer';
 
 export async function generateStaticParams() {
   const posts = getSortedPostsData();
@@ -90,7 +90,7 @@ export default async function BlogPostPage({ params }: Props) {
       <link rel="preload" href="/fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       <link rel="preload" href="/fonts/Satoshi-Medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
-      <BlogPostClient post={post} relatedPosts={relatedPosts} />
+      <BlogPostServer post={post} relatedPosts={relatedPosts} />
     </>
   );
 }

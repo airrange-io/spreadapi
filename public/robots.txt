@@ -24,6 +24,7 @@ Allow: /pricing
 
 # Sitemaps
 Sitemap: https://spreadapi.io/sitemap.xml
+Sitemap: https://spreadapi.io/blog/feed.xml
 
 # Specific rules for major search engines
 User-agent: Googlebot

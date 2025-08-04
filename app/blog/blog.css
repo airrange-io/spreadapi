@@ -507,10 +507,10 @@
 .blog-post-content pre {
   background: #1E1E1E;
   color: #E5E7EB;
-  padding: 24px;
+  padding: 16px 20px;
   border-radius: 12px;
   overflow-x: auto;
-  margin: 2rem 0;
+  margin: 1rem 0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -570,6 +570,143 @@
   font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
   line-height: 1.5;
   tab-size: 2;
+  max-width: 100%;
+}
+
+/* Prevent content overflow */
+.blog-post-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Related posts styling */
+.related-post-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.related-post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .related-posts-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Table of Contents styling */
+.table-of-contents {
+  position: sticky;
+  top: 2rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+.toc-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item {
+  margin: 0;
+}
+
+.toc-level-3 {
+  padding-left: 1.5rem;
+}
+
+.toc-link {
+  display: block;
+  padding: 0.5rem 0;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  padding-left: 1rem;
+  margin-left: -1rem;
+}
+
+.toc-link:hover {
+  color: #9333EA;
+}
+
+/* Active state for TOC (set by client enhancer) */
+.toc-item.active .toc-link {
+  color: #9333EA;
+  font-weight: 600;
+  border-left-color: #9333EA;
+  background: rgba(147, 51, 234, 0.05);
+}
+
+/* Mobile: Hide TOC */
+@media (max-width: 1024px) {
+  .table-of-contents {
+    display: none;
+  }
+}
+
+/* Scrollbar styling for TOC */
+.table-of-contents::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-of-contents::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.table-of-contents::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.table-of-contents::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Override pre styling for better readability */
+.blog-post-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure code doesn't overflow */
+.blog-post-content pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+
+.blog-post-content img,
+.blog-post-content iframe,
+.blog-post-content video,
+.blog-post-content table {
+  max-width: 100%;
+  height: auto;
+}
+
+.blog-post-content code {
+  word-break: break-word;
 }
 
 .blog-post-content code {
