@@ -456,9 +456,6 @@ export default function ChatWrapperBubbles() {
                   if (textParts.length > 0) {
                     content = textParts.join('\n');
                   }
-                } else if (m.content) {
-                  // Fallback to direct content if no parts
-                  content = m.content;
                 }
                 
                 

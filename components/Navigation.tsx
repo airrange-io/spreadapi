@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import './Navigation.css';
 
@@ -56,7 +57,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
     <nav className={`navigation-component ${className}`}>
       <div className="navigation-container">
         <Link href="/product" className="navigation-logo-link">
-          <img src="/icons/logo-full.svg" alt="SpreadAPI" className="navigation-logo" />
+          <Image 
+            src="/icons/logo-full.svg" 
+            alt="SpreadAPI" 
+            className="navigation-logo"
+            width={120}
+            height={32}
+            priority
+          />
         </Link>
 
         <div className="navigation-menu">
