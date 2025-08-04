@@ -26,9 +26,9 @@ interface BlogPostServerProps {
 }
 
 // Format content - runs on server
-function formatContent(content: string): JSX.Element {
+function formatContent(content: string): React.ReactElement {
   const lines = content.split('\n');
-  const elements: JSX.Element[] = [];
+  const elements: React.ReactElement[] = [];
   let inCodeBlock = false;
   let codeContent: string[] = [];
   let codeLanguage = '';
