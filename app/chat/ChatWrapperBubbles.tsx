@@ -124,9 +124,8 @@ export default function ChatWrapperBubbles() {
         hasGreetedRef.current = true;
         // Send greeting message
         setTimeout(async () => {
-          await sendMessage({ 
-            content: '[GREETING]', 
-            role: 'user' 
+          await sendMessage({
+            text: '[GREETING]'
           }, {
             body: { serviceId: selectedService, initialGreeting: true }
           });
@@ -237,9 +236,8 @@ export default function ChatWrapperBubbles() {
     // Clear the input immediately
     setInputValue('');
     
-    await sendMessage({ 
-      content: nextMessage, 
-      role: 'user' 
+    await sendMessage({
+      text: nextMessage
     }, {
       body: selectedService === 'general' ? {} : { serviceId: selectedService }
     });
