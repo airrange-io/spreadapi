@@ -550,6 +550,16 @@ p {
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
 }
 
+.header-image-placeholder-2 {
+  width: 100%;
+  max-width: 50rem;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: '2px solid #E8E1FF';
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08)
+}
+
 .header-image-placeholder svg {
   width: 100%;
   height: auto;

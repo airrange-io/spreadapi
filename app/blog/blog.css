@@ -662,23 +662,10 @@
   }
 }
 
-/* Scrollbar styling for TOC */
-.table-of-contents::-webkit-scrollbar {
-  width: 6px;
-}
-
-.table-of-contents::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.table-of-contents::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.table-of-contents::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+/* Let macOS handle scrollbar naturally */
+.table-of-contents {
+  scrollbar-width: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Override pre styling for better readability */

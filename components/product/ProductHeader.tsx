@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ProductHeaderProps {
   subheading?: string;
@@ -82,16 +83,19 @@ export default function ProductHeader({
               </div>
               {showImage && (
                 <div className="header-image-wrapper">
-                  <div className="header-image-placeholder">
-                    <svg viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="800" height="500" fill="#F8F6FE" />
-                      <rect x="50" y="50" width="700" height="400" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
-                      <rect x="80" y="80" width="200" height="340" rx="4" fill="#F8F6FE" />
-                      <rect x="300" y="80" width="200" height="160" rx="4" fill="#F8F6FE" />
-                      <rect x="520" y="80" width="200" height="220" rx="4" fill="#F8F6FE" />
-                      <rect x="300" y="260" width="200" height="160" rx="4" fill="#F8F6FE" />
-                      <rect x="520" y="320" width="200" height="100" rx="4" fill="#F8F6FE" />
-                    </svg>
+                  <div className="header-image-placeholder-2" style={{ backgroundColor: '#fdfdfd', position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '40px', border: '1px solid #E8E1FF' }}>
+                    <Image
+                      src="/images/product/product_hero.png"
+                      alt="SpreadAPI Product Dashboard"
+                      width={1000}
+                      height={600}
+                      style={{
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '8px'
+                      }}
+                      priority
+                    />
                   </div>
                 </div>
               )}

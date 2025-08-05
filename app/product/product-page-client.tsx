@@ -57,6 +57,65 @@ const ProductPage: React.FC = () => {
               showImage={true}
             />
 
+            {/* Developer Hook Section */}
+            <section style={{ 
+              padding: '0 0 80px 0'
+            }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div style={{ 
+                    maxWidth: '700px', 
+                    margin: '0 auto',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ 
+                      fontSize: '20px',
+                      lineHeight: '1.6',
+                      color: '#374151',
+                      marginBottom: '16px'
+                    }}>
+                      <span style={{ fontWeight: '600', color: '#1f2937' }}>"Just convert this Excel to code,"</span> they said.
+                    </p>
+                    
+                    <p style={{
+                      fontSize: '18px',
+                      lineHeight: '1.6',
+                      color: '#6b7280',
+                      marginBottom: '24px'
+                    }}>
+                      Six months later, you're debugging why JavaScript is off by $0.03.
+                    </p>
+                    
+                    <Link 
+                      href="/blog/stop-reimplementing-excel-business-logic-javascript"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        color: '#9333EA',
+                        textDecoration: 'none',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        gap: '6px',
+                        borderBottom: '2px solid transparent',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderBottomColor = '#9333EA';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderBottomColor = 'transparent';
+                      }}
+                    >
+                      Why developers waste months reimplementing Excel
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.5 3.5L3.5 10.5M10.5 3.5V9.5M10.5 3.5H4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
               <div className="padding-global">
@@ -862,73 +921,6 @@ const ProductPage: React.FC = () => {
                           <h3>Developers</h3>
                         </div>
                         <p>Skip rebuilding Excel logic in code. Use spreadsheets as calculation engines via API.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Use Case Examples Section */}
-            <section className="section-home-testimonials">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="text-align-center">
-                        <div className="max-width-medium align-center">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Use Case Examples</div>
-                            </div>
-                          </div>
-                          <div className="margin-bottom margin-small">
-                            <h2>
-                              How Teams Could Use <span className="text-color-primary">SpreadAPI</span>
-                            </h2>
-                          </div>
-                          <p className="text-size-medium">Discover how different teams could transform their Excel-based processes with AI integration.</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="testimonials-component">
-                      <div className="testimonials-item">
-                        <div className="testimonial-content">
-                          <div className="margin-bottom margin-medium">
-                            <div className="heading-style-h5">Sales teams could transform complex pricing spreadsheets into APIs that AI sales assistants can access instantly. Imagine quote generation dropping from hours to seconds while maintaining 100% accuracy using your existing Excel formulas.</div>
-                          </div>
-                        </div>
-                        <div className="testimonial-author-wrapper">
-                          <div className="testimonial-author-image-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M24 14V24L30 27M33 24C33 28.9706 28.9706 33 24 33C19.0294 33 15 28.9706 15 24C15 19.0294 19.0294 15 24 15C28.9706 15 33 19.0294 33 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                          <div className="testimonial-author-content-wrapper">
-                            <p className="heading-style-h6">Sales Teams</p>
-                            <p>Complex Pricing Calculations</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="testimonials-item">
-                        <div className="testimonial-content">
-                          <div className="margin-bottom margin-medium">
-                            <div className="heading-style-h5">Financial advisors could enable AI assistants to run portfolio scenarios using their proprietary Excel models. The AI gets calculation power while sensitive formulas stay secure—perfect for compliance requirements.</div>
-                          </div>
-                        </div>
-                        <div className="testimonial-author-wrapper">
-                          <div className="testimonial-author-image-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="24" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M15 20H33M15 28H33M19 16V32M29 16V32M13 24C13 19.5817 16.5817 16 21 16H27C31.4183 16 35 19.5817 35 24C35 28.4183 31.4183 32 27 32H21C16.5817 32 13 28.4183 13 24Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                          <div className="testimonial-author-content-wrapper">
-                            <p className="heading-style-h6">Financial Services</p>
-                            <p>Portfolio Analysis & Compliance</p>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>

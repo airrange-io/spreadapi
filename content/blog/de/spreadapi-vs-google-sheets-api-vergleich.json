@@ -1,12 +1,12 @@
 {
   "title": "SpreadAPI vs Google Sheets API: Wann welches Tool verwenden",
-  "date": "2025-02-02",
+  "date": "2025-06-30",
   "author": "SpreadAPI Team",
-  "category": "Comparison", 
+  "category": "Comparison",
   "tags": [
     "google sheets api",
     "spreadapi",
-    "api comparison", 
+    "api comparison",
     "spreadsheet api",
     "calculation engine"
   ],
