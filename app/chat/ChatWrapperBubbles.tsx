@@ -150,7 +150,7 @@ export default function ChatWrapperBubbles() {
               icon: '📊'
             }));
           
-          if (loadedServices.length === 0 && !isAuthenticated) {
+          if (loadedServices.length === 0) {
             loadedServices = DEMO_SERVICES;
           }
           
@@ -164,26 +164,22 @@ export default function ChatWrapperBubbles() {
             
           }
         } else {
-          // If API fails and user is not authenticated, use demo services
-          if (!isAuthenticated) {
-            setUserServices(DEMO_SERVICES);
-            // Auto-select if only one demo service
-            if (DEMO_SERVICES.length === 1) {
-              setSelectedService(DEMO_SERVICES[0].id);
-              
-              // No auto-greeting
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load services:', error);
-        // On error, use demo services for non-authenticated users
-        if (!isAuthenticated) {
+          // If API fails, use demo services
           setUserServices(DEMO_SERVICES);
           // Auto-select if only one demo service
           if (DEMO_SERVICES.length === 1) {
             setSelectedService(DEMO_SERVICES[0].id);
+            
+            // No auto-greeting
           }
+        }
+      } catch (error) {
+        console.error('Failed to load services:', error);
+        // On error, use demo services as fallback
+        setUserServices(DEMO_SERVICES);
+        // Auto-select if only one demo service
+        if (DEMO_SERVICES.length === 1) {
+          setSelectedService(DEMO_SERVICES[0].id);
         }
       } finally {
         setLoadingServices(false);
@@ -220,7 +216,7 @@ export default function ChatWrapperBubbles() {
   
   const availableServices = [
     generalAIOption,
-    ...(isAuthenticated ? userServices : DEMO_SERVICES)
+    ...userServices
   ];
   
   const currentService = selectedService === 'general' 

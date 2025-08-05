@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'),
   title: "SpreadAPI | Spreadsheet calculations as a service",
   description: "High-performance spreadsheet API service",
-  manifest: "/manifest.json",
+  applicationName: "SpreadAPI",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   },
   other: {
     "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-title": "SpreadAPI",
   },
   formatDetection: {
     telephone: false,
