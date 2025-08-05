@@ -215,20 +215,8 @@ export default function BlogPostServer({ post, relatedPosts, locale = 'en' }: Bl
           </div>
         </div>
 
-        <div className="blog-post-container" style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 2rem 4rem',
-          display: 'grid',
-          gridTemplateColumns: '1fr 300px',
-          gap: '3rem',
-          alignItems: 'start'
-        }}>
+        <div className="blog-post-container">
           <article className="blog-post-content" style={{
-            backgroundColor: 'white',
-            padding: '48px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
             minWidth: 0,
             overflow: 'hidden'
           }}>

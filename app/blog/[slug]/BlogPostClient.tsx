@@ -267,7 +267,6 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
               color: '#4B5563',
               fontWeight: '500',
               maxWidth: '400px',
-              whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis'
             }}>
