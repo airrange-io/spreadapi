@@ -557,7 +557,7 @@ p {
   border-radius: 16px;
   overflow: hidden;
   border: '2px solid #E8E1FF';
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08)
+  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.08)
 }
 
 .header-image-placeholder svg {
