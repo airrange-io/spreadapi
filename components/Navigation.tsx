@@ -11,7 +11,7 @@ const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitche
 });
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs' | 'ai-security-control';
+  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'ai-security-control';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
@@ -39,8 +39,6 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
     { label: 'How it Works', path: '/product/how-excel-api-works', key: 'how-excel-api-works' },
     { label: 'AI Integration', path: '/product/excel-ai-integration', key: 'excel-ai-integration' },
     { label: 'Blog', path: '/blog', key: 'blog' },
-    { label: 'Pricing', path: '/pricing', key: 'pricing' },
-    { label: 'Docs', path: '/docs', key: 'docs' },
   ];
 
   // Filter out the current page from the menu
