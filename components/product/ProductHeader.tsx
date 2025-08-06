@@ -45,7 +45,7 @@ export default function ProductHeader({
                       <h1>{title}</h1>
                     </div>
                     {description && (
-                      <p className="text-size-medium" style={{ maxWidth: '650px', margin: '0 auto' }}>
+                      <p className="text-size-medium" style={{ maxWidth: '680px', margin: '0 auto' }}>
                         {description}
                       </p>
                     )}

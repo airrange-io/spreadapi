@@ -33,8 +33,8 @@ const ProductPage: React.FC = () => {
             {/* Hero Section */}
             <ProductHeader
               subheading="Excel as a Web Service"
-              title={<>Turn Excel Into APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
-              description="Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations."
+              title={<>Turn Excel Into Live APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
+              description="Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic."
               primaryButtonText="Create your first free Excel API"
               primaryButtonHref="/"
               secondaryButtonText="View Documentation"
@@ -51,7 +51,7 @@ const ProductPage: React.FC = () => {
                       Why AI Struggles with <span style={{ color: '#9333EA' }}>Spreadsheet Math</span>
                     </h2>
                     <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
-                      AI's honest request for help
+                      We asked AI about its spreadsheet skills — here’s what it honestly told us.
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
                       <div style={{
@@ -503,7 +503,10 @@ const ProductPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="margin-bottom margin-large">
-                        <h2>Give AI <span className="text-color-primary">Your Excel Superpowers</span></h2>
+                        <h2>Give AI & Tools <span className="text-color-primary">Excel Superpowers</span></h2>
+                        <p style={{ fontSize: '18px', color: '#666666', marginTop: '20px', marginBottom: '0', maxWidth: '800px', margin: '20px auto 0' }}>
+                          Transform your spreadsheets into powerful APIs that can be called by applications, AI assistants, or integrated into any workflow. Your Excel expertise becomes instantly accessible.
+                        </p>
                       </div>
 
                       <div style={{

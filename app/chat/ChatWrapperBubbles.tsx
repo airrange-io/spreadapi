@@ -537,12 +537,12 @@ export default function ChatWrapperBubbles() {
               <Sender
                 value={inputValue}
                 onChange={setInputValue}
-                placeholder={selectedService === 'general' ? 'Select a service to start' : 'Type your calculation request...'}
+                placeholder={selectedService === 'general' ? 'Select a service to start' : 'Type or speak your calculation request...'}
                 onSubmit={handleSend}
                 loading={isLoading}
                 onCancel={isLoading ? stop : undefined}
                 style={{ width: '100%' }}
-                allowSpeech={false}
+                allowSpeech={true}
                 submitType="enter"
                 disabled={selectedService === 'general'}
               />

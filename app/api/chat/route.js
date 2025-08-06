@@ -4,6 +4,22 @@ import { z } from 'zod';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
 
+// Basic input sanitization to prevent injection attacks
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return '';
+  
+  // Remove potential script tags and dangerous characters
+  return input
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
+    .replace(/<object[^>]*>.*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim()
+    .slice(0, 5000); // Limit input length
+}
+
 // Create OpenAI instance with API key
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -27,20 +43,20 @@ export async function POST(req) {
         content: 'Hello, I just selected this service. What can it do?'
       }];
     } else {
-      // Convert messages to proper format for the AI SDK
+      // Convert messages to proper format for the AI SDK with sanitization
       formattedMessages = messages.map(msg => {
         // Handle messages with parts array (from UI)
         if (msg.parts && Array.isArray(msg.parts)) {
           const textPart = msg.parts.find(p => p.type === 'text');
           return {
             role: msg.role,
-            content: textPart?.text || ''
+            content: sanitizeInput(textPart?.text || '')
           };
         }
         // Handle regular messages
         return {
           role: msg.role,
-          content: msg.content || ''
+          content: sanitizeInput(msg.content || '')
         };
       }).filter(msg => msg.content); // Remove empty messages
     }
@@ -53,11 +69,11 @@ export async function POST(req) {
     if (!process.env.OPENAI_API_KEY) {
       return new Response(
         JSON.stringify({ 
-          error: 'OpenAI API key not configured',
-          details: 'Please add OPENAI_API_KEY to your .env.local file'
+          error: 'Service temporarily unavailable',
+          message: 'The AI service is currently unavailable. Please try again later.'
         }), 
         { 
-          status: 500,
+          status: 503,
           headers: { 'Content-Type': 'application/json' }
         }
       );
@@ -183,10 +199,24 @@ You have access to a calculation tool for this service. Focus on helping users u
         // Create Zod object schema
         const toolZodSchema = z.object(inputSchemas);
         
+        // Enhanced calculate tool with area updates support
+        const enhancedToolSchema = z.object({
+          inputs: toolZodSchema,
+          areaUpdates: z.array(z.object({
+            areaName: z.string().describe('The area to update'),
+            changes: z.array(z.object({
+              row: z.number().describe('Row index within area (0-based)'),
+              col: z.number().describe('Column index within area (0-based)'),
+              value: z.any().optional().describe('New cell value'),
+              formula: z.string().optional().describe('New cell formula')
+            })).describe('Cell changes to apply')
+          })).optional().describe('Optional area updates to apply before calculation')
+        });
+        
         tools.calculate = tool({
-          description: `Calculate ${serviceDetails.name}. This tool helps you get calculation results that you should then explain to the user in a conversational way.`,
-          inputSchema: toolZodSchema, // Use inputSchema, not parameters
-          execute: async (params) => {
+          description: `Calculate ${serviceDetails.name} with optional area updates. You can modify spreadsheet areas before calculation to test different scenarios.`,
+          inputSchema: enhancedToolSchema,
+          execute: async ({ inputs, areaUpdates }) => {
             try {
               
               // Execute calculation via internal API
@@ -194,69 +224,306 @@ You have access to a calculation tool for this service. Focus on helping users u
                 ? `https://${process.env.VERCEL_URL}` 
                 : 'http://localhost:3000';
               
-              // Build query parameters
-              const queryParams = new URLSearchParams();
-              queryParams.append('api', serviceId);
-              
-              // Add input parameters
-              Object.entries(params).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                  queryParams.append(key, String(value));
-                }
-              });
-              
-              const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
-              const data = await response.json();
-              
-              if (!response.ok) {
-                throw new Error(data.error || 'Calculation failed');
-              }
-              
-              
-              // Format results
-              let resultText = ``;
-              
-              if (data.outputs && Array.isArray(data.outputs)) {
-                data.outputs.forEach(output => {
-                  const value = output.value;
-                  let formattedValue = value;
-                  
-                  // Format based on output type
-                  if (output.format === 'currency' && typeof value === 'number') {
-                    // TODO: Make currency configurable per service or user preference
-                    const currency = output.currency || 'USD';
-                    formattedValue = new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: currency
-                    }).format(value);
-                  } else if (output.format === 'percentage' && typeof value === 'number') {
-                    formattedValue = `${(value * 100).toFixed(2)}%`;
-                  } else if (typeof value === 'number') {
-                    // For very large or very small numbers, use appropriate formatting
-                    if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
-                      formattedValue = value.toExponential(2);
-                    } else {
-                      formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                    }
-                  }
-                  
-                  resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
+              // If we have area updates, use enhanced calculation endpoint
+              if (areaUpdates && areaUpdates.length > 0) {
+                // Use POST method for enhanced calculation with area updates
+                const response = await fetch(`${baseUrl}/api/services/${serviceId}/calculate`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    inputs: inputs,
+                    areaUpdates: areaUpdates
+                  })
                 });
                 
-                // Trim any trailing newline
-                resultText = resultText.trim();
+                const data = await response.json();
+                
+                if (!response.ok) {
+                  throw new Error(data.error || 'Calculation failed');
+                }
+                
+                // Format results
+                let resultText = ``;
+                
+                if (data.outputs && Array.isArray(data.outputs)) {
+                  data.outputs.forEach(output => {
+                    const value = output.value;
+                    let formattedValue = value;
+                    
+                    if (output.format === 'currency' && typeof value === 'number') {
+                      const currency = output.currency || 'USD';
+                      formattedValue = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: currency
+                      }).format(value);
+                    } else if (output.format === 'percentage' && typeof value === 'number') {
+                      formattedValue = `${(value * 100).toFixed(2)}%`;
+                    } else if (typeof value === 'number') {
+                      if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
+                        formattedValue = value.toExponential(2);
+                      } else {
+                        formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                      }
+                    }
+                    
+                    resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
+                  });
+                  
+                  // Add area update confirmation if present
+                  if (data.areaUpdateResults && data.areaUpdateResults.length > 0) {
+                    resultText += `\n*Area modifications applied successfully*\n`;
+                  }
+                  
+                  return resultText.trim();
+                } else {
+                  return 'Result: ' + JSON.stringify(data, null, 2);
+                }
               } else {
-                // Handle different response format
-                resultText = 'Result: ' + JSON.stringify(data, null, 2);
+                // Regular calculation without area updates
+                const queryParams = new URLSearchParams();
+                queryParams.append('api', serviceId);
+                
+                // Add input parameters
+                Object.entries(inputs).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null) {
+                    queryParams.append(key, String(value));
+                  }
+                });
+                
+                const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                  throw new Error(data.error || 'Calculation failed');
+                }
+                
+                // Format results
+                let resultText = ``;
+                
+                if (data.outputs && Array.isArray(data.outputs)) {
+                  data.outputs.forEach(output => {
+                    const value = output.value;
+                    let formattedValue = value;
+                    
+                    // Format based on output type
+                    if (output.format === 'currency' && typeof value === 'number') {
+                      // TODO: Make currency configurable per service or user preference
+                      const currency = output.currency || 'USD';
+                      formattedValue = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: currency
+                      }).format(value);
+                    } else if (output.format === 'percentage' && typeof value === 'number') {
+                      formattedValue = `${(value * 100).toFixed(2)}%`;
+                    } else if (typeof value === 'number') {
+                      // For very large or very small numbers, use appropriate formatting
+                      if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
+                        formattedValue = value.toExponential(2);
+                      } else {
+                        formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                      }
+                    }
+                    
+                    resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
+                  });
+                  
+                  // Trim any trailing newline
+                  resultText = resultText.trim();
+                } else {
+                  // Handle different response format
+                  resultText = 'Result: ' + JSON.stringify(data, null, 2);
+                }
+                
+                // Return the formatted text directly as the tool expects
+                return resultText;
               }
-              
-              // Return the formatted text directly as the tool expects
-              return resultText;
             } catch (error) {
               return `Error executing calculation: ${error.message}`;
             }
           }
         });
+        
+        // Add batch calculation tool for multiple calculations at once
+        const batchInputSchema = z.object({
+          calculations: z.array(toolZodSchema).describe('Array of calculation inputs to process in batch')
+        });
+        
+        tools.calculate_batch = tool({
+          description: `Calculate multiple ${serviceDetails.name} scenarios at once. Use this when the user wants to compare multiple options or calculate for several different inputs.`,
+          inputSchema: batchInputSchema,
+          execute: async ({ calculations }) => {
+            try {
+              // Execute all calculations in parallel
+              const results = await Promise.all(
+                calculations.map(async (params, index) => {
+                  try {
+                    const baseUrl = process.env.VERCEL_URL 
+                      ? `https://${process.env.VERCEL_URL}` 
+                      : 'http://localhost:3000';
+                    
+                    const queryParams = new URLSearchParams();
+                    queryParams.append('api', serviceId);
+                    
+                    Object.entries(params).forEach(([key, value]) => {
+                      if (value !== undefined && value !== null) {
+                        queryParams.append(key, String(value));
+                      }
+                    });
+                    
+                    const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                      throw new Error(data.error || 'Calculation failed');
+                    }
+                    
+                    return {
+                      scenario: index + 1,
+                      inputs: params,
+                      outputs: data.outputs,
+                      success: true
+                    };
+                  } catch (error) {
+                    return {
+                      scenario: index + 1,
+                      inputs: params,
+                      error: error.message,
+                      success: false
+                    };
+                  }
+                })
+              );
+              
+              // Format batch results
+              let resultText = `## Batch Calculation Results\n\n`;
+              
+              results.forEach(result => {
+                resultText += `### Scenario ${result.scenario}\n`;
+                
+                // Show inputs
+                resultText += `**Inputs:**\n`;
+                Object.entries(result.inputs).forEach(([key, value]) => {
+                  resultText += `- ${key}: ${value}\n`;
+                });
+                
+                if (result.success && result.outputs) {
+                  resultText += `\n**Results:**\n`;
+                  result.outputs.forEach(output => {
+                    const value = output.value;
+                    let formattedValue = value;
+                    
+                    if (output.format === 'currency' && typeof value === 'number') {
+                      const currency = output.currency || 'USD';
+                      formattedValue = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: currency
+                      }).format(value);
+                    } else if (output.format === 'percentage' && typeof value === 'number') {
+                      formattedValue = `${(value * 100).toFixed(2)}%`;
+                    } else if (typeof value === 'number') {
+                      formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    }
+                    
+                    resultText += `- **${output.title || output.alias}**: ${formattedValue}\n`;
+                  });
+                } else {
+                  resultText += `\n**Error:** ${result.error}\n`;
+                }
+                
+                resultText += `\n---\n\n`;
+              });
+              
+              return resultText.trim();
+            } catch (error) {
+              return `Error executing batch calculation: ${error.message}`;
+            }
+          }
+        });
+      }
+      
+      // Add area reading tool if service has areas
+      if (serviceDetails.areas && serviceDetails.areas.length > 0) {
+        // Parse areas from JSON string if needed
+        let areas = serviceDetails.areas;
+        if (typeof areas === 'string') {
+          try {
+            areas = JSON.parse(areas);
+          } catch (e) {
+            areas = [];
+          }
+        }
+        
+        // Only add if we have readable areas
+        const readableAreas = areas.filter(area => 
+          area.permissions && area.permissions.canReadValues
+        );
+        
+        if (readableAreas.length > 0) {
+          const areaNames = readableAreas.map(a => a.name);
+          
+          tools.read_area = tool({
+            description: `Read data from an editable area in ${serviceDetails.name}. This gives you access to cell values and formulas that you can examine and potentially modify using the calculate tool with areaUpdates.`,
+            inputSchema: z.object({
+              areaName: z.enum(areaNames).describe('The name of the area to read'),
+              includeFormulas: z.boolean().optional().default(false).describe('Include cell formulas in the response'),
+              includeFormatting: z.boolean().optional().default(false).describe('Include cell formatting in the response')
+            }),
+            execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
+              try {
+                // Use the MCP area executor logic
+                const { executeAreaRead } = await import('@/app/api/mcp/v1/areaExecutors.js');
+                
+                const result = await executeAreaRead(serviceId, areaName, {
+                  includeFormulas,
+                  includeFormatting
+                }, { userId: 'chat-user' });
+                
+                // Format the response for chat
+                let resultText = `## Area: ${result.area.name}\n`;
+                resultText += `*${result.area.rows} rows × ${result.area.columns} columns*\n\n`;
+                
+                // Show the data in a readable format
+                resultText += '```\n';
+                for (let r = 0; r < result.area.rows; r++) {
+                  const row = [];
+                  for (let c = 0; c < result.area.columns; c++) {
+                    const cell = result.data[r][c];
+                    row.push(cell.value !== null ? cell.value : '');
+                  }
+                  resultText += row.join('\t') + '\n';
+                }
+                resultText += '```\n';
+                
+                if (includeFormulas) {
+                  // Show cells with formulas
+                  const formulaCells = [];
+                  for (let r = 0; r < result.area.rows; r++) {
+                    for (let c = 0; c < result.area.columns; c++) {
+                      const cell = result.data[r][c];
+                      if (cell.formula) {
+                        formulaCells.push(`[${r},${c}]: ${cell.formula}`);
+                      }
+                    }
+                  }
+                  if (formulaCells.length > 0) {
+                    resultText += '\n**Formulas:**\n';
+                    formulaCells.forEach(f => {
+                      resultText += `- ${f}\n`;
+                    });
+                  }
+                }
+                
+                resultText += `\n*You can modify this area by using the calculate tool with areaUpdates parameter.*`;
+                
+                return resultText;
+              } catch (error) {
+                return `Error reading area: ${error.message}`;
+              }
+            }
+          });
+        }
       }
     }
     
@@ -281,9 +548,22 @@ You are a helpful assistant in a CHAT conversation. Your responses should be:
 2. If user says "5%" for interest rate, that's 0.05 - don't ask again!
 3. Only ask for parameters that are ACTUALLY missing
 4. Once you have all needed values, use the 'calculate' tool immediately
-5. Present the results in a conversational way
+5. If the user wants to compare multiple scenarios, use 'calculate_batch' tool
+6. Present the results in a conversational way
 
 NEVER ask for clarification on values the user already provided!
+
+### When to use batch calculations:
+- User wants to compare multiple options
+- User provides several sets of inputs
+- User asks "what if" questions with multiple scenarios
+- User wants to see a range of calculations
+
+### Working with Areas (if available):
+- Use 'read_area' to examine spreadsheet data, lookup tables, or reference values
+- You can modify area cells using 'calculate' with areaUpdates parameter
+- This lets you test scenarios by changing values in the spreadsheet before calculation
+- Example: Read a tax rate table, modify rates, then calculate with new rates
 
 ### Required vs Optional Parameters:
 ${(() => {

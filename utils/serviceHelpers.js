@@ -11,8 +11,13 @@ import { normalizeService } from "./normalizeServiceData";
  */
 export async function getServiceDetails(serviceId, userId = null) {
   try {
-    // Get service data from Redis
-    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    // First check if this is a published service
+    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    
+    // Get service data from appropriate source
+    const serviceData = isPublished 
+      ? await redis.hGetAll(`service:${serviceId}:published`)
+      : await redis.hGetAll(`service:${serviceId}`);
     
     if (!serviceData || Object.keys(serviceData).length === 0) {
       return null;
@@ -58,10 +63,9 @@ export async function getServiceDetails(serviceId, userId = null) {
       updatedAt: serviceData.updatedAt
     };
     
-    // Check if published
-    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    // Add published status info
     if (isPublished) {
-      const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+      const publishedData = serviceData; // We already have it from above
       serviceDetails.published = {
         status: true,
         publishedAt: publishedData.created || null,

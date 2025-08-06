@@ -11,7 +11,8 @@
       "Bash(ls:*)",
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
-      "Bash(killall:*)"
+      "Bash(killall:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }
