@@ -1,34 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import './product.css';
 import Footer from '@/components/product/Footer';
-import ProductHeader from '@/components/product/ProductHeader';
 import { developerFAQs } from '@/data/developer-faq';
+import ProductHeader from '@/components/product/ProductHeader';
 import Navigation from '@/components/Navigation';
-import { IntercomProvider } from '../components/IntercomProvider';
-import { IntercomScript } from '../components/IntercomScript';
 
 const ProductPage: React.FC = () => {
-  const [ctaEmail, setCtaEmail] = useState('');
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  const handleCtaEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle CTA email submission
-    console.log('CTA Email submitted:', ctaEmail);
-  };
 
-  const toggleFaq = (index: number) => {
-    setExpandedFaq(expandedFaq === index ? null : index);
-  };
-
-  const faqItems = developerFAQs;
 
   return (
-    <IntercomProvider>
+    <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <style jsx global>{`
@@ -56,65 +41,6 @@ const ProductPage: React.FC = () => {
               secondaryButtonHref="/docs"
               showImage={true}
             />
-
-            {/* Developer Hook Section */}
-            {/* <section style={{
-              padding: '0 0 80px 0'
-            }}>
-              <div className="padding-global">
-                <div className="container-large">
-                  <div style={{
-                    maxWidth: '700px',
-                    margin: '0 auto',
-                    textAlign: 'center'
-                  }}>
-                    <p style={{
-                      fontSize: '20px',
-                      lineHeight: '1.6',
-                      color: '#374151',
-                      marginBottom: '16px'
-                    }}>
-                      <span style={{ fontWeight: '600', color: '#1f2937' }}>"Just convert this Excel to code,"</span> they said.
-                    </p>
-
-                    <p style={{
-                      fontSize: '18px',
-                      lineHeight: '1.6',
-                      color: '#6b7280',
-                      marginBottom: '24px'
-                    }}>
-                      Six months later, you're debugging why JavaScript is off by $0.03.
-                    </p>
-
-                    <Link
-                      href="/blog/stop-reimplementing-excel-business-logic-javascript"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        color: '#9333EA',
-                        textDecoration: 'none',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        gap: '6px',
-                        borderBottom: '2px solid transparent',
-                        transition: 'border-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderBottomColor = '#9333EA';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderBottomColor = 'transparent';
-                      }}
-                    >
-                      Why developers waste months reimplementing Excel
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10.5 3.5L3.5 10.5M10.5 3.5V9.5M10.5 3.5H4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section> */}
 
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
@@ -227,9 +153,10 @@ const ProductPage: React.FC = () => {
                       }}>
                         <div style={{ marginBottom: '15px' }}>
                           <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M16 14L24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <text x="14" y="17" textAnchor="middle" fontSize="12" fill="#9333EA">20%</text>
+                            <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" fill="none" />
+                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                            <path d="M8 14L14 14M14 8V20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M18 10L22 10M18 14L22 14M18 18L22 18" stroke="#9333EA" strokeWidth="1" strokeLinecap="round" />
                           </svg>
                         </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"Complex Models? 20% Accuracy"</h3>
@@ -480,22 +407,26 @@ const ProductPage: React.FC = () => {
                           minHeight: '400px',
                           position: 'relative'
                         }}>
-                          <img
-                            src="/dont-recode-excel.png"
-                            alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
-                            style={{
-                              maxWidth: '100%',
-                              maxHeight: '100%',
-                              objectFit: 'contain',
-                              borderRadius: '8px'
-                            }}
-                          />
+                          <picture>
+                            <source srcSet="/images/product/dont-recode-excel.webp" type="image/webp" />
+                            <source srcSet="/images/product/dont-recode-excel.png" type="image/png" />
+                            <img
+                              src="/images/product/dont-recode-excel.png"
+                              alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '8px'
+                              }}
+                            />
+                          </picture>
                         </div>
                       </div>
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">“Just convert this Excel to code,”</span> they said.
+                            <span className="text-color-primary">“Just convert this Excel to code”</span>, they said.
                           </h2>
                         </div>
                         <p className="text-size-medium" style={{ marginBottom: '30px' }}>
@@ -548,7 +479,8 @@ const ProductPage: React.FC = () => {
                             alignItems: 'center',
                             gap: '5px',
                             color: '#9333EA',
-                            fontWeight: '500'
+                            fontWeight: '500',
+                            textDecoration: 'none'
                           }}>
                           Read: Why reimplementing Excel always fails →
                         </a>
@@ -1028,58 +960,6 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Developer FAQ Section */}
-            <section id="faq" className="section-home-faq">
-              <div className="padding-global">
-                <div className="container-medium">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="text-align-center">
-                        <div className="max-width-large align-center">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Developer FAQ</div>
-                            </div>
-                          </div>
-                          <div className="margin-bottom margin-small">
-                            <h2>Technical Questions <span className="text-color-primary">Answered</span></h2>
-                          </div>
-                          <p className="text-size-medium">Deep dive into the technical details. Built by developers, for developers.</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="faq-collection-wrapper">
-                      <div className="faq-collection-list">
-                        {faqItems.map((item, index) => (
-                          <div key={index} className="faq-collection-item">
-                            <div className="faq-accordion">
-                              <div className="faq-question" onClick={() => toggleFaq(index)}>
-                                <div className="heading-style-h6">{item.question}</div>
-                                <svg
-                                  className={`icon-1x1-small ${expandedFaq === index ? 'rotate' : ''}`}
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path d="M12 5V19M5 12H19" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              </div>
-                              <div className={`faq-answer ${expandedFaq === index ? 'expanded' : ''}`}>
-                                <div className="margin-bottom margin-small">
-                                  <p>{item.answer}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
 
             {/* CTA Section */}
             {/* <section id="cta" className="section-home-cta">
@@ -1129,6 +1009,49 @@ const ProductPage: React.FC = () => {
               </div>
             </section> */}
 
+            {/* Developer FAQ Section - Server Rendered */}
+            <section id="faq" className="section-home-faq">
+              <div className="padding-global">
+                <div className="container-medium">
+                  <div className="padding-section-large">
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <div className="margin-bottom margin-xsmall">
+                            <div className="subheading">
+                              <div>Developer FAQ</div>
+                            </div>
+                          </div>
+                          <div className="margin-bottom margin-small">
+                            <h2>Technical Questions <span className="text-color-primary">Answered</span></h2>
+                          </div>
+                          <p className="text-size-medium">Deep dive into the technical details. Built by developers, for developers.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="faq-collection-wrapper">
+                      <div className="faq-collection-list">
+                        {developerFAQs.map((item, index) => (
+                          <div key={index} className="faq-collection-item">
+                            <div className="faq-accordion">
+                              <div className="faq-question" style={{ cursor: 'default' }}>
+                                <div className="heading-style-h6">{item.question}</div>
+                              </div>
+                              <div className="faq-answer expanded">
+                                <div className="margin-bottom margin-small">
+                                  <p>{item.answer}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Contact Section */}
             <section className="section-home-contact">
               <div className="padding-global">
@@ -1165,8 +1088,7 @@ const ProductPage: React.FC = () => {
           <Footer />
         </div>
       </div>
-      <IntercomScript />
-    </IntercomProvider>
+    </>
   );
 };
 

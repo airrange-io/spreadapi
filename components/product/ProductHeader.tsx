@@ -83,7 +83,7 @@ export default function ProductHeader({
               </div>
               {showImage && (
                 <div className="header-image-wrapper">
-                  <div className="header-image-placeholder-2" style={{ backgroundColor: '#fdfdfd', position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '40px', border: '1px solid #E8E1FF' }}>
+                  <div className="header-image-placeholder-2" style={{ backgroundColor: '#fdfdfd', position: 'relative', width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '40px', border: '2px solid #E8E1FF' }}>
                     <Image
                       src="/images/product/product_hero.png"
                       alt="SpreadAPI Product Dashboard"
