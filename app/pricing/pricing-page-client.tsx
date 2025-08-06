@@ -209,7 +209,7 @@ export default function PricingPageClient() {
                       fontWeight: '600',
                       transition: 'all 0.2s ease'
                     }}>
-                      Get Instant API Access
+                      Create your first free Excel API
                     </a>
                   </div>
 
@@ -351,7 +351,7 @@ export default function PricingPageClient() {
                             minWidth: '200px',
                             border: 'none'
                           }}>
-                            Get Instant API Access
+                            Create your first free Excel API
                           </a>
                         </div>
                       </div>

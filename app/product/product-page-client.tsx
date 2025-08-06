@@ -50,7 +50,7 @@ const ProductPage: React.FC = () => {
               subheading="Excel as a Web Service"
               title={<>Turn Excel Into APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
               description="Transform your Excel spreadsheets into secure web services. Enable AI assistants to work with your complex calculations and business logic without hallucinations."
-              primaryButtonText="Get Instant API Access"
+              primaryButtonText="Create your first free Excel API"
               primaryButtonHref="/"
               secondaryButtonText="View Documentation"
               secondaryButtonHref="/docs"
@@ -1009,7 +1009,7 @@ const ProductPage: React.FC = () => {
                             minWidth: '200px',
                             border: 'none'
                           }}>
-                            Get Instant API Access
+                            Create your first free Excel API
                           </a>
                           <a href="/pricing" className="button" style={{
                             background: 'transparent',

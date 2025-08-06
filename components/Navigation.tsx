@@ -86,7 +86,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
           }}>
             <LanguageSwitcher currentLocale={locale} />
           </div>
-          <Link href="/" className="button hide-mobile-portrait">Get Started</Link>
+          <Link href="/" className="header-button hide-mobile-portrait">Get Started</Link>
           <button
             className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
