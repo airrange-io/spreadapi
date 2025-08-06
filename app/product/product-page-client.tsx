@@ -411,7 +411,7 @@ const ProductPage: React.FC = () => {
                             <source srcSet="/images/product/dont-recode-excel.webp" type="image/webp" />
                             <source srcSet="/images/product/dont-recode-excel.png" type="image/png" />
                             <img
-                              src="/images/product/dont-recode-excel.png"
+                              src="/images/product/dont-recode-excel.webp"
                               alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
                               style={{
                                 maxWidth: '100%',
