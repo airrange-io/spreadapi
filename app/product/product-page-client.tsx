@@ -828,7 +828,7 @@ const ProductPage: React.FC = () => {
                             SpreadAPI works with Claude, ChatGPT, and any AI assistant through our MCP server. Connect via REST API, webhooks, or integrate with Zapier, Make, and n8n. Your Excel calculations become accessible everywhere.
                           </p>
                         </div>
-                        <a href="#cta" className="button">Start Building</a>
+                        <a href="/" className="button">Start Building</a>
                       </div>
                     </div>
                   </div>
