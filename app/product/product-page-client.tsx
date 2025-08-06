@@ -58,17 +58,17 @@ const ProductPage: React.FC = () => {
             />
 
             {/* Developer Hook Section */}
-            <section style={{ 
+            {/* <section style={{
               padding: '0 0 80px 0'
             }}>
               <div className="padding-global">
                 <div className="container-large">
-                  <div style={{ 
-                    maxWidth: '700px', 
+                  <div style={{
+                    maxWidth: '700px',
                     margin: '0 auto',
                     textAlign: 'center'
                   }}>
-                    <p style={{ 
+                    <p style={{
                       fontSize: '20px',
                       lineHeight: '1.6',
                       color: '#374151',
@@ -76,7 +76,7 @@ const ProductPage: React.FC = () => {
                     }}>
                       <span style={{ fontWeight: '600', color: '#1f2937' }}>"Just convert this Excel to code,"</span> they said.
                     </p>
-                    
+
                     <p style={{
                       fontSize: '18px',
                       lineHeight: '1.6',
@@ -85,8 +85,8 @@ const ProductPage: React.FC = () => {
                     }}>
                       Six months later, you're debugging why JavaScript is off by $0.03.
                     </p>
-                    
-                    <Link 
+
+                    <Link
                       href="/blog/stop-reimplementing-excel-business-logic-javascript"
                       style={{
                         display: 'inline-flex',
@@ -108,13 +108,13 @@ const ProductPage: React.FC = () => {
                     >
                       Why developers waste months reimplementing Excel
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10.5 3.5L3.5 10.5M10.5 3.5V9.5M10.5 3.5H4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M10.5 3.5L3.5 10.5M10.5 3.5V9.5M10.5 3.5H4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </Link>
                   </div>
                 </div>
               </div>
-            </section>
+            </section> */}
 
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
@@ -453,6 +453,105 @@ const ProductPage: React.FC = () => {
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Developer Liberation Section */}
+            <section className="section-home-feature" style={{ background: '#ffffff' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="feature-component reverse">
+                      <div className="feature-image-wrapper">
+                        <div className="feature-image-placeholder" style={{
+                          // background: '#F8F6FE',
+                                background: 'white',
+                                border: '1px solid #E8E0FF',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          minHeight: '400px',
+                          position: 'relative'
+                        }}>
+                          <img
+                            src="/dont-recode-excel.png"
+                            alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              objectFit: 'contain',
+                              borderRadius: '8px'
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="feature-content-wrapper">
+                        <div className="margin-bottom margin-small">
+                          <h2>
+                            <span className="text-color-primary">“Just convert this Excel to code,”</span> they said.
+                          </h2>
+                        </div>
+                        <p className="text-size-medium" style={{ marginBottom: '30px' }}>
+                          Six months later, you’re parsing nested IFs, mimicking VLOOKUPs, and debugging why your result is off by 0.03.
+                          Reverse engineering Excel isn’t engineering — it’s archaeology.
+                        </p>
+                        <div className="feature-list">
+                          <div className="feature-item">
+                            <div className="check-icon-wrapper">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <div>
+                              <strong>Your Excel = Your API</strong> - Upload existing spreadsheets and call them directly.
+                              No translation, no bugs, no maintenance nightmare.
+                            </div>
+                          </div>
+                          <div className="feature-item">
+                            <div className="check-icon-wrapper">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <div>
+                              <strong>100% Formula Accuracy</strong> - VLOOKUP, SUMIFS, financial functions - they all
+                              work exactly as designed. Because it's real Excel, not a JavaScript approximation.
+                            </div>
+                          </div>
+                          <div className="feature-item">
+                            <div className="check-icon-wrapper">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <div>
+                              <strong>Business Users Keep Control</strong> - When formulas change, they update the Excel.
+                              Your API instantly reflects the changes. No code deployment needed.
+                            </div>
+                          </div>
+                        </div>
+                        <a href="/blog/stop-reimplementing-excel-business-logic-javascript"
+                          className="text-link"
+                          style={{
+                            marginTop: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            color: '#9333EA',
+                            fontWeight: '500'
+                          }}>
+                          Read: Why reimplementing Excel always fails →
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -983,7 +1082,7 @@ const ProductPage: React.FC = () => {
             </section>
 
             {/* CTA Section */}
-            <section id="cta" className="section-home-cta">
+            {/* <section id="cta" className="section-home-cta">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -1028,7 +1127,7 @@ const ProductPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </section>
+            </section> */}
 
             {/* Contact Section */}
             <section className="section-home-contact">

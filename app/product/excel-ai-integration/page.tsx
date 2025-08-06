@@ -728,7 +728,7 @@ export default function AIIntegrationPage() {
             </section>
 
             {/* CTA Section */}
-            <section id="cta" className="section-home-cta">
+            {/* <section id="cta" className="section-home-cta">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -773,7 +773,7 @@ export default function AIIntegrationPage() {
                   </div>
                 </div>
               </div>
-            </section>
+            </section> */}
 
             {/* Contact Section */}
             <section className="section-home-contact">

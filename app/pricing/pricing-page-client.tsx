@@ -325,7 +325,7 @@ export default function PricingPageClient() {
             </section>
 
             {/* CTA Section */}
-            <section className="section-home-cta">
+            {/* <section className="section-home-cta">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -359,7 +359,7 @@ export default function PricingPageClient() {
                   </div>
                 </div>
               </div>
-            </section>
+            </section> */}
           </main>
           
           <Footer />
