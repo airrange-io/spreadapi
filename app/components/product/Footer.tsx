@@ -16,9 +16,8 @@ const Footer: React.FC = () => {
                       <a href="/product" className="footer-link">Excel to API</a>
                       <a href="/product/how-excel-api-works" className="footer-link">How it Works</a>
                       <a href="/product/excel-ai-integration" className="footer-link">AI Integration</a>
-                      <a href="/product/editable-areas" className="footer-link">Editable Areas</a>
-                      <a href="/pricing" className="footer-link">Pricing</a>
                       <a href="/docs" className="footer-link">Documentation</a>
+                      <a href="/pricing" className="footer-link">Pricing</a>
                       {/* <a href="/ai-security-control" className="footer-link">AI Security</a> */}
                     </div>
                   </div>

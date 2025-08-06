@@ -440,14 +440,15 @@ const ProductPage: React.FC = () => {
                                 justifyContent: 'space-between'
                               }}>
                                 <span>Calculated by Excel in 47ms • 100% accurate</span>
-                                <a href="#" style={{
+                                <span style={{
                                   color: '#9333EA',
                                   textDecoration: 'none',
                                   fontSize: '11px',
-                                  opacity: 0.8
+                                  opacity: 0.8,
+                                  cursor: 'pointer'
                                 }}>
                                   Download PDF
-                                </a>
+                                </span>
                               </div>
                             </div>
                           </div>
