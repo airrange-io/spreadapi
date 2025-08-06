@@ -473,7 +473,7 @@ You have access to a calculation tool for this service. Focus on helping users u
             execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
               try {
                 // Use the MCP area executor logic
-                const { executeAreaRead } = await import('@/app/api/mcp/v1/areaExecutors.js');
+                const { executeAreaRead } = await import('@/app/api/mcp/v1/areaExecutors');
                 
                 const result = await executeAreaRead(serviceId, areaName, {
                   includeFormulas,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { executeEnhancedCalc } from '@/app/api/mcp/v1/executeEnhancedCalc.js';
+import { executeEnhancedCalc } from '@/app/api/mcp/v1/executeEnhancedCalc';
 
 /**
  * POST /api/services/[id]/calculate
