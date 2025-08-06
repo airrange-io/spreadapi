@@ -195,25 +195,36 @@ const ProductPage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '20px', color: '#374151', marginBottom: '30px' }}>
-                        <strong style={{ color: '#9333EA' }}>SpreadAPI:</strong> Your Excel stays Excel. AI gets exact results. Always 100% accurate.
-                      </p>
                       <Link href="/product/why-ai-fails-at-math" style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '14px 28px',
-                        background: 'white',
-                        border: '2px solid #9333EA',
-                        borderRadius: '8px',
+                        fontSize: '20px',
                         color: '#9333EA',
                         textDecoration: 'none',
-                        fontSize: '16px',
                         fontWeight: '600',
+                        display: 'inline-block',
+                        borderBottom: '2px solid #9333EA',
+                        paddingBottom: '2px',
                         transition: 'all 0.2s ease'
                       }}>
-                        Here's What AI Told Us →
+                        Click here to see more AI limitations →
                       </Link>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Solution Bridge Section */}
+            <section className="section-solution-bridge" style={{ background: '#F3F3FD', padding: '80px 0' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="text-align-center" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
+                      Here's How We Help AI <span style={{ color: '#9333EA' }}>Excel at Spreadsheet Math</span>
+                    </h2>
+                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '10px', lineHeight: '1.6' }}>
+                      Transform your spreadsheets into real-time APIs that AI can call — no guessing, no hallucinations, just accurate results powered by your Excel logic.
+                      Whether it’s simple calculations or complex chains of nested formulas, your Excel logic is executed exactly as you built it. The result: clean, reliable JSON that AI assistants, developers, and automation tools can work with — instantly and securely.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -387,7 +398,7 @@ const ProductPage: React.FC = () => {
               </div>
             </section>
 
-            {/* Developer Liberation Section */}
+            {/* Duplicate AI Sales Agents Section with Reversed Layout */}
             <section className="section-home-feature" style={{ background: '#ffffff' }}>
               <div className="padding-global">
                 <div className="container-large">
@@ -395,24 +406,22 @@ const ProductPage: React.FC = () => {
                     <div className="feature-component reverse">
                       <div className="feature-image-wrapper">
                         <div className="feature-image-placeholder" style={{
-                          // background: '#F8F6FE',
-                                background: 'white',
-                                border: '1px solid #E8E0FF',
+                          background: 'white',
                           borderRadius: '12px',
-                          padding: '20px',
+                          padding: '40px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           height: '100%',
                           minHeight: '400px',
-                          position: 'relative'
+                          position: 'relative',
+                          border: '2px solid #E8E0FF'
                         }}>
                           <picture>
-                            <source srcSet="/images/product/dont-recode-excel.webp" type="image/webp" />
-                            <source srcSet="/images/product/dont-recode-excel.png" type="image/png" />
+                            <source srcSet="/images/product/workflow-example.webp" type="image/webp" />
                             <img
-                              src="/images/product/dont-recode-excel.webp"
-                              alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
+                              src="/images/product/workflow-example.webp"
+                              alt="AI Excel Workflow Example"
                               style={{
                                 maxWidth: '100%',
                                 maxHeight: '100%',
@@ -426,26 +435,68 @@ const ProductPage: React.FC = () => {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">“Just convert this Excel to code”</span>, they said.
+                            <span className="text-color-primary">Automation Tools</span> Running Your Excel Logic
                           </h2>
                         </div>
-                        <p className="text-size-medium" style={{ marginBottom: '30px' }}>
-                          Six months later, you’re parsing nested IFs, mimicking VLOOKUPs, and debugging why your result is off by 0.03.
-                          Reverse engineering Excel isn’t engineering — it’s archaeology.
-                        </p>
-                        <div className="feature-list">
-                          <div className="feature-item">
+                        <div className="margin-bottom margin-medium">
+                          <p className="text-size-medium">
+                            Tools like Zapier, Make, and n8n can now trigger calculations in your Excel models with live inputs and return real results — instantly.
+                            No logic reimplementation. No formula rewrites. Just exact Excel behavior delivered as a secure, real-time API.
+                          </p>
+                        </div>
+                        <div className="feature-keypoint-list">
+                          <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <div>
-                              <strong>Your Excel = Your API</strong> - Upload existing spreadsheets and call them directly.
-                              No translation, no bugs, no maintenance nightmare.
-                            </div>
+                            <p className="text-size-medium">Plug & play with any workflow tool</p>
                           </div>
+                          <div className="feature-keypoint-list-item">
+                            <div className="check-icon-wrapper">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <p className="text-size-medium">Returns only clean JSON, never shows formulas</p>
+                          </div>
+                          <div className="feature-keypoint-list-item">
+                            <div className="check-icon-wrapper">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="12" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <p className="text-size-medium">Handles any Excel complexity — IFs, XLOOKUPs, ARRAY functions, VAT logic, pricing</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Developer Liberation Section */}
+            <section className="section-home-feature" style={{ background: '#ffffff' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="feature-component">
+                      <div className="feature-content-wrapper">
+                        <div className="margin-bottom margin-small">
+                          <h2>
+                            <span className="text-color-primary">“Just convert this Excel to code”</span>, they said.
+                          </h2>
+                        </div>
+                        <p className="text-size-medium" style={{ marginBottom: '30px' }}>
+                          It’s one of the most common dev requests — turning business-critical spreadsheets into code. But nested IFs, lookup chains, and constantly changing logic quickly turn it into a maintenance nightmare.
+                          With SpreadAPI, developers don’t need to rebuild spreadsheet logic — they can run it directly, through a secure and versioned API.
+                        </p>
+                        <div className="feature-list">
                           <div className="feature-item">
                             <div className="check-icon-wrapper">
                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -484,6 +535,35 @@ const ProductPage: React.FC = () => {
                           }}>
                           Read: Why reimplementing Excel always fails →
                         </a>
+                      </div>
+                      <div className="feature-image-wrapper">
+                        <div className="feature-image-placeholder" style={{
+                          background: 'white',
+                          border: '1px solid #E8E0FF',
+                          borderRadius: '12px',
+                          padding: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          minHeight: '400px',
+                          position: 'relative'
+                        }}>
+                          <picture>
+                            <source srcSet="/images/product/dont-recode-excel.webp" type="image/webp" />
+                            <source srcSet="/images/product/dont-recode-excel.png" type="image/png" />
+                            <img
+                              src="/images/product/dont-recode-excel.webp"
+                              alt="Why Reverse Engineering Excel Fails - Don't re-code Excel, Just run Excel"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '8px'
+                              }}
+                            />
+                          </picture>
+                        </div>
                       </div>
                     </div>
                   </div>
