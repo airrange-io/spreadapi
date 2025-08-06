@@ -199,145 +199,68 @@ You have access to a calculation tool for this service. Focus on helping users u
         // Create Zod object schema
         const toolZodSchema = z.object(inputSchemas);
         
-        // Enhanced calculate tool with area updates support
-        const enhancedToolSchema = z.object({
-          inputs: toolZodSchema,
-          areaUpdates: z.array(z.object({
-            areaName: z.string().describe('The area to update'),
-            changes: z.array(z.object({
-              row: z.number().describe('Row index within area (0-based)'),
-              col: z.number().describe('Column index within area (0-based)'),
-              value: z.any().optional().describe('New cell value'),
-              formula: z.string().optional().describe('New cell formula')
-            })).describe('Cell changes to apply')
-          })).optional().describe('Optional area updates to apply before calculation')
-        });
-        
         tools.calculate = tool({
-          description: `Calculate ${serviceDetails.name} with optional area updates. You can modify spreadsheet areas before calculation to test different scenarios.`,
-          inputSchema: enhancedToolSchema,
-          execute: async ({ inputs, areaUpdates }) => {
+          description: `Calculate ${serviceDetails.name}`,
+          inputSchema: toolZodSchema,
+          execute: async (inputs) => {
             try {
               
-              // Execute calculation via internal API
+              // Execute calculation via main API endpoint
               const baseUrl = process.env.VERCEL_URL 
                 ? `https://${process.env.VERCEL_URL}` 
                 : 'http://localhost:3000';
               
-              // If we have area updates, use enhanced calculation endpoint
-              if (areaUpdates && areaUpdates.length > 0) {
-                // Use POST method for enhanced calculation with area updates
-                const response = await fetch(`${baseUrl}/api/services/${serviceId}/calculate`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    inputs: inputs,
-                    areaUpdates: areaUpdates
-                  })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                  throw new Error(data.error || 'Calculation failed');
+              // Always use the main getresults endpoint - it's battle-tested and what customers use
+              const queryParams = new URLSearchParams();
+              queryParams.append('api', serviceId);
+              
+              // Add input parameters
+              Object.entries(inputs).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                  queryParams.append(key, String(value));
                 }
-                
-                // Format results
-                let resultText = ``;
-                
-                if (data.outputs && Array.isArray(data.outputs)) {
-                  data.outputs.forEach(output => {
-                    const value = output.value;
-                    let formattedValue = value;
-                    
-                    if (output.format === 'currency' && typeof value === 'number') {
-                      const currency = output.currency || 'USD';
-                      formattedValue = new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: currency
-                      }).format(value);
-                    } else if (output.format === 'percentage' && typeof value === 'number') {
-                      formattedValue = `${(value * 100).toFixed(2)}%`;
-                    } else if (typeof value === 'number') {
-                      if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
-                        formattedValue = value.toExponential(2);
-                      } else {
-                        formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                      }
-                    }
-                    
-                    resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
-                  });
+              });
+              
+              const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
+              const data = await response.json();
+              
+              if (!response.ok) {
+                throw new Error(data.error || 'Calculation failed');
+              }
+              
+              // Format results
+              let resultText = ``;
+              
+              if (data.outputs && Array.isArray(data.outputs)) {
+                data.outputs.forEach(output => {
+                  const value = output.value;
+                  let formattedValue = value;
                   
-                  // Add area update confirmation if present
-                  if (data.areaUpdateResults && data.areaUpdateResults.length > 0) {
-                    resultText += `\n*Area modifications applied successfully*\n`;
+                  // Format based on output type
+                  if (output.format === 'currency' && typeof value === 'number') {
+                    const currency = output.currency || 'USD';
+                    formattedValue = new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: currency
+                    }).format(value);
+                  } else if (output.format === 'percentage' && typeof value === 'number') {
+                    formattedValue = `${(value * 100).toFixed(2)}%`;
+                  } else if (typeof value === 'number') {
+                    // For very large or very small numbers, use appropriate formatting
+                    if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
+                      formattedValue = value.toExponential(2);
+                    } else {
+                      formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    }
                   }
                   
-                  return resultText.trim();
-                } else {
-                  return 'Result: ' + JSON.stringify(data, null, 2);
-                }
+                  resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
+                });
+                
+                return resultText.trim();
               } else {
-                // Regular calculation without area updates
-                const queryParams = new URLSearchParams();
-                queryParams.append('api', serviceId);
-                
-                // Add input parameters
-                Object.entries(inputs).forEach(([key, value]) => {
-                  if (value !== undefined && value !== null) {
-                    queryParams.append(key, String(value));
-                  }
-                });
-                
-                const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
-                const data = await response.json();
-                
-                if (!response.ok) {
-                  throw new Error(data.error || 'Calculation failed');
-                }
-                
-                // Format results
-                let resultText = ``;
-                
-                if (data.outputs && Array.isArray(data.outputs)) {
-                  data.outputs.forEach(output => {
-                    const value = output.value;
-                    let formattedValue = value;
-                    
-                    // Format based on output type
-                    if (output.format === 'currency' && typeof value === 'number') {
-                      // TODO: Make currency configurable per service or user preference
-                      const currency = output.currency || 'USD';
-                      formattedValue = new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: currency
-                      }).format(value);
-                    } else if (output.format === 'percentage' && typeof value === 'number') {
-                      formattedValue = `${(value * 100).toFixed(2)}%`;
-                    } else if (typeof value === 'number') {
-                      // For very large or very small numbers, use appropriate formatting
-                      if (Math.abs(value) > 1e9 || (Math.abs(value) < 0.001 && value !== 0)) {
-                        formattedValue = value.toExponential(2);
-                      } else {
-                        formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
-                      }
-                    }
-                    
-                    resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
-                  });
-                  
-                  // Trim any trailing newline
-                  resultText = resultText.trim();
-                } else {
-                  // Handle different response format
-                  resultText = 'Result: ' + JSON.stringify(data, null, 2);
-                }
-                
-                // Return the formatted text directly as the tool expects
-                return resultText;
+                // Handle different response format
+                return 'Result: ' + JSON.stringify(data, null, 2);
               }
             } catch (error) {
               return `Error executing calculation: ${error.message}`;
