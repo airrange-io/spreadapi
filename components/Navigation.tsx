@@ -11,7 +11,7 @@ const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitche
 });
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog';
+  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
