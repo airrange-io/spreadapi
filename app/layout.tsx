@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from '@/components/auth/AuthContext';
+import { Reb2bScript } from './components/Reb2bScript';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -63,6 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Reb2bScript />
         <ErrorBoundary>
           <AntdRegistry>
             <ConfigProvider
