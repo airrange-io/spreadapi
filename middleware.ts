@@ -37,6 +37,7 @@ export async function middleware(req: NextRequest) {
     '/api/timing-breakdown',
     '/api/test-cache',
     // '/api/warm', // Removed - cron jobs need unauthenticated access
+    '/api/mcp/tokens', // MCP token management requires auth
     '/api/v1/services', // Service management requires auth
     // Note: /api/v1/services/*/execute is handled separately to allow public access
   ];
@@ -175,6 +176,9 @@ export const config = {
     '/api/timing-breakdown',
     '/api/test-cache',
     // '/api/warm', // Removed - cron jobs need unauthenticated access
+    
+    // MCP routes (tokens need auth)
+    '/api/mcp/tokens/:path*',
     
     // v1 API routes
     '/api/v1/:path*',
