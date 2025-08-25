@@ -293,8 +293,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setWorkbookLoading(false);
         }
       } else {
-        // No workbook available
+        // No workbook available (204 or other status)
         setWorkbookLoading(false);
+        setWorkbookLoaded(true); // Mark as loaded to prevent infinite loop
         if (!spreadsheetData) {
           setShowEmptyState(true);
         }

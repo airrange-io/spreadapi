@@ -38,6 +38,17 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
   const [hideDemoService, setHideDemoService] = useState(false);
   const loadingRef = useRef(false);
+  const searchQueryRef = useRef(searchQuery);
+  const hideDemoServiceRef = useRef(hideDemoService);
+
+  // Keep refs updated
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+  useEffect(() => {
+    hideDemoServiceRef.current = hideDemoService;
+  }, [hideDemoService]);
 
   useEffect(() => {
     // Check if demo service should be hidden
@@ -94,7 +105,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }, [searchQuery, services]);
 
   const loadServices = async (forceHideDemo?: boolean) => {
-    const shouldHideDemo = forceHideDemo !== undefined ? forceHideDemo : hideDemoService;
+    const shouldHideDemo = forceHideDemo !== undefined ? forceHideDemo : hideDemoServiceRef.current;
     // Prevent duplicate calls
     if (loadingRef.current) {
       return;
@@ -201,7 +212,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
         setServices(loadedServices);
         // Initialize filtered services with all services if no search query
-        if (!searchQuery.trim()) {
+        if (!searchQueryRef.current.trim()) {
           setFilteredServices(loadedServices);
         }
       } else {
@@ -237,7 +248,11 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
       if (response.ok) {
         message.success(`Service "${serviceName}" deleted`);
-        loadServices(); // Reload the list
+        // Remove the deleted service from state immediately for better UX
+        setServices(prevServices => prevServices.filter(s => s.id !== serviceId));
+        setFilteredServices(prevFiltered => prevFiltered.filter(s => s.id !== serviceId));
+        // Then reload to ensure consistency with backend
+        loadServices();
       } else {
         message.error('Failed to delete service');
       }
@@ -394,7 +409,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </Space>
       ),
     },
-  ], [clickedServiceId, formatDate, handleDelete, handleEdit, message, setHideDemoService]);
+  ], [clickedServiceId, formatDate, handleDelete, handleEdit, message]);
 
   if (loading) {
     return (

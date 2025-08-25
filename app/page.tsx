@@ -151,7 +151,7 @@ const ListsPage: React.FC = observer(() => {
     const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
     if (!isCSV && !isJSON && !isExcel) {
-      messageApi.error('Bitte wählen Sie eine CSV, Excel oder JSON Datei aus');
+      messageApi.error('Please select a CSV, Excel or JSON file');
       return;
     }
 
@@ -183,11 +183,42 @@ const ListsPage: React.FC = observer(() => {
         // We'll use a global variable temporarily
         (window as any).__draggedFile = file;
 
-        // Generate a new service ID and navigate with file flag
+        // Generate a new service ID
         const newId = generateServiceId(user?.id || 'test1234');
-        router.push(`/service/${newId}?fileDropped=true`);
+        
+        // Generate automatic name based on file name
+        const date = new Date();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const baseFileName = file.name.replace(/\.[^/.]+$/, ''); // Remove file extension
+        const automaticName = `${baseFileName} - ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+        // Create the service in the backend first
+        const createResponse = await fetch('/api/services', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: newId,
+            name: automaticName,
+            description: `Imported from ${file.name}`
+          })
+        });
+
+        if (createResponse.ok || createResponse.status === 409) {
+          // Service created or already exists, navigate with file flag
+          router.push(`/service/${newId}?fileDropped=true`);
+        } else {
+          // Handle error
+          const errorData = await createResponse.json().catch(() => ({}));
+          console.error('Failed to create service:', errorData);
+          messageApi.error('Failed to create service. Please try again.');
+          delete (window as any).__draggedFile; // Clean up the global variable
+        }
       } catch (error) {
-        messageApi.error('Fehler beim Verarbeiten der Datei');
+        console.error('Error processing file:', error);
+        messageApi.error('Error processing the file. Please try again.');
+        delete (window as any).__draggedFile; // Clean up the global variable
       }
     };
 
@@ -227,7 +258,7 @@ const ListsPage: React.FC = observer(() => {
   }, [isAuthenticated, router, setIsAuthenticated]);
 
   // Memoized new service handler
-  const handleNewService = useCallback((e: React.MouseEvent) => {
+  const handleNewService = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -240,10 +271,47 @@ const ListsPage: React.FC = observer(() => {
     // Set loading state
     setIsCreatingService(true);
 
-    // Generate a new service ID and navigate
+    // Generate a new service ID
     const newId = generateServiceId(user?.id || 'test1234');
-    router.push(`/service/${newId}`);
-  }, [isAuthenticated, router, user?.id]);
+    
+    // Generate automatic name for new service
+    const date = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const automaticName = `Service ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+    try {
+      // Create the service in the backend first
+      const createResponse = await fetch('/api/services', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: newId,
+          name: automaticName,
+          description: ''
+        })
+      });
+
+      if (createResponse.ok) {
+        // Service created successfully, navigate to it
+        router.push(`/service/${newId}`);
+      } else if (createResponse.status === 409) {
+        // Service already exists (unlikely but possible), navigate anyway
+        router.push(`/service/${newId}`);
+      } else {
+        // Handle other errors
+        const errorData = await createResponse.json().catch(() => ({}));
+        console.error('Failed to create service:', errorData);
+        messageApi.error('Failed to create service. Please try again.');
+        setIsCreatingService(false);
+      }
+    } catch (error) {
+      console.error('Error creating service:', error);
+      messageApi.error('Failed to create service. Please try again.');
+      setIsCreatingService(false);
+    }
+  }, [isAuthenticated, router, user?.id, messageApi]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
