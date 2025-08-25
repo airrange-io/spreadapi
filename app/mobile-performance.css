@@ -1,0 +1,53 @@
+/* High-Impact Mobile Performance Optimizations */
+
+/* CRITICAL: Remove 300ms tap delay on mobile */
+button, 
+a, 
+.ant-btn,
+.ant-card,
+[role="button"],
+[onclick] {
+  touch-action: manipulation;
+}
+
+/* CRITICAL: Prevent zoom on input focus (iOS) */
+@media (max-width: 768px) {
+  input, 
+  textarea, 
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* HIGH IMPACT: Hardware acceleration for smooth scrolling */
+.ant-layout-content,
+.ant-drawer-content,
+.ant-modal-wrap,
+.ant-table-body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* MEDIUM IMPACT: Reduce animations on mobile for better performance */
+@media (max-width: 768px) and (hover: none) {
+  /* Disable hover effects on touch devices */
+  .ant-card-hoverable:hover {
+    transform: none !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+  }
+  
+  /* Speed up transitions on mobile */
+  * {
+    transition-duration: 0.15s !important;
+  }
+  
+  /* But keep loading spinners */
+  .ant-spin-dot {
+    transition-duration: 0s !important;
+  }
+}
+
+/* MEDIUM IMPACT: Optimize font rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

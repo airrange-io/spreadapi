@@ -8,6 +8,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { AuthProvider } from '@/components/auth/AuthContext';
 import { Reb2bScript } from './components/Reb2bScript';
 import "./globals.css";
+import "./mobile-performance.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'),

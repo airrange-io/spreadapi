@@ -177,8 +177,8 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         const data = await response.json();
         const loadedServices = data.services || [];
 
-        // If user has no services, add the demo services (unless hidden)
-        if (loadedServices.length === 0 && !shouldHideDemo) {
+        // Add demo services for users with 0 or 1 service (unless hidden)
+        if (loadedServices.length <= 1 && !shouldHideDemo) {
           const demoServices: Service[] = DEMO_SERVICES.map(demo => ({
             id: demo.id,
             name: demo.name,
@@ -207,6 +207,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             // Error fetching demo service analytics
           }
 
+          // Add demo services to the list
           loadedServices.push(...demoServices);
         }
 
