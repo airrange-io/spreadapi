@@ -3,9 +3,15 @@ import { createToken } from '../../../../../lib/mcp-auth';
 
 export async function POST(request) {
   try {
-    // TODO: Add proper authentication with Hanko
-    // For now, using a fixed test user ID for consistency
-    const tempUserId = 'test1234';
+    // Get user ID from headers (set by middleware)
+    const userId = request.headers.get('x-user-id');
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Please log in to create MCP tokens' },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();
@@ -36,7 +42,7 @@ export async function POST(request) {
 
     // Create token
     const tokenData = await createToken(
-      tempUserId,
+      userId,
       name.trim(),
       description?.trim() || '',
       serviceIds || []

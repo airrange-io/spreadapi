@@ -8,7 +8,7 @@ import {
 import {
   CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined,
   LockOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined, UserOutlined
 } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -35,6 +35,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [generateActiveKey, setGenerateActiveKey] = useState<string[]>(['generate']);
   const [tokensActiveKey, setTokensActiveKey] = useState<string[]>([]);
   const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>(['instructions']);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const { message: messageApi } = App.useApp();
   const router = useRouter();
@@ -53,6 +54,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       if (res.ok) {
         const data = await res.json();
         setExistingTokens(data.tokens || []);
+        setCurrentUserId(data.userId || null);
       }
     } catch (error) {
       messageApi.error('Failed to load tokens');
@@ -426,11 +428,18 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                               {token.description && <Text>{token.description}</Text>}
                               <Space size="small" style={{ fontSize: 12 }}>
                                 <CalendarOutlined />
-                                <Text type="secondary">Created {new Date(token.createdAt).toLocaleDateString()}</Text>
-                                {token.lastUsedAt && (
+                                <Text type="secondary">Created {token.created ? new Date(token.created).toLocaleDateString() : 'Unknown'}</Text>
+                                {currentUserId && (
                                   <>
                                     <Divider type="vertical" />
-                                    <Text type="secondary">Last used {new Date(token.lastUsedAt).toLocaleDateString()}</Text>
+                                    <UserOutlined />
+                                    <Text type="secondary">User: {currentUserId}</Text>
+                                  </>
+                                )}
+                                {token.lastUsed && (
+                                  <>
+                                    <Divider type="vertical" />
+                                    <Text type="secondary">Last used {new Date(token.lastUsed).toLocaleDateString()}</Text>
                                   </>
                                 )}
                               </Space>
