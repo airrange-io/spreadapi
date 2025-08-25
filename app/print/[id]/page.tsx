@@ -264,11 +264,21 @@ export default function PrintPage() {
     );
   }
 
-  // Redirect to report page for pending status
+  // Redirect directly to service page with inputs for pending status
   if (status?.status === 'pending') {
-    // Redirect to the report page
+    // Get the print job data and redirect to service page
     if (typeof window !== 'undefined') {
-      window.location.href = `/print/${jobId}/report`;
+      fetch(`/api/print/${jobId}/data`)
+        .then(res => res.json())
+        .then(data => {
+          const queryParams = new URLSearchParams();
+          Object.entries(data.inputs).forEach(([key, value]) => {
+            queryParams.append(key, String(value));
+          });
+          // Add print mode flag to show print-friendly version
+          queryParams.append('printMode', 'true');
+          window.location.href = `/service/${data.serviceId}?${queryParams.toString()}`;
+        });
     }
     return (
       <div style={{ 
@@ -278,7 +288,7 @@ export default function PrintPage() {
         minHeight: '100vh',
         background: '#f0f2f5'
       }}>
-        <Spin size="large" tip="Loading report..." />
+        <Spin size="large" tip="Loading spreadsheet..." />
       </div>
     );
   }
