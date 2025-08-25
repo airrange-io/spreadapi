@@ -3,6 +3,7 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
+import { createPrintJob } from '@/lib/print/redis';
 
 // Basic input sanitization to prevent injection attacks
 function sanitizeInput(input) {
@@ -146,6 +147,15 @@ When a user asks for a calculation:
 
 IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user.
 
+PDF REPORTS: You have a 'create_pdf' tool available. Use it when:
+- User explicitly asks for a PDF, report, or document
+- User wants to save or share the results
+- User needs formal documentation
+- The calculation is complex or important (like a final loan calculation, investment analysis, etc.)
+- User asks "can I get this in PDF?" or similar
+
+DO NOT automatically generate PDFs for simple calculations unless requested.
+
 CRITICAL: When users say percentages like "5%", "7%", etc:
 - Automatically convert them (5% → 0.05)
 - Do NOT ask for confirmation
@@ -170,6 +180,10 @@ You have access to a calculation tool for this service. Focus on helping users u
     
     // Build tools dynamically based on service
     let tools = {};
+    
+    // Store last calculation data for PDF generation
+    let lastCalculation = null;
+    let lastBatchCalculation = null;
     
     if (serviceDetails) {
       
@@ -257,6 +271,14 @@ You have access to a calculation tool for this service. Focus on helping users u
                   resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
                 });
                 
+                // Store the last calculation inputs for potential PDF generation
+                lastCalculation = {
+                  serviceId,
+                  inputs,
+                  outputs: data.outputs,
+                  serviceName: serviceDetails.name
+                };
+                
                 return resultText.trim();
               } else {
                 // Handle different response format
@@ -322,6 +344,8 @@ You have access to a calculation tool for this service. Focus on helping users u
               // Format batch results
               let resultText = `## Batch Calculation Results\n\n`;
               
+              const successfulResults = [];
+              
               results.forEach(result => {
                 resultText += `### Scenario ${result.scenario}\n`;
                 
@@ -351,6 +375,13 @@ You have access to a calculation tool for this service. Focus on helping users u
                     
                     resultText += `- **${output.title || output.alias}**: ${formattedValue}\n`;
                   });
+                  
+                  // Store successful results for potential PDF generation
+                  successfulResults.push({
+                    scenario: result.scenario,
+                    inputs: result.inputs,
+                    outputs: result.outputs
+                  });
                 } else {
                   resultText += `\n**Error:** ${result.error}\n`;
                 }
@@ -358,9 +389,108 @@ You have access to a calculation tool for this service. Focus on helping users u
                 resultText += `\n---\n\n`;
               });
               
+              // Store batch results for potential PDF generation
+              lastBatchCalculation = {
+                serviceId,
+                serviceName: serviceDetails.name,
+                results: successfulResults
+              };
+              
               return resultText.trim();
             } catch (error) {
               return `Error executing batch calculation: ${error.message}`;
+            }
+          }
+        });
+        
+        // Add PDF generation tool
+        tools.create_pdf = tool({
+          description: `Generate a downloadable PDF report for the last calculation. Use this when the user asks for a report, PDF, or wants to save/share the results.`,
+          inputSchema: z.object({
+            includeLastCalculation: z.boolean().default(true).describe('Include the most recent calculation in the PDF'),
+            title: z.string().optional().describe('Custom title for the PDF report'),
+            orientation: z.enum(['portrait', 'landscape']).optional().default('portrait').describe('Page orientation')
+          }),
+          execute: async ({ includeLastCalculation = true, title, orientation = 'portrait' }) => {
+            try {
+              const userId = req.headers.get('x-user-id') || 'chat-user';
+              
+              // Check if we have a recent calculation to generate PDF from
+              if (!lastCalculation && !lastBatchCalculation) {
+                return 'No recent calculation found. Please perform a calculation first before generating a PDF.';
+              }
+              
+              let resultText = '';
+              
+              // Handle single calculation PDF
+              if (lastCalculation && includeLastCalculation) {
+                const { serviceId, inputs, serviceName } = lastCalculation;
+                
+                const printJob = await createPrintJob({
+                  serviceId,
+                  userId,
+                  inputs,
+                  printSettings: {
+                    orientation,
+                    fitToPage: true
+                  },
+                  metadata: {
+                    title: title || `${serviceName} Calculation Report`,
+                    description: `Generated from chat conversation`
+                  }
+                });
+                
+                // Use appropriate base URL for development vs production
+                const baseUrl = process.env.NODE_ENV === 'development' 
+                  ? 'http://localhost:3000'
+                  : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
+                const printUrl = `${baseUrl}/print/${printJob.id}`;
+                
+                // Use a better title for the report
+                const reportTitle = title || serviceName || 'Calculation Report';
+                
+                resultText = `📄 **PDF Report Generated**\n\n`;
+                resultText += `<a href="${printUrl}" target="_blank" rel="noopener noreferrer">Download ${reportTitle}</a>\n\n`;
+                resultText += `*This link expires in 24 hours*`;
+              }
+              
+              // Handle batch calculation PDFs
+              if (lastBatchCalculation && includeLastCalculation) {
+                const { serviceId, serviceName, results } = lastBatchCalculation;
+                const printLinks = [];
+                
+                resultText = `📄 **PDF Reports Generated**\n\n`;
+                
+                for (const result of results) {
+                  const printJob = await createPrintJob({
+                    serviceId,
+                    userId,
+                    inputs: result.inputs,
+                    printSettings: {
+                      orientation,
+                      fitToPage: true
+                    },
+                    metadata: {
+                      title: title ? `${title} - Scenario ${result.scenario}` : `${serviceName} - Scenario ${result.scenario}`,
+                      description: `Batch calculation scenario ${result.scenario}`
+                    }
+                  });
+                  
+                  // Use appropriate base URL for development vs production
+                  const baseUrl = process.env.NODE_ENV === 'development' 
+                    ? 'http://localhost:3000'
+                    : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
+                  const printUrl = `${baseUrl}/print/${printJob.id}`;
+                  printLinks.push({ scenario: result.scenario, url: printUrl });
+                  resultText += `• [Scenario ${result.scenario} PDF](${printUrl})\n`;
+                }
+                
+                resultText += `\n*All links expire in 24 hours*`;
+              }
+              
+              return resultText;
+            } catch (error) {
+              return `Error generating PDF: ${error.message}`;
             }
           }
         });
@@ -481,6 +611,13 @@ NEVER ask for clarification on values the user already provided!
 - User provides several sets of inputs
 - User asks "what if" questions with multiple scenarios
 - User wants to see a range of calculations
+
+### When to offer PDF reports:
+- User explicitly requests a PDF or report
+- After complex calculations that user might want to save
+- When user mentions sharing results with others
+- For formal documentation needs
+Use the 'create_pdf' tool to generate downloadable PDFs when appropriate
 
 ### Working with Areas (if available):
 - Use 'read_area' to examine spreadsheet data, lookup tables, or reference values

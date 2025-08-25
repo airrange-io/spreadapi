@@ -5,6 +5,7 @@ import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
 import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
+import { createPrintJob, getPrintJobStatus } from '../../../../lib/print/redis';
 
 /**
  * MCP (Model Context Protocol) Server v1
@@ -640,6 +641,58 @@ async function handleJsonRpc(request, auth) {
                 }
               },
               required: ['calculations']
+            }
+          },
+          {
+            name: 'create_print_link',
+            description: 'Generate a shareable PDF print link for SpreadAPI calculation results. The link remains valid for 24 hours.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                serviceId: {
+                  type: 'string',
+                  description: 'The SpreadAPI service ID to execute'
+                },
+                inputs: {
+                  type: 'object',
+                  description: 'Key-value pairs of input parameters for the calculation',
+                  additionalProperties: true
+                },
+                title: {
+                  type: 'string',
+                  description: 'Title for the PDF document (default: "SpreadAPI Report")'
+                },
+                orientation: {
+                  type: 'string',
+                  enum: ['portrait', 'landscape'],
+                  description: 'Page orientation (default: "portrait")'
+                },
+                fitToPage: {
+                  type: 'boolean',
+                  description: 'Whether to fit content to one page (default: true)'
+                },
+                description: {
+                  type: 'string',
+                  description: 'Description or context for the report'
+                }
+              },
+              required: ['serviceId', 'inputs'],
+              additionalProperties: false
+            }
+          },
+          {
+            name: 'get_print_status',
+            description: 'Check the status of a print job and retrieve the PDF URL if already generated',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                jobId: {
+                  type: 'string',
+                  description: 'The print job ID returned from create_print_link'
+                }
+              },
+              required: ['jobId'],
+              additionalProperties: false
             }
           }
         ];
@@ -1299,6 +1352,121 @@ async function handleJsonRpc(request, auth) {
               error: {
                 code: INTERNAL_ERROR,
                 message: `Failed to list services: ${error.message}`
+              },
+              id
+            };
+          }
+        }
+        
+        // Handle create_print_link tool
+        if (name === 'create_print_link') {
+          try {
+            const { serviceId, inputs, title, orientation, fitToPage, description } = args;
+            
+            if (!serviceId || !inputs) {
+              throw new Error('serviceId and inputs are required');
+            }
+            
+            // Check if this service belongs to the user
+            const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+            if (!userServiceIndex[serviceId]) {
+              throw new Error('Service not found');
+            }
+            
+            // Check if this service is allowed for this token
+            const allowedServiceIds = auth.serviceIds || [];
+            const hasServiceRestrictions = allowedServiceIds.length > 0;
+            
+            if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+              throw new Error('Access denied to this service');
+            }
+            
+            // Create print job
+            const printJob = await createPrintJob({
+              serviceId,
+              userId: auth.userId,
+              inputs,
+              token: auth.token,
+              printSettings: {
+                orientation: orientation || 'portrait',
+                fitToPage: fitToPage !== false
+              },
+              metadata: {
+                title: title || 'SpreadAPI Report',
+                description: description
+              }
+            });
+            
+            // Build response with correct URL for development/production
+            const baseUrl = process.env.NODE_ENV === 'development' 
+              ? 'http://localhost:3000'
+              : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
+            const printUrl = `${baseUrl}/print/${printJob.id}`;
+            
+            return {
+              jsonrpc: '2.0',
+              result: {
+                jobId: printJob.id,
+                printUrl,
+                expiresAt: printJob.expiresAt,
+                message: `Print link created: ${printUrl}`
+              },
+              id
+            };
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Failed to create print link: ${error.message}`
+              },
+              id
+            };
+          }
+        }
+        
+        // Handle get_print_status tool
+        if (name === 'get_print_status') {
+          try {
+            const { jobId } = args;
+            
+            if (!jobId) {
+              throw new Error('jobId is required');
+            }
+            
+            // Get print job status
+            const status = await getPrintJobStatus(jobId);
+            
+            if (!status) {
+              throw new Error('Print job not found');
+            }
+            
+            // Check if job has expired
+            const expiresAt = new Date(status.expiresAt);
+            if (expiresAt < new Date()) {
+              return {
+                jsonrpc: '2.0',
+                result: {
+                  jobId: status.jobId,
+                  status: 'expired',
+                  expiresAt: status.expiresAt,
+                  message: 'Print job has expired. Please create a new one.'
+                },
+                id
+              };
+            }
+            
+            return {
+              jsonrpc: '2.0',
+              result: status,
+              id
+            };
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Failed to get print status: ${error.message}`
               },
               id
             };

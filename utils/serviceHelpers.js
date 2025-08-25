@@ -46,7 +46,7 @@ export async function getServiceDetails(serviceId, userId = null) {
     // Build the service details object
     const serviceDetails = {
       id: serviceData.id || serviceId,
-      name: serviceData.name || 'Untitled Service',
+      name: serviceData.title || serviceData.name || 'Untitled Service',
       description: serviceData.description || '',
       inputs: parseJsonField(serviceData.inputs, []),
       outputs: parseJsonField(serviceData.outputs, []),
