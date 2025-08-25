@@ -3,7 +3,7 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
-// import { createPrintJob } from '@/lib/print/redis'; // PDF generation removed
+import { createPrintJob } from '@/lib/print/redis';
 
 // Basic input sanitization to prevent injection attacks
 function sanitizeInput(input) {
@@ -403,9 +403,7 @@ You have access to a calculation tool for this service. Focus on helping users u
           }
         });
         
-        // PDF generation removed - not feasible without heavy libraries
-        // Users can print directly from the service page using Ctrl+P/Cmd+P
-        /*
+        // Add PDF generation tool
         tools.create_pdf = tool({
           description: `Generate a downloadable PDF report for the last calculation. Use this when the user asks for a report, PDF, or wants to save/share the results.`,
           inputSchema: z.object({
@@ -496,7 +494,6 @@ You have access to a calculation tool for this service. Focus on helping users u
             }
           }
         });
-        */
       }
       
       // Add area reading tool if service has areas
