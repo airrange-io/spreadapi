@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
 import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined } from '@ant-design/icons';
@@ -30,62 +30,40 @@ const md = markdownit({
   typographer: true
 });
 
-// Custom markdown renderer for Bubble component
-const renderMarkdown: BubbleProps['messageRender'] = (content) => {
-  return (
-    <Typography>
-      <div 
-        dangerouslySetInnerHTML={{ __html: md.render(content) }}
-        style={{
-          // Style for markdown content
-          '& h1, & h2, & h3, & h4, & h5, & h6': {
-            marginTop: '0.5em',
-            marginBottom: '0.5em',
-          },
-          '& p': {
-            marginBottom: '0.5em',
-            '&:last-child': {
-              marginBottom: 0,
-            },
-          },
-          '& pre': {
-            background: '#f6f8fa',
-            padding: '12px',
-            borderRadius: '6px',
-            overflow: 'auto',
-          },
-          '& code': {
-            background: '#f6f8fa',
-            padding: '2px 4px',
-            borderRadius: '3px',
-            fontSize: '0.9em',
-          },
-          '& pre code': {
-            background: 'transparent',
-            padding: 0,
-          },
-          '& blockquote': {
-            borderLeft: '4px solid #e4e4e7',
-            paddingLeft: '16px',
-            marginLeft: 0,
-            color: '#666',
-          },
-          '& ul, & ol': {
-            paddingLeft: '20px',
-            marginBottom: '0.5em',
-          },
-          '& a': {
-            color: '#502D80',
-            textDecoration: 'none',
-            '&:hover': {
-              textDecoration: 'underline',
-            },
-          },
-        } as any}
-      />
-    </Typography>
-  );
+// Configure markdown to open links in new tabs
+md.renderer.rules.link_open = (tokens, idx, options, env, renderer) => {
+  const token = tokens[idx];
+  token.attrSet('target', '_blank');
+  token.attrSet('rel', 'noopener noreferrer');
+  return renderer.renderToken(tokens, idx, options);
 };
+
+// Memoized message bubble component to prevent re-renders
+const MemoizedAIBubble = React.memo(({ content, avatar, placement, styles }: any) => {
+  // Pre-render markdown content
+  const renderedContent = React.useMemo(() => {
+    try {
+      return md.render(content);
+    } catch (e) {
+      return content;
+    }
+  }, [content]);
+  
+  return (
+    <Bubble
+      placement={placement}
+      content={content}
+      messageRender={() => (
+        <div 
+          dangerouslySetInnerHTML={{ __html: renderedContent }}
+          className="markdown-content"
+        />
+      )}
+      avatar={avatar}
+      styles={styles}
+    />
+  );
+});
 
 export default function ChatWrapperBubbles() {
   const router = useRouter();
@@ -98,9 +76,11 @@ export default function ChatWrapperBubbles() {
   const [serviceDetails, setServiceDetails] = useState<any>(null);
   const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
 
-  // Simple useChat hook usage following Vercel's example
+  // Simple useChat hook usage following Vercel's example with throttling
   const { messages, sendMessage, status, stop, error, setMessages } = useChat({
+    experimental_throttle: 50, // Throttle updates to reduce flickering
     onFinish: () => {
       // Auto-scroll to bottom when new message arrives
       setTimeout(() => {
@@ -434,8 +414,12 @@ export default function ChatWrapperBubbles() {
                 .filter((m, index, self) => 
                   index === self.findIndex(msg => msg.id === m.id)
                 )
-                .map((m, index) => {
+                .map((m, index, array) => {
                 const isUser = m.role === 'user';
+                // Check if this is the last AI message and we're currently streaming
+                const isLastAIMessage = !isUser && index === array.length - 1;
+                const isStreaming = isLastAIMessage && isLoading;
+                
                 // Extract content from message parts
                 let content = '';
                 
@@ -454,9 +438,6 @@ export default function ChatWrapperBubbles() {
                   }
                 }
                 
-                
-                
-                
                 // Skip empty messages and greeting trigger
                 if (!content || content === '[GREETING]') return null;
                 
@@ -469,35 +450,49 @@ export default function ChatWrapperBubbles() {
                       width: '100%'
                     }}
                   >
-                    <Bubble
-                      placement={isUser ? 'end' : 'start'}
-                      content={content}
-                      messageRender={!isUser ? renderMarkdown : undefined}
-                      avatar={
-                        isUser ? (
+                    {isUser ? (
+                      <Bubble
+                        placement="end"
+                        content={content}
+                        avatar={
                           <Avatar
                             style={{ backgroundColor: '#502D80', color: '#fff' }}
                             size={32}
                           >
                             {user?.email?.charAt(0).toUpperCase() || 'U'}
                           </Avatar>
-                        ) : (
+                        }
+                        styles={{
+                          content: {
+                            background: '#502D80',
+                            color: 'white',
+                            maxWidth: '70%',
+                          }
+                        }}
+                      />
+                    ) : (
+                      <MemoizedAIBubble
+                        placement="start"
+                        content={content}
+                        avatar={
                           <Avatar
                             style={{ backgroundColor: '#f0f0f0', color: '#333' }}
                             size={32}
                           >
                             {currentService.icon}
                           </Avatar>
-                        )
-                      }
-                      styles={{
-                        content: {
-                          background: isUser ? '#502D80' : '#f0f0f0',
-                          color: isUser ? 'white' : 'black',
-                          maxWidth: '70%',
                         }
-                      }}
-                    />
+                        styles={{
+                          content: {
+                            background: '#f0f0f0',
+                            color: 'black',
+                            maxWidth: '70%',
+                            width: isStreaming ? '70%' : undefined,
+                            minWidth: '200px',
+                          }
+                        }}
+                      />
+                    )}
                   </div>
                 );
               })}

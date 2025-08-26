@@ -3,7 +3,7 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
-import { createPrintJob } from '@/lib/print/redis';
+// import { createPrintJob } from '@/lib/print/redis'; // Removed - using new simplified PDF system
 
 // Basic input sanitization to prevent injection attacks
 function sanitizeInput(input) {
@@ -147,14 +147,14 @@ When a user asks for a calculation:
 
 IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user.
 
-PDF REPORTS: You have a 'create_pdf' tool available. Use it when:
-- User explicitly asks for a PDF, report, or document
-- User wants to save or share the results
-- User needs formal documentation
-- The calculation is complex or important (like a final loan calculation, investment analysis, etc.)
-- User asks "can I get this in PDF?" or similar
+PDF GENERATION:
+- When users ask for a PDF, report, or printable version, use the calculate tool with _generatePdf: true
+- The PDF link will be included automatically with the calculation results
+- You don't need a separate tool for PDFs - it's built into the calculate function
 
-DO NOT automatically generate PDFs for simple calculations unless requested.
+CRITICAL RULES:
+- NEVER say "I need to perform the calculation again" or "Let me calculate again"  
+- Just calculate with _generatePdf: true when PDF is requested
 
 CRITICAL: When users say percentages like "5%", "7%", etc:
 - Automatically convert them (5% → 0.05)
@@ -181,10 +181,6 @@ You have access to a calculation tool for this service. Focus on helping users u
     // Build tools dynamically based on service
     let tools = {};
     
-    // Store last calculation data for PDF generation
-    let lastCalculation = null;
-    let lastBatchCalculation = null;
-    
     if (serviceDetails) {
       
       // Only add calculate tool if we have inputs
@@ -210,13 +206,18 @@ You have access to a calculation tool for this service. Focus on helping users u
           inputSchemas[input.alias] = schema;
         });
         
+        // Add PDF generation option
+        inputSchemas._generatePdf = z.boolean().optional().describe('Generate a PDF report of the results');
+        
         // Create Zod object schema
         const toolZodSchema = z.object(inputSchemas);
         
         tools.calculate = tool({
-          description: `Calculate ${serviceDetails.name}`,
+          description: `Calculate ${serviceDetails.name}. The AI will automatically include a PDF when appropriate.`,
           inputSchema: toolZodSchema,
-          execute: async (inputs) => {
+          execute: async (params) => {
+            // Extract PDF flag from inputs
+            const { _generatePdf, ...inputs } = params;
             try {
               
               // Execute calculation via main API endpoint
@@ -271,13 +272,42 @@ You have access to a calculation tool for this service. Focus on helping users u
                   resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
                 });
                 
-                // Store the last calculation inputs for potential PDF generation
-                lastCalculation = {
-                  serviceId,
-                  inputs,
-                  outputs: data.outputs,
-                  serviceName: serviceDetails.name
-                };
+                // If PDF was requested, prepare the data and provide link
+                if (_generatePdf) {
+                  try {
+                    const pdfBaseUrl = process.env.NODE_ENV === 'development' 
+                      ? 'http://localhost:3000'
+                      : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
+                    
+                    console.log('PDF Generation requested:', { serviceId, inputs, pdfBaseUrl });
+                    
+                    // Call prepare endpoint which stores JSON in Redis for client-side generation
+                    const pdfResponse = await fetch(`${pdfBaseUrl}/api/pdf/prepare`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        serviceId: serviceId,
+                        inputs: inputs
+                      })
+                    });
+                    
+                    console.log('PDF Response status:', pdfResponse.status);
+                    
+                    if (pdfResponse.ok) {
+                      const { pdfId } = await pdfResponse.json();
+                      const pdfUrl = `${pdfBaseUrl}/pdf/${pdfId}`;
+                      console.log('PDF URL generated:', pdfUrl);
+                      // Link to client-side page where PDF will be generated in browser
+                      resultText += `\n\n📄 [Generate PDF Report](${pdfUrl})\n*Opens in new tab where PDF will be generated and downloaded.*`;
+                    } else {
+                      const errorData = await pdfResponse.text();
+                      console.error('PDF prepare failed:', pdfResponse.status, errorData);
+                    }
+                  } catch (pdfError) {
+                    console.error('PDF preparation failed:', pdfError);
+                    // Don't fail the whole calculation if PDF fails
+                  }
+                }
                 
                 return resultText.trim();
               } else {
@@ -389,108 +419,9 @@ You have access to a calculation tool for this service. Focus on helping users u
                 resultText += `\n---\n\n`;
               });
               
-              // Store batch results for potential PDF generation
-              lastBatchCalculation = {
-                serviceId,
-                serviceName: serviceDetails.name,
-                results: successfulResults
-              };
-              
               return resultText.trim();
             } catch (error) {
               return `Error executing batch calculation: ${error.message}`;
-            }
-          }
-        });
-        
-        // Add PDF generation tool
-        tools.create_pdf = tool({
-          description: `Generate a downloadable PDF report for the last calculation. Use this when the user asks for a report, PDF, or wants to save/share the results.`,
-          inputSchema: z.object({
-            includeLastCalculation: z.boolean().default(true).describe('Include the most recent calculation in the PDF'),
-            title: z.string().optional().describe('Custom title for the PDF report'),
-            orientation: z.enum(['portrait', 'landscape']).optional().default('portrait').describe('Page orientation')
-          }),
-          execute: async ({ includeLastCalculation = true, title, orientation = 'portrait' }) => {
-            try {
-              const userId = req.headers.get('x-user-id') || 'chat-user';
-              
-              // Check if we have a recent calculation to generate PDF from
-              if (!lastCalculation && !lastBatchCalculation) {
-                return 'No recent calculation found. Please perform a calculation first before generating a PDF.';
-              }
-              
-              let resultText = '';
-              
-              // Handle single calculation PDF
-              if (lastCalculation && includeLastCalculation) {
-                const { serviceId, inputs, serviceName } = lastCalculation;
-                
-                const printJob = await createPrintJob({
-                  serviceId,
-                  userId,
-                  inputs,
-                  printSettings: {
-                    orientation,
-                    fitToPage: true
-                  },
-                  metadata: {
-                    title: title || `${serviceName} Calculation Report`,
-                    description: `Generated from chat conversation`
-                  }
-                });
-                
-                // Use appropriate base URL for development vs production
-                const baseUrl = process.env.NODE_ENV === 'development' 
-                  ? 'http://localhost:3000'
-                  : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
-                const printUrl = `${baseUrl}/print/${printJob.id}`;
-                
-                // Use a better title for the report
-                const reportTitle = title || serviceName || 'Calculation Report';
-                
-                resultText = `📄 **PDF Report Generated**\n\n`;
-                resultText += `<a href="${printUrl}" target="_blank" rel="noopener noreferrer">Download ${reportTitle}</a>\n\n`;
-                resultText += `*This link expires in 24 hours*`;
-              }
-              
-              // Handle batch calculation PDFs
-              if (lastBatchCalculation && includeLastCalculation) {
-                const { serviceId, serviceName, results } = lastBatchCalculation;
-                const printLinks = [];
-                
-                resultText = `📄 **PDF Reports Generated**\n\n`;
-                
-                for (const result of results) {
-                  const printJob = await createPrintJob({
-                    serviceId,
-                    userId,
-                    inputs: result.inputs,
-                    printSettings: {
-                      orientation,
-                      fitToPage: true
-                    },
-                    metadata: {
-                      title: title ? `${title} - Scenario ${result.scenario}` : `${serviceName} - Scenario ${result.scenario}`,
-                      description: `Batch calculation scenario ${result.scenario}`
-                    }
-                  });
-                  
-                  // Use appropriate base URL for development vs production
-                  const baseUrl = process.env.NODE_ENV === 'development' 
-                    ? 'http://localhost:3000'
-                    : (process.env.NEXT_PUBLIC_BASE_URL || 'https://spreadapi.io');
-                  const printUrl = `${baseUrl}/print/${printJob.id}`;
-                  printLinks.push({ scenario: result.scenario, url: printUrl });
-                  resultText += `• [Scenario ${result.scenario} PDF](${printUrl})\n`;
-                }
-                
-                resultText += `\n*All links expire in 24 hours*`;
-              }
-              
-              return resultText;
-            } catch (error) {
-              return `Error generating PDF: ${error.message}`;
             }
           }
         });
@@ -526,7 +457,7 @@ You have access to a calculation tool for this service. Focus on helping users u
             execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
               try {
                 // Use the MCP area executor logic
-                const { executeAreaRead } = await import('@/app/api/mcp/v1/areaExecutors');
+                const { executeAreaRead } = await import('../mcp/v1/areaExecutors');
                 
                 const result = await executeAreaRead(serviceId, areaName, {
                   includeFormulas,
@@ -583,11 +514,6 @@ You have access to a calculation tool for this service. Focus on helping users u
     
     // Update system prompt to be more explicit about using tools
     if (Object.keys(tools).length > 0) {
-      // Add tool usage examples based on service inputs
-      const inputExamples = serviceDetails.inputs.map(input => 
-        `${input.alias}: <value> (${input.title}${input.format === 'percentage' ? ' as decimal' : ''})`
-      ).join(', ');
-      
       systemPrompt += `
 
 ## Your Communication Style
@@ -617,7 +543,7 @@ NEVER ask for clarification on values the user already provided!
 - After complex calculations that user might want to save
 - When user mentions sharing results with others
 - For formal documentation needs
-Use the 'create_pdf' tool to generate downloadable PDFs when appropriate
+Use the 'prepare_pdf' tool to generate downloadable PDFs when appropriate
 
 ### Working with Areas (if available):
 - Use 'read_area' to examine spreadsheet data, lookup tables, or reference values
