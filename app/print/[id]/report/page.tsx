@@ -76,7 +76,7 @@ export default function ReportPage() {
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
-        <Spin size="large" tip="Loading report..." />
+        <Spin size="default" tip="Loading report..." />
       </div>
     );
   }

@@ -133,7 +133,7 @@ export default function PrintPage() {
         background: '#f0f2f5'
       }}>
         <Card style={{ textAlign: 'center', padding: '2rem' }}>
-          <Spin size="large" />
+          <Spin size="default" />
           <Paragraph style={{ marginTop: '1rem' }}>Loading print job...</Paragraph>
         </Card>
       </div>
@@ -198,7 +198,7 @@ export default function PrintPage() {
         <Card style={{ textAlign: 'center', padding: '2rem', maxWidth: '400px' }}>
           <FileTextOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: '1rem' }} />
           <Title level={3}>Generating PDF</Title>
-          <Spin size="large" style={{ marginTop: '1rem' }} />
+          <Spin size="default" style={{ marginTop: '1rem' }} />
           <Paragraph style={{ marginTop: '1rem' }}>
             Your PDF report is being generated. This may take a few moments...
           </Paragraph>
@@ -288,7 +288,7 @@ export default function PrintPage() {
         minHeight: '100vh',
         background: '#f0f2f5'
       }}>
-        <Spin size="large" tip="Loading spreadsheet..." />
+        <Spin size="default" tip="Loading spreadsheet..." />
       </div>
     );
   }

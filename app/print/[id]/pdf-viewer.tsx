@@ -59,7 +59,7 @@ export default function PDFViewer({ jobId }: PDFViewerProps) {
         alignItems: 'center', 
         minHeight: '100vh' 
       }}>
-        <Spin size="large" tip="Loading report..." />
+        <Spin size="default" tip="Loading report..." />
       </div>
     );
   }

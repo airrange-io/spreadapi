@@ -649,6 +649,11 @@ async function getResults(requestInfo) {
       metadata: metadata
     };
     
+    // If fullSpread is requested, include the entire spreadsheet JSON with calculated values
+    if (options.includes('fullSpread')) {
+      result.spreadJSON = spread.toJSON();
+    }
+    
     // Track response time in milliseconds
     const totalResponseTime = timeEnd - timeAll;
     
@@ -784,6 +789,11 @@ export async function GET(request) {
 
       if (key === "nocache" && value === "true") {
         options.push("nocache");
+        continue;
+      }
+
+      if (key === "fullSpread" && value === "true") {
+        options.push("fullSpread");
         continue;
       }
 

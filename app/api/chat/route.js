@@ -281,13 +281,42 @@ You have access to a calculation tool for this service. Focus on helping users u
                     
                     console.log('PDF Generation requested:', { serviceId, inputs, pdfBaseUrl });
                     
-                    // Call prepare endpoint which stores JSON in Redis for client-side generation
+                    // First, we need to get the full spreadsheet with calculated results
+                    // The result object should already have the spreadJSON with all the data
+                    let spreadJSONWithResults = null;
+                    
+                    // Check if the result object has spreadsheet JSON data
+                    if (result.spreadJSON) {
+                      spreadJSONWithResults = result.spreadJSON;
+                    } else if (result._metadata && result._metadata.spreadJSON) {
+                      spreadJSONWithResults = result._metadata.spreadJSON;
+                    } else {
+                      // If not in result, we need to fetch it from the calculation endpoint
+                      console.log('Fetching full spreadsheet data for PDF generation...');
+                      const calcUrl = new URL('/api/getresults', pdfBaseUrl);
+                      calcUrl.searchParams.set('api', serviceId);
+                      calcUrl.searchParams.set('fullSpread', 'true'); // Request full spreadsheet
+                      
+                      // Add all input parameters
+                      Object.entries(inputs).forEach(([key, value]) => {
+                        calcUrl.searchParams.set(key, value);
+                      });
+                      
+                      const calcResponse = await fetch(calcUrl.toString());
+                      if (calcResponse.ok) {
+                        const calcResult = await calcResponse.json();
+                        spreadJSONWithResults = calcResult.spreadJSON || calcResult._metadata?.spreadJSON;
+                      }
+                    }
+                    
+                    // Call prepare endpoint with the calculated spreadsheet JSON
                     const pdfResponse = await fetch(`${pdfBaseUrl}/api/pdf/prepare`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         serviceId: serviceId,
-                        inputs: inputs
+                        inputs: inputs,
+                        spreadJSON: spreadJSONWithResults // Pass the calculated spreadsheet
                       })
                     });
                     

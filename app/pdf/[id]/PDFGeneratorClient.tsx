@@ -89,25 +89,39 @@ export default function PDFGeneratorClient() {
           
           // Check if Print_Area custom name exists
           const printAreaName = sheet.getCustomName("Print_Area");
+          console.log('Print_Area custom name:', printAreaName);
           
           if (!printAreaName) {
-            // No existing print area, set defaults based on used range
+            // No existing print area, use the full worksheet dimensions
+            const rowCount = sheet.getRowCount();
+            const colCount = sheet.getColumnCount();
+            
+            console.log(`Sheet dimensions: ${rowCount} rows x ${colCount} columns`);
+            
+            // Use the getUsedRange to try to optimize the print area
             const usedRange = sheet.getUsedRange();
-            if (usedRange) {
+            console.log('Used range from getUsedRange():', usedRange);
+            
+            if (usedRange && usedRange.rowCount > 0 && usedRange.colCount > 0) {
+              // Use the detected used range
               console.log('Setting print area based on used range:', usedRange);
-              
-              // Set the print range using rowStart/rowEnd and columnStart/columnEnd
               printInfo.rowStart(usedRange.row);
               printInfo.rowEnd(usedRange.row + usedRange.rowCount - 1);
               printInfo.columnStart(usedRange.col);
               printInfo.columnEnd(usedRange.col + usedRange.colCount - 1);
+            } else {
+              // Use the full worksheet as print area
+              console.log('Using full worksheet as print area');
+              console.log(`Setting print area to: 0-${rowCount-1} rows, 0-${colCount-1} columns`);
               
-              // Alternative: Set Print_Area custom name
-              // const printAreaFormula = `$${GC.Spread.Sheets.CalcEngine.rangeToFormula(usedRange)}`;
-              // sheet.addCustomName("Print_Area", printAreaFormula, usedRange.row, usedRange.col);
+              // Set to actual sheet dimensions
+              printInfo.rowStart(0);
+              printInfo.rowEnd(Math.min(rowCount - 1, 999));  // Limit to reasonable size
+              printInfo.columnStart(0);
+              printInfo.columnEnd(Math.min(colCount - 1, 25));  // Limit to columns A-Z
             }
           } else {
-            console.log('Using existing Print_Area from template');
+            console.log('Using existing Print_Area from template:', printAreaName);
           }
           
           // Set basic page settings
@@ -188,7 +202,7 @@ export default function PDFGeneratorClient() {
         background: '#f0f2f5'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <Spin size="large" />
+          <Spin size="default" />
           <Paragraph style={{ marginTop: '1rem' }}>Loading PDF data...</Paragraph>
         </div>
       </div>
@@ -205,7 +219,7 @@ export default function PDFGeneratorClient() {
         background: '#f0f2f5'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <Spin size="large" />
+          <Spin size="default" />
           <Title level={3} style={{ marginTop: '1rem' }}>Generating your PDF...</Title>
           <Paragraph>This will download automatically when ready.</Paragraph>
         </div>
