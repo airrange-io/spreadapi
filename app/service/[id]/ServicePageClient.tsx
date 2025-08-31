@@ -1545,6 +1545,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         serviceStatus={serviceStatus}
                         availableTokens={availableTokens}
                         isDemoMode={isDemoMode}
+                        isLoading={!configLoaded}
                         onConfigChange={handleConfigChange}
                         onTokensChange={setAvailableTokens}
                         onTokenCountChange={setTokenCount}
@@ -1658,6 +1659,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     serviceStatus={serviceStatus}
                     availableTokens={availableTokens}
                     isDemoMode={isDemoMode}
+                    isLoading={!configLoaded}
                     onConfigChange={handleConfigChange}
                     onTokensChange={setAvailableTokens}
                     onTokenCountChange={setTokenCount}

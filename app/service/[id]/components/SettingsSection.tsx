@@ -15,6 +15,7 @@ interface SettingsSectionProps {
   aiUsageExamples: string[];
   aiTags: string[];
   category: string;
+  isLoading?: boolean;
   onApiNameChange: (value: string) => void;
   onApiDescriptionChange: (value: string) => void;
   onEnableCachingChange: (checked: boolean) => void;
@@ -36,6 +37,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   aiUsageExamples,
   aiTags,
   category,
+  isLoading = false,
   onApiNameChange,
   onApiDescriptionChange,
   onEnableCachingChange,
@@ -62,6 +64,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               placeholder="Enter service name"
               value={apiName}
               onChange={(e) => onApiNameChange(e.target.value)}
+              disabled={isLoading}
             />
           </div>
 
@@ -72,6 +75,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               value={apiDescription}
               onChange={(e) => onApiDescriptionChange(e.target.value)}
               rows={2}
+              disabled={isLoading}
             />
           </div>
 
@@ -82,6 +86,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 <Checkbox
                   checked={enableCaching}
                   onChange={(e) => onEnableCachingChange(e.target.checked)}
+                  disabled={isLoading}
                 >
                   Enable response caching
                 </Checkbox>
@@ -94,6 +99,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 <Checkbox
                   checked={cacheTableSheetData}
                   onChange={(e) => onCacheTableSheetDataChange(e.target.checked)}
+                  disabled={isLoading}
                 >
                   Cache TableSheet data
                 </Checkbox>
@@ -109,6 +115,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     value={tableSheetCacheTTL} 
                     onChange={onTableSheetCacheTTLChange}
                     style={{ width: '120px' }}
+                    disabled={isLoading}
                   >
                     <Select.Option value={60}>1 minute</Select.Option>
                     <Select.Option value={300}>5 minutes</Select.Option>
@@ -132,6 +139,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 value={aiDescription}
                 onChange={(e) => onAiDescriptionChange(e.target.value)}
                 rows={3}
+                disabled={isLoading}
               />
             </div>
 
@@ -144,6 +152,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 value={aiUsageExamples}
                 onChange={onAiUsageExamplesChange}
                 tokenSeparators={[',']}
+                disabled={isLoading}
               />
             </div>
 
@@ -156,6 +165,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 value={aiTags}
                 onChange={onAiTagsChange}
                 tokenSeparators={[',']}
+                disabled={isLoading}
               />
             </div>
 
@@ -166,6 +176,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 placeholder="Select a category"
                 value={category}
                 onChange={onCategoryChange}
+                disabled={isLoading}
               >
                 <Select.Option value="finance">Finance</Select.Option>
                 <Select.Option value="math">Mathematics</Select.Option>

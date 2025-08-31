@@ -32,6 +32,7 @@ interface SettingsViewProps {
   };
   availableTokens?: any[];
   isDemoMode?: boolean;
+  isLoading?: boolean;
 
   // Event handlers
   onConfigChange: (updates: Partial<ApiConfig>) => void;
@@ -45,6 +46,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   serviceStatus,
   availableTokens = [],
   isDemoMode = false,
+  isLoading = false,
   onConfigChange,
   onTokensChange,
   onTokenCountChange
@@ -117,6 +119,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           aiUsageExamples={apiConfig.aiUsageExamples || []}
           aiTags={apiConfig.aiTags || []}
           category={apiConfig.category || ''}
+          isLoading={isLoading}
           onApiNameChange={(name) => debouncedConfigChange('name', name, 500)}
           onApiDescriptionChange={(description) => debouncedConfigChange('description', description, 500)}
           onEnableCachingChange={(enableCaching) => onConfigChange({ enableCaching })} // Instant for checkboxes
