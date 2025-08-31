@@ -1168,6 +1168,67 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, [apiConfig.name]);
 
+  // Handle Import from Excel menu action (updates existing workbook)
+  const handleImportExcelUpdate = useCallback(() => {
+    // Check if workbook is available
+    if (!workbookRef.current) {
+      message.error('Please wait for the workbook to load');
+      return;
+    }
+
+    // Check for unsaved changes
+    const hasUnsavedChanges = workbookRef.current?.hasChanges?.() || false;
+    
+    Modal.confirm({
+      title: 'Import Excel File',
+      content: (
+        <div>
+          <p>This will replace your current workbook content with the imported Excel file.</p>
+          {hasUnsavedChanges && (
+            <p style={{ color: '#ff4d4f', marginTop: 8 }}>
+              <strong>Warning:</strong> You have unsaved changes that will be lost.
+            </p>
+          )}
+          <p style={{ marginTop: 8 }}>
+            Your parameters and settings will be preserved.
+          </p>
+        </div>
+      ),
+      okText: 'Import',
+      cancelText: 'Cancel',
+      okButtonProps: { danger: hasUnsavedChanges },
+      onOk: () => {
+        // Create hidden file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls,.xlsm';
+        input.onchange = async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (!file) return;
+
+          try {
+            // Show loading message
+            message.loading('Importing Excel file...', 0);
+            
+            // Use existing import function
+            await handleImportExcel(file);
+            
+            // Clear loading and show success
+            message.destroy();
+            message.success('Excel file imported successfully! Remember to save your changes.');
+            
+            // Mark as having changes so save button is enabled
+            setWorkbookChangeCount(prev => prev + 1);
+          } catch (error: any) {
+            message.destroy();
+            message.error('Failed to import: ' + (error.message || 'Unknown error'));
+          }
+        };
+        input.click();
+      }
+    });
+  }, [handleImportExcel]);
+
   // Handle Excel import for empty state (when workbook is not initialized yet)
   const handleEmptyStateImport = useCallback((file: File) => {
     // Store the file for later use
@@ -1428,6 +1489,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Dropdown
             menu={{
               items: [
+                {
+                  key: 'import-excel',
+                  label: 'Import from Excel',
+                  icon: <FileExcelOutlined />,
+                  onClick: () => handleImportExcelUpdate(),
+                  disabled: !spreadInstance || activeView !== 'Workbook'
+                },
+                {
+                  type: 'divider'
+                },
                 {
                   key: 'export-excel',
                   label: 'Export to Excel',

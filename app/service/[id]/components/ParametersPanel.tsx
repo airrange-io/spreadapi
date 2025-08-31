@@ -244,7 +244,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         sheet.setActiveCell(param.row, param.col);
         sheet.showCell(param.row, param.col, 3, 3);
         
-        sheet.getSelections().clear();
+        sheet.clearSelection();
         sheet.addSelection(param.row, param.col, param.rowCount, param.colCount);
       }
     } finally {
@@ -291,7 +291,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           sheet.setActiveCell(row, col);
           sheet.showCell(row, col, 3, 3);
           
-          sheet.getSelections().clear();
+          sheet.clearSelection();
           sheet.addSelection(row, col, rowCount, colCount);
         }
       }
