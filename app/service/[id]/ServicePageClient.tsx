@@ -355,8 +355,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           const isFullEndpoint = data.service && data.status;
 
           if (isFullEndpoint) {
-            // Full endpoint response
-            setServiceStatus(data.status);
+            // Full endpoint response - include workbook info
+            setServiceStatus({
+              ...data.status,
+              hasWorkbook: data.workbook?.hasWorkbook || false,
+              workbookUrl: data.service?.workbookUrl || null
+            });
 
             const loadedConfig = {
               name: data.service.name || '',
@@ -380,7 +384,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             // Regular endpoint response - data is the service directly
             setServiceStatus({
               published: data.status === 'published',
-              status: data.status || 'draft'
+              status: data.status || 'draft',
+              hasWorkbook: !!data.workbookUrl,
+              workbookUrl: data.workbookUrl || null
             });
 
             const loadedConfig = {
@@ -708,8 +714,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check what needs to be saved
       const workbookNeedsSave = workbookRef.current?.hasChanges?.() || false;
-      const hasNoWorkbook = !serviceStatus?.urlData;
-      const shouldSaveWorkbook = workbookNeedsSave || hasNoWorkbook;
+      // Only save workbook if:
+      // 1. It has changes OR
+      // 2. Service has never had a workbook AND the workbook is currently loaded
+      const serviceHasWorkbook = serviceStatus?.hasWorkbook || serviceStatus?.workbookUrl || serviceStatus?.urlData;
+      const shouldSaveWorkbook = workbookNeedsSave || (!serviceHasWorkbook && workbookRef.current);
 
       // Check if there are any changes to save
       if (!configHasChanges && !shouldSaveWorkbook) {
@@ -871,7 +880,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Update service status with the new workbook URL
         setServiceStatus(prevStatus => ({
           ...prevStatus,
-          urlData: result.workbookUrl
+          urlData: result.workbookUrl,
+          hasWorkbook: true,
+          workbookUrl: result.workbookUrl
         }));
       }
 
