@@ -39,10 +39,10 @@ export async function POST(req) {
     
     // If this is an initial greeting, replace the trigger message
     if (initialGreeting || (messages.length === 1 && messages[0]?.content === '[GREETING]')) {
-      // Create system context for initial greeting
+      // Create system context for initial greeting - keep it short for faster response
       formattedMessages = [{
         role: 'user',
-        content: 'Hello, I just selected this service. What can it do?'
+        content: 'Give me 3 quick examples of what I can calculate.'
       }];
     } else {
       // Convert messages to proper format for the AI SDK with sanitization
@@ -154,8 +154,34 @@ export async function POST(req) {
       timeZoneName: 'short'
     });
     
-    // Service-specific system prompt
-    let systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
+    // Service-specific system prompt - optimized for speed
+    let systemPrompt;
+    
+    // Use shorter prompt for greeting to speed up response
+    if (initialGreeting) {
+      // Build parameter context for better examples
+      let paramContext = '';
+      if (serviceDetails?.inputs) {
+        const inputNames = serviceDetails.inputs.map(i => i.alias || i.name).join(', ');
+        paramContext = `\nService expects: ${inputNames}`;
+      }
+      
+      systemPrompt = `You are an assistant for "${serviceDetails?.name}".${paramContext}
+
+Your greeting must:
+1. Start with ONE brief welcome sentence
+2. Generate exactly 3 clickable example buttons with this EXACT format:
+<button class="example-btn" data-example="[natural language request]">▶  [Label]: [specific values]</button>
+
+Rules for buttons:
+- Use realistic values (e.g., $1000-10000 for amounts, 3-7% for rates, 5-30 years)
+- Each button shows different scenarios
+- data-example should be conversational
+- Button text shows the actual values clearly
+
+Keep total response under 150 words.`;
+    } else {
+      systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
 
 When a user asks for a calculation:
 1. Extract ALL provided values from their message
@@ -176,6 +202,7 @@ Current context:
 - Service: ${serviceDetails?.name || 'General calculation service'}
 
 IMPORTANT: You are NOT a general AI assistant. Every response should be focused on helping users with this specific calculation service.`;
+    }
 
     // Add service-specific context if available
     if (serviceDetails) {
@@ -967,7 +994,7 @@ Create 2-3 example buttons. The examples MUST:
 - Never use ages for financial services
 
 Example button format:
-<button class="example-btn" data-example="[Natural language with specific values]">▶ [Label]: [Actual values shown]</button>
+<button class="example-btn" data-example="[Natural language with specific values]">▶  [Label]: [Actual values shown]</button>
 
 Based on the service parameters, generate appropriate example buttons. Each example should:
 - Include concrete, realistic values for ALL required parameters
@@ -986,14 +1013,24 @@ The button text should clearly show what calculation will be performed with the 
     
     // Use streamText with v5 features for better tool handling
     const result = streamText({
-      model: openai('gpt-4o-mini'),
+      model: openai('gpt-4o-mini', {
+        // Add streaming optimizations
+        streamOptions: {
+          // Use HTTP/2 for better performance
+          includeUsage: false, // Don't include token usage to reduce overhead
+        }
+      }),
       messages: recentMessages,
       system: systemPrompt,
       temperature: 0.3,
-      maxTokens: 2000,
+      maxTokens: initialGreeting ? 500 : 2000, // Shorter response for greeting
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
       maxSteps: 5,
+      // Add experimental speed optimizations
+      experimental_telemetry: {
+        isEnabled: false // Disable telemetry for faster response
+      },
       // Use stopWhen to ensure the AI continues after tool calls
       stopWhen: ({ finishReason, stepCount }) => {
         // Don't stop after tool calls - continue to generate a response
