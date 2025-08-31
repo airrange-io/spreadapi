@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
-import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined } from '@ant-design/icons';
+import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
@@ -146,8 +146,7 @@ export default function ChatWrapperBubbles() {
             .map(s => ({
               id: s.id,
               name: s.name,
-              description: s.description || 'Spreadsheet calculation service',
-              icon: '📊'
+              description: s.description || 'Spreadsheet calculation service'
             }));
           
           if (loadedServices.length === 0) {
@@ -218,8 +217,7 @@ export default function ChatWrapperBubbles() {
   const generalAIOption = {
     id: 'general',
     name: 'Select a Service',
-    description: 'Choose a calculation service to start',
-    icon: '📊'
+    description: 'Choose a calculation service to start'
   };
   
   const availableServices = [
@@ -494,11 +492,10 @@ export default function ChatWrapperBubbles() {
                           </Avatar>
                         ) : (
                           <Avatar
-                            style={{ backgroundColor: '#f0f0f0', color: '#333' }}
+                            style={{ backgroundColor: '#f0f0f0' }}
                             size={32}
-                          >
-                            {currentService.icon}
-                          </Avatar>
+                            icon={<RobotOutlined style={{ color: '#502D80' }} />}
+                          />
                         )
                       }
                       styles={{
@@ -521,11 +518,10 @@ export default function ChatWrapperBubbles() {
                     content="..."
                     avatar={
                       <Avatar
-                        style={{ backgroundColor: '#f0f0f0', color: '#333' }}
+                        style={{ backgroundColor: '#f0f0f0' }}
                         size={32}
-                      >
-                        {currentService.icon}
-                      </Avatar>
+                        icon={<RobotOutlined style={{ color: '#502D80' }} />}
+                      />
                     }
                     styles={{
                       content: {

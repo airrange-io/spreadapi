@@ -5,21 +5,18 @@ export interface DemoService {
   id: string;
   name: string;
   description: string;
-  icon: string;
 }
 
 export const DEMO_SERVICES: DemoService[] = [
   {
     id: DEMO_SERVICE_IDS[0], // Compound Interest Calculator
     name: 'Demo: Compound Interest Calculator',
-    description: 'Try our Excel API with this interactive compound interest calculator demo.',
-    icon: '📈'
+    description: 'Try our Excel API with this interactive compound interest calculator demo.'
   },
   {
     id: DEMO_SERVICE_IDS[1], // Orders Lookup
     name: 'Demo: Orders Lookup',
-    description: 'See how Excel APIs can power data lookups and searches.',
-    icon: '📦'
+    description: 'See how Excel APIs can power data lookups and searches.'
   }
 ];
 

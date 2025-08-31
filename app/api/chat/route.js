@@ -967,7 +967,7 @@ Create 2-3 example buttons. The examples MUST:
 - Never use ages for financial services
 
 Example button format:
-<button class="example-btn" data-example="[Natural language with specific values]">📊 [Label]: [Actual values shown]</button>
+<button class="example-btn" data-example="[Natural language with specific values]">▶ [Label]: [Actual values shown]</button>
 
 Based on the service parameters, generate appropriate example buttons. Each example should:
 - Include concrete, realistic values for ALL required parameters

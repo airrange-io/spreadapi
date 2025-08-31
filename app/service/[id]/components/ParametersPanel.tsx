@@ -222,7 +222,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   }, []);
 
   // Handle area editing
-  const handleEditArea = useCallback((area: any) => {
+  const handleEditArea = useCallback((area: any, index: number) => {
     setEditingArea(area);
     setShowAreaModal(true);
   }, []);
@@ -303,11 +303,11 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   }, [spreadInstance]);
 
   // Delete parameter
-  const handleDeleteParameter = useCallback((param: any) => {
-    if (param.type === 'input') {
-      setInputs(prev => prev.filter(p => p.id !== param.id));
+  const handleDeleteParameter = useCallback((type: 'input' | 'output', id: string) => {
+    if (type === 'input') {
+      setInputs(prev => prev.filter(p => p.id !== id));
     } else {
-      setOutputs(prev => prev.filter(p => p.id !== param.id));
+      setOutputs(prev => prev.filter(p => p.id !== id));
     }
   }, []);
 

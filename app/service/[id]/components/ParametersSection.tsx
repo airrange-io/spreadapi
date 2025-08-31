@@ -404,16 +404,37 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     }}
                   />
                   {!isDemoMode && (
-                    <Button
-                      size="small"
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveArea(index);
+                    <Dropdown
+                      menu={{
+                        items: [
+                          {
+                            key: 'delete',
+                            label: 'Delete',
+                            icon: <DeleteOutlined />,
+                            danger: true,
+                            onClick: () => {
+                              Modal.confirm({
+                                title: 'Delete this area?',
+                                content: 'This action cannot be undone.',
+                                okText: 'Yes',
+                                cancelText: 'No',
+                                okButtonProps: { danger: true },
+                                onOk: () => onRemoveArea(index),
+                              });
+                            },
+                          },
+                        ],
                       }}
-                    />
+                      trigger={['click']}
+                      placement="bottomRight"
+                    >
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<MoreOutlined />}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </Dropdown>
                   )}
                 </Space>
               </div>

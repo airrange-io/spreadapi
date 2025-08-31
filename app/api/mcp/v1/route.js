@@ -286,7 +286,7 @@ async function executeService(serviceId, inputs) {
       // Check if this is a missing parameters error with documentation
       if (response.status === 400 && data.parameters) {
         // Format helpful response with parameter documentation
-        let helpText = `📊 ${data.service.name}\n${data.service.description}\n\n`;
+        let helpText = `▶ ${data.service.name}\n${data.service.description}\n\n`;
         
         if (data.parameters.required.length > 0) {
           helpText += '🔴 Required parameters:\n';
@@ -990,7 +990,7 @@ async function handleJsonRpc(request, auth) {
             }
             
             // Format comparison response
-            let responseText = '📊 Batch Calculation Results\n\n';
+            let responseText = '▶ Batch Calculation Results\n\n';
             
             // Show individual results
             results.forEach((result, idx) => {
@@ -1288,7 +1288,7 @@ async function handleJsonRpc(request, auth) {
             let responseText = `Found ${services.length} published services:\n\n`;
             
             for (const service of services) {
-              responseText += `📊 ${service.title} (ID: ${service.id})\n`;
+              responseText += `▶ ${service.title} (ID: ${service.id})\n`;
               if (service.description) {
                 responseText += `   ${service.description}\n`;
               }
