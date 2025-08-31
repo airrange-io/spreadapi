@@ -73,6 +73,9 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  // Check if this is a range selection
+  const isRange = selectedCellInfo && !selectedCellInfo.isSingleCell;
+  
   // Debug logging
   React.useEffect(() => {
     if (open && editingParameter) {
@@ -81,6 +84,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
     }
   }, [open, editingParameter]);
 
+  // Determine the appropriate data type for ranges
+  const getDefaultDataType = () => {
+    if (isRange) {
+      return 'array'; // Ranges should be treated as arrays
+    }
+    return editingParameter?.type || selectedCellInfo?.detectedDataType || 'string';
+  };
+
   return (
     <Modal
       title={`${editingParameter ? 'Edit' : 'Add'} ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
@@ -88,16 +99,17 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
       onCancel={onClose}
       footer={null}
       centered
+      destroyOnClose={true} // Ensure clean state on close
     >
       <Form
-        key={`${editingParameter?.id || 'new'}-${Date.now()}`}
+        key={`${editingParameter?.id || 'new'}-${open ? 'open' : 'closed'}`} // Better key for stability
         layout="vertical"
         variant={'filled'}
         onFinish={onSubmit}
         initialValues={{
           name: editingParameter ? editingParameter.name : (suggestedParamName || ''),
           title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
-          dataType: editingParameter?.type || selectedCellInfo?.detectedDataType || 'string',
+          dataType: getDefaultDataType(),
           description: editingParameter?.description || '',
           mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
           min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
@@ -118,8 +130,10 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             label="Data Type"
             name="dataType"
             style={{ width: '150px' }}
+            tooltip={isRange ? "Range selections are automatically treated as arrays" : undefined}
           >
-            <Select>
+            <Select disabled={isRange}>
+              {isRange && <Select.Option value="array">Array (Range)</Select.Option>}
               <Select.Option value="string">String</Select.Option>
               <Select.Option value="number">Number</Select.Option>
               <Select.Option value="boolean">Boolean</Select.Option>
@@ -133,6 +147,16 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         >
           <Input placeholder="e.g., Interest Rate, Total Amount" />
         </Form.Item>
+
+        {isRange && (
+          <Alert
+            message="Range Selection"
+            description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         {selectedCellInfo?.format?.isPercentage && (
           <Alert

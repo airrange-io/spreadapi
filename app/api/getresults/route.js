@@ -123,9 +123,15 @@ function checkInputValues(apiInputs, inputList) {
         inputErrors.push("missing mandatory input: " + inputAlias);
         continue;
       }
+      
+      // Skip validation if input wasn't provided (for optional inputs)
+      if (!inputFound) {
+        continue;
+      }
+      
       // check the input min value
       if (input.min || input.min === 0) {
-        if (!inputFound.value || inputFound.value < input.min) {
+        if (inputFound.value < input.min) {
           inputErrors.push(
             "input value is less than the minimum allowed: " +
               input.alias +
@@ -134,9 +140,9 @@ function checkInputValues(apiInputs, inputList) {
           );
         }
       }
-      // check the input min value
+      // check the input max value
       if (input.max || input.max === 0) {
-        if (!inputFound.value || inputFound.value > input.max) {
+        if (inputFound.value > input.max) {
           inputErrors.push(
             "input value is bigger than the maximum allowed: " +
               input.alias +
@@ -546,6 +552,7 @@ async function getResults(requestInfo) {
               type: "input",
               name: inputDef.name ?? input.name,
               alias: inputDef.alias ?? input.alias,
+              title: inputDef.title || inputDef.name || input.name,  // Include title field
               value: input.value,
             });
           } catch (cellError) {
@@ -607,6 +614,7 @@ async function getResults(requestInfo) {
             type: "output",
             name: output.name,
             alias: output.alias,
+            title: output.title || output.name,  // Include title field
             value: cellResult,
           });
         } catch (cellError) {
@@ -618,6 +626,7 @@ async function getResults(requestInfo) {
             type: "output",
             name: output.name,
             alias: output.alias,
+            title: output.title || output.name,  // Include title field
             value: null,
             error: "Error reading value",
           });

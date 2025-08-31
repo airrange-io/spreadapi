@@ -308,6 +308,7 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
           type: "input",
           name: inputDef.name ?? input.name,
           alias: inputDef.alias ?? input.alias,
+          title: inputDef.title || inputDef.name || input.name,  // Include title field
           value: input.value,
         });
       }
@@ -354,6 +355,7 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
         type: "output",
         name: output.name,
         alias: output.alias,
+        title: output.title || output.name,  // Include title field
         value: cellResult,
       });
     }

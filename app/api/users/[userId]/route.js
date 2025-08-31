@@ -56,11 +56,13 @@ export async function DELETE(request, { params }) {
   try {
     const { userId } = params;
     
-    // TODO: Add proper authorization check here
-    // For now, only allow deletion of test user
-    if (userId !== 'test1234') {
+    // Get authenticated user from headers
+    const authenticatedUserId = request.headers.get('x-user-id');
+    
+    // Only allow users to delete their own account
+    if (!authenticatedUserId || authenticatedUserId !== userId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - can only delete your own account' },
         { status: 403 }
       );
     }

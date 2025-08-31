@@ -11,15 +11,42 @@ import { normalizeService } from "./normalizeServiceData";
  */
 export async function getServiceDetails(serviceId, userId = null) {
   try {
+    console.log('[ServiceHelper] Getting service details for:', serviceId);
+    
     // First check if this is a published service
     const isPublished = await redis.exists(`service:${serviceId}:published`);
+    console.log('[ServiceHelper] Is published?', isPublished);
     
-    // Get service data from appropriate source
-    const serviceData = isPublished 
-      ? await redis.hGetAll(`service:${serviceId}:published`)
-      : await redis.hGetAll(`service:${serviceId}`);
+    // Always get base service data for metadata (name, id, description, etc.)
+    const baseServiceData = await redis.hGetAll(`service:${serviceId}`);
+    
+    // Get the appropriate data source for inputs/outputs/areas
+    let serviceData;
+    if (isPublished) {
+      // For published services, use published data for inputs/outputs but merge with base metadata
+      const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
+      serviceData = {
+        ...baseServiceData,  // Base metadata (id, name, description, etc.)
+        ...publishedData,     // Published snapshot (inputs, outputs, areas, etc.)
+        id: baseServiceData.id,  // Ensure we keep the original ID
+        name: baseServiceData.name,  // Ensure we keep the original name
+        description: baseServiceData.description  // Keep original description
+      };
+    } else {
+      serviceData = baseServiceData;
+    }
+    
+    console.log('[ServiceHelper] Service data found:', {
+      id: serviceData?.id,
+      name: serviceData?.name,
+      hasInputs: !!serviceData?.inputs,
+      hasOutputs: !!serviceData?.outputs,
+      inputCount: serviceData?.inputs ? JSON.parse(serviceData.inputs).length : 0,
+      outputCount: serviceData?.outputs ? JSON.parse(serviceData.outputs).length : 0
+    });
     
     if (!serviceData || Object.keys(serviceData).length === 0) {
+      console.log('[ServiceHelper] No service data found');
       return null;
     }
     

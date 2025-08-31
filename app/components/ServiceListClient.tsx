@@ -215,7 +215,7 @@ export default function ServiceListClient({
         style={{ marginTop: 180 }}
       >
         <Button type="primary" onClick={() => {
-          const newId = generateServiceId(user?.id || 'test1234');
+          const newId = generateServiceId(user?.id);
           console.log('[ServiceList] Generated service ID:', newId);
           router.push(`/service/${newId}`);
         }}>

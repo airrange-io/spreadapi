@@ -45,6 +45,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const handleZoomChangeRef = useRef(null);
   const isLoadingData = useRef(false);
   const changeCountRef = useRef(0);
+  const lastLoadedDataRef = useRef(null); // Track last loaded data to prevent re-loads
 
   // Initialize ribbon configuration
   const initRibbon = useCallback((showRibbon) => {
@@ -279,6 +280,20 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       return;
     }
     
+    // Check if we've already loaded this data to prevent re-initialization
+    const currentDataKey = JSON.stringify({
+      type: props.storeLocal.spread.type,
+      hasBlob: !!props.storeLocal.spread.blob,
+      hasData: !!props.storeLocal.spread.data,
+      fileName: props.storeLocal.spread.fileName,
+      sheetCount: props.storeLocal.spread.sheets ? Object.keys(props.storeLocal.spread.sheets).length : 0
+    });
+    
+    if (dataLoaded && lastLoadedDataRef.current === currentDataKey) {
+      console.log("WorkbookViewer: Data already loaded, skipping re-initialization");
+      return;
+    }
+    
     // Check if this is just the default empty workbook
     const isDefaultWorkbook = props.storeLocal.spread.version && 
                              props.storeLocal.spread.sheets && 
@@ -297,6 +312,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     try {
       // Set loading flag to ignore change events during load
       isLoadingData.current = true;
+      lastLoadedDataRef.current = currentDataKey;
       
       // Load spreadsheet data if provided
       if (

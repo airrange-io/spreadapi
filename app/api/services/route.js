@@ -48,6 +48,12 @@ export async function GET(request) {
         const baseIndex = i * 3;
         const serviceData = results[baseIndex];
         const isPublished = results[baseIndex + 1] === 1;
+        
+        console.log('[Services API] Processing service:', {
+          serviceId: serviceIds[i],
+          name: serviceData?.name,
+          isPublished
+        });
         const publishedCalls = results[baseIndex + 2];
         
         if (!serviceData || !serviceData.id) continue;

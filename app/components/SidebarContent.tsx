@@ -249,7 +249,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 //   return;
                 // }
                 // Generate a new service ID and navigate
-                const newId = generateServiceId(user?.id || 'test1234');
+                const newId = generateServiceId(user?.id);
                 console.log('[SidebarContent] Generated service ID:', newId);
                 router.push(`/service/${newId}`);
               }}
@@ -276,7 +276,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               //   return;
               // }
               // Generate a new service ID and navigate
-              const newId = generateServiceId(user?.id || 'test1234');
+              const newId = generateServiceId(user?.id);
               console.log('[SidebarContent] Generated service ID:', newId);
               router.push(`/service/${newId}`);
             }}

@@ -726,10 +726,19 @@ async function handleJsonRpc(request, auth) {
               
               // Add area-specific tools if service has areas defined
               if (hasAreas) {
+                // Build area descriptions with AI context
+                let areaDescriptions = areas.map(area => {
+                  let desc = `${area.name}`;
+                  if (area.alias) desc += ` (${area.alias})`;
+                  if (area.description) desc += `: ${area.description}`;
+                  if (area.aiContext?.purpose) desc += ` | Purpose: ${area.aiContext.purpose}`;
+                  return desc;
+                }).join('; ');
+                
                 // Add read area tool
                 tools.push({
                     name: `spreadapi_read_area_${serviceId}`,
-                    description: `Read data from editable areas in ${publishedData.title || serviceId}`,
+                    description: `Read data from editable areas in ${publishedData.title || serviceId}. Areas: ${areaDescriptions}`,
                     inputSchema: {
                       type: 'object',
                       properties: {
@@ -796,29 +805,42 @@ async function handleJsonRpc(request, auth) {
             };
           }
           
-          // First check if this service belongs to the user
-          const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
-          if (!userServiceIndex[serviceId]) {
+          // Check if this token has access to the service
+          // Marketplace model: tokens must explicitly grant access to specific services
+          const allowedServiceIds = auth.serviceIds || [];
+          
+          // Token must have explicit service access - no wildcards
+          if (allowedServiceIds.length === 0) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found'
+                message: 'This token has no service access configured'
               },
               id
             };
           }
           
-          // Then check if this service is allowed for this token
-          const allowedServiceIds = auth.serviceIds || [];
-          const hasServiceRestrictions = allowedServiceIds.length > 0;
-          
-          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+          // Check if this specific service is allowed
+          if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Access denied to this service'
+                message: 'This token does not have access to this service'
+              },
+              id
+            };
+          }
+          
+          // Verify the service exists and is published
+          const serviceExists = await redis.exists(`service:${serviceId}:published`);
+          if (!serviceExists) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INVALID_PARAMS,
+                message: 'Service not found or not published'
               },
               id
             };
@@ -853,28 +875,41 @@ async function handleJsonRpc(request, auth) {
             };
           }
           
-          // Check access permissions
-          const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
-          if (!userServiceIndex[serviceId]) {
+          // Check access permissions - marketplace model
+          const allowedServiceIds = auth.serviceIds || [];
+          
+          // Token must have explicit service access
+          if (allowedServiceIds.length === 0) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found'
+                message: 'This token has no service access configured'
               },
               id
             };
           }
           
-          const allowedServiceIds = auth.serviceIds || [];
-          const hasServiceRestrictions = allowedServiceIds.length > 0;
-          
-          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+          // Check if this specific service is allowed
+          if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Access denied to this service'
+                message: 'This token does not have access to this service'
+              },
+              id
+            };
+          }
+          
+          // Verify service exists
+          const serviceExists = await redis.exists(`service:${serviceId}:published`);
+          if (!serviceExists) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INVALID_PARAMS,
+                message: 'Service not found or not published'
               },
               id
             };
@@ -1119,6 +1154,9 @@ async function handleJsonRpc(request, auth) {
                 if (area.alias) responseText += ` (alias: ${area.alias})`;
                 responseText += ` - ${area.mode}\n`;
                 responseText += `  Address: ${area.address}\n`;
+                if (area.description) responseText += `  Description: ${area.description}\n`;
+                if (area.aiContext?.purpose) responseText += `  Purpose: ${area.aiContext.purpose}\n`;
+                if (area.aiContext?.expectedBehavior) responseText += `  Expected Behavior: ${area.aiContext.expectedBehavior}\n`;
                 responseText += `  Permissions:\n`;
                 if (area.permissions.canReadValues) responseText += `    - Read values\n`;
                 if (area.permissions.canReadFormulas) responseText += `    - Read formulas\n`;
@@ -1310,28 +1348,41 @@ async function handleJsonRpc(request, auth) {
           const serviceId = name.replace('spreadapi_read_area_', '');
           const { areaName, includeFormulas, includeFormatting } = args;
           
-          // Check access permissions
-          const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
-          if (!userServiceIndex[serviceId]) {
+          // Check access permissions - marketplace model
+          const allowedServiceIds = auth.serviceIds || [];
+          
+          // Token must have explicit service access
+          if (allowedServiceIds.length === 0) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found'
+                message: 'This token has no service access configured'
               },
               id
             };
           }
           
-          const allowedServiceIds = auth.serviceIds || [];
-          const hasServiceRestrictions = allowedServiceIds.length > 0;
-          
-          if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
+          // Check if this specific service is allowed
+          if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Access denied to this service'
+                message: 'This token does not have access to this service'
+              },
+              id
+            };
+          }
+          
+          // Verify service exists
+          const serviceExists = await redis.exists(`service:${serviceId}:published`);
+          if (!serviceExists) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INVALID_PARAMS,
+                message: 'Service not found or not published'
               },
               id
             };

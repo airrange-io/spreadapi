@@ -93,17 +93,34 @@ export async function POST(req) {
       );
     }
     
+    // Debug logging for service ID
+    console.log('[Chat API] Processing request for service ID:', serviceId);
+    console.log('[Chat API] Initial greeting?', initialGreeting);
+    
     // Fetch service details
     let serviceDetails = null;
     
     try {
       // Get auth from current request
       const userId = req.headers.get('x-user-id');
+      console.log('[Chat API] User ID:', userId);
       
       // Use the centralized helper function
       serviceDetails = await getServiceDetails(serviceId, userId);
       
+      // Debug log the fetched service details
+      console.log('[Chat API] Fetched service details:', {
+        id: serviceDetails?.id,
+        name: serviceDetails?.name,
+        description: serviceDetails?.description,
+        inputCount: serviceDetails?.inputs?.length || 0,
+        inputs: serviceDetails?.inputs?.map(i => ({ alias: i.alias, title: i.title })),
+        outputCount: serviceDetails?.outputs?.length || 0,
+        outputs: serviceDetails?.outputs?.map(o => ({ alias: o.alias, title: o.title }))
+      });
+      
       if (!serviceDetails) {
+        console.log('[Chat API] Service not found for ID:', serviceId);
         
         // Return error response for missing services
         return new Response(
@@ -160,18 +177,47 @@ IMPORTANT: You are NOT a general AI assistant. Every response should be focused 
 
     // Add service-specific context if available
     if (serviceDetails) {
+      // Use AI description if available, otherwise fall back to regular description
+      const effectiveDescription = serviceDetails.aiDescription || serviceDetails.description || 'A SpreadAPI calculation service';
+      
       systemPrompt += `
 
 ## Active Service: ${serviceDetails.name}
-${serviceDetails.description || 'A SpreadAPI calculation service'}
+${effectiveDescription}
 
 You have access to a calculation tool for this service. Focus on helping users use it effectively.`;
+
+      // Add usage examples if available
+      if (serviceDetails.aiUsageExamples && serviceDetails.aiUsageExamples.length > 0) {
+        systemPrompt += `
+
+### Example Use Cases:
+${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
+      }
     }
+    
+    // Debug log the system prompt being used
+    console.log('[Chat API] System prompt service context:', {
+      serviceName: serviceDetails?.name,
+      serviceDescription: serviceDetails?.description,
+      aiDescription: serviceDetails?.aiDescription,
+      aiUsageExamples: serviceDetails?.aiUsageExamples
+    });
     
     // Build tools dynamically based on service
     let tools = {};
     
     if (serviceDetails) {
+      // Comprehensive debug log of all service details
+      console.log('[Chat API] Full service details for tool building:', JSON.stringify({
+        id: serviceDetails.id,
+        name: serviceDetails.name,
+        description: serviceDetails.description,
+        aiDescription: serviceDetails.aiDescription,
+        inputs: serviceDetails.inputs,
+        outputs: serviceDetails.outputs,
+        aiUsageExamples: serviceDetails.aiUsageExamples
+      }, null, 2));
       
       // Only add calculate tool if we have inputs
       if (serviceDetails.inputs && serviceDetails.inputs.length > 0) {
@@ -216,7 +262,9 @@ You have access to a calculation tool for this service. Focus on helping users u
               
               // Add input parameters
               Object.entries(inputs).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
+                // Only send parameters that have actual values
+                // Skip undefined, null, and empty string values
+                if (value !== undefined && value !== null && value !== '') {
                   queryParams.append(key, String(value));
                 }
               });
@@ -225,16 +273,35 @@ You have access to a calculation tool for this service. Focus on helping users u
               const data = await response.json();
               
               if (!response.ok) {
+                console.error('[Chat API] Calculation failed:', {
+                  status: response.status,
+                  error: data.error,
+                  details: data,
+                  url: `${baseUrl}/api/getresults?${queryParams.toString()}`
+                });
                 throw new Error(data.error || 'Calculation failed');
               }
               
               // Format results
               let resultText = ``;
               
+              // Create a map of output aliases to their titles/descriptions
+              const outputInfo = {};
+              serviceDetails.outputs.forEach(out => {
+                outputInfo[out.alias] = {
+                  title: out.title || out.name || out.alias,
+                  description: out.description || ''
+                };
+              });
+              
               if (data.outputs && Array.isArray(data.outputs)) {
                 data.outputs.forEach(output => {
                   const value = output.value;
                   let formattedValue = value;
+                  
+                  // Get the title from our service details
+                  const info = outputInfo[output.alias] || {};
+                  const displayName = info.title || output.title || output.alias;
                   
                   // Format based on output type
                   if (output.format === 'currency' && typeof value === 'number') {
@@ -254,7 +321,7 @@ You have access to a calculation tool for this service. Focus on helping users u
                     }
                   }
                   
-                  resultText += `**${output.title || output.alias}**: ${formattedValue}\n`;
+                  resultText += `**${displayName}**: ${formattedValue}\n`;
                 });
                 
                 return resultText.trim();
@@ -367,6 +434,8 @@ You have access to a calculation tool for this service. Focus on helping users u
       }
       
       // Add area reading tool if service has areas
+      // TODO: Fix import issue with executeAreaRead before enabling this
+      /*
       if (serviceDetails.areas && serviceDetails.areas.length > 0) {
         // Parse areas from JSON string if needed
         let areas = serviceDetails.areas;
@@ -396,8 +465,7 @@ You have access to a calculation tool for this service. Focus on helping users u
             execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
               try {
                 // Use the MCP area executor logic
-                const { executeAreaRead } = await import('@/app/api/mcp/v1/areaExecutors');
-                
+                const { executeAreaRead } = await import('../mcp/v1/areaExecutors');
                 const result = await executeAreaRead(serviceId, areaName, {
                   includeFormulas,
                   includeFormatting
@@ -448,6 +516,7 @@ You have access to a calculation tool for this service. Focus on helping users u
           });
         }
       }
+      */
     }
     
     
@@ -495,14 +564,15 @@ ${(() => {
   
   let text = 'REQUIRED (must ask if missing):\n';
   required.forEach(input => {
-    text += `- ${input.alias} (${input.title || input.name})\n`;
+    text += `- ${input.alias} (${input.title || input.name || input.alias})\n`;
   });
   
   if (optional.length > 0) {
-    text += '\nOPTIONAL (can use default if not provided):\n';
+    text += '\nOPTIONAL (omit if not provided by user):\n';
     optional.forEach(input => {
-      text += `- ${input.alias} (${input.title || input.name}) - default: 0\n`;
+      text += `- ${input.alias} (${input.title || input.name || input.alias})\n`;
     });
+    text += 'IMPORTANT: For optional parameters, only include them if the user explicitly provides values. Do NOT automatically fill with 0 or defaults.\n';
   }
   
   return text;
@@ -544,6 +614,12 @@ Remember: You exist solely to help users with ${serviceDetails.name} calculation
 
 GOLDEN RULE: You are in a CONVERSATION. When you use a tool, you must TELL THE USER what you discovered. Think of tools as a way to get information that you then SHARE with the user in a friendly message.
 
+When presenting results:
+- Use human-readable names from the result output, not technical parameter names
+- If a result shows "tariff_extra" call it "Tariff Extra" or "Extra Plan"
+- If a result shows "member1" call it "first member" or "member 1"
+- Make the conversation natural - don't use technical aliases
+
 ### Initial Greeting
 When the user asks "Hello, I just selected this service. What can it do?", provide a brief, friendly introduction that includes:
 1. Welcome to the service
@@ -551,17 +627,28 @@ When the user asks "Hello, I just selected this service. What can it do?", provi
 3. Provide 2-3 clickable examples with realistic values based on the service type
 4. Ask what they'd like to calculate
 
-Create 2-3 example buttons with concrete, realistic values based on the service parameters. Each button should:
-- Show actual numbers, not generic text
-- Use realistic values that make sense for the calculation type
-- Include all required parameters in the example text
+CRITICAL INSTRUCTION FOR GENERATING EXAMPLES:
+Analyze the service parameters and descriptions to understand what this service does:
 
-IMPORTANT: Use natural language in the data-example attribute, not parameter names. Examples:
-- For compound interest: "Calculate $5,000 starting amount with 7% interest rate, $200 monthly deposits for 10 years"
-- For mortgages: "Calculate monthly payment for $300,000 loan at 6.5% for 30 years"
-- For investments: "Show returns on $10,000 investment at 8% annual return over 20 years"
+Service: ${serviceDetails.name}
+Description: ${serviceDetails.description || serviceDetails.aiDescription || 'Not provided'}
+Input Parameters: ${serviceDetails.inputs.map(i => `${i.alias}: ${i.description || i.title || i.name || 'no description'}`).join(', ')}
+Output Parameters: ${serviceDetails.outputs.map(o => `${o.alias}: ${o.description || o.title || o.name || 'no description'}`).join(', ')}
 
-Format:
+Based on the parameter names, descriptions, and data types, infer what kind of values make sense.
+Look for clues in:
+- Parameter descriptions (e.g., "age of member", "interest rate", "loan amount")
+- Parameter names (what they suggest about the domain)
+- Min/max constraints if provided
+- Data types (number, string, percentage, currency)
+
+Create 2-3 example buttons. The examples MUST:
+- Match the detected service type above
+- Use values appropriate for the actual parameters
+- Never use interest rates or financial amounts for age-based services
+- Never use ages for financial services
+
+Example button format:
 <button class="example-btn" data-example="[Natural language with specific values]">📊 [Label]: [Actual values shown]</button>
 
 Based on the service parameters, generate appropriate example buttons. Each example should:

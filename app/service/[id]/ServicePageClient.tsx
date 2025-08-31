@@ -1212,6 +1212,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     />
   );
 
+  // Memoize spreadsheetData to prevent unnecessary re-renders
+  const memoizedSpreadsheetData = useMemo(() => {
+    if (!spreadsheetData) return null;
+    
+    // For object types, create a stable reference
+    if (spreadsheetData.type === 'sjs' || spreadsheetData.type === 'excel') {
+      return spreadsheetData;
+    }
+    
+    // For JSON data, only update if content actually changed
+    return spreadsheetData;
+  }, [
+    // Use specific properties that actually indicate data change
+    spreadsheetData?.type,
+    spreadsheetData?.blob,
+    spreadsheetData?.data,
+    spreadsheetData?.fileName,
+    // For JSON workbooks, stringify to detect actual content changes
+    spreadsheetData?.version ? JSON.stringify(spreadsheetData) : null
+  ]);
+
   // Show loading spinner until everything is ready
   if (initialLoading) {
     return (
@@ -1371,12 +1392,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 color: serviceStatus?.published ? '#389E0E' : '#666666', //'#fa8c16'
               }}>
                 <Space size={4}>
-                  {configLoaded ? (
+                  {loading ? (
+                    <>
+                      <Spin size="small" />
+                      <span>Working...</span>
+                    </>
+                  ) : configLoaded ? (
                     serviceStatus?.published ? 'Published' : 'Draft'
                   ) : (
                     <Spin size="small" />
                   )}
-                  <DownOutlined style={{ fontSize: 12 }} />
+                  {!loading && <DownOutlined style={{ fontSize: 12 }} />}
                 </Space>
               </Button>
             </Dropdown>
@@ -1453,7 +1479,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       ) : (
                         <WorkbookView
                           ref={workbookRef}
-                          spreadsheetData={spreadsheetData}
+                          spreadsheetData={memoizedSpreadsheetData}
                           showEmptyState={showEmptyState}
                           isDemoMode={isDemoMode}
                           zoomLevel={zoomLevel}
@@ -1566,7 +1592,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   ) : (
                     <WorkbookView
                       ref={workbookRef}
-                      spreadsheetData={spreadsheetData}
+                      spreadsheetData={memoizedSpreadsheetData}
                       showEmptyState={showEmptyState}
                       isDemoMode={isDemoMode}
                       zoomLevel={zoomLevel}

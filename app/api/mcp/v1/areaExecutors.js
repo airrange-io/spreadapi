@@ -65,7 +65,14 @@ export async function executeAreaRead(serviceId, areaName, options, auth) {
         address: area.address,
         mode: area.mode,
         rows: rows,
-        columns: cols
+        columns: cols,
+        ...(area.description && { description: area.description }),
+        ...(area.aiContext && { 
+          aiContext: {
+            purpose: area.aiContext.purpose,
+            expectedBehavior: area.aiContext.expectedBehavior
+          }
+        })
       },
       data: {}
     };

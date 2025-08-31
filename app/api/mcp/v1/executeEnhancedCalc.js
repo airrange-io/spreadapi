@@ -14,18 +14,29 @@ const { createWorkbook } = require('../../../../lib/spreadjs-server');
  */
 export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = [], returnOptions = {}, auth) {
   try {
+    console.log('[ExecuteEnhancedCalc] Starting calculation for service:', serviceId);
+    console.log('[ExecuteEnhancedCalc] Inputs:', inputs);
+    console.log('[ExecuteEnhancedCalc] Auth:', auth ? 'provided' : 'none');
+    
     // Get service definition
     const apiData = await getApiDefinition(serviceId, null);
     if (apiData.error) {
-      throw new Error(apiData.error);
+      console.error('[ExecuteEnhancedCalc] Failed to get service definition:', apiData.error);
+      throw new Error(`Service error: ${apiData.error}`);
     }
     
     const apiDefinition = apiData.apiJson || apiData;
+    console.log('[ExecuteEnhancedCalc] API Definition keys:', Object.keys(apiDefinition));
+    
     const fileJson = apiDefinition.fileJson;
     
     if (!fileJson) {
-      throw new Error('Service file data not found');
+      console.error('[ExecuteEnhancedCalc] No fileJson found in apiDefinition');
+      console.error('[ExecuteEnhancedCalc] Available keys:', Object.keys(apiDefinition));
+      throw new Error('Service file data not found - service may not be properly published');
     }
+    
+    console.log('[ExecuteEnhancedCalc] FileJson loaded, size:', JSON.stringify(fileJson).length, 'bytes');
     
     // Get published data for areas
     const publishedData = await redis.hGetAll(`service:${serviceId}:published`);

@@ -255,7 +255,18 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         // Then reload to ensure consistency with backend
         loadServices();
       } else {
-        message.error('Failed to delete service');
+        // Check for specific error message
+        const errorData = await response.json().catch(() => null);
+        if (errorData?.error?.includes('published')) {
+          message.warning(
+            <span>
+              Cannot delete published service. Please unpublish <strong>{serviceName}</strong> first, then try deleting again.
+            </span>,
+            5 // Show for 5 seconds
+          );
+        } else {
+          message.error('Failed to delete service');
+        }
       }
     } catch (error) {
       // Error deleting service
@@ -452,7 +463,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         >
           <Space direction="vertical" align="center">
             <Button type="primary" onClick={() => {
-              const newId = generateServiceId(userId || 'test1234');
+              const newId = generateServiceId(userId);
               router.push(`/service/${newId}`);
             }}>
               Create Your First Service

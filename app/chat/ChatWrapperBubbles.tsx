@@ -192,17 +192,25 @@ export default function ChatWrapperBubbles() {
   // Fetch detailed service information
   const fetchServiceDetails = async (serviceId: string) => {
     try {
+      console.log('[Chat] Fetching service details for ID:', serviceId);
       const res = await fetch(`/api/services/${serviceId}/full`, {
         credentials: 'include'
       });
       
       if (res.ok) {
         const data = await res.json();
+        console.log('[Chat] Service details received:', { 
+          id: data.service?.id, 
+          name: data.service?.name,
+          description: data.service?.description
+        });
         setServiceDetails(data.service);
       } else {
+        console.error('[Chat] Failed to fetch service details, status:', res.status);
         setServiceDetails(null);
       }
     } catch (error) {
+      console.error('[Chat] Error fetching service details:', error);
       setServiceDetails(null);
     }
   };
@@ -361,6 +369,8 @@ export default function ChatWrapperBubbles() {
             <Select
               value={selectedService}
               onChange={async (value) => {
+                console.log('[Chat] Service selected:', value);
+                console.log('[Chat] Available services:', availableServices.map(s => ({ id: s.id, name: s.name })));
                 setSelectedService(value);
                 
                 // Clear messages when switching services
@@ -371,6 +381,7 @@ export default function ChatWrapperBubbles() {
                 
                 // Fetch service details when selected
                 if (value !== 'general') {
+                  console.log('[Chat] Fetching details for service:', value);
                   fetchServiceDetails(value);
                   
                   // Always trigger AI greeting for non-general services

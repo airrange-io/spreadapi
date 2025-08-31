@@ -17,6 +17,9 @@ export async function GET(request, { params }) {
   const { id } = await params;
   
   try {
+    console.log('[API] Getting service data for ID:', id);
+    console.log('[API] User ID:', userId);
+    
     // Use Redis multi to get all data in one round trip
     const multi = redis.multi();
     
@@ -27,6 +30,14 @@ export async function GET(request, { params }) {
     
     // Execute all at once
     const [serviceData, isPublished, publishedData] = await multi.exec();
+    
+    console.log('[API] Service data found:', {
+      id: serviceData?.id,
+      name: serviceData?.name,
+      userId: serviceData?.userId,
+      hasInputs: !!serviceData?.inputs,
+      hasOutputs: !!serviceData?.outputs
+    });
     
     if (!serviceData || Object.keys(serviceData).length === 0) {
       return NextResponse.json(

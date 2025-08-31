@@ -184,7 +184,7 @@ const ListsPage: React.FC = observer(() => {
         (window as any).__draggedFile = file;
 
         // Generate a new service ID
-        const newId = generateServiceId(user?.id || 'test1234');
+        const newId = generateServiceId(user?.id);
         
         // Generate automatic name based on file name
         const date = new Date();
@@ -272,7 +272,7 @@ const ListsPage: React.FC = observer(() => {
     setIsCreatingService(true);
 
     // Generate a new service ID
-    const newId = generateServiceId(user?.id || 'test1234');
+    const newId = generateServiceId(user?.id);
     
     // Generate automatic name for new service
     const date = new Date();

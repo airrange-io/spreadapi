@@ -2,11 +2,16 @@
 
 import { revalidateTag } from 'next/cache';
 import redis from '@/lib/redis';
+import { cookies } from 'next/headers';
 
-const TEST_USER_ID = 'test1234';
-
-export async function deleteServiceAction(serviceId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteServiceAction(serviceId: string, userId?: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // Get user ID from cookies or parameter
+    // Note: In production, this should be verified with proper authentication
+    if (!userId) {
+      return { success: false, error: 'Authentication required' };
+    }
+    
     // Check if service exists
     const serviceData = await redis.hGetAll(`service:${serviceId}`);
     if (!serviceData || Object.keys(serviceData).length === 0) {
@@ -14,8 +19,8 @@ export async function deleteServiceAction(serviceId: string): Promise<{ success:
     }
     
     // Verify ownership
-    if (serviceData.userId !== TEST_USER_ID) {
-      return { success: false, error: 'Unauthorized' };
+    if (serviceData.userId !== userId) {
+      return { success: false, error: 'Unauthorized - you can only delete your own services' };
     }
     
     // Check if published
@@ -28,7 +33,7 @@ export async function deleteServiceAction(serviceId: string): Promise<{ success:
     await redis.del(`service:${serviceId}`);
     
     // Remove from user's services index
-    await redis.hDel(`user:${TEST_USER_ID}:services`, serviceId);
+    await redis.hDel(`user:${userId}:services`, serviceId);
     
     // Revalidate the services cache
     revalidateTag('services');

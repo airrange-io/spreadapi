@@ -112,6 +112,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       address: input.address,
       name: input.name,
       alias: input.alias,
+      title: input.title,  // Add the human-readable title
       row: input.row,
       col: input.col,
       type: input.type,
@@ -136,6 +137,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       address: output.address,
       name: output.name,
       alias: output.alias,
+      title: output.title,  // Add the human-readable title
       row: output.row,
       col: output.col,
       type: output.type,
@@ -176,7 +178,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
 }
 
 // Call service management via API route (client-safe)
-export async function publishService(serviceId, publishData, tenant = 'test1234') {
+export async function publishService(serviceId, publishData, tenant = null) {
   try {
     // Use API route instead of direct function call
     const response = await fetch('/api/services/publish', {

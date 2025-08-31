@@ -329,7 +329,17 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
   // Handle area save from modal
   const handleAreaSave = useCallback((updatedArea: AreaParameter) => {
-    setAreas(prev => prev.map(a => a.id === updatedArea.id ? updatedArea : a));
+    // Check if this is a new area or an existing one
+    setAreas(prev => {
+      const existingIndex = prev.findIndex(a => a.id === updatedArea.id);
+      if (existingIndex >= 0) {
+        // Update existing area
+        return prev.map(a => a.id === updatedArea.id ? updatedArea : a);
+      } else {
+        // Add new area
+        return [...prev, updatedArea];
+      }
+    });
     setShowAreaModal(false);
     setEditingArea(null);
   }, []);
@@ -760,10 +770,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             onSubmit={(values) => {
               // Map dataType from form to type in parameter
               const { dataType, ...otherValues } = values;
+              // Map "array" type to "string" for backend compatibility (ranges are handled as JSON strings)
+              const mappedType = dataType === 'array' ? 'string' : dataType;
               const newParam = {
                 ...selectedCellInfo,
                 ...otherValues,
-                type: dataType, // Map dataType to type
+                type: mappedType, // Map dataType to type
                 id: editingParameter?.id || generateParameterId(),
                 direction: parameterType
               };

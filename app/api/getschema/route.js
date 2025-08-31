@@ -104,10 +104,12 @@ function getGetResultTool(apiId, apiDefinition) {
   for (const output of outputs) {
     if (output?.hasOwnProperty("row")) delete output.row;
     if (output?.hasOwnProperty("col")) delete output.col;
+    output.title = output.title || output.name;  // Preserve title for outputs
+    output.name = output.alias ?? output.name;
     
     // Add additional metadata for AI understanding
     output.type = output.datatype || "string";
-    output.description = output.description || `Output result for ${output.name}`;
+    output.description = output.description || `Output result for ${output.title || output.name}`;
     
     if (output?.hasOwnProperty("alias")) delete output.alias;
     if (output?.hasOwnProperty("direction")) delete output.direction;
