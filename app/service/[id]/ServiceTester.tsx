@@ -165,18 +165,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     };
   }, []);
 
-  // Sync form values when parameterValues change
-  useEffect(() => {
-    // Only set values if component is mounted and has values
-    if (isMounted.current && Object.keys(parameterValues).length > 0) {
-      // Delay to ensure Form is rendered
-      setTimeout(() => {
-        if (isMounted.current) {
-          form.setFieldsValue(parameterValues);
-        }
-      }, 0);
-    }
-  }, [parameterValues, form]);
+  // Sync form values when parameterValues change  
+  // No need for this effect since we're using initialValues on the Form
+  // and onValuesChange to keep parameterValues in sync
 
 
   // Get column span based on container width

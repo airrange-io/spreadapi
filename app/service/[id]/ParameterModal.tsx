@@ -256,7 +256,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
       onCancel={onClose}
       footer={null}
       centered
-      destroyOnClose={true} // Ensure clean state on close
+      destroyOnHidden={true} // Ensure clean state on close
     >
       <Form
         form={form}
@@ -476,7 +476,6 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           <Form.Item
             name="mandatory"
             valuePropName="checked"
-            initialValue={true}
           >
             <Checkbox>Mandatory parameter</Checkbox>
           </Form.Item>
