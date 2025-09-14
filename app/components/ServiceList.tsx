@@ -249,7 +249,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
-    router.push(`/service/${serviceId}`);
+    router.push(`/app/service/${serviceId}`);
   }, [router]);
 
 
@@ -437,7 +437,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           <Space direction="vertical" align="center">
             <Button type="primary" onClick={() => {
               const newId = generateServiceId(userId || 'test1234');
-              router.push(`/service/${newId}`);
+              router.push(`/app/service/${newId}`);
             }}>
               Create Your First Service
             </Button>

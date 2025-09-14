@@ -12,7 +12,12 @@
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
       "Bash(killall:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:privacy.anthropic.com)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

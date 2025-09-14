@@ -23,11 +23,11 @@ const ServiceList = dynamic(() => import('@/components/ServiceList'), {
 });
 
 // Lazy load Intercom components
-const IntercomProvider = dynamic(() => import('./components/IntercomProvider').then(mod => ({ default: mod.IntercomProvider })), {
+const IntercomProvider = dynamic(() => import('../components/IntercomProvider').then(mod => ({ default: mod.IntercomProvider })), {
   ssr: false
 });
 
-const IntercomScript = dynamic(() => import('./components/IntercomScript').then(mod => ({ default: mod.IntercomScript })), {
+const IntercomScript = dynamic(() => import('../components/IntercomScript').then(mod => ({ default: mod.IntercomScript })), {
   ssr: false
 });
 
@@ -135,7 +135,6 @@ const ListsPage: React.FC = observer(() => {
     // Check authentication
     if (!isAuthenticated) {
       messageApi.warning('Please sign in to create a new service');
-      router.push('/login?returnTo=/');
       return;
     }
 
@@ -185,7 +184,7 @@ const ListsPage: React.FC = observer(() => {
 
         // Generate a new service ID and navigate with file flag
         const newId = generateServiceId(user?.id || 'test1234');
-        router.push(`/service/${newId}?fileDropped=true`);
+        router.push(`/app/service/${newId}?fileDropped=true`);
       } catch (error) {
         messageApi.error('Fehler beim Verarbeiten der Datei');
       }
@@ -202,7 +201,7 @@ const ListsPage: React.FC = observer(() => {
           key: 'profile',
           icon: <SettingOutlined />,
           label: 'Profile Settings',
-          onClick: () => router.push('/profile'),
+          onClick: () => router.push('/app/profile'),
         },
         { type: 'divider' as const },
         {
@@ -233,7 +232,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Check authentication
     if (!isAuthenticated) {
-      router.push('/login?returnTo=/');
+      messageApi.info('Please sign in to create a new service');
       return;
     }
 
@@ -242,7 +241,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Generate a new service ID and navigate
     const newId = generateServiceId(user?.id || 'test1234');
-    router.push(`/service/${newId}`);
+    router.push(`/app/service/${newId}`);
   }, [isAuthenticated, router, user?.id]);
 
   // Memoized styles
@@ -461,7 +460,7 @@ const ListsPage: React.FC = observer(() => {
                     }}>
                       {/* Overview Card */}
                       <a
-                        href="/product"
+                        href="/"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
@@ -509,7 +508,7 @@ const ListsPage: React.FC = observer(() => {
 
                       {/* How it Works Card */}
                       <a
-                        href="/product/how-excel-api-works"
+                        href="/how-excel-api-works"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
@@ -558,7 +557,7 @@ const ListsPage: React.FC = observer(() => {
 
                       {/* Claude Setup Card */}
                       <a
-                        href="/product/excel-ai-integration#quick-setup"
+                        href="/excel-ai-integration#quick-setup"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',

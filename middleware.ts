@@ -7,23 +7,41 @@ const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   
-  // Handle redirects for old URLs
+  // Handle redirects for migration to new structure
   const redirects: Record<string, string> = {
-    '/how-excel-api-works': '/product/how-excel-api-works',
-    '/excel-ai-integration': '/product/excel-ai-integration',
-    // Also redirect the temporary generic URLs if anyone uses them
-    '/product/how-it-works': '/product/how-excel-api-works',
-    '/product/ai-integration': '/product/excel-ai-integration',
+    // Marketing pages moved to root
+    '/product': '/',
+    '/product/how-excel-api-works': '/how-excel-api-works',
+    '/product/excel-ai-integration': '/excel-ai-integration',
+    '/product/why-ai-fails-at-math': '/why-ai-fails-at-math',
+    
+    // App pages moved under /app
+    '/profile': '/app/profile',
+    
+    // Legacy redirects
+    '/product/how-it-works': '/how-excel-api-works',
+    '/product/ai-integration': '/excel-ai-integration',
   };
+  
+  // Handle service/[id] redirects
+  if (pathname.startsWith('/service/') && !pathname.startsWith('/app/service/')) {
+    const serviceId = pathname.replace('/service/', '');
+    return NextResponse.redirect(new URL(`/app/service/${serviceId}`, req.url), 301);
+  }
   
   if (redirects[pathname]) {
     return NextResponse.redirect(new URL(redirects[pathname], req.url), 301);
   }
   
+  // Also handle subpaths of /product
+  if (pathname.startsWith('/product/')) {
+    const newPath = pathname.replace('/product', '');
+    return NextResponse.redirect(new URL(newPath, req.url), 301);
+  }
+  
   // Define protected routes
   const protectedRoutes = [
-    '/service/',
-    '/analytics/',
+    // Note: /app routes are protected by AuthGuard in layout.tsx instead
     '/api/services',
     '/api/workbook',
     '/api/manageapi',
@@ -55,8 +73,8 @@ export async function middleware(req: NextRequest) {
   // Services list endpoint should be public to allow service discovery
   const isServicesListEndpoint = pathname === '/api/v1/services';
   
-  // Extract service ID from pathname
-  const serviceIdMatch = pathname.match(/\/(service|api\/services|api\/workbook)\/([^\/]+)/);
+  // Extract service ID from pathname (updated for new /app/service structure)
+  const serviceIdMatch = pathname.match(/\/(app\/service|api\/services|api\/workbook)\/([^\/]+)/);
   const serviceId = serviceIdMatch ? serviceIdMatch[2] : null;
   
   // Allow unauthenticated access to demo services (both page and API routes)
@@ -157,8 +175,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Protected page routes
-    '/service/:path*',
+    // Protected page routes (removed /app as it's handled by AuthGuard)
     '/analytics/:path*',
     
     // Protected API routes

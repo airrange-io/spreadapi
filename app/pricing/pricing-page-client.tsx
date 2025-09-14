@@ -2,7 +2,7 @@
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/product/Footer';
-import '../product/product.css';
+import '../(marketing)/product.css';
 
 export default function PricingPageClient() {
   return (
@@ -112,7 +112,7 @@ export default function PricingPageClient() {
                         Community access
                       </li>
                     </ul>
-                    <a href="/" style={{
+                    <a href="/app" style={{
                       display: 'block',
                       textAlign: 'center',
                       padding: '12px 24px',
@@ -198,7 +198,7 @@ export default function PricingPageClient() {
                         Custom domains
                       </li>
                     </ul>
-                    <a href="/" style={{
+                    <a href="/app" style={{
                       display: 'block',
                       textAlign: 'center',
                       padding: '12px 24px',
@@ -342,7 +342,7 @@ export default function PricingPageClient() {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center">
-                          <a href="/" className="button" style={{
+                          <a href="/app" className="button" style={{
                             background: 'white',
                             color: '#1a1a1a',
                             padding: '16px 32px',

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Give AI Assistants Excel Superpowers - SpreadAPI',
     description: 'Connect ChatGPT and Claude to your Excel calculations. Enable accurate, reproducible results.',
     type: 'article',
-    url: 'https://spreadapi.com/product/excel-ai-integration',
+    url: 'https://spreadapi.com/excel-ai-integration',
     siteName: 'SpreadAPI',
     images: [{
       url: 'https://spreadapi.com/api/og?title=Excel%20AI%20Integration&description=Give%20AI%20assistants%20Excel%20superpowers',
@@ -481,7 +481,7 @@ export default function AIIntegrationPage() {
                             <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
                               Sign up for free and upload your Excel file. Define inputs and outputs with simple point-and-click.
                             </p>
-                            <a href="/" className="button is-primary" style={{
+                            <a href="/app" className="button is-primary" style={{
                               display: 'inline-block',
                               background: '#502D80',
                               color: 'white',
@@ -745,7 +745,7 @@ export default function AIIntegrationPage() {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button" style={{
+                          <a href="/app" className="button" style={{
                             background: 'white',
                             color: '#1a1a1a',
                             padding: '16px 32px',
@@ -756,7 +756,7 @@ export default function AIIntegrationPage() {
                           }}>
                             Start Free Trial
                           </a>
-                          <a href="/product/how-excel-api-works" className="button" style={{
+                          <a href="/how-excel-api-works" className="button" style={{
                             background: 'transparent',
                             border: '2px solid white',
                             color: 'white',

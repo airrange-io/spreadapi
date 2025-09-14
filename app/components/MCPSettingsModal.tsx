@@ -192,7 +192,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
               size="small" 
               onClick={() => {
                 onClose();
-                router.push('/login?returnTo=/');
+                router.push('/login?returnTo=/app');
               }}
             >
               Sign In

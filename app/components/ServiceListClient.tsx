@@ -85,7 +85,7 @@ export default function ServiceListClient({
   }, [services, message, router]);
 
   const handleEdit = useCallback((serviceId: string) => {
-    router.push(`/service/${serviceId}`);
+    router.push(`/app/service/${serviceId}`);
   }, [router]);
 
   const handleUsage = useCallback((serviceId: string) => {
@@ -217,7 +217,7 @@ export default function ServiceListClient({
         <Button type="primary" onClick={() => {
           const newId = generateServiceId(user?.id || 'test1234');
           console.log('[ServiceList] Generated service ID:', newId);
-          router.push(`/service/${newId}`);
+          router.push(`/app/service/${newId}`);
         }}>
           Create Your First Service
         </Button>

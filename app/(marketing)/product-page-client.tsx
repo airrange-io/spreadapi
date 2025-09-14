@@ -36,7 +36,7 @@ const ProductPage: React.FC = () => {
               title={<>Turn Excel Into Live APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
               description="Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic."
               primaryButtonText="Create your first free Excel API"
-              primaryButtonHref="/"
+              primaryButtonHref="/app"
               secondaryButtonText="View Documentation"
               secondaryButtonHref="/docs"
               showImage={true}
@@ -195,7 +195,7 @@ const ProductPage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                      <Link href="/product/why-ai-fails-at-math" style={{
+                      <Link href="/why-ai-fails-at-math" style={{
                         fontSize: '20px',
                         color: '#9333EA',
                         textDecoration: 'none',
@@ -911,7 +911,7 @@ const ProductPage: React.FC = () => {
                             SpreadAPI works with Claude, ChatGPT, and any AI assistant through our MCP server. Connect via REST API, webhooks, or integrate with Zapier, Make, and n8n. Your Excel calculations become accessible everywhere.
                           </p>
                         </div>
-                        <a href="/" className="button">Start Building</a>
+                        <a href="/app" className="button">Start Building</a>
                       </div>
                     </div>
                   </div>
@@ -1062,7 +1062,7 @@ const ProductPage: React.FC = () => {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button" style={{
+                          <a href="/app" className="button" style={{
                             background: 'white',
                             color: '#1a1a1a',
                             padding: '16px 32px',

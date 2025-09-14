@@ -34,9 +34,9 @@ export default function WhyAIFailsClient() {
               title={<>🤖 "Why We Can't Do <span className="text-color-primary">Excel"</span></>}
               description="An Honest Conversation with AI About Spreadsheets"
               primaryButtonText="Try SpreadAPI Instead"
-              primaryButtonHref="/"
+              primaryButtonHref="/app"
               secondaryButtonText="← Back to Product"
-              secondaryButtonHref="/product"
+              secondaryButtonHref="/"
             />
 
             {/* The Confession Section */}
@@ -588,7 +588,7 @@ export default function WhyAIFailsClient() {
                     </div>
 
                     <div style={{ textAlign: 'center', marginTop: '60px' }}>
-                      <a href="/" className="button button-large">
+                      <a href="/app" className="button button-large">
                         Start Your Free Trial
                       </a>
                       <p style={{ marginTop: '20px', fontSize: '16px', color: '#374151' }}>

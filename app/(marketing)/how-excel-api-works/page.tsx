@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'How SpreadAPI Works - Excel to API in Minutes',
     description: 'Transform your Excel spreadsheets into REST APIs instantly. Learn the simple 3-step process.',
     type: 'article',
-    url: 'https://spreadapi.com/product/how-excel-api-works',
+    url: 'https://spreadapi.com/how-excel-api-works',
     siteName: 'SpreadAPI',
     images: [{
       url: 'https://spreadapi.com/api/og?title=How%20Excel%20API%20Works&description=Transform%20spreadsheets%20to%20APIs%20in%203%20simple%20steps',
@@ -678,7 +678,7 @@ export default function HowItWorksPage() {
                       </div>
                     </div>
                     <div className="margin-top margin-medium text-align-center">
-                      <a href="/login" className="button button-white">Get Started Free</a>
+                      <a href="/app" className="button button-white">Get Started Free</a>
                     </div>
                   </div>
                 </div>

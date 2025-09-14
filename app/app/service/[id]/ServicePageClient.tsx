@@ -32,7 +32,7 @@ const StatusBar = dynamic(() => import('./StatusBar'), {
   ssr: false
 });
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
-import { appStore } from '../../stores/AppStore';
+import { appStore } from '@/stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
@@ -546,7 +546,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push('/');
+    router.push('/app');
   };
 
   const handlePublish = async () => {
@@ -1258,7 +1258,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             <Breadcrumb
               items={[
                 {
-                  title: <a onClick={() => router.push('/')}>Services</a>,
+                  title: <a onClick={() => router.push('/app')}>Services</a>,
                 },
                 {
                   title: configLoaded ? (

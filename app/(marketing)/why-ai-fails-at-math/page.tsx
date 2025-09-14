@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: 'Why AI Can\'t Do Your Excel Math',
     description: 'AI hallucinates. Excel calculates. See the difference and why it matters for your business.',
     type: 'website',
-    url: 'https://spreadapi.com/product/why-ai-fails-at-math',
+    url: 'https://spreadapi.com/why-ai-fails-at-math',
   },
 };
 

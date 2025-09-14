@@ -289,7 +289,7 @@ export default function ChatWrapperBubbles() {
             />
             <Breadcrumb
               items={[
-                { title: <a onClick={() => router.push('/')}>Services</a> },
+                { title: <a onClick={() => router.push('/app')}>Services</a> },
                 { title: 'Chat' }
               ]}
             />
@@ -302,7 +302,7 @@ export default function ChatWrapperBubbles() {
                   key: 'profile',
                   icon: <SettingOutlined />,
                   label: 'Profile Settings',
-                  onClick: () => router.push('/profile'),
+                  onClick: () => router.push('/app/profile'),
                 },
                 { type: 'divider' as const },
                 {
