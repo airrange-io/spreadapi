@@ -36,7 +36,7 @@ const ProductPage: React.FC = () => {
               title={<>Turn Excel Into Live APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
               description="Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic."
               primaryButtonText="Create your first free Excel API"
-              primaryButtonHref="/"
+              primaryButtonHref="/app"
               secondaryButtonText="View Documentation"
               secondaryButtonHref="/docs"
               showImage={true}
@@ -1062,7 +1062,7 @@ const ProductPage: React.FC = () => {
                       </div>
                       <div className="margin-top margin-medium">
                         <div className="text-align-center" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                          <a href="/" className="button" style={{
+                          <a href="/app" className="button" style={{
                             background: 'white',
                             color: '#1a1a1a',
                             padding: '16px 32px',
