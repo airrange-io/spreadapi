@@ -35,9 +35,9 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
 
   // Define menu items with their labels and paths
   const menuItems = [
-    { label: 'Overview', path: '/product', key: 'product' },
-    { label: 'How it Works', path: '/product/how-excel-api-works', key: 'how-excel-api-works' },
-    { label: 'AI Integration', path: '/product/excel-ai-integration', key: 'excel-ai-integration' },
+    { label: 'Overview', path: '/', key: 'product' },
+    { label: 'How it Works', path: '/how-excel-api-works', key: 'how-excel-api-works' },
+    { label: 'AI Integration', path: '/excel-ai-integration', key: 'excel-ai-integration' },
     { label: 'Blog', path: '/blog', key: 'blog' },
   ];
 
@@ -54,7 +54,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   return (
     <nav className={`navigation-component ${className}`}>
       <div className="navigation-container">
-        <Link href="/product" className="navigation-logo-link">
+        <Link href="/" className="navigation-logo-link">
           <Image 
             src="/icons/logo-full.svg" 
             alt="SpreadAPI" 
@@ -86,7 +86,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
           }}>
             <LanguageSwitcher currentLocale={locale} />
           </div>
-          <Link href="/" className="header-button hide-mobile-portrait">Get Started</Link>
+          <Link href="/app" className="header-button hide-mobile-portrait">Get Started</Link>
           <button
             className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -115,7 +115,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
               </Link>
             ))}
             <Link
-              href="/"
+              href="/app"
               className="button w-button"
               onClick={() => setMobileMenuOpen(false)}
             >

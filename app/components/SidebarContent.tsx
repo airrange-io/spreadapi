@@ -70,7 +70,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         // appStore.setActiveList(null);
         appStore.setSwitchingView(true);
       });
-      router.push('/');
+      router.push('/app');
       if (isMobile) {
         appStore.toggleSidebar();
       }
@@ -251,7 +251,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 // Generate a new service ID and navigate
                 const newId = generateServiceId(user?.id);
                 console.log('[SidebarContent] Generated service ID:', newId);
-                router.push(`/service/${newId}`);
+                router.push(`/app/service/${newId}`);
               }}
               size="small"
               style={{
@@ -278,7 +278,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               // Generate a new service ID and navigate
               const newId = generateServiceId(user?.id);
               console.log('[SidebarContent] Generated service ID:', newId);
-              router.push(`/service/${newId}`);
+              router.push(`/app/service/${newId}`);
             }}
             style={{
               width: '100%',
@@ -373,7 +373,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         {isCollapsed ? (
           <>
             <Tooltip title="Product" placement="right">
-              <Link href="/product">
+              <Link href="/">
                 <Button
                   type="text"
                   icon={<RocketOutlined style={{ fontSize: '18px' }} />}
@@ -395,7 +395,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               </Link>
             </Tooltip>
             <Tooltip title="How it works" placement="right">
-              <Link href="/product/how-excel-api-works">
+              <Link href="/how-excel-api-works">
                 <Button
                   type="text"
                   icon={<InfoCircleOutlined style={{ fontSize: '18px' }} />}
@@ -417,7 +417,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               </Link>
             </Tooltip>
             <Tooltip title="AI Integration" placement="right">
-              <Link href="/product/excel-ai-integration">
+              <Link href="/excel-ai-integration">
                 <Button
                   type="text"
                   icon={<RobotOutlined style={{ fontSize: '18px' }} />}
@@ -485,7 +485,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Link href="/product" style={{ textDecoration: 'none' }}>
+            <Link href="/" style={{ textDecoration: 'none' }}>
               <Button
                 type="text"
                 icon={<RocketOutlined />}
@@ -504,7 +504,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 Product
               </Button>
             </Link>
-            <Link href="/product/how-excel-api-works" style={{ textDecoration: 'none' }}>
+            <Link href="/how-excel-api-works" style={{ textDecoration: 'none' }}>
               <Button
                 type="text"
                 icon={<InfoCircleOutlined />}
@@ -523,7 +523,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 How it works
               </Button>
             </Link>
-            <Link href="/product/excel-ai-integration" style={{ textDecoration: 'none' }}>
+            <Link href="/excel-ai-integration" style={{ textDecoration: 'none' }}>
               <Button
                 type="text"
                 icon={<RobotOutlined />}

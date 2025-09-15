@@ -2,7 +2,7 @@
 
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/product/Footer';
-import '../product/product.css';
+import '../(marketing)/product.css';
 
 export default function DocsPageClient() {
   return (

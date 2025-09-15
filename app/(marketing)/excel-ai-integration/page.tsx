@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: 'Give AI Assistants Excel Superpowers - SpreadAPI',
     description: 'Connect ChatGPT and Claude to your Excel calculations. Enable accurate, reproducible results.',
     type: 'article',
-    url: 'https://spreadapi.com/product/excel-ai-integration',
+    url: 'https://spreadapi.com/excel-ai-integration',
     siteName: 'SpreadAPI',
     images: [{
       url: 'https://spreadapi.com/api/og?title=Excel%20AI%20Integration&description=Give%20AI%20assistants%20Excel%20superpowers',
@@ -756,7 +756,7 @@ export default function AIIntegrationPage() {
                           }}>
                             Start Free Trial
                           </a>
-                          <a href="/product/how-excel-api-works" className="button" style={{
+                          <a href="/how-excel-api-works" className="button" style={{
                             background: 'transparent',
                             border: '2px solid white',
                             color: 'white',

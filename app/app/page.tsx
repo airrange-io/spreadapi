@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
-import './main.css'; // Critical CSS for preventing layout shifts
+import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
@@ -23,11 +23,11 @@ const ServiceList = dynamic(() => import('@/components/ServiceList'), {
 });
 
 // Lazy load Intercom components
-const IntercomProvider = dynamic(() => import('./components/IntercomProvider').then(mod => ({ default: mod.IntercomProvider })), {
+const IntercomProvider = dynamic(() => import('../components/IntercomProvider').then(mod => ({ default: mod.IntercomProvider })), {
   ssr: false
 });
 
-const IntercomScript = dynamic(() => import('./components/IntercomScript').then(mod => ({ default: mod.IntercomScript })), {
+const IntercomScript = dynamic(() => import('../components/IntercomScript').then(mod => ({ default: mod.IntercomScript })), {
   ssr: false
 });
 
@@ -98,7 +98,7 @@ const ListsPage: React.FC = observer(() => {
 
   // Memoized handlers
   const handleHomeClick = useCallback(() => {
-    router.push('/');
+    router.push('/app');
   }, [router]);
 
   // Drag and drop handlers
@@ -135,7 +135,7 @@ const ListsPage: React.FC = observer(() => {
     // Check authentication
     if (!isAuthenticated) {
       messageApi.warning('Please sign in to create a new service');
-      router.push('/login?returnTo=/');
+      router.push('/login?returnTo=/app');
       return;
     }
 
@@ -207,7 +207,7 @@ const ListsPage: React.FC = observer(() => {
 
         if (createResponse.ok || createResponse.status === 409) {
           // Service created or already exists, navigate with file flag
-          router.push(`/service/${newId}?fileDropped=true`);
+          router.push(`/app/service/${newId}?fileDropped=true`);
         } else {
           // Handle error
           const errorData = await createResponse.json().catch(() => ({}));
@@ -233,7 +233,7 @@ const ListsPage: React.FC = observer(() => {
           key: 'profile',
           icon: <SettingOutlined />,
           label: 'Profile Settings',
-          onClick: () => router.push('/profile'),
+          onClick: () => router.push('/app/profile'),
         },
         { type: 'divider' as const },
         {
@@ -242,7 +242,7 @@ const ListsPage: React.FC = observer(() => {
           label: 'Logout',
           onClick: async () => {
             document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            router.push('/');
+            router.push('/app');
             setIsAuthenticated(false);
           },
         },
@@ -264,7 +264,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Check authentication
     if (!isAuthenticated) {
-      router.push('/login?returnTo=/');
+      router.push('/login?returnTo=/app');
       return;
     }
 
@@ -295,10 +295,10 @@ const ListsPage: React.FC = observer(() => {
 
       if (createResponse.ok) {
         // Service created successfully, navigate to it
-        router.push(`/service/${newId}`);
+        router.push(`/app/service/${newId}`);
       } else if (createResponse.status === 409) {
         // Service already exists (unlikely but possible), navigate anyway
-        router.push(`/service/${newId}`);
+        router.push(`/app/service/${newId}`);
       } else {
         // Handle other errors
         const errorData = await createResponse.json().catch(() => ({}));
@@ -391,7 +391,7 @@ const ListsPage: React.FC = observer(() => {
                   variant='filled'
                   color="default"
                   icon={<MessageOutlined />}
-                  onClick={() => router.push('/chat')}
+                  onClick={() => router.push('/app/chat')}
                   title="Chat with services"
                 >
                   <span className="desktop-text">Chat</span>
@@ -529,7 +529,7 @@ const ListsPage: React.FC = observer(() => {
                     }}>
                       {/* Overview Card */}
                       <a
-                        href="/product"
+                        href="/"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
@@ -577,7 +577,7 @@ const ListsPage: React.FC = observer(() => {
 
                       {/* How it Works Card */}
                       <a
-                        href="/product/how-excel-api-works"
+                        href="/how-excel-api-works"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
@@ -626,7 +626,7 @@ const ListsPage: React.FC = observer(() => {
 
                       {/* Claude Setup Card */}
                       <a
-                        href="/product/excel-ai-integration#quick-setup"
+                        href="/excel-ai-integration#quick-setup"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',

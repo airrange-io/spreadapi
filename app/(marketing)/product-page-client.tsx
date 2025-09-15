@@ -195,7 +195,7 @@ const ProductPage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                      <Link href="/product/why-ai-fails-at-math" style={{
+                      <Link href="/why-ai-fails-at-math" style={{
                         fontSize: '20px',
                         color: '#9333EA',
                         textDecoration: 'none',

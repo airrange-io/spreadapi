@@ -45,7 +45,7 @@ export default function LoginPage() {
               borderRadius: '8px',
               minHeight: '400px'
             }}>
-              <HankoAuth redirectTo="/" />
+              <HankoAuth redirectTo="/app" />
             </div>
 
             <div style={{ textAlign: 'center' }}>

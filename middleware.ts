@@ -9,19 +9,32 @@ export async function middleware(req: NextRequest) {
   
   // Handle redirects for old URLs
   const redirects: Record<string, string> = {
-    '/how-excel-api-works': '/product/how-excel-api-works',
-    '/excel-ai-integration': '/product/excel-ai-integration',
-    // Also redirect the temporary generic URLs if anyone uses them
-    '/product/how-it-works': '/product/how-excel-api-works',
-    '/product/ai-integration': '/product/excel-ai-integration',
+    // Redirect old product routes to new root locations
+    '/product': '/',
+    '/product/how-excel-api-works': '/how-excel-api-works',
+    '/product/excel-ai-integration': '/excel-ai-integration',
+    '/product/why-ai-fails-at-math': '/why-ai-fails-at-math',
+    // Redirect dashboard routes to /app
+    '/profile': '/app/profile',
+    '/services': '/app/services',
+    '/cache-diagnostics': '/app/cache-diagnostics',
+    '/cache-stats': '/app/cache-stats',
+    '/chat': '/app/chat',
   };
   
   if (redirects[pathname]) {
     return NextResponse.redirect(new URL(redirects[pathname], req.url), 301);
   }
   
+  // Handle service/[id] redirects
+  if (pathname.startsWith('/service/')) {
+    const newPath = pathname.replace('/service/', '/app/service/');
+    return NextResponse.redirect(new URL(newPath, req.url), 301);
+  }
+  
   // Define protected routes
   const protectedRoutes = [
+    '/app/',
     '/service/',
     '/analytics/',
     '/api/services',
@@ -57,7 +70,7 @@ export async function middleware(req: NextRequest) {
   const isServicesListEndpoint = pathname === '/api/v1/services';
   
   // Extract service ID from pathname
-  const serviceIdMatch = pathname.match(/\/(service|api\/services|api\/workbook)\/([^\/]+)/);
+  const serviceIdMatch = pathname.match(/\/(app\/service|service|api\/services|api\/workbook)\/([^\/]+)/);
   const serviceId = serviceIdMatch ? serviceIdMatch[2] : null;
   
   // Allow unauthenticated access to demo services (both page and API routes)
@@ -159,8 +172,17 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Protected page routes
-    '/service/:path*',
+    '/app/:path*',
+    '/service/:path*',  // This will catch old service routes and redirect them
     '/analytics/:path*',
+    
+    // Handle redirects
+    '/product/:path*',
+    '/profile',
+    '/services',
+    '/cache-diagnostics',
+    '/cache-stats',
+    '/chat',
     
     // Protected API routes
     '/api/services/:path*',

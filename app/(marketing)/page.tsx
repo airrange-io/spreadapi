@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: 'SpreadAPI - Excel to API in Seconds',
     description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
     type: 'website',
-    url: 'https://spreadapi.com/product',
+    url: 'https://spreadapi.com/',
     siteName: 'SpreadAPI',
     images: [{
       url: 'https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     images: ['https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
   },
   alternates: {
-    canonical: 'https://spreadapi.com/product',
+    canonical: 'https://spreadapi.com/',
   },
   robots: {
     index: true,
