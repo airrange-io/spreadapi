@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'SpreadAPI - Turn Excel Into APIs for AI | Excel as a Web Service',
+  title: 'SpreadAPI - Headless Spreadsheets for AI and Automation',
   description: 'Transform your Excel spreadsheets into secure APIs that AI assistants can use. Enable Claude, ChatGPT, and other AI tools to work with your Excel calculations without hallucinations.',
   keywords: 'Excel API, AI spreadsheet integration, Excel web service, MCP server, Claude Excel, ChatGPT Excel, spreadsheet API, Excel automation',
   openGraph: {
