@@ -33,10 +33,10 @@ export async function POST(req) {
     const body = await req.json();
     const { messages, serviceId, initialGreeting } = body;
     
-    
-    
+
+
     let formattedMessages;
-    
+
     // If this is an initial greeting, replace the trigger message
     if (initialGreeting || (messages.length === 1 && messages[0]?.content === '[GREETING]')) {
       // Create system context for initial greeting - keep it short for faster response
@@ -156,17 +156,105 @@ export async function POST(req) {
     
     // Service-specific system prompt - optimized for speed
     let systemPrompt;
-    
+
+    // Check if this is an area-only service (no inputs, only areas)
+    const hasInputs = serviceDetails?.inputs && serviceDetails.inputs.length > 0;
+    const hasAreas = serviceDetails?.areas && serviceDetails.areas.length > 0;
+
     // Use shorter prompt for greeting to speed up response
     if (initialGreeting) {
-      // Build parameter context for better examples
-      let paramContext = '';
-      if (serviceDetails?.inputs) {
-        const inputNames = serviceDetails.inputs.map(i => i.alias || i.name).join(', ');
-        paramContext = `\nService expects: ${inputNames}`;
-      }
-      
-      systemPrompt = `You are an assistant for "${serviceDetails?.name}".${paramContext}
+
+      console.log('[Chat API] Greeting configuration:', {
+        hasInputs,
+        hasAreas,
+        inputCount: serviceDetails?.inputs?.length || 0,
+        areaCount: typeof serviceDetails?.areas === 'string' ? 'JSON string' : serviceDetails?.areas?.length || 0,
+        serviceName: serviceDetails?.name
+      });
+
+      if (!hasInputs && hasAreas) {
+        // Area-only service
+        let areas = serviceDetails.areas;
+        if (typeof areas === 'string') {
+          try {
+            areas = JSON.parse(areas);
+          } catch (e) {
+            areas = [];
+          }
+        }
+
+        const readableAreas = areas.filter(a => a.permissions?.canReadValues);
+        const writableAreas = areas.filter(a => a.permissions?.canWriteValues && a.mode !== 'readonly');
+
+        // Check if any area has a meaningful description or AI context
+        const areasWithContext = areas.filter(area =>
+          (area.description && area.description.trim().length > 0) ||
+          (area.aiContext && (area.aiContext.purpose || area.aiContext.expectedBehavior))
+        );
+
+        if (areasWithContext.length > 0) {
+          // Build context from area descriptions and AI context
+          const areaContext = areasWithContext.map(area => {
+            let context = `**${area.name}**`;
+            if (area.description) {
+              context += `: ${area.description}`;
+            }
+            if (area.aiContext) {
+              if (area.aiContext.purpose) {
+                context += `\n  - Purpose: ${area.aiContext.purpose}`;
+              }
+              if (area.aiContext.expectedBehavior) {
+                context += `\n  - Usage: ${area.aiContext.expectedBehavior}`;
+              }
+            }
+            return context;
+          }).join('\n\n');
+
+          systemPrompt = `You are an assistant for "${serviceDetails?.name}".
+This is a spreadsheet service with editable areas.
+
+Available areas with descriptions:
+${areaContext}
+
+Based on these descriptions, provide a brief welcome message explaining what this service does.
+Then suggest 3 specific actions users can take, based on the area descriptions.
+
+Keep your response concise and focused on the described functionality.`;
+        } else {
+          // No area descriptions - provide simple greeting and hint about descriptions
+          systemPrompt = `You are an assistant for "${serviceDetails?.name}".
+This is a LIVE SPREADSHEET service with ${areas.length} editable area${areas.length > 1 ? 's' : ''}.
+
+CRITICAL UNDERSTANDING:
+- This is NOT a calculation API - it's a live spreadsheet
+- Input values AND results are already in the spreadsheet cells
+- When users ask to "calculate", they mean: update the input cells and read the results
+- You must use the read_area tool to see current values and update_areas tool to change inputs
+
+IMPORTANT: The area${areas.length > 1 ? 's' : ''} ${areas.length > 1 ? 'have' : 'has'} no descriptions, so you don't know:
+- Which cells are inputs vs outputs
+- What each value represents
+- How the calculation works
+
+When users ask for calculations:
+1. Use read_area to see the current spreadsheet
+2. Try to identify input cells (usually smaller values) and result cells (usually totals/larger values)
+3. Use update_areas to modify what appear to be input values
+4. Read the area again to see the updated results
+
+Suggest adding area descriptions for better assistance.
+
+Keep response under 100 words.`;
+        }
+      } else {
+        // Standard service with inputs - use calculation examples
+        let paramContext = '';
+        if (serviceDetails?.inputs) {
+          const inputNames = serviceDetails.inputs.map(i => i.alias || i.name).join(', ');
+          paramContext = `\nService expects: ${inputNames}`;
+        }
+
+        systemPrompt = `You are an assistant for "${serviceDetails?.name}".${paramContext}
 
 Your greeting must:
 1. Start with ONE brief welcome sentence
@@ -180,8 +268,53 @@ Rules for buttons:
 - Button text shows the actual values clearly
 
 Keep total response under 150 words.`;
+      }
     } else {
-      systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
+      // Check if this is an area-only service without inputs
+      const isAreaOnlyService = (!hasInputs && hasAreas);
+
+      if (isAreaOnlyService) {
+        // Get first area name for instructions
+        let firstAreaName = 'calculation';
+        if (serviceDetails?.areas) {
+          let areas = serviceDetails.areas;
+          if (typeof areas === 'string') {
+            try {
+              areas = JSON.parse(areas);
+            } catch (e) {
+              areas = [];
+            }
+          }
+          if (areas.length > 0) {
+            firstAreaName = areas[0].name || 'calculation';
+          }
+        }
+
+        systemPrompt = `You are an assistant for "${serviceDetails?.name || 'SpreadAPI service'}" - a LIVE SPREADSHEET service.
+
+IMPORTANT: When users ask for calculations, be confident and direct.
+
+When a user provides specific values (like "2 Desktop Licenses, 4 Mobile Licenses"):
+
+1. Go straight to updating - DO NOT mention any issues or troubles
+2. Use update_areas to modify the spreadsheet based on common patterns:
+   - Look for "Desktop" → update the numeric cell near it
+   - Look for "Mobile" → update the numeric cell near it
+   - Look for "Discount" → update the percentage cell near it
+3. After updating, read the area to show the results
+
+If you need to find cell positions, read the area SILENTLY (don't mention it to the user).
+Just say something like "I'll update those values for you" and proceed.
+
+RULES:
+- NEVER say "I'm having trouble accessing" or "unable to access"
+- NEVER mention technical issues to the user
+- NEVER ask for prices - they're in the spreadsheet
+- BE CONFIDENT - just update the values and show results
+
+The spreadsheet auto-calculates when you change inputs.`;
+      } else {
+        systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
 
 When a user asks for a calculation:
 1. Extract ALL provided values from their message
@@ -202,6 +335,7 @@ Current context:
 - Service: ${serviceDetails?.name || 'General calculation service'}
 
 IMPORTANT: You are NOT a general AI assistant. Every response should be focused on helping users with this specific calculation service.`;
+      }
     }
 
     // Add service-specific context if available
@@ -303,7 +437,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
     
     // Build tools dynamically based on service
     let tools = {};
-    
+
     if (serviceDetails) {
       // Comprehensive debug log of all service details
       console.log('[Chat API] Full service details for tool building:', JSON.stringify({
@@ -313,10 +447,163 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
         aiDescription: serviceDetails.aiDescription,
         inputs: serviceDetails.inputs,
         outputs: serviceDetails.outputs,
-        aiUsageExamples: serviceDetails.aiUsageExamples
+        aiUsageExamples: serviceDetails.aiUsageExamples,
+        areas: serviceDetails.areas ? (typeof serviceDetails.areas === 'string' ? 'JSON string' : serviceDetails.areas.length + ' areas') : 'none'
       }, null, 2));
-      
-      // Only add calculate tool if we have inputs
+
+      // FIRST: Add area tools if available (needed for area-only services during greeting)
+      if (serviceDetails.areas && serviceDetails.areas.length > 0) {
+        let areas = serviceDetails.areas;
+        if (typeof areas === 'string') {
+          try {
+            areas = JSON.parse(areas);
+          } catch (e) {
+            console.error('[Chat API] Failed to parse areas JSON:', e);
+            areas = [];
+          }
+        }
+
+        // Add read_area tool for readable areas
+        const readableAreas = areas.filter(area =>
+          area.permissions && area.permissions.canReadValues
+        );
+
+        if (readableAreas.length > 0) {
+          const areaNames = readableAreas.map(a => a.name);
+          console.log('[Chat API] Adding read_area tool for areas:', areaNames);
+
+          tools.read_area = tool({
+            description: `Read data from an editable area in ${serviceDetails.name}. Use this to explore spreadsheet data and understand the calculation structure.`,
+            inputSchema: z.object({
+              areaName: z.enum(areaNames).describe('The name of the area to read'),
+              includeFormulas: z.boolean().optional().default(false).describe('Include cell formulas in the response'),
+              includeFormatting: z.boolean().optional().default(false).describe('Include cell formatting in the response')
+            }),
+            execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
+              try {
+                const result = await executeAreaRead(serviceId, areaName, {
+                  includeFormulas,
+                  includeFormatting
+                }, { userId: 'chat-user' });
+
+                let resultText = `## Area: ${result.area.name}\n`;
+                resultText += `*${result.area.rows} rows × ${result.area.columns} columns*\n\n`;
+
+                resultText += '```\n';
+                for (let r = 0; r < result.area.rows; r++) {
+                  const row = [];
+                  for (let c = 0; c < result.area.columns; c++) {
+                    const cell = result.data[r][c];
+                    row.push(cell.value !== null ? cell.value : '');
+                  }
+                  resultText += row.join('\t') + '\n';
+                }
+                resultText += '```\n';
+
+                if (includeFormulas) {
+                  const formulaCells = [];
+                  for (let r = 0; r < result.area.rows; r++) {
+                    for (let c = 0; c < result.area.columns; c++) {
+                      const cell = result.data[r][c];
+                      if (cell.formula) {
+                        formulaCells.push(`[${r},${c}]: ${cell.formula}`);
+                      }
+                    }
+                  }
+                  if (formulaCells.length > 0) {
+                    resultText += '\n**Formulas:**\n';
+                    formulaCells.forEach(f => {
+                      resultText += `- ${f}\n`;
+                    });
+                  }
+                }
+
+                return resultText;
+              } catch (error) {
+                return `Error reading area: ${error.message}`;
+              }
+            }
+          });
+        }
+
+        // Add update_areas tool for writable areas
+        const writableAreas = areas.filter(area =>
+          area.permissions && area.permissions.canWriteValues && area.mode !== 'readonly'
+        );
+
+        if (writableAreas.length > 0) {
+          console.log('[Chat API] Adding update_areas tool for writable areas');
+
+          tools.update_areas = tool({
+            description: `Update values in editable areas of ${serviceDetails.name}. Use this to modify spreadsheet data.`,
+            inputSchema: z.object({
+              areaUpdates: z.array(z.object({
+                areaName: z.string().describe('Name of the area to update'),
+                changes: z.array(z.object({
+                  row: z.number().describe('Row index within the area (0-based)'),
+                  col: z.number().describe('Column index within the area (0-based)'),
+                  value: z.any().optional().describe('New value for the cell'),
+                  formula: z.string().optional().describe('New formula for the cell')
+                })).describe('Changes to apply to the area')
+              })).describe('Area updates to apply'),
+              returnUpdatedData: z.boolean().optional().default(true).describe('Include updated area data in response')
+            }),
+            execute: async ({ areaUpdates, returnUpdatedData = true }) => {
+              try {
+                const returnOptions = {
+                  includeValues: returnUpdatedData,
+                  includeFormulas: false,
+                  includeFormatting: false,
+                  includeRelatedOutputs: serviceDetails.outputs && serviceDetails.outputs.length > 0
+                };
+
+                const result = await executeAreaUpdate(
+                  serviceId,
+                  areaUpdates,
+                  { userId: 'chat-user' },
+                  returnOptions
+                );
+
+                const resultData = JSON.parse(result.content[0].text);
+
+                let resultText = '## Area Updates Applied\n\n';
+
+                resultData.results.forEach(r => {
+                  if (r.success) {
+                    resultText += `✓ **${r.area}**: ${r.appliedChanges} changes applied\n`;
+                  } else {
+                    resultText += `✗ **${r.area}**: ${r.error || 'Failed'}\n`;
+                  }
+                });
+
+                if (returnUpdatedData && resultData.updatedAreas) {
+                  resultText += '\n### Updated Values\n';
+                  for (const [areaName, areaData] of Object.entries(resultData.updatedAreas)) {
+                    resultText += `\n**${areaName}** (${areaData.rows}×${areaData.columns}):\n`;
+                    resultText += '```\n';
+                    for (let r = 0; r < areaData.rows; r++) {
+                      const row = [];
+                      for (let c = 0; c < areaData.columns; c++) {
+                        const cell = areaData.data[r] && areaData.data[r][c];
+                        row.push(cell && cell.value !== null && cell.value !== undefined ? cell.value : '');
+                      }
+                      resultText += row.join('\t') + '\n';
+                    }
+                    resultText += '```\n';
+                  }
+                }
+
+                return resultText;
+              } catch (error) {
+                console.error('[Chat API] Area update error:', error);
+                return `Error updating areas: ${error.message}`;
+              }
+            }
+          });
+        }
+      }
+
+      // THEN: Add calculate tool if we have inputs
       if (serviceDetails.inputs && serviceDetails.inputs.length > 0) {
         // Build Zod schema for inputs
         const inputSchemas = {};
@@ -636,181 +923,6 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
           }
         });
       }
-      
-      // Add area reading tool if service has areas
-      if (serviceDetails.areas && serviceDetails.areas.length > 0) {
-        // Parse areas from JSON string if needed
-        let areas = serviceDetails.areas;
-        if (typeof areas === 'string') {
-          try {
-            areas = JSON.parse(areas);
-          } catch (e) {
-            areas = [];
-          }
-        }
-        
-        // Only add if we have readable areas
-        const readableAreas = areas.filter(area => 
-          area.permissions && area.permissions.canReadValues
-        );
-        
-        if (readableAreas.length > 0) {
-          const areaNames = readableAreas.map(a => a.name);
-          
-          tools.read_area = tool({
-            description: `Read data from an editable area in ${serviceDetails.name}. Areas are spreadsheet regions containing tables, parameters, formulas, and calculations. Use this to explore data structures, understand calculation logic, and prepare for intelligent modifications. Always read an area before modifying it.`,
-            inputSchema: z.object({
-              areaName: z.enum(areaNames).describe('The name of the area to read'),
-              includeFormulas: z.boolean().optional().default(false).describe('Include cell formulas in the response'),
-              includeFormatting: z.boolean().optional().default(false).describe('Include cell formatting in the response')
-            }),
-            execute: async ({ areaName, includeFormulas = false, includeFormatting = false }) => {
-              try {
-                // Use the already imported executeAreaRead function
-                const result = await executeAreaRead(serviceId, areaName, {
-                  includeFormulas,
-                  includeFormatting
-                }, { userId: 'chat-user' });
-                
-                // Format the response for chat
-                let resultText = `## Area: ${result.area.name}\n`;
-                resultText += `*${result.area.rows} rows × ${result.area.columns} columns*\n\n`;
-                
-                // Show the data in a readable format
-                resultText += '```\n';
-                for (let r = 0; r < result.area.rows; r++) {
-                  const row = [];
-                  for (let c = 0; c < result.area.columns; c++) {
-                    const cell = result.data[r][c];
-                    row.push(cell.value !== null ? cell.value : '');
-                  }
-                  resultText += row.join('\t') + '\n';
-                }
-                resultText += '```\n';
-                
-                if (includeFormulas) {
-                  // Show cells with formulas
-                  const formulaCells = [];
-                  for (let r = 0; r < result.area.rows; r++) {
-                    for (let c = 0; c < result.area.columns; c++) {
-                      const cell = result.data[r][c];
-                      if (cell.formula) {
-                        formulaCells.push(`[${r},${c}]: ${cell.formula}`);
-                      }
-                    }
-                  }
-                  if (formulaCells.length > 0) {
-                    resultText += '\n**Formulas:**\n';
-                    formulaCells.forEach(f => {
-                      resultText += `- ${f}\n`;
-                    });
-                  }
-                }
-                
-                resultText += `\n*Note: This area contains reference data used in calculations.*`;
-                
-                return resultText;
-              } catch (error) {
-                return `Error reading area: ${error.message}`;
-              }
-            }
-          });
-        }
-        
-        // Add standalone area update tool for direct area manipulation
-        // This complements the calculate tool which also supports area updates
-        // - calculate: atomic area updates + calculation (when inputs exist)
-        // - update_areas: just area updates without calculation (always available)
-        const writableAreas = areas.filter(area => 
-          area.permissions && area.permissions.canWriteValues
-        );
-        
-        if (writableAreas.length > 0) {
-          tools.update_areas = tool({
-            description: `Update values in editable areas of ${serviceDetails.name}. Use this to modify spreadsheet data like lookup tables, parameters, or reference values. This tool updates areas WITHOUT triggering calculation - useful for preparing multiple changes. For atomic update+calculate, use the calculate tool with areaUpdates parameter instead.`,
-            inputSchema: z.object({
-              areaUpdates: z.array(z.object({
-                areaName: z.string().describe('Name of the area to update'),
-                changes: z.array(z.object({
-                  row: z.number().describe('Row index within the area (0-based)'),
-                  col: z.number().describe('Column index within the area (0-based)'),
-                  value: z.any().optional().describe('New value for the cell'),
-                  formula: z.string().optional().describe('New formula for the cell')
-                })).describe('Changes to apply to the area')
-              })).describe('Area updates to apply'),
-              returnUpdatedData: z.boolean().optional().default(true).describe('Include updated area data in response')
-            }),
-            execute: async ({ areaUpdates, returnUpdatedData = true }) => {
-              try {
-                const returnOptions = {
-                  includeValues: returnUpdatedData,
-                  includeFormulas: false,
-                  includeFormatting: false,
-                  includeRelatedOutputs: serviceDetails.outputs && serviceDetails.outputs.length > 0
-                };
-                
-                const result = await executeAreaUpdate(
-                  serviceId,
-                  areaUpdates,
-                  { userId: 'chat-user' },
-                  returnOptions
-                );
-                
-                // Parse the result
-                const resultData = JSON.parse(result.content[0].text);
-                
-                // Format response
-                let resultText = '## Area Updates Applied\n\n';
-                
-                resultData.results.forEach(r => {
-                  if (r.success) {
-                    resultText += `✓ **${r.area}**: ${r.appliedChanges} changes applied\n`;
-                  } else {
-                    resultText += `✗ **${r.area}**: ${r.error || 'Failed'}\n`;
-                  }
-                  
-                  if (r.details && r.details.errors && r.details.errors.length > 0) {
-                    r.details.errors.forEach(e => {
-                      resultText += `  • ${e}\n`;
-                    });
-                  }
-                });
-                
-                // Show updated data if requested
-                if (returnUpdatedData && resultData.updatedAreas) {
-                  resultText += '\n### Updated Values\n';
-                  for (const [areaName, areaData] of Object.entries(resultData.updatedAreas)) {
-                    resultText += `\n**${areaName}** (${areaData.rows}×${areaData.columns}):\n`;
-                    resultText += '```\n';
-                    for (let r = 0; r < areaData.rows; r++) {
-                      const row = [];
-                      for (let c = 0; c < areaData.columns; c++) {
-                        const cell = areaData.data[r] && areaData.data[r][c];
-                        row.push(cell && cell.value !== null && cell.value !== undefined ? cell.value : '');
-                      }
-                      resultText += row.join('\t') + '\n';
-                    }
-                    resultText += '```\n';
-                  }
-                }
-                
-                // Show any related outputs if they exist
-                if (resultData.relatedOutputs) {
-                  resultText += '\n### Calculated Outputs\n';
-                  for (const [key, value] of Object.entries(resultData.relatedOutputs)) {
-                    resultText += `**${key}**: ${JSON.stringify(value)}\n`;
-                  }
-                }
-                
-                return resultText;
-              } catch (error) {
-                console.error('[Chat API] Area update error:', error);
-                return `Error updating areas: ${error.message}`;
-              }
-            }
-          });
-        }
-      }
     }
     
     
@@ -1011,6 +1123,25 @@ For numeric parameters, use these realistic ranges:
 The button text should clearly show what calculation will be performed with the specific values.`;
     }
     
+    // Log tools being passed to AI
+    console.log('[Chat API] Tools available for AI:', {
+      toolCount: Object.keys(tools).length,
+      toolNames: Object.keys(tools),
+      isInitialGreeting: initialGreeting,
+      serviceId: serviceId,
+      hasReadAreaTool: 'read_area' in tools,
+      toolsObject: tools ? 'exists' : 'null'
+    });
+
+    // For area-only services on greeting, verify tools are present
+    if (initialGreeting && !hasInputs && hasAreas) {
+      console.log('[Chat API] Area-only service greeting - verifying read_area tool:', {
+        hasReadAreaTool: 'read_area' in tools,
+        readAreaToolType: typeof tools.read_area,
+        allTools: Object.keys(tools)
+      });
+    }
+
     // Use streamText with v5 features for better tool handling
     const result = streamText({
       model: openai('gpt-4o-mini', {

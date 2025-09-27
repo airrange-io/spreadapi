@@ -41,8 +41,10 @@ export async function getServiceDetails(serviceId, userId = null) {
       name: serviceData?.name,
       hasInputs: !!serviceData?.inputs,
       hasOutputs: !!serviceData?.outputs,
+      hasAreas: !!serviceData?.areas,
       inputCount: serviceData?.inputs ? JSON.parse(serviceData.inputs).length : 0,
-      outputCount: serviceData?.outputs ? JSON.parse(serviceData.outputs).length : 0
+      outputCount: serviceData?.outputs ? JSON.parse(serviceData.outputs).length : 0,
+      areaCount: serviceData?.areas ? JSON.parse(serviceData.areas).length : 0
     });
     
     if (!serviceData || Object.keys(serviceData).length === 0) {

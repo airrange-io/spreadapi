@@ -198,11 +198,10 @@ export default function ChatWrapperBubbles() {
       
       if (res.ok) {
         const data = await res.json();
-        console.log('[Chat] Service details received:', { 
-          id: data.service?.id, 
-          name: data.service?.name,
-          description: data.service?.description
-        });
+        console.log('[Chat] Full service details received:', data.service);
+        console.log('[Chat] Service areas:', data.service?.areas);
+        console.log('[Chat] Service inputs:', data.service?.inputs);
+        console.log('[Chat] Service outputs:', data.service?.outputs);
         setServiceDetails(data.service);
       } else {
         console.error('[Chat] Failed to fetch service details, status:', res.status);
