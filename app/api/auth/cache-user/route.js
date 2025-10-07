@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
-import { cacheUserData, updateUserCache, trackUserActivity } from '@/lib/userHashCache';
+import { cacheUserData, updateUserCache, trackUserActivity, getUserCache } from '@/lib/userHashCache';
 
 export async function POST(request) {
   try {
     const { userId, userData, action } = await request.json();
-    
+
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
-    
+
+    // Check if user already sent to CRM
+    const existingUser = await getUserCache(userId);
+    const sentToCRM = existingUser?.sentToCRM === 'true' || existingUser?.sentToCRM === true;
+
     // Cache user data if provided
     if (userData) {
       await cacheUserData(userId, userData);
     }
-    
+
     // Track activity if action provided
     if (action) {
       await trackUserActivity(userId, action);
@@ -21,15 +25,48 @@ export async function POST(request) {
       // Default to login action
       await trackUserActivity(userId, 'login');
     }
-    
+
     // Update last login
     await updateUserCache(userId, {
       lastLogin: new Date().toISOString()
     });
-    
-    return NextResponse.json({ 
+
+    // Send user data to Pipedream webhook (only if not yet sent to CRM)
+    if (process.env.PIPEDREAM_NEW_USER_WEBHOOK_URL && action === 'login' && !sentToCRM) {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+
+        // Add secret token if configured
+        if (process.env.PIPEDREAM_NEW_USER_WEBHOOK_SECRET) {
+          headers['Authorization'] = `Bearer ${process.env.PIPEDREAM_NEW_USER_WEBHOOK_SECRET}`;
+        }
+
+        await fetch(process.env.PIPEDREAM_NEW_USER_WEBHOOK_URL, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            userId,
+            userData,
+            action: 'new_user_registration',
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        // Mark user as sent to CRM
+        await updateUserCache(userId, {
+          sentToCRM: 'true'
+        });
+
+        console.log(`User ${userId} sent to CRM via Pipedream webhook`);
+      } catch (webhookError) {
+        console.error('Failed to send to Pipedream webhook:', webhookError);
+        // Don't fail the request if webhook fails
+      }
+    }
+
+    return NextResponse.json({
       success: true,
-      message: 'User data cached successfully' 
+      message: 'User data cached successfully'
     });
     
   } catch (error) {

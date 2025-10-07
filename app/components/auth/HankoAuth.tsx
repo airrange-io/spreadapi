@@ -43,11 +43,14 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
     if (!hanko) return;
     
     // Set up the redirect handler
-    const unsubscribe = hanko.onSessionCreated(async () => {
+    const unsubscribe = hanko.onSessionCreated(async (sessionDetail) => {
       try {
         // Get the user data to cache it
         const user = await (hanko as any).user.getCurrent();
         if (user) {
+          // sessionDetail contains JWT claims which can help determine if user is new
+          console.log('Session created:', sessionDetail);
+
           // Cache user data in Redis
           await fetch('/api/auth/cache-user', {
             method: 'POST',
@@ -62,7 +65,7 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
       } catch (error) {
         console.error('Failed to cache user data on login:', error);
       }
-      
+
       redirectAfterLogin();
     });
     
