@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cacheUserData, updateUserCache, trackUserActivity, getUserCache } from '@/lib/userHashCache';
+import { cacheUserData, updateUserCache, trackUserActivity, getCachedUserData } from '@/lib/userHashCache';
 
 export async function POST(request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request) {
     }
 
     // Check if user already sent to CRM
-    const existingUser = await getUserCache(userId);
+    const existingUser = await getCachedUserData(userId);
     const sentToCRM = existingUser?.sentToCRM === 'true' || existingUser?.sentToCRM === true;
 
     // Cache user data if provided
