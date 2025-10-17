@@ -44,6 +44,7 @@ export async function POST(request, { params}) {
     // Use direct calculation instead of HTTP call
     const calcStart = Date.now();
     const result = await calculateDirect(serviceId, body.inputs, body.token, {
+      nocdn: body.nocdn,
       nocache: body.nocache
     });
     console.log(`[v1/execute] Direct calculation: ${Date.now() - calcStart}ms`);
@@ -107,14 +108,14 @@ export async function POST(request, { params}) {
     }
     
     // HTTP edge caching strategy (per Vercel docs)
-    // If nocache requested, bypass all caching layers
-    // Otherwise use edge cache for performance
+    // nocdn = bypass HTTP/edge cache only (keeps Redis caching)
+    // nocache = bypass ALL caches (HTTP/edge + Redis)
     const headers = {
       'Access-Control-Allow-Origin': '*', // CORS for browser requests
     };
 
-    if (body.nocache) {
-      // Bypass all caches: browser, other CDNs, and Vercel edge
+    if (body.nocdn || body.nocache) {
+      // Bypass all HTTP caches: browser, other CDNs, and Vercel edge
       headers['Cache-Control'] = 'no-store';
       headers['CDN-Cache-Control'] = 'no-store';
       headers['Vercel-CDN-Cache-Control'] = 'no-store';
@@ -168,6 +169,7 @@ export async function GET(request, { params }) {
     // Extract special parameters
     const format = searchParams.get('_format') || 'json'; // json, csv, plain
     const pretty = searchParams.get('_pretty') === 'true';
+    const nocdn = searchParams.get('nocdn') === 'true';
     const nocache = searchParams.get('nocache') === 'true';
 
     // Convert query params to inputs object (excluding special params)
@@ -177,8 +179,8 @@ export async function GET(request, { params }) {
     for (const [key, value] of searchParams) {
       if (key === 'token') {
         token = value;
-      } else if (key === 'nocache') {
-        // Skip nocache - already extracted above
+      } else if (key === 'nocdn' || key === 'nocache') {
+        // Skip nocdn and nocache - already extracted above
       } else if (!key.startsWith('_')) {
         // Parse value types: boolean > number > string
         let parsedValue = value;
@@ -204,6 +206,9 @@ export async function GET(request, { params }) {
     const postBody = { inputs };
     if (token) {
       postBody.token = token;
+    }
+    if (nocdn) {
+      postBody.nocdn = nocdn;
     }
     if (nocache) {
       postBody.nocache = nocache;
@@ -242,7 +247,7 @@ export async function GET(request, { params }) {
       'Access-Control-Allow-Origin': '*',
     };
 
-    if (nocache) {
+    if (nocdn || nocache) {
       cacheHeaders['Cache-Control'] = 'no-store';
       cacheHeaders['CDN-Cache-Control'] = 'no-store';
       cacheHeaders['Vercel-CDN-Cache-Control'] = 'no-store';

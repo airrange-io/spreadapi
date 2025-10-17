@@ -87,7 +87,7 @@ async function logCalls(apiId, apiToken) {
  * @param {string} serviceId - The service ID to execute
  * @param {object} inputs - Key-value pairs of input parameters
  * @param {string|null} apiToken - Optional API token for authentication
- * @param {object} options - Optional settings (nocache, etc.)
+ * @param {object} options - Optional settings (nocdn, nocache, etc.)
  * @returns {Promise<object>} Result object with inputs, outputs, metadata, or error
  */
 export async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
@@ -99,6 +99,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     // L1: Check result cache FIRST (fastest - complete result cached)
     // This is the express lane: if exact same calculation was done before, return it immediately
+    // options.nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
+    // options.nocache = bypass ALL caches (HTTP/edge + Redis result cache + workbook cache)
     if (!options.nocache) {
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
@@ -134,6 +136,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       } catch (cacheError) {
         console.error(`Result cache check error for ${serviceId}:`, cacheError);
       }
+    } else {
+      console.log(`[Result Cache] BYPASS due to nocache=true`);
     }
 
     // Result cache miss - track it
@@ -194,6 +198,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         return { error: "error loading required modules" };
       }
     }
+    // Server-side caching (result cache, workbook cache, process cache)
+    // options.nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
+    // options.nocache = bypass ALL caches including Redis (forces fresh calculation)
     const useCaching = apiDefinition.useCaching !== false && !options.nocache;
 
     let spread;

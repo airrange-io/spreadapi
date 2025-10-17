@@ -90,7 +90,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 >
                   Enable response caching
                 </Checkbox>
-                <Tooltip title="Cache API responses for improved performance. Users can bypass with nocache=true parameter.">
+                <Tooltip title="Cache API responses for improved performance. Users can bypass CDN cache with nocdn=true or bypass all caches with nocache=true.">
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
                 </Tooltip>
               </Space>

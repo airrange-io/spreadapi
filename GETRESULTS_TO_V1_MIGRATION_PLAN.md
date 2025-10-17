@@ -130,7 +130,7 @@ export async function calculateDirect(
   serviceId: string,
   inputs: object,
   apiToken: string | null,
-  options: { nocache?: boolean } = {}
+  options: { nocdn?: boolean, nocache?: boolean } = {}
 ): Promise<{
   apiId: string,
   inputs: Array,
