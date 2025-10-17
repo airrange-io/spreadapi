@@ -115,11 +115,16 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           return {
             ...cachedResult,
             metadata: {
-              ...cachedResult.metadata,
+              // Clear timing metadata - not relevant for cached results
               executionTime: totalTime,
               timestamp: new Date().toISOString(),
               fromResultCache: true,
-              cached: true
+              cached: true,
+              // Preserve non-timing metadata
+              useCaching: cachedResult.metadata?.useCaching,
+              hasTableSheets: cachedResult.metadata?.hasTableSheets,
+              // Indicate this was served from result cache
+              cacheLayer: 'L1:Result'
             }
           };
         }
@@ -400,6 +405,14 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       });
     }
 
+    // Determine cache layer for metadata
+    let cacheLayer = 'L3:Blob';
+    if (fromProcessCache) {
+      cacheLayer = 'L2a:Process';
+    } else if (fromRedisCache) {
+      cacheLayer = 'L2b:Redis';
+    }
+
     const result = {
       apiId: serviceId,
       inputs: answerInputs,
@@ -414,6 +427,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         recalc: false, // SpreadJS doesn't recalc when loading from cache
         fromProcessCache: fromProcessCache,
         fromRedisCache: fromRedisCache,
+        cacheLayer: cacheLayer,
         processCacheStats: spreadjsModule && spreadjsModule.getCacheStats ? spreadjsModule.getCacheStats() : null,
         memoryUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
       }
