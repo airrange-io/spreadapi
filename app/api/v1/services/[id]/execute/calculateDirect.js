@@ -424,17 +424,17 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
 
-      // Fire and forget cache write
-      Promise.resolve().then(async () => {
-        try {
-          const multi = redis.multi();
-          multi.json.set(cacheKey, "$", result);
-          multi.expire(cacheKey, CACHE_TTL.result);
-          await multi.exec();
-        } catch (cacheError) {
-          console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
-        }
-      });
+      // IMPORTANT: Make this BLOCKING to ensure cache is written before returning
+      // This ensures the next request with same inputs will hit the cache
+      try {
+        const multi = redis.multi();
+        multi.json.set(cacheKey, "$", result);
+        multi.expire(cacheKey, CACHE_TTL.result);
+        await multi.exec();
+        console.log(`[calculateDirect] Saved result to cache: ${cacheKey}`);
+      } catch (cacheError) {
+        console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
+      }
     }
 
     return result;
