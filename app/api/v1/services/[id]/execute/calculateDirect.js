@@ -103,6 +103,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
 
+      console.log(`[Result Cache] Checking key: ${cacheKey}`);
+      console.log(`[Result Cache] Input hash: ${inputHash} from inputs:`, JSON.stringify(inputs));
+
       try {
         const cachedResult = await redis.json.get(cacheKey);
         if (cachedResult) {
@@ -437,6 +440,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     if (useCaching) {
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
+
+      console.log(`[Result Cache] WRITING cache key: ${cacheKey}`);
+      console.log(`[Result Cache] WRITING input hash: ${inputHash} from inputs:`, JSON.stringify(inputs));
 
       // IMPORTANT: Make this BLOCKING to ensure cache is written before returning
       // This ensures the next request with same inputs will hit the cache

@@ -106,6 +106,26 @@ export async function POST(request, { params}) {
       });
     }
     
+    // HTTP edge caching strategy (per Vercel docs)
+    // If nocache requested, bypass all caching layers
+    // Otherwise use edge cache for performance
+    const headers = {
+      'Access-Control-Allow-Origin': '*', // CORS for browser requests
+    };
+
+    if (body.nocache) {
+      // Bypass all caches: browser, other CDNs, and Vercel edge
+      headers['Cache-Control'] = 'no-store';
+      headers['CDN-Cache-Control'] = 'no-store';
+      headers['Vercel-CDN-Cache-Control'] = 'no-store';
+    } else {
+      // Multi-layer caching strategy:
+      // Browser: 5 minutes, Other CDNs: 5 minutes, Vercel Edge: 5 minutes
+      headers['Cache-Control'] = 'public, max-age=300';
+      headers['CDN-Cache-Control'] = 'max-age=300';
+      headers['Vercel-CDN-Cache-Control'] = 'max-age=300';
+    }
+
     return NextResponse.json({
       serviceId,
       inputs: result.inputs || [],
@@ -116,7 +136,7 @@ export async function POST(request, { params}) {
         timestamp: new Date().toISOString(),
         version: 'v1'
       }
-    });
+    }, { headers });
     
   } catch (error) {
     console.error('Service execution error:', error);
@@ -148,18 +168,35 @@ export async function GET(request, { params }) {
     // Extract special parameters
     const format = searchParams.get('_format') || 'json'; // json, csv, plain
     const pretty = searchParams.get('_pretty') === 'true';
-    
+    const nocache = searchParams.get('nocache') === 'true';
+
     // Convert query params to inputs object (excluding special params)
     const inputs = {};
     let token = null;
-    
+
     for (const [key, value] of searchParams) {
       if (key === 'token') {
         token = value;
+      } else if (key === 'nocache') {
+        // Skip nocache - already extracted above
       } else if (!key.startsWith('_')) {
-        // Try to parse numbers
-        const numValue = Number(value);
-        inputs[key] = !isNaN(numValue) && value !== '' ? numValue : value;
+        // Parse value types: boolean > number > string
+        let parsedValue = value;
+
+        // Check for boolean
+        if (value === 'true') {
+          parsedValue = true;
+        } else if (value === 'false') {
+          parsedValue = false;
+        } else {
+          // Try to parse as number
+          const numValue = Number(value);
+          if (!isNaN(numValue) && value !== '') {
+            parsedValue = numValue;
+          }
+        }
+
+        inputs[key] = parsedValue;
       }
     }
     
@@ -167,6 +204,9 @@ export async function GET(request, { params }) {
     const postBody = { inputs };
     if (token) {
       postBody.token = token;
+    }
+    if (nocache) {
+      postBody.nocache = nocache;
     }
     
     // Create a new request with proper headers
@@ -196,13 +236,28 @@ export async function GET(request, { params }) {
     }
     
     const data = await response.json();
-    
+
+    // HTTP edge caching strategy (per Vercel docs) - same as POST
+    const cacheHeaders = {
+      'Access-Control-Allow-Origin': '*',
+    };
+
+    if (nocache) {
+      cacheHeaders['Cache-Control'] = 'no-store';
+      cacheHeaders['CDN-Cache-Control'] = 'no-store';
+      cacheHeaders['Vercel-CDN-Cache-Control'] = 'no-store';
+    } else {
+      cacheHeaders['Cache-Control'] = 'public, max-age=300';
+      cacheHeaders['CDN-Cache-Control'] = 'max-age=300';
+      cacheHeaders['Vercel-CDN-Cache-Control'] = 'max-age=300';
+    }
+
     // Format response based on _format parameter
     if (format === 'plain') {
       // Plain text for Excel WEBSERVICE function
       const outputs = data.outputs || [];
       let text = '';
-      
+
       // Handle both object and array formats
       if (Array.isArray(outputs)) {
         text = outputs
@@ -213,22 +268,21 @@ export async function GET(request, { params }) {
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n');
       }
-      
+
       return new NextResponse(text, {
         headers: {
           'Content-Type': 'text/plain',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          ...cacheHeaders,
         }
       });
     }
-    
+
     if (format === 'csv') {
       // CSV format for Excel import
       const outputs = data.outputs || [];
       let headers = '';
       let values = '';
-      
+
       // Handle both object and array formats
       if (Array.isArray(outputs)) {
         headers = outputs.map(o => o.alias || o.name).join(',');
@@ -237,35 +291,30 @@ export async function GET(request, { params }) {
         headers = Object.keys(outputs).join(',');
         values = Object.values(outputs).join(',');
       }
-      
+
       const csv = `${headers}\n${values}`;
-      
+
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          ...cacheHeaders,
         }
       });
     }
-    
+
     // Default JSON response
     if (pretty) {
       return new NextResponse(JSON.stringify(data, null, 2), {
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          ...cacheHeaders,
         }
       });
     }
-    
+
     // Return the data as JSON with CORS headers
     return NextResponse.json(data, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
-      }
+      headers: cacheHeaders,
     });
     
   } catch (error) {
