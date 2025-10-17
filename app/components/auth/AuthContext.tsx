@@ -52,10 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentUser);
         setError(null);
         
-        // Cache user data in Redis
+        // Store user data in Redis
         if (currentUser) {
           try {
-            await fetch('/api/auth/cache-user', {
+            await fetch('/api/auth/user-data', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -64,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 action: 'session_check'
               })
             });
-          } catch (cacheError) {
-            console.error('Failed to cache user data:', cacheError);
+          } catch (error) {
+            console.error('Failed to store user data:', error);
           }
         }
       } catch (err: any) {

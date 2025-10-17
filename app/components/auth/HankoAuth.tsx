@@ -51,8 +51,8 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
           // sessionDetail contains JWT claims which can help determine if user is new
           console.log('Session created:', sessionDetail);
 
-          // Cache user data in Redis
-          await fetch('/api/auth/cache-user', {
+          // Store user data in Redis
+          await fetch('/api/auth/user-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -63,7 +63,7 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
           });
         }
       } catch (error) {
-        console.error('Failed to cache user data on login:', error);
+        console.error('Failed to store user data on login:', error);
       }
 
       redirectAfterLogin();

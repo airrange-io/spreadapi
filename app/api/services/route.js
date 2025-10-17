@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { trackUserActivity } from '@/lib/userHashCache';
+import { trackUserActivity } from '@/lib/userData';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { delBlob } from '@/lib/blob-client';
 import { revalidateServicesCache } from '@/lib/revalidateServices';

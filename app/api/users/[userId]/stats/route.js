@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCachedUserData, getUserStats, getRecentActivity } from '@/lib/userHashCache';
+import { getUserData, getUserStats, getRecentActivity } from '@/lib/userData';
 
 export async function GET(request, { params }) {
   try {
@@ -15,8 +15,8 @@ export async function GET(request, { params }) {
       }, { status: 403 });
     }
     
-    // Get cached user data
-    const cachedUser = await getCachedUserData(userId);
+    // Get user data
+    const userData = await getUserData(userId);
     
     // Get user statistics
     const stats = await getUserStats(userId);
@@ -25,10 +25,10 @@ export async function GET(request, { params }) {
     const recentActivity = await getRecentActivity(userId, 5);
     
     return NextResponse.json({
-      user: cachedUser || { id: userId },
+      user: userData || { id: userId },
       stats,
       recentActivity,
-      cached: !!cachedUser
+      fromStorage: !!userData
     });
     
   } catch (error) {

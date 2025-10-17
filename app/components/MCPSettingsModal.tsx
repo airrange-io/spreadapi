@@ -96,7 +96,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
 
     setLoading(true);
     try {
-      const res = await fetch('/api/mcp/tokens/create', {
+      const res = await fetch('/api/mcp/create-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
