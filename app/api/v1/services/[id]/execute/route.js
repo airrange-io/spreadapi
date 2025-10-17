@@ -351,7 +351,6 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
       }
       
       answerOutputs.push({
-        type: "output",
         name: output.name,
         alias: output.alias,
         title: output.title || output.name,  // Include title field
