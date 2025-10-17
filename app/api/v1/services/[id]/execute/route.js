@@ -305,10 +305,9 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
         
         actualSheet.getCell(inputDef.row, inputDef.col).value(input.value);
         answerInputs.push({
-          type: "input",
           name: inputDef.name ?? input.name,
           alias: inputDef.alias ?? input.alias,
-          title: inputDef.title || inputDef.name || input.name,  // Include title field
+          title: inputDef.title || inputDef.name || input.name,
           value: input.value,
         });
       }
@@ -458,7 +457,7 @@ export async function POST(request, { params }) {
             
             return NextResponse.json({
               serviceId,
-              inputs: body.inputs,
+              inputs: cacheResult.inputs || [],
               outputs: cacheResult.outputs || [],
               metadata: {
                 ...cacheResult.metadata,
@@ -544,7 +543,7 @@ export async function POST(request, { params }) {
     
     return NextResponse.json({
       serviceId,
-      inputs: body.inputs,
+      inputs: result.inputs || [],
       outputs: result.outputs || [],
       metadata: {
         ...result.metadata,

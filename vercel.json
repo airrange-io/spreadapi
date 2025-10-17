@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "pnpm build",
   "functions": {
     "app/api/getresults/route.js": {
       "maxDuration": 30,
