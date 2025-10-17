@@ -5,6 +5,7 @@ import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
 import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
+import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
 
 /**
  * MCP (Model Context Protocol) Server v1
@@ -259,86 +260,16 @@ function generateParameterExamples(serviceId, paramName, paramType) {
 }
 
 /**
- * Execute a service calculation (original function)
+ * Execute a service calculation using V1 API
  */
 async function executeService(serviceId, inputs) {
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    params.append('api', serviceId);
-    
-    // Add input parameters
-    Object.entries(inputs).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-    
-    // Use internal API endpoint
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/getresults?${params.toString()}`);
-    const data = await response.json();
-    
-    if (!response.ok) {
-      // Check if this is a missing parameters error with documentation
-      if (response.status === 400 && data.parameters) {
-        // Format helpful response with parameter documentation
-        let helpText = `▶ ${data.service.name}\n${data.service.description}\n\n`;
-        
-        if (data.parameters.required.length > 0) {
-          helpText += '🔴 Required parameters:\n';
-          data.parameters.required.forEach(p => {
-            helpText += `\n• ${p.name} (${p.type}): ${p.description}`;
-            
-            // Add constraints
-            if (p.min !== undefined || p.max !== undefined) {
-              helpText += `\n  Range: ${p.min || 'any'} to ${p.max || 'any'}`;
-            }
-            
-            // Add format hints
-            if (p.format === 'percentage') {
-              helpText += '\n  💡 Format: Enter as decimal (0.05 for 5%)';
-            }
-            
-            // Add examples
-            const examples = generateParameterExamples(serviceId, p.name, p.type);
-            if (examples) {
-              helpText += '\n  📝 Examples: ' + examples.join(', ');
-            }
-            helpText += '\n';
-          });
-        }
-        
-        if (data.parameters.optional.length > 0) {
-          helpText += '\nOptional parameters:\n';
-          data.parameters.optional.forEach(p => {
-            helpText += `- ${p.name} (${p.type}): ${p.description}`;
-            if (p.min !== undefined || p.max !== undefined) {
-              helpText += ` [${p.min || ''}-${p.max || ''}]`;
-            }
-            helpText += '\n';
-          });
-        }
-        
-        if (data.outputs.length > 0) {
-          helpText += '\nOutputs:\n';
-          data.outputs.forEach(o => {
-            helpText += `- ${o.name}: ${o.description}\n`;
-          });
-        }
-        
-        return {
-          content: [{
-            type: 'text',
-            text: helpText
-          }]
-        };
-      }
-      
-      throw new Error(data.error || `Calculation failed with status ${response.status}`);
+    // Use V1 API direct calculation (no HTTP overhead)
+    const data = await calculateDirect(serviceId, inputs, null, {});
+
+    // Check for errors from calculateDirect
+    if (data.error) {
+      throw new Error(data.error);
     }
     
     // Format response for MCP
@@ -349,12 +280,10 @@ async function executeService(serviceId, inputs) {
       const outputs = data.outputs || data.result;
       resultText = 'Calculation Results:\n';
       
-      // Handle array format (from API response)
+      // Handle array format (from V1 API response)
       if (Array.isArray(outputs)) {
         outputs.forEach(output => {
-          if (output.type === 'output') {
-            resultText += `${output.alias || output.name}: ${output.value}\n`;
-          }
+          resultText += `${output.alias || output.name}: ${output.value}\n`;
         });
       } else {
         // Handle object format (legacy)

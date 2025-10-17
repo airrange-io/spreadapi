@@ -5,6 +5,7 @@ import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
 import { executeAreaRead, executeAreaUpdate } from '../mcp/v1/areaExecutors';
 import { executeEnhancedCalc } from '../mcp/v1/executeEnhancedCalc';
+import { calculateDirect } from '../v1/services/[id]/execute/calculateDirect';
 
 // Basic input sanitization to prevent injection attacks
 function sanitizeInput(input) {
@@ -742,35 +743,15 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
                 return resultText.trim();
               }
               
-              // Otherwise use the standard API endpoint
-              const baseUrl = process.env.VERCEL_URL 
-                ? `https://${process.env.VERCEL_URL}` 
-                : 'http://localhost:3000';
-              
-              // Always use the main getresults endpoint - it's battle-tested and what customers use
-              const queryParams = new URLSearchParams();
-              queryParams.append('api', serviceId);
-              
-              // Add input parameters
-              Object.entries(calculationInputs).forEach(([key, value]) => {
-                // Only send parameters that have actual values
-                // Skip undefined, null, and empty string values
-                if (value !== undefined && value !== null && value !== '') {
-                  queryParams.append(key, String(value));
-                }
-              });
-              
-              const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
-              const data = await response.json();
-              
-              if (!response.ok) {
+              // Use V1 API direct calculation (no HTTP overhead)
+              const data = await calculateDirect(serviceId, calculationInputs, null, {});
+
+              if (data.error) {
                 console.error('[Chat API] Calculation failed:', {
-                  status: response.status,
                   error: data.error,
-                  details: data,
-                  url: `${baseUrl}/api/getresults?${queryParams.toString()}`
+                  serviceId
                 });
-                throw new Error(data.error || 'Calculation failed');
+                throw new Error(data.error);
               }
               
               // Format results
@@ -840,24 +821,11 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
               const results = await Promise.all(
                 calculations.map(async (params, index) => {
                   try {
-                    const baseUrl = process.env.VERCEL_URL 
-                      ? `https://${process.env.VERCEL_URL}` 
-                      : 'http://localhost:3000';
-                    
-                    const queryParams = new URLSearchParams();
-                    queryParams.append('api', serviceId);
-                    
-                    Object.entries(params).forEach(([key, value]) => {
-                      if (value !== undefined && value !== null) {
-                        queryParams.append(key, String(value));
-                      }
-                    });
-                    
-                    const response = await fetch(`${baseUrl}/api/getresults?${queryParams.toString()}`);
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                      throw new Error(data.error || 'Calculation failed');
+                    // Use V1 API direct calculation (no HTTP overhead)
+                    const data = await calculateDirect(serviceId, params, null, {});
+
+                    if (data.error) {
+                      throw new Error(data.error);
                     }
                     
                     return {

@@ -40,7 +40,8 @@ Create tools dynamically based on service schema:
 ```
 
 #### 2.2 Tool Execution
-- Use internal API call to `/api/getresults`
+- Use direct `calculateDirect()` function call (zero HTTP overhead)
+- Import from: `/app/api/v1/services/[id]/execute/calculateDirect`
 - Format results for chat display
 - Handle errors gracefully
 
@@ -60,7 +61,8 @@ Create tools dynamically based on service schema:
 
 ### API Endpoints Used
 - `/api/services/[id]/full` - Get service schema
-- `/api/getresults` - Execute calculations
+- `/api/v1/services/[id]/execute` - V1 API endpoint (public)
+- `calculateDirect()` - Direct function call (internal, used by chat)
 - `/api/chat` - Main chat endpoint
 
 ### Service Schema Structure
@@ -132,7 +134,8 @@ interface Service {
 ## Notes for Next Developer
 
 1. The MCP server at `/api/mcp/v1/` is already working - don't modify it
-2. Use the existing `/api/getresults` endpoint for calculations
-3. Demo services don't require authentication
-4. Service schemas vary - always validate inputs
-5. The chat already passes serviceId when selected
+2. Use `calculateDirect()` for internal calculations (chat uses this, MCP uses this)
+3. Public V1 API is at `/api/v1/services/{id}/execute`
+4. Demo services don't require authentication
+5. Service schemas vary - always validate inputs
+6. The chat already passes serviceId when selected

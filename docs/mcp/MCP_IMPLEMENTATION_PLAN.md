@@ -395,8 +395,8 @@ Enter Token Name → Generate → Display Token → Copy → Show Config
 // In tools/call handler
 1. Extract serviceId from tool name
 2. Validate inputs against schema
-3. Build request to /api/getresults
-4. Execute and format response
+3. Call calculateDirect() directly (no HTTP overhead)
+4. Format response for MCP protocol
 5. Handle errors gracefully
 ```
 
@@ -505,7 +505,7 @@ SPREADAPI_TOKEN=$TOKEN npx spreadapi-mcp
 
 1. **Simple Token Model**: No complex permissions, all tokens can browse and calculate
 2. **Tool Naming**: `spreadapi_calc_${serviceId}` for easy parsing
-3. **Direct Execution**: Use existing `/api/getresults` endpoint
+3. **Direct Execution**: Uses `calculateDirect()` for zero HTTP overhead
 4. **Stateless Bridge**: Bridge only translates protocols
 5. **No Rate Limiting**: Add later if needed (development phase)
 6. **Rich Parameter Descriptions**: Each input/output parameter includes AI-friendly descriptions

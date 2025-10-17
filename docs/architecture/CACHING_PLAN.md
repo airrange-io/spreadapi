@@ -19,9 +19,11 @@ Implement high-performance process-level caching for SpreadAPI to dramatically r
 - LRU eviction when cache is full
 - `getCachedWorkbook()` function for cache management
 
-### Phase 2: Integration with getresults Route
+### Phase 2: Integration with V1 API Route
+**Note:** `/api/getresults` has been migrated to `/api/v1/services/[id]/execute`
+
 **Tasks:**
-1. **Modify getresults route to use process cache**
+1. **Modify V1 execution route to use process cache**
    - Generate cache keys from apiId + input parameters
    - Use `getCachedWorkbook()` for workbook retrieval
    - Preserve existing Redis caching as L2 cache

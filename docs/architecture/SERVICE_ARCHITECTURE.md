@@ -156,8 +156,9 @@ if (isPublished) {
 - `POST /api/services/{id}/unpublish` - Unpublish service
 - `GET /api/services/{id}/status` - Get publish status
 
-### Calculation Engine
-- `GET /api/getresults?api={id}&{params}` - Execute published service
+### Calculation Engine (V1 API)
+- `GET /api/v1/services/{id}/execute?param1=value1` - Execute published service (simple)
+- `POST /api/v1/services/{id}/execute` - Execute published service (recommended)
 
 ## Emergency Procedures
 

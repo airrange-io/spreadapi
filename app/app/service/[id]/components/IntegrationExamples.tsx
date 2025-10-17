@@ -24,27 +24,7 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
     message.success('Copied to clipboard');
   };
 
-  // Legacy API URL (deprecated)
-  const buildUrl = () => {
-    const baseUrl = 'https://spreadapi.io/api/getresults';
-    
-    const params = new URLSearchParams();
-    params.append('id', serviceId);
-    
-    Object.entries(parameterValues).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, String(value));
-      }
-    });
-    
-    if (requireToken) {
-      params.append('token', 'YOUR_TOKEN_HERE');
-    }
-    
-    return `${baseUrl}?${params.toString()}`;
-  };
-
-  // New v1 API URL
+  // Build V1 API URL
   const buildV1Url = () => {
     const baseUrl = `https://spreadapi.io/api/v1/services/${serviceId}/execute`;
     const params = new URLSearchParams();
@@ -62,7 +42,6 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
     return `${baseUrl}?${params.toString()}`;
   };
 
-  const fullUrl = buildUrl();
   const v1Url = buildV1Url();
 
   const getCodeExample = (language: string) => {

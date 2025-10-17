@@ -84,14 +84,14 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 Your published APIs will be available at:
 ```
-POST /api/getresults
+POST /api/v1/services/{serviceId}/execute
+GET /api/v1/services/{serviceId}/execute?param1=value1&param2=value2
 ```
 
-With request body:
+**POST Method** (Recommended for applications):
 ```json
 {
-  "serviceId": "your-service-id",
-  "parameters": {
+  "inputs": {
     "param1": "value1",
     "param2": "value2"
   }

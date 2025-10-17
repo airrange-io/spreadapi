@@ -16,7 +16,7 @@ const serviceData = await redis.hGetAll(`service:${serviceId}`);
 - `/api/workbook/[id]/route.js` (3 instances)
 - `/api/services/[id]/route.js`
 - `/api/services/[id]/tokens/[tokenId]/route.js`
-- `/api/getresults/route.js`
+- `/api/v1/services/[id]/execute/route.js` (formerly `/api/getresults/route.js` - migrated ✓)
 - `/api/mcp/route.js` (multiple instances)
 - `/api/services/[id]/metadata/route.js`
 - `/api/v1/services/[id]/route.js`

@@ -46,7 +46,7 @@ const CACHE_TTL_MS = 20 * 60 * 1000;  // 20 minutes TTL
 
 ## API Response Cache Information
 
-The `getresults` endpoint includes cache statistics:
+The V1 API execution endpoint includes cache statistics:
 
 ```json
 {

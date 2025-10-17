@@ -6,10 +6,10 @@ import { getApiDefinition } from '../../../utils/helperApi';
 // Function
 //===============================================
 
-function getGetResultTool(apiId, apiDefinition) {
+function buildExecuteTool(apiId, apiDefinition) {
   let tool = {
-    name: "getResults",
-    url: "https://services.airrange.io/api/getresults?service=" + apiId,
+    name: "execute",
+    url: `https://services.airrange.io/api/v1/services/${apiId}/execute`,
     method: "GET",
     description:
       "Calculate the results of a spreadsheet model. Call the service with inputParameter-name and inputParameter-value as url parameters and get the results as JSON response.",
@@ -20,7 +20,7 @@ function getGetResultTool(apiId, apiDefinition) {
       required: true,
       description: "API token for authentication"
     } : null,
-    exampleRequest: `https://services.airrange.io/api/getresults?service=${apiId}&${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
+    exampleRequest: `https://services.airrange.io/api/v1/services/${apiId}/execute?${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
     errorCodes: [
       { code: 400, message: "Bad request", description: "Invalid parameters or missing required parameters" },
       { code: 401, message: "Unauthorized", description: "Authentication required or invalid token" },
@@ -185,8 +185,8 @@ async function getServiceSchema(apiId, apiToken) {
     // add the tools
     // =====================================
     let tools = [];
-    const getResultTool = getGetResultTool(apiId, apiDefinition);
-    tools.push(getResultTool);
+    const executeTool = buildExecuteTool(apiId, apiDefinition);
+    tools.push(executeTool);
     
     // Add example workflows for AI agents
     const exampleWorkflows = [
@@ -195,8 +195,8 @@ async function getServiceSchema(apiId, apiToken) {
         description: "Simple workflow to calculate results using default parameters",
         steps: [
           {
-            action: "Make GET request to getResults endpoint",
-            url: `https://services.airrange.io/api/getresults?service=${apiId}`,
+            action: "Make GET request to V1 execute endpoint",
+            url: `https://services.airrange.io/api/v1/services/${apiId}/execute`,
             parameters: ["Default parameters"]
           }
         ]
@@ -206,8 +206,8 @@ async function getServiceSchema(apiId, apiToken) {
         description: "Workflow to calculate results with custom parameters",
         steps: [
           {
-            action: "Make GET request to getResults endpoint with custom parameters",
-            url: `https://services.airrange.io/api/getresults?service=${apiId}&${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
+            action: "Make GET request to V1 execute endpoint with custom parameters",
+            url: `https://services.airrange.io/api/v1/services/${apiId}/execute?${(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input)?.[0]?.name || "param1"}=value1`,
             parameters: ["Custom parameters as needed"]
           }
         ]
@@ -226,18 +226,11 @@ async function getServiceSchema(apiId, apiToken) {
         version: "1.0"
       },
       paths: {
-        "/api/getresults": {
+        [`/api/v1/services/${apiId}/execute`]: {
           get: {
             summary: "Calculate results from spreadsheet model",
             description: "Calculates the results based on input parameters",
             parameters: [
-              {
-                name: "service",
-                in: "query",
-                required: true,
-                description: "Service identifier",
-                schema: { type: "string" }
-              },
               ...(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input || []).map(input => ({
                 name: input.name || input.alias,
                 in: "query",

@@ -1,10 +1,6 @@
 {
   "buildCommand": "pnpm build",
   "functions": {
-    "app/api/getresults/route.js": {
-      "maxDuration": 30,
-      "memory": 1024
-    },
     "app/api/warm/route.js": {
       "maxDuration": 30,
       "memory": 1024

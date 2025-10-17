@@ -69,11 +69,11 @@ The chat interface at `/chat` is functional with basic AI responses, but the MCP
 ### 2.3 Update Medium-Priority Components
 - [ ] Workbook Management
   - [ ] `/api/workbook/[id]/route.js`
-- [ ] API Execution
-  - [ ] `/api/getresults/route.js`
 - [ ] Service Operations
   - [ ] `/api/services/[id]/metadata/route.js`
   - [ ] `/api/services/[id]/tokens/route.js`
+
+Note: `/api/getresults/` has been migrated to `/api/v1/services/[id]/execute/` ✓
 
 ### 2.4 Update Low-Priority Components
 - [ ] Admin/Diagnostic endpoints

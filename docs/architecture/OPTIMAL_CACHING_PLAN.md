@@ -128,7 +128,7 @@ console.log(`API definition cache miss for ${apiId}`);
 
 ### 2. Ensure Proper Cache Flow
 ```javascript
-// In getresults route
+// In V1 API execution route (/api/v1/services/[id]/execute)
 1. Try process cache for both API def and workbook
 2. If API def not cached, fetch it
 3. If workbook not cached, create it

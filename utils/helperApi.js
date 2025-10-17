@@ -231,10 +231,12 @@ export async function getApiDefinition(apiId, apiToken) {
                     description: o.description || ""
                   })),
                   example: {
-                    url: `https://spreadapi.io/api/getresults?service=${apiId}${
-                      inputs.filter(i => i.mandatory !== false)
-                        .map(i => `&${i.alias || i.name}={value}`)
-                        .join('')
+                    url: `https://spreadapi.io/api/v1/services/${apiId}/execute${
+                      inputs.filter(i => i.mandatory !== false).length > 0
+                        ? '?' + inputs.filter(i => i.mandatory !== false)
+                            .map(i => `${i.alias || i.name}={value}`)
+                            .join('&')
+                        : ''
                     }`,
                     description: "Replace {value} with your actual parameter values"
                   },
