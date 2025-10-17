@@ -52,7 +52,6 @@ export async function middleware(req: NextRequest) {
     // '/api/warm', // Removed - cron jobs need unauthenticated access
     '/api/mcp/tokens', // MCP token management requires auth
     '/api/mcp/create-token', // MCP token creation requires auth
-    '/api/mcp/revoke-token', // MCP token revocation requires auth
     '/api/mcp/update-token', // MCP token update requires auth
     '/api/v1/services', // Service management requires auth
     // Note: /api/v1/services/*/execute is handled separately to allow public access
@@ -205,7 +204,6 @@ export const config = {
     // MCP routes (token management needs auth)
     '/api/mcp/tokens/:path*',
     '/api/mcp/create-token',
-    '/api/mcp/revoke-token',
     '/api/mcp/update-token',
     
     // v1 API routes

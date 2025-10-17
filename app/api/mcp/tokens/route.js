@@ -22,7 +22,8 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       tokens: tokens,
-      count: tokens.length
+      count: tokens.length,
+      userId: userId
     });
     
   } catch (error) {

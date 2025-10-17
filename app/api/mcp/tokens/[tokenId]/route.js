@@ -2,34 +2,33 @@ import { NextResponse } from 'next/server';
 import { revokeToken } from '@/lib/mcp-auth';
 
 /**
- * POST /api/mcp/revoke-token - Revoke an MCP token
+ * DELETE /api/mcp/tokens/[tokenId] - Revoke an MCP token
  */
-export async function POST(request) {
+export async function DELETE(request, { params }) {
   try {
     // Get authenticated user ID from headers
     const authenticatedUserId = request.headers.get('x-user-id');
-    
+
     if (!authenticatedUserId) {
       return NextResponse.json(
         { error: 'Unauthorized - authentication required' },
         { status: 401 }
       );
     }
-    
-    const body = await request.json();
-    const { token } = body;
-    
-    if (!token) {
+
+    const { tokenId } = await params;
+
+    if (!tokenId) {
       return NextResponse.json(
-        { error: 'Token is required' },
+        { error: 'Token ID is required' },
         { status: 400 }
       );
     }
-    
+
     // Revoke the token (revokeToken function checks ownership)
     try {
-      await revokeToken(authenticatedUserId, token);
-      
+      await revokeToken(authenticatedUserId, tokenId);
+
       return NextResponse.json({
         success: true,
         message: 'Token revoked successfully'
@@ -43,7 +42,7 @@ export async function POST(request) {
       }
       throw error;
     }
-    
+
   } catch (error) {
     console.error('Error revoking token:', error);
     return NextResponse.json(

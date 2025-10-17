@@ -365,7 +365,7 @@ async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
       metadata: {
         dataFetchTime: timeApiData,
         executionTime: Date.now() - timeAll,
-        spreadJSLoadTime: timeSpreadJSLoad,
+        engineLoadTime: timeSpreadJSLoad,
         tableSheetLoadTime: timeTableSheetLoad,
         hasTableSheets: withTables,
         useCaching: useCaching,
