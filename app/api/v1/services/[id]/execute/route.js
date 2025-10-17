@@ -16,8 +16,7 @@ export async function POST(request, { params}) {
   try {
     const { id: serviceId } = await params;
     const body = await request.json();
-    console.log(`[v1/execute] Request parsing: ${Date.now() - totalStart}ms`);
-    
+
     // Validate request
     if (!body.inputs || typeof body.inputs !== 'object') {
       return NextResponse.json({
@@ -25,11 +24,9 @@ export async function POST(request, { params}) {
         message: 'Request body must contain "inputs" object'
       }, { status: 400 });
     }
-    
+
     // Check if service exists and is published
-    const checkStart = Date.now();
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    console.log(`[v1/execute] Redis check: ${Date.now() - checkStart}ms`);
     
     if (!isPublished) {
       return NextResponse.json({
