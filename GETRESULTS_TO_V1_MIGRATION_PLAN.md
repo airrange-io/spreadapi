@@ -611,6 +611,7 @@ A: Add V1 endpoint to vercel.json with 30s timeout. Currently unnecessary (40-80
 | 2025-10-17 | Migration 95% complete - documentation updated | Claude |
 | 2025-10-17 | Updated code comments to remove getresults references | Claude |
 | 2025-10-17 | Deleted unused optimized.js (dead code cleanup) | Claude |
+| 2025-10-17 | Fixed process cache regression - restored pre-migration behavior | Claude |
 
 ---
 

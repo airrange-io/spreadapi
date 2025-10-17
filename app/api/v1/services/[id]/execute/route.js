@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { generateResultCacheHash, CACHE_KEYS } from '@/lib/cacheHelpers';
 import { calculateDirect } from './calculateDirect';
 
 /**
@@ -39,47 +38,9 @@ export async function POST(request, { params}) {
       }, { status: 404 });
     }
     
-    // Check service settings
-    const serviceData = await redis.hGetAll(`service:${serviceId}:published`);
-    const useCaching = serviceData.useCaching !== 'false' && !body.nocache;
-    
-    // First check cache if enabled
-    if (useCaching) {
-      const inputHash = generateResultCacheHash(body.inputs);
-      const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
-      
-      try {
-        const cacheExists = await redis.exists(cacheKey);
-        if (cacheExists > 0) {
-          const cacheResult = await redis.json.get(cacheKey);
-          if (cacheResult) {
-            // Track cache hit
-            redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:hits', 1).catch(() => {});
-            
-            const totalTime = Date.now() - totalStart;
-            console.log(`[v1/execute] Cache hit, total time: ${totalTime}ms`);
-            
-            return NextResponse.json({
-              serviceId,
-              inputs: cacheResult.inputs || [],
-              outputs: cacheResult.outputs || [],
-              metadata: {
-                ...cacheResult.metadata,
-                executionTime: 0,
-                totalTime,
-                timestamp: new Date().toISOString(),
-                version: 'v1',
-                cached: true,
-                fromResultCache: true
-              }
-            });
-          }
-        }
-      } catch (cacheError) {
-        console.error(`Cache check error for ${serviceId}:`, cacheError);
-      }
-    }
-    
+    // Result cache check now handled inside calculateDirect()
+    // This allows all callers (route, MCP, chat) to benefit from result caching
+
     // Use direct calculation instead of HTTP call
     const calcStart = Date.now();
     const result = await calculateDirect(serviceId, body.inputs, body.token, {

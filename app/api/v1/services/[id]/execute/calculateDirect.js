@@ -97,7 +97,38 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     // Log the call
     logCalls(serviceId, apiToken);
 
-    // Track cache miss
+    // L1: Check result cache FIRST (fastest - complete result cached)
+    // This is the express lane: if exact same calculation was done before, return it immediately
+    if (!options.nocache) {
+      const inputHash = generateResultCacheHash(inputs);
+      const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
+
+      try {
+        const cachedResult = await redis.json.get(cacheKey);
+        if (cachedResult) {
+          // Track cache hit
+          redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:hits', 1).catch(() => {});
+
+          const totalTime = Date.now() - timeAll;
+          console.log(`[calculateDirect] Result cache HIT for ${serviceId}, total time: ${totalTime}ms`);
+
+          return {
+            ...cachedResult,
+            metadata: {
+              ...cachedResult.metadata,
+              executionTime: totalTime,
+              timestamp: new Date().toISOString(),
+              fromResultCache: true,
+              cached: true
+            }
+          };
+        }
+      } catch (cacheError) {
+        console.error(`Result cache check error for ${serviceId}:`, cacheError);
+      }
+    }
+
+    // Result cache miss - track it
     redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:misses', 1).catch(() => {});
 
     // Get API definition
@@ -163,29 +194,38 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     const processCacheKey = serviceId; // Cache by API ID only
 
     if (useCaching) {
-      // First try Redis workbook cache
       const workbookCacheKey = CACHE_KEYS.workbookCache(serviceId);
-      try {
-        const cachedWorkbookJson = await redis.json.get(workbookCacheKey);
-        if (cachedWorkbookJson) {
-          console.log(`[calculateDirect] Found workbook in Redis cache for ${serviceId}`);
-          spread = createWorkbook();
-          spread.fromJSON(cachedWorkbookJson, {
-            calcOnDemand: false,
-            doNotRecalculateAfterLoad: false,
-          });
-          fromRedisCache = true;
-        }
-      } catch (err) {
-        console.error('Redis workbook cache error:', err);
-      }
 
-      // If not in Redis, try process cache
-      if (!spread) {
-        const cacheResult = await getCachedWorkbook(
-          serviceId,
-          processCacheKey,
-          async (workbook) => {
+      // Three-layer caching strategy:
+      // L1: Process cache (0ms) - check first
+      // L2: Redis cache (~30ms) - fallback for other Lambda instances
+      // L3: Blob storage (~300ms) - create from fileJson
+
+      // First try process cache (fastest - same Lambda instance)
+      const cacheResult = await getCachedWorkbook(
+        serviceId,
+        processCacheKey,
+        async (workbook) => {
+          // Process cache miss - try Redis workbook cache (L2)
+          let loadedFromRedis = false;
+
+          try {
+            const cachedWorkbookJson = await redis.json.get(workbookCacheKey);
+            if (cachedWorkbookJson) {
+              console.log(`[calculateDirect] Found workbook in Redis cache for ${serviceId}`);
+              workbook.fromJSON(cachedWorkbookJson, {
+                calcOnDemand: false,
+                doNotRecalculateAfterLoad: false,
+              });
+              loadedFromRedis = true;
+              fromRedisCache = true; // Set flag for metadata
+            }
+          } catch (err) {
+            console.error('Redis workbook cache error:', err);
+          }
+
+          // If not in Redis either, create from fileJson (L3 - blob storage)
+          if (!loadedFromRedis) {
             workbook.fromJSON(fileJson, {
               calcOnDemand: false,
               doNotRecalculateAfterLoad: false,
@@ -249,7 +289,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
               }
             }
 
-            // Save to Redis for other instances (non-blocking)
+            // Save to Redis for other Lambda instances (non-blocking)
             if (!withTables) { // Only cache non-table workbooks for now
               Promise.resolve().then(async () => {
                 try {
@@ -265,10 +305,10 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
               });
             }
           }
-        );
-        spread = cacheResult.workbook;
-        fromProcessCache = cacheResult.fromCache;
-      }
+        }
+      );
+      spread = cacheResult.workbook;
+      fromProcessCache = cacheResult.fromCache;
     } else {
       spread = createWorkbook();
       spread.fromJSON(fileJson, {
