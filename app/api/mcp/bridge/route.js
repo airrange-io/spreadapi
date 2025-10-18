@@ -5,7 +5,7 @@ import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
 import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
-import { calculateDirect } from '../../../v1/services/[id]/execute/calculateDirect.js';
+import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
 
 /**
  * MCP (Model Context Protocol) Server - Bridge Endpoint
