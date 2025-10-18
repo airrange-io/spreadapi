@@ -262,31 +262,22 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     Generate Token
                   </Button>
                 ) : (
-                  <>
-                    <Alert
-                      message="Remember to Save"
-                      description="Click the Save button at the top to activate your web app settings."
-                      type="info"
-                      showIcon
-                      style={{ marginBottom: 16 }}
+                  <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                    <Input
+                      value={webAppToken}
+                      readOnly
+                      addonAfter={
+                        <ReloadOutlined
+                          onClick={handleGenerateToken}
+                          style={{ cursor: 'pointer' }}
+                          title="Regenerate token"
+                        />
+                      }
                     />
-                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                      <Input
-                        value={webAppToken}
-                        readOnly
-                        addonAfter={
-                          <ReloadOutlined
-                            onClick={handleGenerateToken}
-                            style={{ cursor: 'pointer' }}
-                            title="Regenerate token"
-                          />
-                        }
-                      />
-                      <div style={{ fontSize: '11px', color: '#999' }}>
-                        Regenerate to revoke access to old links
-                      </div>
-                    </Space>
-                  </>
+                    <div style={{ fontSize: '11px', color: '#999' }}>
+                      Regenerate to revoke access to old links
+                    </div>
+                  </Space>
                 )}
               </div>
 
@@ -306,10 +297,28 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                       />
                     }
                   />
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: 4 }}>
-                    Share this link with users to access your web application
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
+                    Share this{' '}
+                    <a
+                      href={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      link
+                    </a>
+                    {' '}with users to access your web application
                   </div>
                 </div>
+              )}
+
+              {webAppToken && (
+                <Alert
+                  message="Remember to click the Save button at the top to activate your web app settings"
+                  type="info"
+                  showIcon={false}
+                  style={{ fontSize: '12px', padding: '8px 12px' }}
+                />
               )}
             </>
           )}
