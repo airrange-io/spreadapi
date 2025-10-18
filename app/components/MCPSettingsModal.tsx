@@ -319,7 +319,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                               command: "npx",
                               args: ["spreadapi-mcp"],
                               env: {
-                                SPREADAPI_URL: `${mcpUrl}/v1`,
+                                SPREADAPI_URL: `${mcpUrl}/bridge`,
                                 SPREADAPI_TOKEN: generatedToken
                               }
                             }
@@ -335,7 +335,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       "command": "npx",
       "args": ["spreadapi-mcp"],
       "env": {
-        "SPREADAPI_URL": "${mcpUrl}/v1",
+        "SPREADAPI_URL": "${mcpUrl}/bridge",
         "SPREADAPI_TOKEN": "${generatedToken}"
       }
     }
@@ -548,7 +548,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                         command: "npx",
                         args: ["spreadapi-mcp"],
                         env: {
-                          SPREADAPI_URL: `${mcpUrl}/v1`,
+                          SPREADAPI_URL: `${mcpUrl}/bridge`,
                           SPREADAPI_TOKEN: "YOUR_TOKEN_HERE"
                         }
                       }
@@ -564,7 +564,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       "command": "npx",
       "args": ["spreadapi-mcp"],
       "env": {
-        "SPREADAPI_URL": "${mcpUrl}/v1",
+        "SPREADAPI_URL": "${mcpUrl}/bridge",
         "SPREADAPI_TOKEN": "YOUR_TOKEN_HERE"
       }
     }

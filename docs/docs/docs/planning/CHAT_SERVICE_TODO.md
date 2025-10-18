@@ -56,10 +56,10 @@ The chat interface at `/chat` is functional with basic AI responses, but the MCP
 
 ### 2.2 Update High-Priority Components
 - [ ] MCP Server Routes (5 files, ~10 instances)
-  - [ ] `/api/mcp/v1/route.js`
-  - [ ] `/api/mcp/v1/executeEnhancedCalc.js`
-  - [ ] `/api/mcp/v1/areaExecutors.js`
-  - [ ] `/api/mcp/v1/areaHandlers.js`
+  - [ ] `/api/mcp/bridge/route.js`
+  - [ ] `/api/mcp/bridge/executeEnhancedCalc.js`
+  - [ ] `/api/mcp/bridge/areaExecutors.js`
+  - [ ] `/api/mcp/bridge/areaHandlers.js`
   - [ ] `/api/mcp/route.js`
 - [ ] Service Management Endpoints
   - [ ] `/api/services/[id]/route.js`

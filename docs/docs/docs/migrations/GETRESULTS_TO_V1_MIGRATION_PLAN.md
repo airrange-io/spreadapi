@@ -159,14 +159,14 @@ export async function calculateDirect(
    - Fixed Next.js route export restrictions
 
 2. **Migrate MCP v1 route** ✓
-   - File: `/app/api/mcp/v1/route.js`
+   - File: `/app/api/mcp/bridge/route.js`
    - Changed: HTTP fetch → direct `calculateDirect()` call
    - Adapter: `executeService()` formats V1 response to MCP protocol
    - Zero HTTP overhead
 
 3. **Delete unused `/api/mcp/route.js`** ✓
    - Legacy route was never called
-   - All users connect to `/api/mcp/v1`
+   - All users connect to `/api/mcp/bridge`
    - File removed
 
 4. **Fix MCP token deletion bug** ✓
@@ -552,7 +552,7 @@ outputs: [{ name: "x", value: 1 }]
 ```
 
 ### MCP Bridge Package
-The NPM package `spreadapi-mcp` connects to `/api/mcp/v1` which is already migrated. No changes needed to published package.
+The NPM package `spreadapi-mcp` connects to `/api/mcp/bridge` which is already migrated. No changes needed to published package.
 
 ### Authentication
 Both endpoints support the same authentication:
@@ -619,7 +619,7 @@ A: Add V1 endpoint to vercel.json with 30s timeout. Currently unnecessary (40-80
 
 - V1 API Route: `/app/api/v1/services/[id]/execute/route.js`
 - Legacy Route: `/app/api/getresults/route.js` (to be deleted)
-- MCP v1: `/app/api/mcp/v1/route.js` (migrated)
+- MCP v1: `/app/api/mcp/bridge/route.js` (migrated)
 - Chat: `/app/api/chat/route.js` (pending)
 - Schema: `/app/api/getschema/route.js` (pending)
 - Examples: `/app/app/service/[id]/components/IntegrationExamples.tsx` (pending)

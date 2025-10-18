@@ -1,12 +1,3 @@
-/**
- * @deprecated This endpoint is deprecated and will be removed in a future version.
- *
- * For stdio bridge clients (Claude Desktop), use: /api/mcp/bridge
- * For ChatGPT/OpenAI Agent Builder, use: /api/mcp (Streamable HTTP)
- *
- * This endpoint remains functional for backward compatibility but is no longer recommended.
- */
-
 import { NextResponse } from 'next/server';
 import redis from '../../../../lib/redis';
 import { mcpAuthMiddleware } from '../../../../lib/mcp-auth';
@@ -14,14 +5,12 @@ import { getError } from '../../../../utils/helper';
 import { getApiDefinition } from '../../../../utils/helperApi';
 import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
-import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
+import { calculateDirect } from '../../../v1/services/[id]/execute/calculateDirect.js';
 
 /**
- * MCP (Model Context Protocol) Server v1 [DEPRECATED]
- * JSON-RPC 2.0 endpoint for AI assistants
- *
- * @deprecated Use /api/mcp/bridge for stdio clients or /api/mcp for Streamable HTTP clients
- *
+ * MCP (Model Context Protocol) Server - Bridge Endpoint
+ * JSON-RPC 2.0 endpoint for stdio bridge clients (e.g., Claude Desktop)
+ * 
  * This implementation uses a generic tool approach to reduce tool proliferation:
  * - spreadapi_calc: Generic calculation tool that accepts serviceId parameter (with optional areaUpdates)
  * - spreadapi_read_area: Generic area reading tool that accepts serviceId parameter
@@ -364,9 +353,6 @@ async function handleJsonRpc(request, auth) {
   try {
     switch (method) {
       case 'initialize': {
-        // Log deprecation warning
-        console.warn('[DEPRECATED] /api/mcp/v1 is deprecated. Use /api/mcp/bridge for stdio clients or /api/mcp for Streamable HTTP clients.');
-
         return {
           jsonrpc: '2.0',
           result: {
@@ -379,13 +365,7 @@ async function handleJsonRpc(request, auth) {
             },
             serverInfo: {
               name: SERVER_NAME,
-              version: SERVER_VERSION,
-              deprecated: true,
-              deprecationMessage: 'This endpoint is deprecated. Use /api/mcp/bridge for stdio clients or /api/mcp for Streamable HTTP clients.',
-              migration: {
-                stdioClients: '/api/mcp/bridge',
-                streamableHttp: '/api/mcp'
-              }
+              version: SERVER_VERSION
             }
           },
           id

@@ -5,7 +5,8 @@ Follow these steps in order to implement MCP server with remote bridge:
 ## Phase 1: Server Implementation (2-4 hours)
 
 - [ ] **Create the main MCP endpoint**
-  - Path: `/api/mcp/v1/route.ts` (or equivalent)
+  - Path: `/api/mcp/bridge/route.ts` for stdio bridge (Claude Desktop)
+  - Path: `/api/mcp/route.ts` for Streamable HTTP (ChatGPT, OpenAI Agent Builder)
   - Implement POST handler for JSON-RPC
   - Add OPTIONS handler for CORS
 
@@ -21,8 +22,15 @@ Follow these steps in order to implement MCP server with remote bridge:
 
 - [ ] **Test with curl**
   ```bash
-  curl -X POST http://localhost:3000/api/mcp/v1 \
+  # Test bridge endpoint (stdio clients)
+  curl -X POST http://localhost:3000/api/mcp/bridge \
     -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
+
+  # Test Streamable HTTP endpoint (ChatGPT/OpenAI)
+  curl -X POST http://localhost:3000/api/mcp \
+    -H "Content-Type: application/json" \
+    -H "Mcp-Session-Id: test-session" \
     -d '{"jsonrpc":"2.0","id":1,"method":"initialize"}'
   ```
 
@@ -51,8 +59,8 @@ Follow these steps in order to implement MCP server with remote bridge:
 
 - [ ] **Test locally**
   ```bash
-  MCP_SERVER_URL=http://localhost:3000/api/mcp/v1 \
-  MCP_TOKEN=test-token \
+  SPREADAPI_URL=http://localhost:3000/api/mcp/bridge \
+  SPREADAPI_TOKEN=test-token \
   node index.js
   ```
 
@@ -148,7 +156,7 @@ After each phase, verify:
 1. **Server responds correctly**
    ```bash
    # Should return your tools
-   curl http://localhost:3000/api/mcp/v1 \
+   curl http://localhost:3000/api/mcp/bridge \
      -H "Authorization: Bearer YOUR_TOKEN" \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
    ```

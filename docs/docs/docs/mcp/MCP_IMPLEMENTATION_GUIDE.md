@@ -21,7 +21,7 @@ This guide explains how to implement an MCP server with a remote bridge, enablin
 
 ### 1.1 Create the Main MCP Endpoint
 
-Create `/api/mcp/v1/route.ts` (or equivalent in your framework):
+Create `/api/mcp/bridge/route.ts` (or equivalent in your framework):
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -193,7 +193,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import fetch from 'node-fetch';
 
-const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'https://your-app.com/api/mcp/v1';
+const MCP_SERVER_URL = process.env.MCP_SERVER_URL || 'https://your-app.com/api/mcp/bridge';
 const MCP_TOKEN = process.env.MCP_TOKEN;
 
 class YourAppMCPBridge {
@@ -376,7 +376,7 @@ Users configure Claude Desktop by adding to their config:
       "command": "npx",
       "args": ["your-app-mcp"],
       "env": {
-        "MCP_SERVER_URL": "https://your-app.com/api/mcp/v1",
+        "MCP_SERVER_URL": "https://your-app.com/api/mcp/bridge",
         "MCP_TOKEN": "sk_live_..."
       }
     }
@@ -425,7 +425,7 @@ await logMCPOperation({
 
 ## Implementation Checklist
 
-- [ ] Create MCP API endpoint (`/api/mcp/v1`)
+- [ ] Create MCP API endpoint (`/api/mcp/bridge`)
 - [ ] Implement authentication (token validation)
 - [ ] Add CORS headers for browser support
 - [ ] Implement `initialize`, `tools/list`, and `tools/call` methods
@@ -507,7 +507,7 @@ async function handleToolCall(params: any, userId: string, tokenData: any) {
 1. **Test locally first:**
    ```bash
    cd mcp-bridge
-   MCP_SERVER_URL=http://localhost:3000/api/mcp/v1 \
+   MCP_SERVER_URL=http://localhost:3000/api/mcp/bridge \
    MCP_TOKEN=your-test-token \
    node index.js
    ```
@@ -524,7 +524,7 @@ async function handleToolCall(params: any, userId: string, tokenData: any) {
 
 4. **Test JSON-RPC directly:**
    ```bash
-   curl -X POST http://localhost:3000/api/mcp/v1 \
+   curl -X POST http://localhost:3000/api/mcp/bridge \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer your-test-token" \
      -d '{

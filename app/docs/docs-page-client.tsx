@@ -720,7 +720,7 @@ console.log(result.outputs); // Your Excel calculation results`}
       "args": ["spreadapi-mcp"],
       "env": {
         "SPREADAPI_TOKEN": "YOUR_API_KEY",
-        "SPREADAPI_URL": "https://spreadapi.io/api/mcp/v1"
+        "SPREADAPI_URL": "https://spreadapi.io/api/mcp/bridge"
       }
     }
   }

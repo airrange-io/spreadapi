@@ -1,6 +1,6 @@
 # Add Area Handler Imports to MCP Route
 
-## Update /app/api/mcp/v1/route.js
+## Update /app/api/mcp/bridge/route.js
 
 Add this import at the top of the file:
 

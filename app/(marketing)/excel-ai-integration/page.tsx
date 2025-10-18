@@ -620,7 +620,7 @@ export default function AIIntegrationPage() {
       "command": "npx",
       "args": ["spreadapi-mcp"],
       "env": {
-        "SPREADAPI_URL": "https://spreadapi.com/api/mcp/v1",
+        "SPREADAPI_URL": "https://spreadapi.com/api/mcp/bridge",
         "SPREADAPI_TOKEN": "YOUR_TOKEN"
       }
     }

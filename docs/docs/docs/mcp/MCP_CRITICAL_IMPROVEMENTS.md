@@ -9,7 +9,7 @@ While the SpreadAPI MCP implementation is innovative and well-designed, several 
 ### 1. Input Validation and Sanitization
 
 ```javascript
-// In app/api/mcp/v1/route.js, add at the beginning:
+// In app/api/mcp/bridge/route.js, add at the beginning:
 import { sanitizeFormula, validateAreaUpdate, checkRateLimit } from './security.js';
 
 // Modify the calc handler to add rate limiting:
@@ -39,7 +39,7 @@ if (name === 'spreadapi_calc') {
 ### 2. CORS Restrictions
 
 ```javascript
-// In app/api/mcp/v1/route.js, modify CORS headers:
+// In app/api/mcp/bridge/route.js, modify CORS headers:
 const allowedOrigins = [
   'https://claude.ai',
   'https://console.anthropic.com',
@@ -79,7 +79,7 @@ tokens: userTokens.map(token => ({
 ### 1. Implement Workbook Locking
 
 ```javascript
-// In app/api/mcp/v1/executeEnhancedCalc.js:
+// In app/api/mcp/bridge/executeEnhancedCalc.js:
 import { withLock } from './concurrency.js';
 
 export async function executeEnhancedCalc(serviceId, inputs, areaUpdates, auth, returnOptions) {
@@ -104,7 +104,7 @@ if (areaUpdate.expectedVersion !== undefined) {
 ### 3. Implement Redis Transactions
 
 ```javascript
-// In app/api/mcp/v1/mcp-auth.js:
+// In app/api/mcp/bridge/mcp-auth.js:
 async function updateTokenUsage(tokenId) {
   const multi = redis.multi();
   
@@ -130,7 +130,7 @@ async function updateTokenUsage(tokenId) {
 ### 1. Implement Service Discovery Caching
 
 ```javascript
-// In app/api/mcp/v1/route.js:
+// In app/api/mcp/bridge/route.js:
 const serviceListCache = new Map();
 const CACHE_TTL = 60000; // 1 minute
 
@@ -382,7 +382,7 @@ import os from 'os';
 
 async function loadTest(config) {
   const {
-    url = 'http://localhost:3000/api/mcp/v1',
+    url = 'http://localhost:3000/api/mcp/bridge',
     duration = 60000,  // 1 minute
     concurrency = os.cpus().length,
     requestsPerWorker = 100

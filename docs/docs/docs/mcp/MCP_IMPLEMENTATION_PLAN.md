@@ -80,7 +80,7 @@ Implement a remote MCP (Model Context Protocol) server that allows AI assistants
 
 ### Phase 2: MCP Server Implementation
 
-#### 2.1 Main Endpoint: POST /api/mcp/v1
+#### 2.1 Main Endpoint: POST /api/mcp/bridge
 
 **Authentication:**
 - Bearer token in Authorization header
@@ -414,7 +414,7 @@ Enter Token Name → Generate → Display Token → Copy → Show Config
 TOKEN=$(curl -X POST .../api/mcp/tokens/create)
 
 # 2. Test MCP endpoint directly
-curl -X POST .../api/mcp/v1 \
+curl -X POST .../api/mcp/bridge \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
 

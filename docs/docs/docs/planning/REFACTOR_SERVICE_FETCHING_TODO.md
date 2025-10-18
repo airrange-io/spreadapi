@@ -201,7 +201,7 @@ export interface PublishedServiceData extends ServiceDetails {
 // scripts/migrate-service-fetching.js
 const filesToUpdate = [
   {
-    path: '/api/mcp/v1/route.js',
+    path: '/api/mcp/bridge/route.js',
     patterns: [
       {
         old: 'await redis.hGetAll(`service:${serviceId}:published`)',
@@ -219,7 +219,7 @@ const filesToUpdate = [
 
 ### 2.2 Update High-Priority Files (MCP Routes)
 
-#### File: `/api/mcp/v1/route.js`
+#### File: `/api/mcp/bridge/route.js`
 - [ ] Line 74: Replace `redis.hGetAll` with `getPublishedData()`
 - [ ] Line 672: Replace `redis.hGetAll` with `getPublishedData()`
 - [ ] Line 1061: Replace `redis.hGetAll` with `getPublishedData()`
@@ -227,12 +227,12 @@ const filesToUpdate = [
 - [ ] Add import for serviceHelpers
 - [ ] Test MCP functionality after changes
 
-#### File: `/api/mcp/v1/executeEnhancedCalc.js`
+#### File: `/api/mcp/bridge/executeEnhancedCalc.js`
 - [ ] Line 31: Replace with `getPublishedData()`
 - [ ] Consider if this needs full service details instead
 - [ ] Update error handling
 
-#### File: `/api/mcp/v1/areaExecutors.js`
+#### File: `/api/mcp/bridge/areaExecutors.js`
 - [ ] Line 19: Replace with `getPublishedData()`
 - [ ] Line 133: Replace with `getPublishedData()`
 - [ ] Ensure area parsing still works

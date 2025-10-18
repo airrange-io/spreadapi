@@ -111,7 +111,7 @@ When integrating with the MCP API:
 
 ## Implementation Details
 
-The changes are implemented in `/app/api/mcp/v1/route.js`:
+The changes are implemented in `/app/api/mcp/bridge/route.js`:
 
 - Generic tools are always included in the tool list
 - Service-specific tools are generated only when requested

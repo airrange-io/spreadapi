@@ -26,10 +26,10 @@ const serviceData = await redis.hGetAll(`service:${serviceId}`);
 const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
 ```
 **Used in:**
-- `/api/mcp/v1/route.js` (5 instances)
-- `/api/mcp/v1/executeEnhancedCalc.js`
-- `/api/mcp/v1/areaExecutors.js` (2 instances)
-- `/api/mcp/v1/areaHandlers.js` (2 instances)
+- `/api/mcp/bridge/route.js` (5 instances)
+- `/api/mcp/bridge/executeEnhancedCalc.js`
+- `/api/mcp/bridge/areaExecutors.js` (2 instances)
+- `/api/mcp/bridge/areaHandlers.js` (2 instances)
 - `/api/mcp/route.js` (3 instances)
 - `/api/workbook/[id]/route.js`
 

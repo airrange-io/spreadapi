@@ -12,10 +12,12 @@ import {
 /**
  * SpreadAPI MCP Bridge
  * Translates between Claude Desktop (stdio) and SpreadAPI HTTP server
+ *
+ * Updated to use /api/mcp/bridge endpoint (JSON-RPC stdio bridge)
  */
 
 // Configuration from environment
-const SPREADAPI_URL = process.env.SPREADAPI_URL || 'https://spreadapi.io/api/mcp/v1';
+const SPREADAPI_URL = process.env.SPREADAPI_URL || 'https://spreadapi.io/api/mcp/bridge';
 const SPREADAPI_TOKEN = process.env.SPREADAPI_TOKEN;
 
 if (!SPREADAPI_TOKEN) {
@@ -64,7 +66,7 @@ async function callSpreadAPI(method, params = {}) {
 const server = new Server(
   {
     name: 'spreadapi-mcp',
-    version: '1.0.2',
+    version: '1.1.0',
   },
   {
     capabilities: {

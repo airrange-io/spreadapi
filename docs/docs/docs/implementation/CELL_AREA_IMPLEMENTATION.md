@@ -38,7 +38,7 @@ Add an `areas` field to your service definition:
 
 ### 2. Add Area Tools to MCP Server
 
-Update `/app/api/mcp/v1/route.js` to include area tools in the tools list:
+Update `/app/api/mcp/bridge/route.js` to include area tools in the tools list:
 
 ```javascript
 // In the 'tools/list' case, add these after the existing tools:

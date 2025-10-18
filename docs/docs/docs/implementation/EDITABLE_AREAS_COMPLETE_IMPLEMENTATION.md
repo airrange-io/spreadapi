@@ -661,7 +661,7 @@ const getModeLabel = (mode: string) => {
 
 ## 2. Update MCP Server - Add Area Tools
 
-### Update /app/api/mcp/v1/route.js
+### Update /app/api/mcp/bridge/route.js
 
 Add these tools to the tools/list case (after the existing tools):
 
@@ -786,7 +786,7 @@ if (name.startsWith('spreadapi_update_area_')) {
 
 ## 3. Create Area Execution Functions
 
-Create new file: /app/api/mcp/v1/areaExecutors.js
+Create new file: /app/api/mcp/bridge/areaExecutors.js
 
 ```javascript
 import redis from '../../../../lib/redis.js';

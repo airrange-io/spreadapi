@@ -29,7 +29,7 @@ npm install -g spreadapi-mcp
          "command": "npx",
          "args": ["spreadapi-mcp"],
          "env": {
-           "SPREADAPI_URL": "https://spreadapi.io/api/mcp/v1",
+           "SPREADAPI_URL": "https://spreadapi.io/api/mcp/bridge",
            "SPREADAPI_TOKEN": "your_token_here"
          }
        }
@@ -54,8 +54,17 @@ Example prompts:
 
 ## Environment Variables
 
-- `SPREADAPI_URL` - The SpreadAPI MCP endpoint (default: https://spreadapi.io/api/mcp/v1)
+- `SPREADAPI_URL` - The SpreadAPI MCP endpoint (default: https://spreadapi.io/api/mcp/bridge)
 - `SPREADAPI_TOKEN` - Your SpreadAPI token (required)
+
+## MCP Endpoints
+
+SpreadAPI provides two MCP endpoints:
+
+- **`/api/mcp/bridge`** - JSON-RPC stdio bridge for Claude Desktop (this package)
+- **`/api/mcp`** - Streamable HTTP transport for ChatGPT Developer Mode and OpenAI Agent Builder
+
+> **Note**: The old `/api/mcp/v1` endpoint is deprecated. Please update to `/api/mcp/bridge`.
 
 ## Development
 

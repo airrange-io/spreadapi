@@ -6,7 +6,7 @@ This document outlines the plan to integrate SpreadAPI's MCP (Model Context Prot
 ## Current State
 - ✅ Working AI chat with Bubbles UI (Ant Design X)
 - ✅ Service selector dropdown above chat
-- ✅ MCP server implementation at `/api/mcp/v1/`
+- ✅ MCP server implementation at `/api/mcp/bridge/`
 - ✅ Demo services available for testing
 
 ## Implementation Plan
@@ -133,7 +133,7 @@ interface Service {
 
 ## Notes for Next Developer
 
-1. The MCP server at `/api/mcp/v1/` is already working - don't modify it
+1. The MCP server at `/api/mcp/bridge/` is already working - don't modify it
 2. Use `calculateDirect()` for internal calculations (chat uses this, MCP uses this)
 3. Public V1 API is at `/api/v1/services/{id}/execute`
 4. Demo services don't require authentication
