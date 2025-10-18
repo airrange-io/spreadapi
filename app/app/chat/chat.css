@@ -1,5 +1,17 @@
 /* Chat page specific styles */
 
+/* Bubble fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Override Select component font size */
 .chat-service-select .ant-select-selector {
   font-size: 14px !important;

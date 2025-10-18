@@ -127,7 +127,7 @@ export default function ChatWrapperBubbles() {
         }, {
           body: { serviceId: selectedService, initialGreeting: true }
         });
-      }, 500);
+      }, 300);
     }
   }, [selectedService, loadingServices, userServices.length]);
 
@@ -380,7 +380,7 @@ export default function ChatWrapperBubbles() {
                 if (value !== 'general') {
                   console.log('[Chat] Fetching details for service:', value);
                   fetchServiceDetails(value);
-                  
+
                   // Always trigger AI greeting for non-general services
                   setTimeout(async () => {
                     hasGreetedRef.current = true;
@@ -389,7 +389,7 @@ export default function ChatWrapperBubbles() {
                     }, {
                       body: { serviceId: value, initialGreeting: true }
                     });
-                  }, 100);
+                  }, 300);
                 } else {
                   setServiceDetails(null);
                 }
@@ -469,12 +469,13 @@ export default function ChatWrapperBubbles() {
                 if (!content || content === '[GREETING]') return null;
                 
                 return (
-                  <div 
+                  <div
                     key={m.id}
                     style={{
                       display: 'flex',
                       justifyContent: isUser ? 'flex-end' : 'flex-start',
-                      width: '100%'
+                      width: '100%',
+                      animation: 'fadeInUp 0.3s ease-out',
                     }}
                   >
                     <Bubble
