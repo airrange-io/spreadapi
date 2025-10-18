@@ -67,7 +67,7 @@ export async function GET(request, { params }) {
         }
       })()
     };
-    
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching service:', error);

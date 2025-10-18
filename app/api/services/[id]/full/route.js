@@ -90,6 +90,8 @@ export async function GET(request, { params }) {
         areas,
         enableCaching: serviceData.cacheEnabled !== 'false',
         requireToken: serviceData.requireToken === 'true',
+        cacheTableSheetData: serviceData.cacheTableSheetData !== 'false',
+        tableSheetCacheTTL: parseInt(serviceData.tableSheetCacheTTL) || 300,
         workbookUrl: serviceData.workbookUrl,
         workbookSize: serviceData.workbookSize,
         workbookModified: serviceData.workbookModified,
@@ -97,6 +99,7 @@ export async function GET(request, { params }) {
         updatedAt: serviceData.updatedAt,
         // AI metadata
         aiDescription: serviceData.aiDescription || '',
+        aiUsageGuidance: serviceData.aiUsageGuidance || '',
         aiUsageExamples: (() => {
           try {
             return serviceData.aiUsageExamples ? JSON.parse(serviceData.aiUsageExamples) : [];
@@ -111,7 +114,10 @@ export async function GET(request, { params }) {
             return [];
           }
         })(),
-        category: serviceData.category || ''
+        category: serviceData.category || '',
+        // Web App settings
+        webAppEnabled: serviceData.webAppEnabled === 'true' || serviceData.webAppEnabled === true,
+        webAppToken: serviceData.webAppToken || ''
       },
       
       // Status information

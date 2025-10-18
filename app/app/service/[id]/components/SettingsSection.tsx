@@ -249,13 +249,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
           {webAppEnabled && (
             <>
-              <Alert
-                message="Remember to Save"
-                description="After enabling the web app and generating a token, click the Save button at the top to make your changes active."
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
               <div>
                 <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
                   Access Token
@@ -269,22 +262,31 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                     Generate Token
                   </Button>
                 ) : (
-                  <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                    <Input
-                      value={webAppToken}
-                      readOnly
-                      addonAfter={
-                        <ReloadOutlined
-                          onClick={handleGenerateToken}
-                          style={{ cursor: 'pointer' }}
-                          title="Regenerate token"
-                        />
-                      }
+                  <>
+                    <Alert
+                      message="Remember to Save"
+                      description="Click the Save button at the top to activate your web app settings."
+                      type="info"
+                      showIcon
+                      style={{ marginBottom: 16 }}
                     />
-                    <div style={{ fontSize: '11px', color: '#999' }}>
-                      Regenerate to revoke access to old links
-                    </div>
-                  </Space>
+                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                      <Input
+                        value={webAppToken}
+                        readOnly
+                        addonAfter={
+                          <ReloadOutlined
+                            onClick={handleGenerateToken}
+                            style={{ cursor: 'pointer' }}
+                            title="Regenerate token"
+                          />
+                        }
+                      />
+                      <div style={{ fontSize: '11px', color: '#999' }}>
+                        Regenerate to revoke access to old links
+                      </div>
+                    </Space>
+                  </>
                 )}
               </div>
 

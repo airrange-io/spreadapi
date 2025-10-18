@@ -12,16 +12,19 @@ interface ServiceData {
   description: string;
   inputs: Array<{
     name: string;
+    alias?: string;
     title?: string;
     description?: string;
     type: string;
     mandatory?: boolean;
     min?: number;
     max?: number;
+    value?: any;
     aiExamples?: string[];
   }>;
   outputs: Array<{
     name: string;
+    alias?: string;
     title?: string;
     description?: string;
     type: string;
@@ -41,6 +44,7 @@ export default function WebAppPage() {
   const [serviceData, setServiceData] = useState<ServiceData | null>(null);
   const [results, setResults] = useState<any>(null);
   const [form] = Form.useForm();
+  const [initialValues, setInitialValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (!token) {
@@ -74,6 +78,23 @@ export default function WebAppPage() {
         outputs: data.outputs || []
       });
 
+      // Set initial values from spreadsheet defaults
+      const defaults: Record<string, any> = {};
+      (data.inputs || []).forEach((input: any) => {
+        const key = input.alias || input.name;
+        if (input.value !== undefined && input.value !== null) {
+          defaults[key] = input.value;
+        } else if (input.type === 'number') {
+          defaults[key] = input.min || 0;
+        } else if (input.type === 'boolean') {
+          defaults[key] = false;
+        } else {
+          defaults[key] = '';
+        }
+      });
+      setInitialValues(defaults);
+      form.setFieldsValue(defaults);
+
     } catch (err: any) {
       setError(err.message || 'Failed to load service');
     } finally {
@@ -87,21 +108,44 @@ export default function WebAppPage() {
       setError(null);
       setResults(null);
 
-      const response = await fetch(`/api/v1/services/${serviceId}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values)
+      // Build query string from form values
+      const params = new URLSearchParams();
+      Object.entries(values).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
       });
 
+      // Call the actual published API execute endpoint
+      const apiUrl = `/api/v1/services/${serviceId}/execute?${params.toString()}`;
+      const response = await fetch(apiUrl);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Execution failed');
+        const errorText = await response.text();
+        let errorMessage = 'Execution failed';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      setResults(data);
+
+      // Convert outputs array to a simple key-value object
+      // The execute endpoint returns: { outputs: [{name: 'total', value: 123}, ...] }
+      // We need: { total: 123, invested: 456, ... }
+      const resultsObj: Record<string, any> = {};
+      if (data.outputs && Array.isArray(data.outputs)) {
+        data.outputs.forEach((output: any) => {
+          if (output.name && output.value !== undefined) {
+            resultsObj[output.name] = output.value;
+          }
+        });
+      }
+      setResults(resultsObj);
 
     } catch (err: any) {
       setError(err.message || 'Failed to execute calculation');
@@ -110,7 +154,35 @@ export default function WebAppPage() {
     }
   };
 
+  // Smart step size calculator (same logic as API Test)
+  const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
+    // If we have min and max, calculate step based on range
+    if (min !== undefined && max !== undefined) {
+      const range = max - min;
+      // Use ~1% of range as step
+      return Math.max(range / 100, 0.01);
+    }
+
+    // Otherwise, base step on current value
+    const currentValue = value || 0;
+    const absValue = Math.abs(currentValue);
+
+    if (absValue >= 10000) {
+      return 100;  // For large numbers (10k+), step by 100
+    } else if (absValue >= 1000) {
+      return 10;   // For thousands, step by 10
+    } else if (absValue >= 100) {
+      return 1;    // For hundreds, step by 1
+    } else if (absValue >= 1) {
+      return 0.1;  // For single digits, step by 0.1
+    } else {
+      return 0.01; // For decimals (percentages, etc.), step by 0.01
+    }
+  };
+
   const renderInputControl = (input: ServiceData['inputs'][0]) => {
+    const fieldName = input.alias || input.name;
+
     const label = (
       <div>
         <div style={{ fontWeight: 600, marginBottom: 4 }}>
@@ -128,8 +200,8 @@ export default function WebAppPage() {
     if (input.type === 'number') {
       return (
         <Form.Item
-          key={input.name}
-          name={input.name}
+          key={fieldName}
+          name={fieldName}
           label={label}
           rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
         >
@@ -137,12 +209,10 @@ export default function WebAppPage() {
             style={{ width: '100%' }}
             min={input.min}
             max={input.max}
-            step={input.min !== undefined && input.max !== undefined ?
-              (input.max - input.min) / 100 :
-              0.01
-            }
+            step={getSmartStep(input.value, input.min, input.max)}
             placeholder={input.aiExamples?.[0] || `Enter ${input.title || input.name}`}
             size="large"
+            keyboard={true}
           />
         </Form.Item>
       );
@@ -151,8 +221,8 @@ export default function WebAppPage() {
     if (input.type === 'boolean') {
       return (
         <Form.Item
-          key={input.name}
-          name={input.name}
+          key={fieldName}
+          name={fieldName}
           label={label}
           valuePropName="checked"
         >
@@ -167,8 +237,8 @@ export default function WebAppPage() {
     // Default to string/text
     return (
       <Form.Item
-        key={input.name}
-        name={input.name}
+        key={fieldName}
+        name={fieldName}
         label={label}
         rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
       >
@@ -212,9 +282,9 @@ export default function WebAppPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#ffffff'
       }}>
-        <Spin size="large" />
+        <Spin size="default" />
       </div>
     );
   }
@@ -226,7 +296,7 @@ export default function WebAppPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#ffffff',
         padding: 24
       }}>
         <Card style={{ maxWidth: 600, width: '100%' }}>
@@ -244,7 +314,7 @@ export default function WebAppPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: '#ffffff',
       padding: 24
     }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -265,41 +335,44 @@ export default function WebAppPage() {
           title={<span style={{ fontSize: 18, fontWeight: 600 }}>Input Parameters</span>}
           style={{ marginBottom: 24 }}
         >
-          {error && (
-            <Alert
-              message="Error"
-              description={error}
-              type="error"
-              closable
-              onClose={() => setError(null)}
-              style={{ marginBottom: 24 }}
-            />
-          )}
+          <div style={{ backgroundColor: '#f8f8f8', padding: 24, borderRadius: 8 }}>
+            {error && (
+              <Alert
+                message="Error"
+                description={error}
+                type="error"
+                closable
+                onClose={() => setError(null)}
+                style={{ marginBottom: 24 }}
+              />
+            )}
 
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleExecute}
-            size="large"
-          >
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
-              {serviceData?.inputs.map(input => renderInputControl(input))}
-            </Space>
-
-            <Divider />
-
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<PlayCircleOutlined />}
-              loading={executing}
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleExecute}
               size="large"
-              block
-              style={{ height: 56, fontSize: 16, fontWeight: 600 }}
+              initialValues={initialValues}
             >
-              {executing ? 'Calculating...' : 'Calculate Results'}
-            </Button>
-          </Form>
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                {serviceData?.inputs.map(input => renderInputControl(input))}
+              </Space>
+
+              <Divider />
+
+              <Button
+                type="primary"
+                htmlType="submit"
+                icon={<PlayCircleOutlined />}
+                loading={executing}
+                size="large"
+                block
+                style={{ height: 56, fontSize: 16, fontWeight: 600 }}
+              >
+                {executing ? 'Calculating...' : 'Calculate Results'}
+              </Button>
+            </Form>
+          </div>
         </Card>
 
         {/* Results */}
@@ -311,42 +384,41 @@ export default function WebAppPage() {
                 <span style={{ fontSize: 18, fontWeight: 600 }}>Results</span>
               </Space>
             }
-            style={{
-              borderColor: '#52c41a',
-              borderWidth: 2
-            }}
+            style={{ marginBottom: 24 }}
           >
-            <Space direction="vertical" size={20} style={{ width: '100%' }}>
-              {serviceData?.outputs.map(output => {
-                const value = results[output.name];
-                if (value === undefined || value === null) return null;
+            <div style={{ backgroundColor: '#f8f8f8', padding: 24, borderRadius: 8 }}>
+              <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                {serviceData?.outputs.map(output => {
+                  const value = results[output.name];
+                  if (value === undefined || value === null) return null;
 
-                return (
-                  <div key={output.name}>
-                    <div style={{
-                      fontSize: 14,
-                      color: '#666',
-                      marginBottom: 4,
-                      fontWeight: 500
-                    }}>
-                      {output.title || output.name}
-                    </div>
-                    <div style={{
-                      fontSize: 28,
-                      fontWeight: 700,
-                      color: '#1890ff'
-                    }}>
-                      {formatOutput(output, value)}
-                    </div>
-                    {output.description && (
-                      <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                        {output.description}
+                  return (
+                    <div key={output.name}>
+                      <div style={{
+                        fontSize: 14,
+                        color: '#666',
+                        marginBottom: 4,
+                        fontWeight: 500
+                      }}>
+                        {output.title || output.name}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </Space>
+                      <div style={{
+                        fontSize: 28,
+                        fontWeight: 700,
+                        color: '#4F2D7F'
+                      }}>
+                        {formatOutput(output, value)}
+                      </div>
+                      {output.description && (
+                        <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                          {output.description}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </Space>
+            </div>
           </Card>
         )}
 
@@ -358,7 +430,7 @@ export default function WebAppPage() {
           color: '#999',
           fontSize: 13
         }}>
-          Powered by <strong>SpreadAPI</strong>
+          Powered by <a href="https://spreadapi.io" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#4F2D7F', textDecoration: 'none' }}>SpreadAPI</a>
         </div>
       </div>
     </div>

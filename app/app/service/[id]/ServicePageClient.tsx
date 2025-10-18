@@ -386,7 +386,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiUsageExamples: data.service.aiUsageExamples || [],
               aiTags: data.service.aiTags || [],
               category: data.service.category || '',
-              webAppEnabled: data.service.webAppEnabled || false,
+              webAppEnabled: data.service.webAppEnabled === 'true' || data.service.webAppEnabled === true,
               webAppToken: data.service.webAppToken || ''
             };
             setApiConfig(loadedConfig);

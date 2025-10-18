@@ -121,7 +121,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       mandatory: input.mandatory !== false,
       ...(input.min !== undefined && { min: input.min }),
       ...(input.max !== undefined && { max: input.max }),
-      ...(input.description && { description: input.description })
+      ...(input.description && { description: input.description }),
+      ...(input.aiExamples && input.aiExamples.length > 0 && { aiExamples: input.aiExamples })
     };
   });
 
@@ -143,7 +144,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       type: output.type,
       value: output.value || '',
       direction: 'output',
-      ...(output.description && { description: output.description })
+      ...(output.description && { description: output.description }),
+      ...(output.aiPresentationHint && { aiPresentationHint: output.aiPresentationHint })
     };
   });
 
@@ -164,11 +166,15 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       },
       // AI metadata fields
       ...(service.aiDescription && { aiDescription: service.aiDescription }),
+      ...(service.aiUsageGuidance && { aiUsageGuidance: service.aiUsageGuidance }),
       ...(service.aiUsageExamples && service.aiUsageExamples.length > 0 && { aiUsageExamples: service.aiUsageExamples }),
       ...(service.aiTags && service.aiTags.length > 0 && { aiTags: service.aiTags }),
       ...(service.category && { category: service.category }),
       // Editable areas for AI
-      ...(service.areas && service.areas.length > 0 && { areas: service.areas })
+      ...(service.areas && service.areas.length > 0 && { areas: service.areas }),
+      // Web App settings
+      ...(service.webAppEnabled !== undefined && { webAppEnabled: service.webAppEnabled }),
+      ...(service.webAppToken && { webAppToken: service.webAppToken })
     },
     fileJson: optimizedWorkbook // The optimized spreadsheet data
   };

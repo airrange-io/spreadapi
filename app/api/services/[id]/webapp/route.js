@@ -15,13 +15,9 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Try to get service data from published version first (for production), then draft
-    let serviceData = await redis.hGetAll(`service:${serviceId}:published`);
-
-    // If not published, try draft version
-    if (!serviceData || Object.keys(serviceData).length === 0) {
-      serviceData = await redis.hGetAll(`service:${serviceId}`);
-    }
+    // Always use the current draft version for web app settings
+    // This way users only need to "Save" - no need to republish
+    const serviceData = await redis.hGetAll(`service:${serviceId}`);
 
     if (!serviceData || Object.keys(serviceData).length === 0) {
       return NextResponse.json(
@@ -35,7 +31,7 @@ export async function GET(request, { params }) {
 
     if (!webAppEnabled) {
       return NextResponse.json(
-        { error: 'Web app not enabled for this service. Please enable it in Settings and save your changes.' },
+        { error: 'Web app not enabled for this service. Please enable it in Settings and click Save.' },
         { status: 403 }
       );
     }
@@ -48,11 +44,14 @@ export async function GET(request, { params }) {
     }
 
     // Parse JSON fields
+    const inputs = JSON.parse(serviceData.inputs || '[]');
+    const outputs = JSON.parse(serviceData.outputs || '[]');
+
     const response = {
       name: serviceData.name || '',
       description: serviceData.description || '',
-      inputs: JSON.parse(serviceData.inputs || '[]'),
-      outputs: JSON.parse(serviceData.outputs || '[]'),
+      inputs: inputs,
+      outputs: outputs,
       webAppEnabled: serviceData.webAppEnabled === 'true',
       webAppToken: serviceData.webAppToken
     };
