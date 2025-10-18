@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Card, Form, Input, InputNumber, Button, Space, Alert, Spin, Typography, Divider } from 'antd';
-import { PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Form, Input, InputNumber, Button, Space, Alert, Spin, Typography } from 'antd';
+import { PlayCircleOutlined } from '@ant-design/icons';
+import CollapsibleSection from './CollapsibleSection';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -43,6 +44,7 @@ export default function WebAppPage() {
   const [error, setError] = useState<string | null>(null);
   const [serviceData, setServiceData] = useState<ServiceData | null>(null);
   const [results, setResults] = useState<any>(null);
+  const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [initialValues, setInitialValues] = useState<Record<string, any>>({});
 
@@ -146,6 +148,13 @@ export default function WebAppPage() {
         });
       }
       setResults(resultsObj);
+
+      // Capture execution time from metadata
+      if (data.metadata?.executionTime) {
+        setExecutionTime(data.metadata.executionTime);
+      } else if (data.metadata?.totalTime) {
+        setExecutionTime(data.metadata.totalTime);
+      }
 
     } catch (err: any) {
       setError(err.message || 'Failed to execute calculation');
@@ -331,35 +340,30 @@ export default function WebAppPage() {
         </Card>
 
         {/* Input Form */}
-        <Card
-          title={<span style={{ fontSize: 18, fontWeight: 600 }}>Input Parameters</span>}
-          style={{ marginBottom: 24 }}
-        >
-          <div style={{ backgroundColor: '#f8f8f8', padding: 24, borderRadius: 8 }}>
-            {error && (
-              <Alert
-                message="Error"
-                description={error}
-                type="error"
-                closable
-                onClose={() => setError(null)}
-                style={{ marginBottom: 24 }}
-              />
-            )}
+        <CollapsibleSection title="Input Parameters" defaultOpen={true} style={{ marginBottom: 24 }}>
+          {error && (
+            <Alert
+              message="Error"
+              description={error}
+              type="error"
+              closable
+              onClose={() => setError(null)}
+              style={{ marginBottom: 24 }}
+            />
+          )}
 
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleExecute}
-              size="large"
-              initialValues={initialValues}
-            >
-              <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                {serviceData?.inputs.map(input => renderInputControl(input))}
-              </Space>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleExecute}
+            size="large"
+            initialValues={initialValues}
+          >
+            <Space direction="vertical" size={0} style={{ width: '100%' }}>
+              {serviceData?.inputs.map(input => renderInputControl(input))}
+            </Space>
 
-              <Divider />
-
+            <div style={{ marginTop: 24 }}>
               <Button
                 type="primary"
                 htmlType="submit"
@@ -371,22 +375,18 @@ export default function WebAppPage() {
               >
                 {executing ? 'Calculating...' : 'Calculate Results'}
               </Button>
-            </Form>
-          </div>
-        </Card>
+            </div>
+          </Form>
+        </CollapsibleSection>
 
         {/* Results */}
         {results && (
-          <Card
-            title={
-              <Space>
-                <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />
-                <span style={{ fontSize: 18, fontWeight: 600 }}>Results</span>
-              </Space>
-            }
-            style={{ marginBottom: 24 }}
-          >
-            <div style={{ backgroundColor: '#f8f8f8', padding: 24, borderRadius: 8 }}>
+          <>
+            <CollapsibleSection
+              title="Calculation Results"
+              defaultOpen={true}
+              style={{ marginBottom: 8 }}
+            >
               <Space direction="vertical" size={20} style={{ width: '100%' }}>
                 {serviceData?.outputs.map(output => {
                   const value = results[output.name];
@@ -403,7 +403,7 @@ export default function WebAppPage() {
                         {output.title || output.name}
                       </div>
                       <div style={{
-                        fontSize: 28,
+                        fontSize: 22,
                         fontWeight: 700,
                         color: '#4F2D7F'
                       }}>
@@ -418,8 +418,13 @@ export default function WebAppPage() {
                   );
                 })}
               </Space>
-            </div>
-          </Card>
+            </CollapsibleSection>
+            {executionTime !== null && (
+              <div style={{ fontSize: 10, color: '#999', marginBottom: 24, textAlign: 'left' }}>
+                Calculated in {executionTime}ms
+              </div>
+            )}
+          </>
         )}
 
         {/* Footer */}

@@ -25,7 +25,8 @@
       "WebFetch(domain:openai.github.io)",
       "Bash(for dir in docs/*/)",
       "Bash(do echo \"\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Read(//var/folders/v7/r7ty9ng11ms5y2k_0rnljzqh0000gn/T/**)"
     ],
     "deny": []
   }
