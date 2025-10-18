@@ -14,6 +14,7 @@ interface ApiConfig {
   cacheTableSheetData?: boolean;
   tableSheetCacheTTL?: number;
   aiDescription?: string;
+  aiUsageGuidance?: string;
   aiUsageExamples?: string[];
   aiTags?: string[];
   category?: string;
@@ -58,17 +59,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [localConfig, setLocalConfig] = useState<Partial<ApiConfig>>({
     name: apiConfig.name,
     description: apiConfig.description,
-    aiDescription: apiConfig.aiDescription
+    aiDescription: apiConfig.aiDescription,
+    aiUsageGuidance: apiConfig.aiUsageGuidance
   });
-  
+
   // Update local state when props change
   useEffect(() => {
     setLocalConfig({
       name: apiConfig.name,
       description: apiConfig.description,
-      aiDescription: apiConfig.aiDescription
+      aiDescription: apiConfig.aiDescription,
+      aiUsageGuidance: apiConfig.aiUsageGuidance
     });
-  }, [apiConfig.name, apiConfig.description, apiConfig.aiDescription]);
+  }, [apiConfig.name, apiConfig.description, apiConfig.aiDescription, apiConfig.aiUsageGuidance]);
   
   // Add fade-in effect
   useEffect(() => {
@@ -116,6 +119,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           cacheTableSheetData={apiConfig.cacheTableSheetData || false}
           tableSheetCacheTTL={apiConfig.tableSheetCacheTTL || 300}
           aiDescription={localConfig.aiDescription || apiConfig.aiDescription || ''}
+          aiUsageGuidance={localConfig.aiUsageGuidance || apiConfig.aiUsageGuidance || ''}
           aiUsageExamples={apiConfig.aiUsageExamples || []}
           aiTags={apiConfig.aiTags || []}
           category={apiConfig.category || ''}
@@ -126,6 +130,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           onCacheTableSheetDataChange={(cacheTableSheetData) => onConfigChange({ cacheTableSheetData })} // Instant for checkboxes
           onTableSheetCacheTTLChange={(tableSheetCacheTTL) => onConfigChange({ tableSheetCacheTTL })} // Instant for select
           onAiDescriptionChange={(aiDescription) => debouncedConfigChange('aiDescription', aiDescription, 500)}
+          onAiUsageGuidanceChange={(aiUsageGuidance) => debouncedConfigChange('aiUsageGuidance', aiUsageGuidance, 500)}
           onAiUsageExamplesChange={(aiUsageExamples) => onConfigChange({ aiUsageExamples })} // Keep instant for tags
           onAiTagsChange={(aiTags) => onConfigChange({ aiTags })} // Keep instant for tags
           onCategoryChange={(category) => onConfigChange({ category })} // Instant for select

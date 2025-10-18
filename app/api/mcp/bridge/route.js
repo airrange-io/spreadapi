@@ -1088,7 +1088,12 @@ async function handleJsonRpc(request, auth) {
               responseText += `Description: ${publishedData.description || publishedData.aiDescription}\n`;
             }
             responseText += '\n';
-            
+
+            // Add usage guidance if available
+            if (publishedData.aiUsageGuidance) {
+              responseText += `WHEN TO USE:\n${publishedData.aiUsageGuidance}\n\n`;
+            }
+
             // Check for areas
             let areas = [];
             if (publishedData.areas) {
@@ -1110,6 +1115,12 @@ async function handleJsonRpc(request, auth) {
                   responseText += ' [PERCENTAGE: Enter as decimal, e.g., 0.05 for 5%]';
                 }
                 if (input.description) responseText += `\n  ${input.description}`;
+
+                // Add AI examples if available
+                if (input.aiExamples && input.aiExamples.length > 0) {
+                  responseText += `\n  Examples: ${input.aiExamples.join(', ')}`;
+                }
+
                 if (input.min !== undefined || input.max !== undefined) {
                   responseText += `\n  Range: ${input.min || '*'} to ${input.max || '*'}`;
                 }
@@ -1122,6 +1133,12 @@ async function handleJsonRpc(request, auth) {
               apiDefinition.outputs.forEach(output => {
                 responseText += `• ${output.name} - ${output.type}`;
                 if (output.description) responseText += `: ${output.description}`;
+
+                // Add presentation hint if available
+                if (output.aiPresentationHint) {
+                  responseText += `\n  Present as: ${output.aiPresentationHint}`;
+                }
+
                 responseText += '\n';
               });
             }

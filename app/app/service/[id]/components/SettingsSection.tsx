@@ -15,6 +15,7 @@ interface SettingsSectionProps {
   aiUsageExamples: string[];
   aiTags: string[];
   category: string;
+  aiUsageGuidance?: string;
   isLoading?: boolean;
   onApiNameChange: (value: string) => void;
   onApiDescriptionChange: (value: string) => void;
@@ -25,6 +26,7 @@ interface SettingsSectionProps {
   onAiUsageExamplesChange: (values: string[]) => void;
   onAiTagsChange: (values: string[]) => void;
   onCategoryChange: (value: string) => void;
+  onAiUsageGuidanceChange: (value: string) => void;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
@@ -37,6 +39,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   aiUsageExamples,
   aiTags,
   category,
+  aiUsageGuidance,
   isLoading = false,
   onApiNameChange,
   onApiDescriptionChange,
@@ -47,6 +50,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   onAiUsageExamplesChange,
   onAiTagsChange,
   onCategoryChange,
+  onAiUsageGuidanceChange,
 }) => {
   return (
     <div style={{
@@ -139,6 +143,17 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                 value={aiDescription}
                 onChange={(e) => onAiDescriptionChange(e.target.value)}
                 rows={3}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Guidance</div>
+              <Input.TextArea
+                placeholder="When should AI use this service? E.g., 'Use when user wants to calculate mortgage payments or compare loan terms'"
+                value={aiUsageGuidance || ''}
+                onChange={(e) => onAiUsageGuidanceChange(e.target.value)}
+                rows={2}
                 disabled={isLoading}
               />
             </div>

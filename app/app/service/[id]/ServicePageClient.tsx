@@ -80,6 +80,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     cacheTableSheetData: true,
     tableSheetCacheTTL: 300,
     aiDescription: '',
+    aiUsageGuidance: '',
     aiUsageExamples: [],
     aiTags: [],
     category: ''
@@ -95,6 +96,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     cacheTableSheetData: true,
     tableSheetCacheTTL: 300,
     aiDescription: '',
+    aiUsageGuidance: '',
     aiUsageExamples: [],
     aiTags: [],
     category: ''
@@ -200,6 +202,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       apiConfig.cacheTableSheetData !== savedConfig.cacheTableSheetData ||
       apiConfig.tableSheetCacheTTL !== savedConfig.tableSheetCacheTTL ||
       apiConfig.aiDescription !== savedConfig.aiDescription ||
+      apiConfig.aiUsageGuidance !== savedConfig.aiUsageGuidance ||
       JSON.stringify(apiConfig.aiUsageExamples) !== JSON.stringify(savedConfig.aiUsageExamples) ||
       JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
       apiConfig.category !== savedConfig.category;
@@ -373,6 +376,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               cacheTableSheetData: data.service.cacheTableSheetData !== false,
               tableSheetCacheTTL: data.service.tableSheetCacheTTL || 300,
               aiDescription: data.service.aiDescription || '',
+              aiUsageGuidance: data.service.aiUsageGuidance || '',
               aiUsageExamples: data.service.aiUsageExamples || [],
               aiTags: data.service.aiTags || [],
               category: data.service.category || ''
@@ -400,6 +404,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               cacheTableSheetData: data.cacheTableSheetData !== 'false', // Default to true
               tableSheetCacheTTL: parseInt(data.tableSheetCacheTTL) || 300,
               aiDescription: data.aiDescription || '',
+              aiUsageGuidance: data.aiUsageGuidance || '',
               aiUsageExamples: data.aiUsageExamples || [],
               aiTags: data.aiTags || [],
               category: data.category || ''
@@ -431,6 +436,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             cacheTableSheetData: true,
             tableSheetCacheTTL: 300,
             aiDescription: '',
+            aiUsageGuidance: '',
             aiUsageExamples: [],
             aiTags: [],
             category: ''
@@ -837,6 +843,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           aiDescription: apiConfig.aiDescription,
+          aiUsageGuidance: apiConfig.aiUsageGuidance,
           aiUsageExamples: apiConfig.aiUsageExamples,
           aiTags: apiConfig.aiTags,
           category: apiConfig.category,

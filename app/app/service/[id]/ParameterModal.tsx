@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox } from 'antd';
+import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 interface InputDefinition {
@@ -23,6 +23,7 @@ interface InputDefinition {
   description?: string;
   format?: 'percentage';
   percentageDecimals?: number;
+  aiExamples?: string[];
 }
 
 interface OutputDefinition {
@@ -39,6 +40,7 @@ interface OutputDefinition {
   value?: any;
   direction: 'output';
   description?: string;
+  aiPresentationHint?: string;
 }
 
 interface SelectedCellInfo {
@@ -188,6 +190,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   const [form] = Form.useForm();
   const [addressError, setAddressError] = useState<string>('');
   const [parsedAddress, setParsedAddress] = useState<any>(null);
+  const [activeView, setActiveView] = useState<'parameter' | 'ai'>('parameter');
   
   // Check if this is a range selection
   const isRange = selectedCellInfo && !selectedCellInfo.isSingleCell;
@@ -304,10 +307,29 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           description: editingParameter?.description || '',
           mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
           min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
-          max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined
+          max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined,
+          aiExamples: editingParameter && 'aiExamples' in editingParameter ? editingParameter.aiExamples : undefined,
+          aiPresentationHint: editingParameter && 'aiPresentationHint' in editingParameter ? editingParameter.aiPresentationHint : undefined
         }}
       >
-        <div style={{ display: 'flex', gap: '16px' }}>
+        {/* View Switcher */}
+        <div style={{ marginBottom: 24 }}>
+          <Segmented
+            options={['Parameter Info', '🤖 AI Info']}
+            value={activeView === 'parameter' ? 'Parameter Info' : '🤖 AI Info'}
+            onChange={(value) => setActiveView(value === 'Parameter Info' ? 'parameter' : 'ai')}
+            block
+            style={{
+              backgroundColor: '#f5f5f5',
+              padding: 4
+            }}
+          />
+        </div>
+
+        {/* Parameter Info View */}
+        {activeView === 'parameter' && (
+          <>
+            <div style={{ display: 'flex', gap: '16px' }}>
           <Form.Item
             label="Parameter Name"
             name="name"
@@ -409,18 +431,6 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           />
         )}
 
-        <Form.Item
-          label="Description (for AI assistants)"
-          name="description"
-        >
-          <Input.TextArea
-            rows={2}
-            placeholder="Describe what this parameter represents and how it should be used..."
-            maxLength={500}
-            showCount
-          />
-        </Form.Item>
-
         {parameterType === 'input' && (
           <>
             <Form.Item
@@ -480,7 +490,66 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             <Checkbox>Mandatory parameter</Checkbox>
           </Form.Item>
         )}
-        
+          </>
+        )}
+
+        {/* AI Info View */}
+        {activeView === 'ai' && (
+          <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 24 }}>
+            <div>
+              <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
+                Description (for AI assistants)
+              </div>
+              <Form.Item name="description" noStyle>
+                <Input.TextArea
+                  rows={3}
+                  placeholder="Describe what this parameter represents and how it should be used by AI assistants..."
+                  maxLength={500}
+                  showCount
+                />
+              </Form.Item>
+              <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                Help AI understand the purpose and usage of this parameter
+              </div>
+            </div>
+
+            {parameterType === 'input' && (
+              <div>
+                <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
+                  Example Values
+                </div>
+                <Form.Item name="aiExamples" noStyle>
+                  <Select
+                    mode="tags"
+                    style={{ width: '100%' }}
+                    placeholder="E.g., '0.05 (5% APR)', '300000 (for $300k)', '30 (years)'"
+                    tokenSeparators={[',']}
+                  />
+                </Form.Item>
+                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                  Provide example values that AI can suggest to users
+                </div>
+              </div>
+            )}
+
+            {parameterType === 'output' && (
+              <div>
+                <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
+                  Presentation Hint
+                </div>
+                <Form.Item name="aiPresentationHint" noStyle>
+                  <Input
+                    placeholder="E.g., 'Format as currency with 2 decimals' or 'Show as percentage'"
+                  />
+                </Form.Item>
+                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                  Guide AI on how to format and present this result to users
+                </div>
+              </div>
+            )}
+          </Space>
+        )}
+
         <Form.Item style={{ marginBottom: 0, paddingBottom: 0 }}>
           <Space style={{ marginTop: 8 }}>
             <Button type="primary" htmlType="submit">

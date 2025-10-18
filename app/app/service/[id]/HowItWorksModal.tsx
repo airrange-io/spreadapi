@@ -57,7 +57,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 Input parameters are specific values that users or applications provide when calling your service.
                 Think of them as function arguments - fixed entry points for data.
               </Paragraph>
-              <ul>
+              <ul style={{ paddingLeft: 24 }}>
                 <li>Select any cell that should receive user input</li>
                 <li>Click "Add as Input" to make it a parameter</li>
                 <li>Give it a meaningful name (e.g., "interest_rate", "loan_amount")</li>
@@ -77,7 +77,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 Output parameters are the calculated results that your API returns. These are the final
                 values after all spreadsheet formulas have been calculated.
               </Paragraph>
-              <ul>
+              <ul style={{ paddingLeft: 24 }}>
                 <li>Select cells containing formulas or calculated results</li>
                 <li>Click "Add as Output"</li>
                 <li>Name your outputs clearly (e.g., "monthly_payment", "total_interest")</li>
@@ -98,7 +98,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 Unlike simple parameters, areas preserve the spreadsheet's structure - formulas, relationships, and data patterns.
                 AI can discover what's in an area and intelligently manipulate it.
               </Paragraph>
-              <ul>
+              <ul style={{ paddingLeft: 24 }}>
                 <li>Select a meaningful range (e.g., a tax table, parameter grid, or data structure)</li>
                 <li>Click "Add as Editable Area" and name it descriptively</li>
                 <li>Set granular permissions (read values, write values, read/write formulas)</li>
@@ -118,7 +118,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
           <div>
             <Title level={4}>The API Flow</Title>
             <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-              <ol style={{ marginBottom: 0 }}>
+              <ol style={{ paddingLeft: 24, marginBottom: 0 }}>
                 <li><strong>API Call Received</strong>: Your service receives a request with input values</li>
                 <li><strong>Inputs Applied</strong>: Values are placed into the designated input cells</li>
                 <li><strong>Calculation</strong>: Spreadsheet formulas automatically recalculate</li>
@@ -167,7 +167,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               <Paragraph style={{ marginBottom: 8 }}>
                 <strong>AI Capabilities:</strong>
               </Paragraph>
-              <ul style={{ marginLeft: 20, marginBottom: 8 }}>
+              <ul style={{ paddingLeft: 24, marginBottom: 8 }}>
                 <li>Read the tax brackets to understand the structure</li>
                 <li>Modify rates to test different tax policies</li>
                 <li>Add or remove brackets for scenario testing</li>
@@ -190,7 +190,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div style={{ background: '#f6ffed', padding: 16, borderRadius: 8 }}>
                 <Title level={5}>Use Parameters When:</Title>
-                <ul style={{ marginBottom: 0 }}>
+                <ul style={{ paddingLeft: 24, marginBottom: 0 }}>
                   <li>You have specific, known inputs</li>
                   <li>Values are single cells</li>
                   <li>Structure is fixed</li>
@@ -200,7 +200,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               </div>
               <div style={{ background: '#fff7e6', padding: 16, borderRadius: 8 }}>
                 <Title level={5}>Use Areas When:</Title>
-                <ul style={{ marginBottom: 0 }}>
+                <ul style={{ paddingLeft: 24, marginBottom: 0 }}>
                   <li>You have tables or data structures</li>
                   <li>AI needs to explore/discover</li>
                   <li>Scenarios require flexibility</li>
@@ -217,7 +217,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
             <Paragraph>
               Once you've defined your parameters:
             </Paragraph>
-            <ol>
+            <ol style={{ paddingLeft: 24 }}>
               <li>Click "Publish Service" to make it available</li>
               <li>Get your unique API endpoint</li>
               <li>Share with developers or configure for AI assistants</li>
@@ -240,7 +240,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
             <div style={{ marginBottom: 16 }}>
               <div style={{ background: '#f0f9ff', padding: 16, borderRadius: 8, marginBottom: 12 }}>
                 <Title level={5} style={{ marginTop: 0 }}>For Parameters (Inputs/Outputs):</Title>
-                <ul style={{ marginBottom: 0 }}>
+                <ul style={{ paddingLeft: 24, marginBottom: 0 }}>
                   <li><strong>Title:</strong> Human-readable name (e.g., "Annual Interest Rate")</li>
                   <li><strong>Description:</strong> Explain what it is and provide examples
                     <div style={{ marginLeft: 20, marginTop: 4, fontSize: 12, color: '#666' }}>
@@ -258,7 +258,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               
               <div style={{ background: '#fff7e6', padding: 16, borderRadius: 8 }}>
                 <Title level={5} style={{ marginTop: 0 }}>For Editable Areas:</Title>
-                <ul style={{ marginBottom: 0 }}>
+                <ul style={{ paddingLeft: 24, marginBottom: 0 }}>
                   <li><strong>Description:</strong> What does this area contain?
                     <div style={{ marginLeft: 20, marginTop: 4, fontSize: 12, color: '#666' }}>
                       Example: "Tax bracket table with income thresholds and rates"
@@ -310,7 +310,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
             <Paragraph>
               MCP (Model Context Protocol) enables AI assistants to become intelligent spreadsheet operators:
             </Paragraph>
-            <ul>
+            <ul style={{ paddingLeft: 24 }}>
               <li><strong>Service Discovery:</strong> AI automatically finds and understands your services</li>
               <li><strong>Natural Language:</strong> "Calculate my mortgage payment for $300k at 5%"</li>
               <li><strong>Intelligent Exploration:</strong> AI reads areas to understand your data structures</li>
@@ -337,7 +337,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               <Paragraph style={{ marginBottom: 8 }}>
                 The difference between a good API and a GREAT AI-powered service is documentation:
               </Paragraph>
-              <ul style={{ marginBottom: 0 }}>
+              <ul style={{ paddingLeft: 24, marginBottom: 0 }}>
                 <li>Every parameter needs a description with examples</li>
                 <li>Every area needs purpose and expected behavior</li>
                 <li>Include units, formats, and valid ranges</li>
@@ -345,7 +345,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               </ul>
             </div>
             
-            <ul>
+            <ul style={{ paddingLeft: 24 }}>
               <li><strong>Clear Naming</strong>: Use descriptive names ("tax_rate" not "input1")</li>
               <li><strong>Rich Descriptions</strong>: Include examples in every description field</li>
               <li><strong>Smart Validation</strong>: Set min/max values and mark optional parameters</li>
