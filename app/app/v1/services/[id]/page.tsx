@@ -278,6 +278,11 @@ export default function WebAppPage() {
     }
 
     if (typeof value === 'number') {
+      // Don't show decimal places for integers
+      if (Number.isInteger(value)) {
+        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+      }
+      // Show up to 2 decimal places for decimals
       return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
     }
 
