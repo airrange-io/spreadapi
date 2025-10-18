@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Tabs, Button, Typography, message } from 'antd';
-import { CopyOutlined } from '@ant-design/icons';
+import { Tabs, Button, Typography, message, Space } from 'antd';
+import { CopyOutlined, CaretRightOutlined } from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
@@ -10,12 +10,14 @@ const { Text } = Typography;
 
 interface IntegrationExamplesProps {
   serviceId: string;
+  serviceName?: string;
   requireToken?: boolean;
   parameterValues?: Record<string, any>;
 }
 
 const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
   serviceId,
+  serviceName,
   requireToken,
   parameterValues = {}
 }) => {
@@ -232,6 +234,228 @@ if ($httpCode == 200) {
     echo $response;
 }`;
 
+      case 'standalone-ui':
+        const inputFields = Object.entries(parameterValues)
+          .map(([key, value]) => {
+            const inputType = typeof value === 'number' ? 'number' : 'text';
+            return `        <div class="form-group">
+          <label for="${key}">${key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+          <input type="${inputType}" id="${key}" name="${key}" value="${value}" ${inputType === 'number' ? 'step="any"' : ''}>
+        </div>`;
+          })
+          .join('\n');
+
+        const jsInputs = Object.keys(parameterValues)
+          .map(key => `        ${key}: document.getElementById('${key}').value`)
+          .join(',\n');
+
+        const resultFields = Object.keys(parameterValues).length > 0
+          ? `Object.entries(data.outputs).forEach(([key, value]) => {
+          const row = document.createElement('div');
+          row.className = 'result-row';
+          // Extract the label from title, alias, or name property
+          const label = (typeof value === 'object' && value !== null)
+            ? (value.title || value.alias || value.name || key)
+            : key;
+          // Extract the value property if the output is an object with a value field
+          const displayValue = (typeof value === 'object' && value !== null && 'value' in value)
+            ? value.value
+            : (typeof value === 'object' ? JSON.stringify(value, null, 2) : value);
+          row.innerHTML = \`
+            <span class="result-label">\${label}:</span>
+            <span class="result-value">\${displayValue}</span>
+          \`;
+          content.appendChild(row);
+        });`
+          : `content.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';`;
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${serviceName || serviceId} Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #502D80;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #502D80;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    button:hover { background: #3d2260; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+
+    .results {
+      margin-top: 24px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .results.show { display: block; }
+
+    .results h2 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .result-row:last-child { border-bottom: none; }
+
+    .result-value {
+      font-weight: 600;
+      color: #502D80;
+    }
+
+    .error {
+      margin-top: 16px;
+      padding: 12px;
+      background: #fee;
+      color: #c33;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .error.show { display: block; }
+
+    .meta {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${serviceName || serviceId}</h1>
+
+    <form id="form">
+${inputFields}
+      <button type="submit" id="btn">Calculate</button>
+    </form>
+
+    <div class="error" id="error"></div>
+
+    <div class="results" id="results">
+      <h2>Results</h2>
+      <div id="content"></div>
+      <div class="meta">
+        <span id="time"></span> •
+        <a href="https://spreadapi.io" target="_blank" style="color: #502D80; text-decoration: none;">SpreadAPI</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('form');
+    const btn = document.getElementById('btn');
+    const results = document.getElementById('results');
+    const content = document.getElementById('content');
+    const error = document.getElementById('error');
+    const time = document.getElementById('time');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      error.classList.remove('show');
+      results.classList.remove('show');
+      btn.disabled = true;
+      btn.textContent = 'Calculating...';
+
+      try {
+        const res = await fetch('https://spreadapi.io/api/v1/services/${serviceId}/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json'${requireToken ? ", 'Authorization': 'Bearer YOUR_TOKEN_HERE'" : ''} },
+          body: JSON.stringify({
+            inputs: {
+${jsInputs}
+            }
+          })
+        });
+
+        if (!res.ok) throw new Error(\`Error: \${res.status}\`);
+
+        const data = await res.json();
+        content.innerHTML = '';
+
+        ${resultFields}
+
+        if (data.metadata) {
+          time.textContent = \`\${data.metadata.executionTime}ms\`;
+        }
+
+        results.classList.add('show');
+
+      } catch (err) {
+        error.textContent = err.message;
+        error.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Calculate';
+      }
+    };
+  </script>
+</body>
+</html>`;
+
       case 'postman':
         return `// Postman Configuration
 
@@ -430,6 +654,67 @@ function SPREADAPI(serviceId, ...args) {
     );
   };
 
+  const downloadHtml = () => {
+    const htmlContent = getCodeExample('standalone-ui');
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${serviceId}-calculator.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    message.success('HTML file downloaded!');
+  };
+
+  const openHtmlInNewTab = () => {
+    const htmlContent = getCodeExample('standalone-ui');
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
+
+    if (newWindow) {
+      message.success('Calculator opened in new tab!');
+      // Clean up the blob URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } else {
+      message.error('Please allow popups to open the calculator');
+    }
+  };
+
+  const StandaloneUI: React.FC = () => (
+    <div>
+      <div style={{ marginBottom: 16, padding: '16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+        <Text strong style={{ display: 'block', marginBottom: 8, color: '#0369a1' }}>
+          📦 Ready-to-Use Calculator UI
+        </Text>
+        <Text style={{ fontSize: 13, color: '#075985', display: 'block', marginBottom: 12 }}>
+          A complete, standalone HTML file with a beautiful UI for your service.
+          Open it instantly or download for offline use!
+        </Text>
+        <Space>
+          <Button
+            type="primary"
+            icon={<CaretRightOutlined />}
+            onClick={openHtmlInNewTab}
+            size="large"
+          >
+            Open in New Tab
+          </Button>
+          <Button
+            icon={<CopyOutlined />}
+            onClick={downloadHtml}
+            size="large"
+          >
+            Download HTML
+          </Button>
+        </Space>
+      </div>
+      <CodeBlock language="html" code={getCodeExample('standalone-ui')} />
+    </div>
+  );
+
   const tabItems = [
     {
       key: 'curl',
@@ -470,6 +755,11 @@ function SPREADAPI(serviceId, ...args) {
       key: 'postman',
       label: 'Postman',
       children: <CodeBlock language="text" code={getCodeExample('postman')} />
+    },
+    {
+      key: 'standalone-ui',
+      label: '🎨 Standalone UI',
+      children: <StandaloneUI />
     }
   ];
 
@@ -477,19 +767,21 @@ function SPREADAPI(serviceId, ...args) {
     <div>
       <div style={{ marginBottom: 12 }}>
         <Text type="secondary" style={{ fontSize: 13 }}>
-          Code examples for integrating this service using the SpreadAPI v1 REST API. 
-          Both GET (simple) and POST (recommended) methods are supported.
+          Integration examples for this service. Start with the <strong>Standalone UI</strong> for a ready-to-use calculator,
+          or choose from code examples in various languages.
           {requireToken && ' Remember to replace YOUR_TOKEN_HERE with your actual API token.'}
         </Text>
         <div style={{ marginTop: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
+            <strong>Standalone UI:</strong> Download a complete HTML calculator - works offline!<br/>
             <strong>GET method:</strong> Best for Excel, browser testing, and simple integrations<br/>
             <strong>POST method:</strong> Recommended for applications, supports complex data and better error handling
           </Text>
         </div>
       </div>
-      <Tabs 
-        items={tabItems} 
+      <Tabs
+        items={tabItems}
+        defaultActiveKey="curl"
         size="small"
         style={{ marginTop: 8 }}
       />

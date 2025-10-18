@@ -14,6 +14,7 @@ const { TextArea } = Input;
 
 interface ServiceTesterProps {
   serviceId: string;
+  serviceName?: string;
   isPublished: boolean;
   inputs: any[];
   outputs: any[];
@@ -25,6 +26,7 @@ interface ServiceTesterProps {
 
 const ServiceTester: React.FC<ServiceTesterProps> = ({
   serviceId,
+  serviceName,
   isPublished,
   inputs,
   outputs,
@@ -512,8 +514,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             <Spin size="small" />
           </div>
         }>
-          <IntegrationExamples 
+          <IntegrationExamples
             serviceId={serviceId}
+            serviceName={serviceName}
             requireToken={requireToken}
             parameterValues={parameterValues}
           />

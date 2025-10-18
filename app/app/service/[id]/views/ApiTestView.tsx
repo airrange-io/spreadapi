@@ -24,6 +24,7 @@ const TokenManagement = dynamic(() => import('../TokenManagement'), {
 interface ApiTestViewProps {
   serviceId: string;
   apiConfig: {
+    name?: string;
     inputs: any[];
     outputs: any[];
     requireToken?: boolean;
@@ -123,6 +124,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
         {/* Service Tester */}
         <ServiceTester
           serviceId={serviceId}
+          serviceName={apiConfig.name}
           isPublished={serviceStatus?.published || false}
           inputs={apiConfig.inputs || []}
           outputs={apiConfig.outputs || []}
