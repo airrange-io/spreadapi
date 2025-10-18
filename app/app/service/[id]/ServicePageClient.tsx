@@ -181,10 +181,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setIsMobile(mobile);
 
       // Auto-manage drawer visibility based on screen size
-      // Only auto-show on mobile when transitioning from desktop
       if (mobile && !wasMobile) {
         // Just became mobile: show drawer
         setDrawerVisible(true);
+      } else if (!mobile && wasMobile) {
+        // Just became desktop: hide drawer (sider is now visible)
+        setDrawerVisible(false);
       }
     };
 
