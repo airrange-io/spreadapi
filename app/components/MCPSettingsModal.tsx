@@ -34,7 +34,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [showConfig, setShowConfig] = useState(false);
   const [generateActiveKey, setGenerateActiveKey] = useState<string[]>(['generate']);
   const [tokensActiveKey, setTokensActiveKey] = useState<string[]>([]);
-  const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>(['instructions']);
+  const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const { message: messageApi } = App.useApp();
@@ -481,6 +481,202 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       />
       )}
 
+      {/* ChatGPT Instructions */}
+      <Collapse
+        style={{ marginBottom: 24 }}
+        items={[
+          {
+            key: 'chatgpt',
+            label: 'How to Connect ChatGPT',
+            children: (
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {/* Step 1 */}
+                <div>
+                  <Title level={5}>Step 1: Generate an API Token</Title>
+                  <Text>
+                    {isAuthenticated ?
+                      'Create a token above with access to your published services.' :
+                      'Sign in to generate an API token for your published services.'
+                    }
+                  </Text>
+                </div>
+
+                {/* Step 2 */}
+                <div>
+                  <Title level={5}>Step 2: Open ChatGPT Developer Mode</Title>
+                  <div style={{
+                    background: '#f5f5f5',
+                    padding: 16,
+                    borderRadius: 8,
+                    marginTop: 12
+                  }}>
+                    <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
+                      <li>Go to <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></li>
+                      <li>Click <strong>Settings</strong> (bottom left)</li>
+                      <li>Navigate to <strong>Apps & Connectors → Advanced → Developer Mode</strong></li>
+                      <li>Click <strong>Create</strong> to add a new connector</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div>
+                  <Title level={5}>Step 3: Configure the Connector</Title>
+                  <Space direction="vertical" style={{ width: '100%' }} size="small">
+                    <div>
+                      <Text strong>Name:</Text>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: 8,
+                        borderRadius: 4,
+                        marginTop: 4,
+                        position: 'relative'
+                      }}>
+                        <Button
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => copyToClipboard('SpreadAPI')}
+                          style={{ position: 'absolute', top: 4, right: 4 }}
+                        >
+                          Copy
+                        </Button>
+                        SpreadAPI
+                      </pre>
+                    </div>
+
+                    <div>
+                      <Text strong>Description:</Text>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: 8,
+                        borderRadius: 4,
+                        marginTop: 4,
+                        position: 'relative'
+                      }}>
+                        <Button
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => copyToClipboard('Access to spreadsheet calculation services')}
+                          style={{ position: 'absolute', top: 4, right: 4 }}
+                        >
+                          Copy
+                        </Button>
+                        Access to spreadsheet calculation services
+                      </pre>
+                    </div>
+
+                    <div>
+                      <Text strong>URL des MCP-Servers:</Text>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: 8,
+                        borderRadius: 4,
+                        marginTop: 4,
+                        position: 'relative'
+                      }}>
+                        <Button
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => copyToClipboard('https://spreadapi.io/api/mcp')}
+                          style={{ position: 'absolute', top: 4, right: 4 }}
+                        >
+                          Copy
+                        </Button>
+                        https://spreadapi.io/api/mcp
+                      </pre>
+                    </div>
+                  </Space>
+                </div>
+
+                {/* Step 4 */}
+                <div>
+                  <Title level={5}>Step 4: Configure OAuth Authentication</Title>
+                  <Text>In the Authentication section, select <strong>OAuth</strong> and enter:</Text>
+
+                  <Space direction="vertical" style={{ width: '100%', marginTop: 12 }} size="small">
+                    <div>
+                      <Text strong>Client-ID:</Text>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: 8,
+                        borderRadius: 4,
+                        marginTop: 4,
+                        position: 'relative'
+                      }}>
+                        <Button
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => copyToClipboard('chatgpt')}
+                          style={{ position: 'absolute', top: 4, right: 4 }}
+                        >
+                          Copy
+                        </Button>
+                        chatgpt
+                      </pre>
+                    </div>
+
+                    <div>
+                      <Text strong>Client-Secret:</Text>
+                      <pre style={{
+                        background: '#f5f5f5',
+                        padding: 8,
+                        borderRadius: 4,
+                        marginTop: 4,
+                        position: 'relative'
+                      }}>
+                        <Button
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={() => copyToClipboard(generatedToken || 'YOUR_TOKEN_HERE')}
+                          style={{ position: 'absolute', top: 4, right: 4 }}
+                          disabled={!generatedToken}
+                        >
+                          Copy
+                        </Button>
+                        {generatedToken || 'YOUR_TOKEN_HERE'}
+                      </pre>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                        {generatedToken ? '✓ Use the token you just generated' : '⚠️ Generate a token first (Step 1)'}
+                      </Text>
+                    </div>
+                  </Space>
+
+                  <Alert
+                    style={{ marginTop: 12 }}
+                    message="How OAuth Works"
+                    description="ChatGPT will automatically exchange your token for an OAuth access token when you create the connector. Your existing token permissions are preserved."
+                    type="info"
+                    showIcon
+                  />
+                </div>
+
+                {/* Step 5 */}
+                <div>
+                  <Title level={5}>Step 5: Save and Test</Title>
+                  <Text>Click <strong>Erstellen/Create</strong> to save the connector, then start a new chat and try:</Text>
+                  <ul style={{ marginTop: 8, marginLeft: 20 }}>
+                    <li>"What Excel calculations can you help me with?"</li>
+                    <li>"Calculate the monthly payment for a $300,000 loan"</li>
+                    <li>"Help me analyze different pricing scenarios"</li>
+                  </ul>
+                </div>
+
+                {/* Troubleshooting */}
+                <Divider />
+                <div>
+                  <Title level={5}>Need Help?</Title>
+                  <ul style={{ marginTop: 8, marginLeft: 20 }}>
+                    <li><strong>Connection failed?</strong> Double-check the URL is exactly: https://spreadapi.io/api/mcp</li>
+                    <li><strong>Authentication error?</strong> Make sure Client-ID is "chatgpt" and Client-Secret is your token</li>
+                    <li><strong>No tools found?</strong> Ensure your services are published and included in the token</li>
+                  </ul>
+                </div>
+              </Space>
+            )
+          }
+        ]}
+      />
+
       {/* Configuration Guide - Collapsible - Always visible */}
       <Collapse
         activeKey={instructionsActiveKey}
@@ -496,7 +692,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             <div>
               <Title level={5}>Step 1: Generate an API Token</Title>
               <Text>
-                {isAuthenticated ? 
+                {isAuthenticated ?
                   'Create a token above with access to your published services.' :
                   'Sign in to generate an API token for your published services.'
                 }
@@ -506,11 +702,11 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             {/* Step 2 */}
             <div>
               <Title level={5}>Step 2: Open Claude Desktop Settings</Title>
-              <div style={{ 
-                background: '#f5f5f5', 
-                padding: 16, 
+              <div style={{
+                background: '#f5f5f5',
+                padding: 16,
                 borderRadius: 8,
-                marginTop: 12 
+                marginTop: 12
               }}>
                 <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
                   <li>Open Claude Desktop</li>
@@ -525,12 +721,12 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             <div>
               <Title level={5}>Step 3: Add SpreadAPI Configuration</Title>
               <Text>
-                {isAuthenticated ? 
+                {isAuthenticated ?
                   'Add this to your config file (replace YOUR_TOKEN_HERE with the token from Step 1):' :
                   'Add this to your config file (you\'ll need to sign in first to get a real token):'
                 }
               </Text>
-              
+
               <pre style={{
                 background: '#f5f5f5',
                 padding: 12,
