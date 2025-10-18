@@ -220,12 +220,11 @@ export default function WebAppPage() {
 
     // If the value is an integer, never use decimal steps
     if (Number.isInteger(currentValue) && currentValue !== 0) {
-      if (absValue < 10) return 1;
-      if (absValue < 100) return 10;
-      if (absValue < 1000) return 100;
-      if (absValue < 10000) return 1000;
-      if (absValue < 100000) return 10000;
-      return 100000;
+      if (absValue < 10) return 1;          // 0-9: step by 1
+      if (absValue < 1000) return 10;       // 10-999: step by 10
+      if (absValue < 100000) return 100;    // 1000-99999: step by 100
+      if (absValue < 10000000) return 1000; // 100000-9999999: step by 1000
+      return 10000;
     }
 
     // For decimal values or zero, use decimal steps
