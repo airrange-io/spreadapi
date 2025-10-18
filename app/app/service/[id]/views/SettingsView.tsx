@@ -62,9 +62,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     name: apiConfig.name,
     description: apiConfig.description,
     aiDescription: apiConfig.aiDescription,
-    aiUsageGuidance: apiConfig.aiUsageGuidance,
-    webAppEnabled: apiConfig.webAppEnabled,
-    webAppToken: apiConfig.webAppToken
+    aiUsageGuidance: apiConfig.aiUsageGuidance
   });
 
   // Update local state when props change
@@ -73,11 +71,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       name: apiConfig.name,
       description: apiConfig.description,
       aiDescription: apiConfig.aiDescription,
-      aiUsageGuidance: apiConfig.aiUsageGuidance,
-      webAppEnabled: apiConfig.webAppEnabled,
-      webAppToken: apiConfig.webAppToken
+      aiUsageGuidance: apiConfig.aiUsageGuidance
     });
-  }, [apiConfig.name, apiConfig.description, apiConfig.aiDescription, apiConfig.aiUsageGuidance, apiConfig.webAppEnabled, apiConfig.webAppToken]);
+  }, [apiConfig.name, apiConfig.description, apiConfig.aiDescription, apiConfig.aiUsageGuidance]);
   
   // Add fade-in effect
   useEffect(() => {
@@ -129,9 +125,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           aiUsageExamples={apiConfig.aiUsageExamples || []}
           aiTags={apiConfig.aiTags || []}
           category={apiConfig.category || ''}
-          webAppEnabled={localConfig.webAppEnabled || apiConfig.webAppEnabled || false}
-          webAppToken={localConfig.webAppToken || apiConfig.webAppToken || ''}
-          serviceId={serviceId}
           isLoading={isLoading}
           onApiNameChange={(name) => debouncedConfigChange('name', name, 500)}
           onApiDescriptionChange={(description) => debouncedConfigChange('description', description, 500)}
@@ -143,8 +136,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           onAiUsageExamplesChange={(aiUsageExamples) => onConfigChange({ aiUsageExamples })} // Keep instant for tags
           onAiTagsChange={(aiTags) => onConfigChange({ aiTags })} // Keep instant for tags
           onCategoryChange={(category) => onConfigChange({ category })} // Instant for select
-          onWebAppEnabledChange={(webAppEnabled) => onConfigChange({ webAppEnabled })} // Instant for checkboxes
-          onWebAppTokenChange={(webAppToken) => onConfigChange({ webAppToken })} // Instant for token generation
         />
       </Suspense>
     </div>

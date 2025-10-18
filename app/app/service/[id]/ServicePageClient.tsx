@@ -1618,11 +1618,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         availableTokens={availableTokens}
                         isDemoMode={isDemoMode}
                         configLoaded={configLoaded}
+                        isLoading={!configLoaded}
                         onRequireTokenChange={(value) => {
                           handleConfigChange({ requireToken: value });
                         }}
                         onTokenCountChange={setTokenCount}
                         onTokensChange={setAvailableTokens}
+                        onConfigChange={handleConfigChange}
                       />
                     </div>
 
@@ -1732,11 +1734,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     availableTokens={availableTokens}
                     isDemoMode={isDemoMode}
                     configLoaded={configLoaded}
+                    isLoading={!configLoaded}
                     onRequireTokenChange={(value) => {
                       handleConfigChange({ requireToken: value });
                     }}
                     onTokenCountChange={setTokenCount}
                     onTokensChange={setAvailableTokens}
+                    onConfigChange={handleConfigChange}
                   />
                 </div>
 

@@ -21,6 +21,11 @@ const TokenManagement = dynamic(() => import('../TokenManagement'), {
   ssr: false
 });
 
+const WebAppSection = dynamic(() => import('../components/WebAppSection'), {
+  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
+  ssr: false
+});
+
 interface ApiTestViewProps {
   serviceId: string;
   apiConfig: {
@@ -28,6 +33,8 @@ interface ApiTestViewProps {
     inputs: any[];
     outputs: any[];
     requireToken?: boolean;
+    webAppEnabled?: boolean;
+    webAppToken?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -35,9 +42,11 @@ interface ApiTestViewProps {
   availableTokens?: any[];
   isDemoMode?: boolean;
   configLoaded?: boolean;
+  isLoading?: boolean;
   onRequireTokenChange?: (value: boolean) => void;
   onTokenCountChange?: (count: number) => void;
   onTokensChange?: (tokens: any[]) => void;
+  onConfigChange?: (updates: any) => void;
 }
 
 const ApiTestView: React.FC<ApiTestViewProps> = ({
@@ -47,9 +56,11 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   availableTokens = [],
   isDemoMode = false,
   configLoaded = false,
+  isLoading = false,
   onRequireTokenChange,
   onTokenCountChange,
-  onTokensChange
+  onTokensChange,
+  onConfigChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -143,6 +154,16 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           onRequireTokenChange={onRequireTokenChange}
           onTokenCountChange={onTokenCountChange}
           onTokensChange={onTokensChange}
+        />
+
+        {/* Web App Section */}
+        <WebAppSection
+          serviceId={serviceId}
+          webAppEnabled={apiConfig.webAppEnabled || false}
+          webAppToken={apiConfig.webAppToken || ''}
+          isLoading={isLoading}
+          onWebAppEnabledChange={(webAppEnabled) => onConfigChange?.({ webAppEnabled })}
+          onWebAppTokenChange={(webAppToken) => onConfigChange?.({ webAppToken })}
         />
       </Space>
     </div>

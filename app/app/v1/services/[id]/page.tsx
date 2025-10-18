@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Card, Form, Input, InputNumber, Button, Space, Alert, Spin, Typography } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
-import CollapsibleSection from './CollapsibleSection';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 
 interface ServiceData {
   name: string;
@@ -45,6 +44,7 @@ export default function WebAppPage() {
   const [serviceData, setServiceData] = useState<ServiceData | null>(null);
   const [results, setResults] = useState<any>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
+  const [totalTime, setTotalTime] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [initialValues, setInitialValues] = useState<Record<string, any>>({});
 
@@ -105,10 +105,11 @@ export default function WebAppPage() {
   };
 
   const handleExecute = async (values: any) => {
+    const clientStart = Date.now();
     try {
       setExecuting(true);
       setError(null);
-      setResults(null);
+      // Don't clear results to prevent flicker - keep old results visible while calculating
 
       // Build query string from form values
       const params = new URLSearchParams();
@@ -156,6 +157,10 @@ export default function WebAppPage() {
         setExecutionTime(data.metadata.totalTime);
       }
 
+      // Calculate total round-trip time
+      const clientEnd = Date.now();
+      setTotalTime(clientEnd - clientStart);
+
     } catch (err: any) {
       setError(err.message || 'Failed to execute calculation');
     } finally {
@@ -194,12 +199,12 @@ export default function WebAppPage() {
 
     const label = (
       <div>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+        <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
           {input.title || input.name}
-          {!input.mandatory && <Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }}>(Optional)</Text>}
+          {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(Optional)</Text>}
         </div>
         {input.description && (
-          <div style={{ fontSize: 12, color: '#666', fontWeight: 400, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginBottom: 4 }}>
             {input.description}
           </div>
         )}
@@ -213,6 +218,7 @@ export default function WebAppPage() {
           name={fieldName}
           label={label}
           rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+          style={{ marginBottom: 12 }}
         >
           <InputNumber
             style={{ width: '100%' }}
@@ -220,8 +226,23 @@ export default function WebAppPage() {
             max={input.max}
             step={getSmartStep(input.value, input.min, input.max)}
             placeholder={input.aiExamples?.[0] || `Enter ${input.title || input.name}`}
-            size="large"
+            size="middle"
             keyboard={true}
+            formatter={(value) => {
+              if (!value) return '';
+              const num = parseFloat(value.toString());
+              if (isNaN(num)) return value.toString();
+              // Show no decimals for integers, up to 2 for decimals
+              if (Number.isInteger(num)) {
+                return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
+              }
+              return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+            }}
+            parser={(value) => {
+              if (!value) return 0;
+              const parsed = parseFloat(value.replace(/,/g, ''));
+              return isNaN(parsed) ? 0 : parsed;
+            }}
           />
         </Form.Item>
       );
@@ -234,10 +255,11 @@ export default function WebAppPage() {
           name={fieldName}
           label={label}
           valuePropName="checked"
+          style={{ marginBottom: 12 }}
         >
           <Input
             type="checkbox"
-            size="large"
+            size="middle"
           />
         </Form.Item>
       );
@@ -250,10 +272,11 @@ export default function WebAppPage() {
         name={fieldName}
         label={label}
         rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+        style={{ marginBottom: 12 }}
       >
         <Input
           placeholder={input.aiExamples?.[0] || `Enter ${input.title || input.name}`}
-          size="large"
+          size="middle"
         />
       </Form.Item>
     );
@@ -296,7 +319,7 @@ export default function WebAppPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#ffffff'
+        backgroundColor: '#f5f5f5'
       }}>
         <Spin size="default" />
       </div>
@@ -310,10 +333,10 @@ export default function WebAppPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
-        padding: 24
+        backgroundColor: '#f5f5f5',
+        padding: 16
       }}>
-        <Card style={{ maxWidth: 600, width: '100%' }}>
+        <Card style={{ maxWidth: 600, width: '100%', padding: '24px 32px' }}>
           <Alert
             message="Access Denied"
             description={error}
@@ -328,24 +351,16 @@ export default function WebAppPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#ffffff',
-      padding: 24
+      backgroundColor: '#f5f5f5',
+      padding: 16
     }}>
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        {/* Header */}
-        <Card style={{ marginBottom: 24 }}>
-          <Title level={2} style={{ marginBottom: 8 }}>
+      <div style={{ maxWidth: 700, margin: '0 auto' }}>
+        <Card style={{ padding: '24px 32px', marginTop: 20 }}>
+          {/* Service Title */}
+          <Title level={2} style={{ marginBottom: 24, marginTop: 0, fontSize: 24 }}>
             {serviceData?.name}
           </Title>
-          {serviceData?.description && (
-            <Paragraph style={{ fontSize: 16, color: '#666', marginBottom: 0 }}>
-              {serviceData.description}
-            </Paragraph>
-          )}
-        </Card>
 
-        {/* Input Form */}
-        <CollapsibleSection title="Input Parameters" defaultOpen={true} style={{ marginBottom: 24 }}>
           {error && (
             <Alert
               message="Error"
@@ -353,95 +368,115 @@ export default function WebAppPage() {
               type="error"
               closable
               onClose={() => setError(null)}
-              style={{ marginBottom: 24 }}
+              style={{ marginBottom: 16 }}
             />
           )}
 
+          {/* Input Form */}
           <Form
             form={form}
             layout="vertical"
             onFinish={handleExecute}
-            size="large"
+            size="middle"
             initialValues={initialValues}
           >
-            <Space direction="vertical" size={0} style={{ width: '100%' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '0px 16px',
+              marginBottom: 24
+            }}>
               {serviceData?.inputs.map(input => renderInputControl(input))}
-            </Space>
-
-            <div style={{ marginTop: 24 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                icon={<PlayCircleOutlined />}
-                loading={executing}
-                size="large"
-                block
-                style={{ height: 56, fontSize: 16, fontWeight: 600 }}
-              >
-                {executing ? 'Calculating...' : 'Calculate Results'}
-              </Button>
             </div>
-          </Form>
-        </CollapsibleSection>
 
-        {/* Results */}
-        {results && (
-          <>
-            <CollapsibleSection
-              title="Calculation Results"
-              defaultOpen={true}
-              style={{ marginBottom: 8 }}
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<PlayCircleOutlined />}
+              loading={executing}
+              size="large"
+              block
+              style={{ height: 48, fontSize: 15, fontWeight: 600, backgroundColor: '#4F2D7F', borderColor: '#4F2D7F' }}
             >
-              <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                {serviceData?.outputs.map(output => {
-                  const value = results[output.name];
-                  if (value === undefined || value === null) return null;
+              {executing ? 'Calculating...' : 'Calculate Results'}
+            </Button>
+          </Form>
 
-                  return (
-                    <div key={output.name}>
-                      <div style={{
-                        fontSize: 14,
-                        color: '#666',
-                        marginBottom: 4,
-                        fontWeight: 500
+          {/* Results */}
+          {results && (
+            <>
+              <div style={{ marginTop: 32 }}>
+                <Title level={4} style={{ marginBottom: 16, marginTop: 0, fontSize: 16, fontWeight: 600 }}>
+                  Results
+                </Title>
+                <div style={{
+                  backgroundColor: '#f8f8f8',
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  opacity: executing ? 0.5 : 1,
+                  transition: 'opacity 0.3s ease'
+                }}>
+                  {serviceData?.outputs.map((output, index) => {
+                    const value = results[output.name];
+                    if (value === undefined || value === null) return null;
+
+                    return (
+                      <div key={output.name} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 16px',
+                        borderBottom: index < (serviceData?.outputs.length || 0) - 1 ? '1px solid #e8e8e8' : 'none'
                       }}>
-                        {output.title || output.name}
-                      </div>
-                      <div style={{
-                        fontSize: 22,
-                        fontWeight: 700,
-                        color: '#4F2D7F'
-                      }}>
-                        {formatOutput(output, value)}
-                      </div>
-                      {output.description && (
-                        <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                          {output.description}
+                        <div style={{
+                          fontSize: 14,
+                          color: '#333',
+                          fontWeight: 400
+                        }}>
+                          {output.title || output.name}:
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </Space>
-            </CollapsibleSection>
-            {executionTime !== null && (
-              <div style={{ fontSize: 10, color: '#999', marginBottom: 24, textAlign: 'left' }}>
-                Calculated in {executionTime}ms
+                        <div style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: '#4F2D7F'
+                        }}>
+                          {formatOutput(output, value)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </>
-        )}
 
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: 48,
-          paddingBottom: 24,
-          color: '#999',
-          fontSize: 13
-        }}>
-          Powered by <a href="https://spreadapi.io" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#4F2D7F', textDecoration: 'none' }}>SpreadAPI</a>
-        </div>
+              {/* Footer inside card */}
+              <div style={{
+                marginTop: 24,
+                color: '#999',
+                fontSize: 11,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}>
+                {(executionTime !== null || totalTime !== null) && (
+                  <>
+                    <span>
+                      {executionTime !== null && totalTime !== null
+                        ? `${executionTime}ms / ${totalTime}ms (calc / total)`
+                        : executionTime !== null
+                        ? `${executionTime}ms`
+                        : `${totalTime}ms`
+                      }
+                    </span>
+                    <span>•</span>
+                  </>
+                )}
+                <a href="https://spreadapi.io" target="_blank" rel="noopener noreferrer" style={{ color: '#4F2D7F', textDecoration: 'none' }}>
+                  SpreadAPI
+                </a>
+              </div>
+            </>
+          )}
+        </Card>
       </div>
     </div>
   );
