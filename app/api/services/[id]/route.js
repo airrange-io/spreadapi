@@ -119,10 +119,10 @@ export async function PUT(request, { params }) {
     };
     
     // Update simple fields
-    const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration', 
+    const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration',
                          'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching',
                          'cacheTableSheetData', 'tableSheetCacheTTL',
-                         'aiDescription', 'category'];
+                         'aiDescription', 'aiUsageGuidance', 'category', 'webAppEnabled', 'webAppToken'];
     simpleFields.forEach(field => {
       if (body[field] !== undefined) {
         updateData[field] = body[field].toString();

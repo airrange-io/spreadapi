@@ -83,7 +83,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiUsageGuidance: '',
     aiUsageExamples: [],
     aiTags: [],
-    category: ''
+    category: '',
+    webAppEnabled: false,
+    webAppToken: ''
   });
   const [savedConfig, setSavedConfig] = useState({
     name: '',
@@ -99,7 +101,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiUsageGuidance: '',
     aiUsageExamples: [],
     aiTags: [],
-    category: ''
+    category: '',
+    webAppEnabled: false,
+    webAppToken: ''
   });
   const [configHasChanges, setConfigHasChanges] = useState(false);
   const [workbookChangeCount, setWorkbookChangeCount] = useState(0);
@@ -205,7 +209,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       apiConfig.aiUsageGuidance !== savedConfig.aiUsageGuidance ||
       JSON.stringify(apiConfig.aiUsageExamples) !== JSON.stringify(savedConfig.aiUsageExamples) ||
       JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
-      apiConfig.category !== savedConfig.category;
+      apiConfig.category !== savedConfig.category ||
+      apiConfig.webAppEnabled !== savedConfig.webAppEnabled ||
+      apiConfig.webAppToken !== savedConfig.webAppToken;
 
     setConfigHasChanges(configChanged);
   }, [apiConfig, savedConfig]);
@@ -379,7 +385,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiUsageGuidance: data.service.aiUsageGuidance || '',
               aiUsageExamples: data.service.aiUsageExamples || [],
               aiTags: data.service.aiTags || [],
-              category: data.service.category || ''
+              category: data.service.category || '',
+              webAppEnabled: data.service.webAppEnabled || false,
+              webAppToken: data.service.webAppToken || ''
             };
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
@@ -407,7 +415,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiUsageGuidance: data.aiUsageGuidance || '',
               aiUsageExamples: data.aiUsageExamples || [],
               aiTags: data.aiTags || [],
-              category: data.category || ''
+              category: data.category || '',
+              webAppEnabled: data.webAppEnabled === 'true' || data.webAppEnabled === true,
+              webAppToken: data.webAppToken || ''
             };
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
@@ -439,7 +449,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             aiUsageGuidance: '',
             aiUsageExamples: [],
             aiTags: [],
-            category: ''
+            category: '',
+            webAppEnabled: false,
+            webAppToken: ''
           };
           setApiConfig(newConfig);
           setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
@@ -847,6 +859,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           aiUsageExamples: apiConfig.aiUsageExamples,
           aiTags: apiConfig.aiTags,
           category: apiConfig.category,
+          webAppEnabled: apiConfig.webAppEnabled,
+          webAppToken: apiConfig.webAppToken,
           status: 'draft'
         })
       });
