@@ -353,45 +353,93 @@ async function handleJsonRpc(request, auth) {
   try {
     switch (method) {
       case 'initialize': {
-        return {
-          jsonrpc: '2.0',
-          result: {
-            protocolVersion: MCP_VERSION,
-            capabilities: {
-              tools: {},
-              resources: {
-                subscribe: false
-              }
-            },
-            serverInfo: {
-              name: SERVER_NAME,
-              version: SERVER_VERSION
+        const response = {
+          protocolVersion: MCP_VERSION,
+          capabilities: {
+            tools: {},
+            resources: {
+              subscribe: false
             }
           },
+          serverInfo: {
+            name: SERVER_NAME,
+            version: SERVER_VERSION
+          }
+        };
+
+        // Detect single-service token and add helpful context
+        const allowedServiceIds = auth.serviceIds || [];
+        if (allowedServiceIds.length === 1) {
+          const singleServiceId = allowedServiceIds[0];
+
+          try {
+            // Load service metadata to provide context
+            const publishedData = await redis.hGetAll(`service:${singleServiceId}:published`);
+            const serviceName = publishedData.title || singleServiceId;
+
+            // Customize server info for single-service scenario
+            response.serverInfo.name = serviceName;
+            response.serverInfo.description = `This MCP connection provides access to the "${serviceName}" service. Use spreadapi_get_service_details with serviceId "${singleServiceId}" to learn about its capabilities.`;
+            response.serverInfo.instructions = `Start by calling spreadapi_get_service_details(serviceId: "${singleServiceId}") to understand what this service does and what parameters it needs.`;
+          } catch (error) {
+            console.error('Error loading single service metadata:', error);
+          }
+        }
+
+        return {
+          jsonrpc: '2.0',
+          result: response,
           id
         };
       }
       
       case 'tools/list': {
+        // Detect single-service token
+        const allowedServiceIds = auth.serviceIds || [];
+        const isSingleService = allowedServiceIds.length === 1;
+        let singleServiceId = null;
+        let singleServiceName = null;
+
+        // Load single service metadata if applicable
+        if (isSingleService) {
+          singleServiceId = allowedServiceIds[0];
+          try {
+            const publishedData = await redis.hGetAll(`service:${singleServiceId}:published`);
+            singleServiceName = publishedData.title || singleServiceId;
+          } catch (error) {
+            console.error('Error loading service name:', error);
+          }
+        }
+
         // Build service descriptions for this user/token
         const serviceInfo = await buildServiceListDescription(auth);
-        
+
         // Build dynamic descriptions
         let calcDescription = 'Execute calculations with optional area updates.';
         if (serviceInfo.calcServices.length > 0) {
           calcDescription += '\n\nYour available calculation services:\n' + serviceInfo.calcServices.join('\n');
         }
-        
+
         let areaDescription = 'Read data from an editable area in any SpreadAPI service.';
         if (serviceInfo.areaServices.length > 0) {
           areaDescription += '\n\nYour services with editable areas:\n' + serviceInfo.areaServices.join('\n');
         }
-        
+
+        // Enhance descriptions for single-service scenario
+        let getDetailsDescription = 'Get detailed information about a specific SpreadAPI service including its inputs, outputs, areas, and usage examples';
+        let listServicesDescription = 'List all published SpreadAPI services with their descriptions, metadata, and available areas';
+
+        if (isSingleService && singleServiceName) {
+          getDetailsDescription = `Get details for the "${singleServiceName}" service. **CALL THIS FIRST** to understand what inputs are needed and how to use the service. Service ID: ${singleServiceId}`;
+          calcDescription = `Execute the "${singleServiceName}" calculation. Call spreadapi_get_service_details first to learn what parameters are required. Service ID: ${singleServiceId}`;
+          listServicesDescription = `List services (this token only has access to "${singleServiceName}")`;
+        }
+
         // Always include generic tools
         const tools = [
           {
             name: 'spreadapi_list_services',
-            description: 'List all published SpreadAPI services with their descriptions, metadata, and available areas',
+            description: listServicesDescription,
             inputSchema: {
               type: 'object',
               properties: {
@@ -411,13 +459,15 @@ async function handleJsonRpc(request, auth) {
           },
           {
             name: 'spreadapi_get_service_details',
-            description: 'Get detailed information about a specific SpreadAPI service including its inputs, outputs, areas, and usage examples',
+            description: getDetailsDescription,
             inputSchema: {
               type: 'object',
               properties: {
                 serviceId: {
                   type: 'string',
-                  description: 'The service ID to get details for'
+                  description: isSingleService && singleServiceId
+                    ? `The service ID (use "${singleServiceId}")`
+                    : 'The service ID to get details for'
                 }
               },
               required: ['serviceId'],
