@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Card, Form, Input, InputNumber, Button, Space, Alert, Spin, Typography } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
@@ -42,11 +42,21 @@ export default function WebAppPage() {
   const [executing, setExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [serviceData, setServiceData] = useState<ServiceData | null>(null);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<Record<string, number | string | boolean> | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [totalTime, setTotalTime] = useState<number | null>(null);
   const [form] = Form.useForm();
   const [initialValues, setInitialValues] = useState<Record<string, any>>({});
+
+  // Ref to track current request for cancellation
+  const currentRequestRef = useRef<AbortController | null>(null);
+
+  // Memoize number formatters to avoid recreating on every render
+  const formatters = useMemo(() => ({
+    integer: new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }),
+    decimal: new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }),
+    currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+  }), []);
 
   useEffect(() => {
     if (!token) {
@@ -55,57 +65,67 @@ export default function WebAppPage() {
       return;
     }
 
-    loadServiceData();
-  }, [serviceId, token]);
+    const loadServiceData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const loadServiceData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+        // Load service data using the web app endpoint (validates token)
+        const response = await fetch(`/api/services/${serviceId}/webapp?token=${token}`);
 
-      // Load service data using the web app endpoint (validates token)
-      const response = await fetch(`/api/services/${serviceId}/webapp?token=${token}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to load service');
-      }
-
-      const data = await response.json();
-
-      setServiceData({
-        name: data.name || 'Calculation Service',
-        description: data.description || '',
-        inputs: data.inputs || [],
-        outputs: data.outputs || []
-      });
-
-      // Set initial values from spreadsheet defaults
-      const defaults: Record<string, any> = {};
-      (data.inputs || []).forEach((input: any) => {
-        const key = input.alias || input.name;
-        if (input.value !== undefined && input.value !== null) {
-          defaults[key] = input.value;
-        } else if (input.type === 'number') {
-          defaults[key] = input.min || 0;
-        } else if (input.type === 'boolean') {
-          defaults[key] = false;
-        } else {
-          defaults[key] = '';
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to load service');
         }
-      });
-      setInitialValues(defaults);
-      form.setFieldsValue(defaults);
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to load service');
-    } finally {
-      setLoading(false);
-    }
-  };
+        const data = await response.json();
+
+        setServiceData({
+          name: data.name || 'Calculation Service',
+          description: data.description || '',
+          inputs: data.inputs || [],
+          outputs: data.outputs || []
+        });
+
+        // Set initial values from spreadsheet defaults
+        const defaults: Record<string, any> = {};
+        (data.inputs || []).forEach((input: any) => {
+          const key = input.alias || input.name;
+          if (input.value !== undefined && input.value !== null) {
+            defaults[key] = input.value;
+          } else if (input.type === 'number') {
+            defaults[key] = input.min || 0;
+          } else if (input.type === 'boolean') {
+            defaults[key] = false;
+          } else {
+            defaults[key] = '';
+          }
+        });
+        setInitialValues(defaults);
+        form.setFieldsValue(defaults);
+
+      } catch (err: any) {
+        setError(err.message || 'Failed to load service');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServiceData();
+  }, [serviceId, token, form]);
 
   const handleExecute = async (values: any) => {
     const clientStart = Date.now();
+
+    // Cancel any previous request
+    if (currentRequestRef.current) {
+      currentRequestRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    const abortController = new AbortController();
+    currentRequestRef.current = abortController;
+
     try {
       setExecuting(true);
       setError(null);
@@ -121,7 +141,9 @@ export default function WebAppPage() {
 
       // Call the actual published API execute endpoint
       const apiUrl = `/api/v1/services/${serviceId}/execute?${params.toString()}`;
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        signal: abortController.signal
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -140,7 +162,7 @@ export default function WebAppPage() {
       // Convert outputs array to a simple key-value object
       // The execute endpoint returns: { outputs: [{name: 'total', value: 123}, ...] }
       // We need: { total: 123, invested: 456, ... }
-      const resultsObj: Record<string, any> = {};
+      const resultsObj: Record<string, number | string | boolean> = {};
       if (data.outputs && Array.isArray(data.outputs)) {
         data.outputs.forEach((output: any) => {
           if (output.name && output.value !== undefined) {
@@ -162,39 +184,61 @@ export default function WebAppPage() {
       setTotalTime(clientEnd - clientStart);
 
     } catch (err: any) {
+      // Ignore aborted requests (user clicked Calculate again)
+      if (err.name === 'AbortError') {
+        return;
+      }
+
       setError(err.message || 'Failed to execute calculation');
+      // Clear stale results on error to avoid confusion
+      setResults(null);
+      setExecutionTime(null);
+      setTotalTime(null);
     } finally {
       setExecuting(false);
+      currentRequestRef.current = null;
     }
   };
 
-  // Smart step size calculator (same logic as API Test)
+  // Smart step size calculator
   const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
     // If we have min and max, calculate step based on range
     if (min !== undefined && max !== undefined) {
       const range = max - min;
       // Use ~1% of range as step
-      return Math.max(range / 100, 0.01);
+      const step = Math.max(range / 100, 0.01);
+      // If both min and max are integers, use integer steps only
+      if (Number.isInteger(min) && Number.isInteger(max)) {
+        return Math.max(Math.floor(step), 1);
+      }
+      return step;
     }
 
     // Otherwise, base step on current value
     const currentValue = value || 0;
     const absValue = Math.abs(currentValue);
 
-    if (absValue >= 10000) {
-      return 100;  // For large numbers (10k+), step by 100
-    } else if (absValue >= 1000) {
-      return 10;   // For thousands, step by 10
-    } else if (absValue >= 100) {
-      return 1;    // For hundreds, step by 1
-    } else if (absValue >= 1) {
-      return 0.1;  // For single digits, step by 0.1
-    } else {
-      return 0.01; // For decimals (percentages, etc.), step by 0.01
+    // If the value is an integer, never use decimal steps
+    if (Number.isInteger(currentValue) && currentValue !== 0) {
+      if (absValue < 10) return 1;
+      if (absValue < 100) return 10;
+      if (absValue < 1000) return 100;
+      if (absValue < 10000) return 1000;
+      if (absValue < 100000) return 10000;
+      return 100000;
     }
+
+    // For decimal values or zero, use decimal steps
+    if (absValue < 1) return 0.1;
+    if (absValue < 10) return 1;
+    if (absValue < 100) return 10;
+    if (absValue < 1000) return 100;
+    if (absValue < 10000) return 1000;
+    if (absValue < 100000) return 10000;
+    return 100000;
   };
 
-  const renderInputControl = (input: ServiceData['inputs'][0]) => {
+  const renderInputControl = useCallback((input: ServiceData['inputs'][0]) => {
     const fieldName = input.alias || input.name;
 
     const label = (
@@ -234,9 +278,9 @@ export default function WebAppPage() {
               if (isNaN(num)) return value.toString();
               // Show no decimals for integers, up to 2 for decimals
               if (Number.isInteger(num)) {
-                return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
+                return formatters.integer.format(num);
               }
-              return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+              return formatters.decimal.format(num);
             }}
             parser={(value) => {
               if (!value) return 0;
@@ -280,16 +324,16 @@ export default function WebAppPage() {
         />
       </Form.Item>
     );
-  };
+  }, [formatters]);
 
-  const formatOutput = (output: ServiceData['outputs'][0], value: any) => {
+  const formatOutput = useCallback((output: ServiceData['outputs'][0], value: any) => {
     // Use AI presentation hint if available
     const hint = output.aiPresentationHint?.toLowerCase() || '';
 
     if (hint.includes('currency')) {
       const num = parseFloat(value);
       if (!isNaN(num)) {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        return formatters.currency.format(num);
       }
     }
 
@@ -303,14 +347,14 @@ export default function WebAppPage() {
     if (typeof value === 'number') {
       // Don't show decimal places for integers
       if (Number.isInteger(value)) {
-        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+        return formatters.integer.format(value);
       }
       // Show up to 2 decimal places for decimals
-      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+      return formatters.decimal.format(value);
     }
 
     return value;
-  };
+  }, [formatters]);
 
   if (loading) {
     return (
