@@ -100,15 +100,19 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     // L1: Check result cache FIRST (fastest - complete result cached)
     // This is the express lane: if exact same calculation was done before, return it immediately
+    // Uses Redis Hash: all results for a service stored in single hash for efficient invalidation
     // options.nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
     // options.nocache = bypass ALL caches (HTTP/edge + Redis result cache + workbook cache)
     if (!options.nocache) {
       const inputHash = generateResultCacheHash(inputs);
-      const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
+      const cacheKey = CACHE_KEYS.resultCache(serviceId);
 
       try {
-        const cachedResult = await redis.json.get(cacheKey);
-        if (cachedResult) {
+        // Get result from hash field
+        const cachedResultString = await redis.hGet(cacheKey, inputHash);
+        if (cachedResultString) {
+          const cachedResult = JSON.parse(cachedResultString);
+
           // Track cache hit
           redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:hits', 1).catch(() => {});
 
@@ -469,20 +473,26 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     };
 
     // Cache result if caching enabled
+    // Store in Redis Hash: all results for service in single hash
+    // TTL is reset on each write to keep active services cached
     if (useCaching) {
       const inputHash = generateResultCacheHash(inputs);
-      const cacheKey = CACHE_KEYS.resultCache(serviceId, inputHash);
+      const cacheKey = CACHE_KEYS.resultCache(serviceId);
 
       // IMPORTANT: Make this BLOCKING to ensure cache is written before returning
       // This ensures the next request with same inputs will hit the cache
       try {
+        // Store result as hash field and reset TTL on entire hash
+        // Use multi() to batch hSet + expire in single round-trip (faster!)
+        // This keeps frequently-used services cached indefinitely
+        // Inactive services expire after 15 minutes
         const multi = redis.multi();
-        multi.json.set(cacheKey, "$", result);
+        multi.hSet(cacheKey, inputHash, JSON.stringify(result));
         multi.expire(cacheKey, CACHE_TTL.result);
         await multi.exec();
-        console.log(`[calculateDirect] Saved result to cache: ${cacheKey}`);
+        console.log(`[calculateDirect] Saved result to cache hash: ${cacheKey}[${inputHash}]`);
       } catch (cacheError) {
-        console.error(`Failed to set cache for ${cacheKey}:`, cacheError);
+        console.error(`Failed to set cache for ${cacheKey}[${inputHash}]:`, cacheError);
       }
     }
 

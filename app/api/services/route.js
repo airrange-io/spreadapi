@@ -282,18 +282,13 @@ export async function DELETE(request) {
       }
     }
     
-    // Delete service hash
-    await redis.del(`service:${serviceId}`);
-    
-    // Delete all caches for this service
-    await redis.del(CACHE_KEYS.apiCache(serviceId));
-    const resultKeys = await redis.keys(`service:${serviceId}:cache:result:*`);
-    if (resultKeys.length > 0) {
-      await redis.del(...resultKeys);
-    }
-    
-    // Remove from user's services index
-    await redis.hDel(`user:${userId}:services`, serviceId);
+    // Delete service and all caches in single round-trip
+    const multi = redis.multi();
+    multi.del(`service:${serviceId}`);
+    multi.del(CACHE_KEYS.apiCache(serviceId));
+    multi.del(CACHE_KEYS.resultCache(serviceId));
+    multi.hDel(`user:${userId}:services`, serviceId);
+    await multi.exec();
     
     // Revalidate services cache
     await revalidateServicesCache();

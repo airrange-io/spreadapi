@@ -56,20 +56,13 @@ export async function POST(request, { params }) {
       }
     }
     
-    // Delete the published service data
-    await redis.del(`service:${serviceId}:published`);
-    
-    // Also delete the cached API data if it exists
-    await redis.del(CACHE_KEYS.apiCache(serviceId));
-    
-    // Delete all cached results for this service
-    const resultKeys = await redis.keys(`service:${serviceId}:cache:result:*`);
-    if (resultKeys.length > 0) {
-      await redis.del(...resultKeys);
-    }
-    
-    // Update the user's service index with just the status
-    await redis.hSet(`user:${userId}:services`, serviceId, 'draft');
+    // Delete published data and caches in single round-trip
+    const multi = redis.multi();
+    multi.del(`service:${serviceId}:published`);
+    multi.del(CACHE_KEYS.apiCache(serviceId));
+    multi.del(CACHE_KEYS.resultCache(serviceId));
+    multi.hSet(`user:${userId}:services`, serviceId, 'draft');
+    await multi.exec();
     
     // Revalidate services cache
     await revalidateServicesCache();
