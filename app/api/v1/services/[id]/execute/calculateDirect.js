@@ -368,13 +368,17 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       value: value
     }));
 
+    // Create lookup map for O(1) input parameter lookup (instead of O(n) find)
+    // This improves performance significantly with many input parameters
+    const inputDefMap = new Map();
+    for (const inp of apiInputs) {
+      if (inp.name) inputDefMap.set(inp.name.toLowerCase(), inp);
+      if (inp.alias) inputDefMap.set(inp.alias.toLowerCase(), inp);
+      if (inp.address) inputDefMap.set(inp.address.toLowerCase(), inp);
+    }
+
     for (const input of inputList) {
-      const inputDef = apiInputs.find(
-        (apiInput) =>
-          apiInput.name?.toLowerCase() === input.name ||
-          apiInput.alias?.toLowerCase() === input.name ||
-          apiInput.address?.toLowerCase() === input.name
-      );
+      const inputDef = inputDefMap.get(input.name);
 
       if (inputDef) {
         // Value is already validated and type-coerced
