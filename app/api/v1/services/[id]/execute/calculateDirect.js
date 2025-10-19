@@ -81,7 +81,7 @@ async function logCalls(apiId, apiToken) {
  * Direct calculation function - avoids HTTP call overhead
  * This is the core calculation engine used by:
  * - V1 API route (/api/v1/services/[id]/execute)
- * - MCP servers (/api/mcp, /api/mcp/bridge, /api/mcp/v1 deprecated)
+ * - MCP servers (/api/mcp, /api/mcp/bridge)
  * - Chat route (/api/chat)
  *
  * @param {string} serviceId - The service ID to execute

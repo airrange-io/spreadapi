@@ -50,8 +50,8 @@ async function buildServiceListDescription(auth) {
       return cached.data;
     }
     
-    // Get user's services
-    const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`);
+    // Get user's services (with null safety)
+    const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`) || {};
     const userServiceIds = Object.keys(userServiceIndex);
     
     // Get allowed service IDs from auth
@@ -60,20 +60,48 @@ async function buildServiceListDescription(auth) {
     
     const serviceDescriptions = [];
     const servicesWithAreas = [];
-    
-    // Collect all user's published services
+    const structuredServices = [];  // Add structured data for safe access
+
+    // Use Redis multi for batch operations (reduces round trips)
+    const multi = redis.multi();
+
+    // Queue all operations
     for (const serviceId of userServiceIds) {
-      // Skip if not published
-      const isPublished = await redis.exists(`service:${serviceId}:published`);
+      multi.exists(`service:${serviceId}:published`);
+      multi.hGetAll(`service:${serviceId}:published`);
+    }
+
+    // Execute all at once
+    // Note: node-redis returns [[error, result], [error, result], ...]
+    const results = await multi.exec();
+
+    // Process results (2 results per service: exists + hGetAll)
+    for (let i = 0; i < userServiceIds.length; i++) {
+      const serviceId = userServiceIds[i];
+      const baseIndex = i * 2;
+
+      // Check for errors in the multi execution
+      if (!results[baseIndex] || results[baseIndex][0]) {
+        console.error(`[MCP] Error checking published status for ${serviceId}:`, results[baseIndex]?.[0]);
+        continue;
+      }
+      if (!results[baseIndex + 1] || results[baseIndex + 1][0]) {
+        console.error(`[MCP] Error fetching data for ${serviceId}:`, results[baseIndex + 1]?.[0]);
+        continue;
+      }
+
+      // Access [1] to get actual result from [error, result] tuple
+      const isPublished = results[baseIndex][1] === 1;
+      const publishedData = results[baseIndex + 1][1];
+
       if (!isPublished) continue;
-      
+
       // Check if this service is allowed for this token
       if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
         continue;
       }
-      
-      const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
-      if (!publishedData.urlData) continue;
+
+      if (!publishedData || !publishedData.urlData) continue;
       
       const title = publishedData.title || serviceId;
       const description = publishedData.description || publishedData.aiDescription || '';
@@ -87,22 +115,35 @@ async function buildServiceListDescription(auth) {
       if (publishedData.areas) {
         try {
           areas = JSON.parse(publishedData.areas);
-        } catch (e) {}
+        } catch (e) {
+          console.warn(`[MCP] Invalid areas JSON for service ${serviceId}:`, e.message);
+        }
       }
-      
+
       if (hasCalc) {
         serviceDescriptions.push(`• ${title} (${serviceId}) - ${shortDesc}`);
+
+        // Store structured data for safe access (avoid string parsing)
+        structuredServices.push({
+          id: serviceId,
+          name: title,
+          description: shortDesc,
+          fullDescription: description,
+          hasAreas: areas.length > 0,
+          areaCount: areas.length
+        });
       }
-      
+
       if (areas.length > 0) {
         const areaNames = areas.map(a => a.name).join(', ');
         servicesWithAreas.push(`• ${title} (${serviceId}) - Areas: ${areaNames}`);
       }
     }
-    
+
     const result = {
       calcServices: serviceDescriptions,
       areaServices: servicesWithAreas,
+      structuredServices: structuredServices,  // Add structured data
       totalCount: serviceDescriptions.length + servicesWithAreas.length
     };
     
@@ -216,50 +257,6 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
 
 
 /**
- * Generate smart parameter examples based on service type
- */
-function generateParameterExamples(serviceId, paramName, paramType) {
-  const examples = {
-    mortgage_calc: {
-      loanAmount: ['300000 (for a $300k loan)', '450000 (for a $450k loan)'],
-      interestRate: ['0.065 (for 6.5%)', '0.07 (for 7%)', '0.0525 (for 5.25%)'],
-      loanTerm: ['30 (for 30 years)', '15 (for 15 years)'],
-      downPayment: ['60000 (20% of $300k)', '30000 (10% of $300k)']
-    },
-    investment_calc: {
-      principal: ['10000 (initial investment)', '50000 (larger investment)'],
-      rate: ['0.08 (8% annual return)', '0.10 (10% annual return)'],
-      years: ['10 (decade)', '20 (long-term)', '5 (short-term)']
-    },
-    budget_tracker: {
-      income: ['5000 (monthly income)', '60000 (annual income)'],
-      expenses: ['3500 (monthly expenses)', '42000 (annual expenses)']
-    }
-  };
-  
-  // Try to find service-specific examples
-  if (examples[serviceId]?.[paramName]) {
-    return examples[serviceId][paramName];
-  }
-  
-  // Generic examples based on parameter name patterns
-  if (paramName.toLowerCase().includes('amount') || paramName.toLowerCase().includes('principal')) {
-    return ['10000', '50000', '100000'];
-  }
-  if (paramName.toLowerCase().includes('rate') || paramName.toLowerCase().includes('interest')) {
-    return ['0.05 (5%)', '0.065 (6.5%)', '0.08 (8%)'];
-  }
-  if (paramName.toLowerCase().includes('term') || paramName.toLowerCase().includes('year')) {
-    return ['5', '15', '30'];
-  }
-  if (paramName.toLowerCase().includes('percent')) {
-    return ['0.10 (10%)', '0.20 (20%)', '0.25 (25%)'];
-  }
-  
-  return null;
-}
-
-/**
  * Execute a service calculation using V1 API
  */
 async function executeService(serviceId, inputs) {
@@ -367,31 +364,38 @@ async function handleJsonRpc(request, auth) {
           }
         };
 
-        // Detect single-service token and add helpful context
-        const allowedServiceIds = auth.serviceIds || [];
-        if (allowedServiceIds.length === 1) {
-          const singleServiceId = allowedServiceIds[0];
+        // Provide service list directly in handshake
+        try {
+          // Build service list for immediate display
+          const serviceInfo = await buildServiceListDescription(auth);
+          const serviceCount = serviceInfo.calcServices.length;
 
-          try {
-            // Load service metadata to provide context
-            const publishedData = await redis.hGetAll(`service:${singleServiceId}:published`);
-            const serviceName = publishedData.title || singleServiceId;
+          if (serviceCount === 0) {
+            response.serverInfo.description = `This MCP connection is configured but has no published services available.`;
+            response.serverInfo.instructions = `Publish services in SpreadAPI to make them available.`;
+          } else if (serviceCount === 1) {
+            // Single service: customize name and description using structured data
+            const service = serviceInfo.structuredServices[0];
+            const serviceLine = serviceInfo.calcServices[0];
 
-            // Customize server info for single-service scenario
-            response.serverInfo.name = serviceName;
-            response.serverInfo.description = `This MCP connection provides access to the "${serviceName}" service. Use spreadapi_get_service_details with serviceId "${singleServiceId}" to learn about its capabilities.`;
-            response.serverInfo.instructions = `Start by calling spreadapi_get_service_details(serviceId: "${singleServiceId}") to understand what this service does and what parameters it needs.`;
-          } catch (error) {
-            console.error('Error loading single service metadata:', error);
+            response.serverInfo.name = service.name;
+            response.serverInfo.description = `This MCP connection provides access to:\n\n${serviceLine}\n\nUse spreadapi_get_service_details to learn about inputs and outputs.`;
+            response.serverInfo.instructions = `Call spreadapi_get_service_details with the service ID to understand what parameters are needed before executing calculations.`;
+          } else {
+            // Multiple services: list them all
+            let description = `This MCP connection provides access to ${serviceCount} SpreadAPI calculation services:\n\n`;
+            serviceInfo.calcServices.forEach((svc, index) => {
+              description += `${index + 1}. ${svc}\n`;
+            });
+
+            response.serverInfo.description = description;
+            response.serverInfo.instructions = `Use spreadapi_get_service_details(serviceId) to learn about specific service capabilities before executing calculations.`;
           }
-        } else {
-          // Multi-service token: provide discovery guidance
-          const serviceCount = allowedServiceIds.length > 0
-            ? allowedServiceIds.length
-            : 'multiple';
-
-          response.serverInfo.description = `This MCP connection provides access to ${serviceCount} SpreadAPI calculation services. Each service can execute spreadsheet-based calculations.`;
-          response.serverInfo.instructions = `Start by calling spreadapi_list_services() to see all available services and their descriptions. Then use spreadapi_get_service_details(serviceId) to learn about specific service capabilities before executing calculations.`;
+        } catch (error) {
+          console.error('Error loading service list:', error);
+          // Fallback to simple description
+          response.serverInfo.description = `This MCP connection provides access to SpreadAPI calculation services.`;
+          response.serverInfo.instructions = `Call spreadapi_list_services() to see available services, then use spreadapi_get_service_details(serviceId) to learn about specific capabilities.`;
         }
 
         return {
@@ -402,27 +406,10 @@ async function handleJsonRpc(request, auth) {
       }
       
       case 'tools/list': {
-        // Detect single-service token
-        const allowedServiceIds = auth.serviceIds || [];
-        const isSingleService = allowedServiceIds.length === 1;
-        let singleServiceId = null;
-        let singleServiceName = null;
-
-        // Load single service metadata if applicable
-        if (isSingleService) {
-          singleServiceId = allowedServiceIds[0];
-          try {
-            const publishedData = await redis.hGetAll(`service:${singleServiceId}:published`);
-            singleServiceName = publishedData.title || singleServiceId;
-          } catch (error) {
-            console.error('Error loading service name:', error);
-          }
-        }
-
         // Build service descriptions for this user/token
         const serviceInfo = await buildServiceListDescription(auth);
 
-        // Build dynamic descriptions
+        // Build dynamic tool descriptions with service list
         let calcDescription = 'Execute calculations with optional area updates.';
         if (serviceInfo.calcServices.length > 0) {
           calcDescription += '\n\nYour available calculation services:\n' + serviceInfo.calcServices.join('\n');
@@ -433,15 +420,8 @@ async function handleJsonRpc(request, auth) {
           areaDescription += '\n\nYour services with editable areas:\n' + serviceInfo.areaServices.join('\n');
         }
 
-        // Enhance descriptions for single-service scenario
-        let getDetailsDescription = 'Get detailed information about a specific SpreadAPI service including its inputs, outputs, areas, and usage examples';
-        let listServicesDescription = 'List all published SpreadAPI services with their descriptions, metadata, and available areas';
-
-        if (isSingleService && singleServiceName) {
-          getDetailsDescription = `Get details for the "${singleServiceName}" service. **CALL THIS FIRST** to understand what inputs are needed and how to use the service. Service ID: ${singleServiceId}`;
-          calcDescription = `Execute the "${singleServiceName}" calculation. Call spreadapi_get_service_details first to learn what parameters are required. Service ID: ${singleServiceId}`;
-          listServicesDescription = `List services (this token only has access to "${singleServiceName}")`;
-        }
+        const getDetailsDescription = 'Get detailed information about a specific SpreadAPI service including its inputs, outputs, areas, and usage examples';
+        const listServicesDescription = 'List all published SpreadAPI services with their descriptions, metadata, and available areas';
 
         // Always include generic tools
         const tools = [
@@ -473,9 +453,7 @@ async function handleJsonRpc(request, auth) {
               properties: {
                 serviceId: {
                   type: 'string',
-                  description: isSingleService && singleServiceId
-                    ? `The service ID (use "${singleServiceId}")`
-                    : 'The service ID to get details for'
+                  description: 'The service ID to get details for'
                 }
               },
               required: ['serviceId'],
@@ -980,7 +958,7 @@ async function handleJsonRpc(request, auth) {
             let responseText = '▶ Batch Calculation Results\n\n';
             
             // Show individual results
-            results.forEach((result, idx) => {
+            results.forEach((result) => {
               responseText += `### ${result.label}\n`;
               if (result.error) {
                 responseText += `❌ Error: ${result.error}\n\n`;
@@ -1084,7 +1062,7 @@ async function handleJsonRpc(request, auth) {
             
             // Prewarm the service asynchronously
             import('../../../../lib/prewarmService.js').then(({ prewarmService }) => {
-              prewarmService(serviceId).catch(err => {
+              prewarmService(serviceId).catch(() => {
                 console.log(`[MCP] Prewarm for ${serviceId} initiated`);
               });
             }).catch(() => {});
@@ -1555,7 +1533,7 @@ export async function POST(request) {
   }
 }
 
-export async function OPTIONS(request) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
