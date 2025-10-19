@@ -77,7 +77,7 @@ async function buildServiceListDescription(auth) {
       
       const title = publishedData.title || serviceId;
       const description = publishedData.description || publishedData.aiDescription || '';
-      const shortDesc = description.substring(0, 60) + (description.length > 60 ? '...' : '');
+      const shortDesc = description.substring(0, 120) + (description.length > 120 ? '...' : '');
       
       // Check if has calculation capability
       const hasCalc = publishedData.inputs && publishedData.outputs;
@@ -384,6 +384,14 @@ async function handleJsonRpc(request, auth) {
           } catch (error) {
             console.error('Error loading single service metadata:', error);
           }
+        } else {
+          // Multi-service token: provide discovery guidance
+          const serviceCount = allowedServiceIds.length > 0
+            ? allowedServiceIds.length
+            : 'multiple';
+
+          response.serverInfo.description = `This MCP connection provides access to ${serviceCount} SpreadAPI calculation services. Each service can execute spreadsheet-based calculations.`;
+          response.serverInfo.instructions = `Start by calling spreadapi_list_services() to see all available services and their descriptions. Then use spreadapi_get_service_details(serviceId) to learn about specific service capabilities before executing calculations.`;
         }
 
         return {

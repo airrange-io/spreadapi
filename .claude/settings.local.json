@@ -26,7 +26,11 @@
       "Bash(for dir in docs/*/)",
       "Bash(do echo \"\")",
       "Bash(done)",
-      "Read(//var/folders/v7/r7ty9ng11ms5y2k_0rnljzqh0000gn/T/**)"
+      "Read(//var/folders/v7/r7ty9ng11ms5y2k_0rnljzqh0000gn/T/**)",
+      "WebFetch(domain:support.anthropic.com)",
+      "WebFetch(domain:support.claude.com)",
+      "WebFetch(domain:apidog.com)",
+      "WebFetch(domain:developers.openai.com)"
     ],
     "deny": []
   }
