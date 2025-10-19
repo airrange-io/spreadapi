@@ -29,6 +29,7 @@ interface ServiceData {
     description?: string;
     type: string;
     aiPresentationHint?: string;
+    formatString?: string; // e.g., "€#,##0.00", "$#,##0.00", "#,##0.0 kg", "0.00%"
   }>;
 }
 
@@ -326,7 +327,43 @@ export default function WebAppPage() {
   }, [formatters]);
 
   const formatOutput = useCallback((output: ServiceData['outputs'][0], value: any) => {
-    // Use AI presentation hint if available
+    // Use formatString if available (priority over AI hint)
+    if (output.formatString && typeof value === 'number') {
+      const formatStr = output.formatString.trim();
+
+      // Handle percentage formats: "0.00%", "0.0%"
+      if (formatStr.includes('%')) {
+        const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
+        return `${value.toFixed(decimals)}%`;
+      }
+
+      // Handle date format
+      if (formatStr.toLowerCase() === 'date') {
+        return new Date(value).toLocaleDateString();
+      }
+
+      // Parse the format string for currency/unit symbols and decimal places
+      // Examples: "€#,##0.00", "$#,##0.00", "#,##0.0 kg", "#,##0 units"
+      const prefixMatch = formatStr.match(/^([^#0,.\s]+)/); // Currency/unit before number
+      const suffixMatch = formatStr.match(/([^#0,.\s]+)$/);  // Unit after number
+      const decimalMatch = formatStr.match(/\.0+/);
+      const hasThousands = formatStr.includes(',');
+
+      const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
+      const prefix = prefixMatch ? prefixMatch[1] : '';
+      const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
+
+      // Format the number
+      const formattedNum = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: hasThousands
+      }).format(value);
+
+      return `${prefix}${formattedNum}${suffix}`;
+    }
+
+    // Fallback to AI presentation hint if no formatString
     const hint = output.aiPresentationHint?.toLowerCase() || '';
 
     if (hint.includes('currency')) {
