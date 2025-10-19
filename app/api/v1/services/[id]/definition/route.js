@@ -127,14 +127,8 @@ export async function GET(request, { params }) {
           type: output.type || 'string',
           description: output.description || '',
 
-          // Format information (for proper display of percentages, currency, dates, etc.)
-          ...(output.format && { format: output.format }),
-          ...(output.formatter && { formatter: output.formatter }),
-
-          // JavaScript-friendly formatting metadata
-          ...(output.currencySymbol && { currencySymbol: output.currencySymbol }),
-          ...(output.decimals !== undefined && { decimals: output.decimals }),
-          ...(output.thousandsSeparator !== undefined && { thousandsSeparator: output.thousandsSeparator }),
+          // Format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.00%", "date")
+          ...(output.formatString && { formatString: output.formatString }),
 
           // AI presentation hints
           ...(output.aiPresentationHint && {

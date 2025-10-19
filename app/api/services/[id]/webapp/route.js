@@ -49,7 +49,7 @@ export async function GET(request, { params }) {
 
     // Note: inputs and outputs include format information:
     // - inputs: format, percentageDecimals, allowedValues, min, max, defaultValue, etc.
-    // - outputs: format, formatter (for percentage, currency, date display)
+    // - outputs: formatString (e.g., "€#,##0.00", "#,##0.0 kg", "0.00%")
     // This allows web apps to properly format and display values
 
     const response = {
@@ -64,13 +64,8 @@ export async function GET(request, { params }) {
       })),
       outputs: outputs.map(output => ({
         ...output,
-        // Ensure format information is included for proper display
-        ...(output.format && { format: output.format }),
-        ...(output.formatter && { formatter: output.formatter }),
-        // JavaScript-friendly formatting metadata
-        ...(output.currencySymbol && { currencySymbol: output.currencySymbol }),
-        ...(output.decimals !== undefined && { decimals: output.decimals }),
-        ...(output.thousandsSeparator !== undefined && { thousandsSeparator: output.thousandsSeparator })
+        // Include simple, editable format string
+        ...(output.formatString && { formatString: output.formatString })
       })),
       webAppEnabled: serviceData.webAppEnabled === 'true',
       webAppToken: serviceData.webAppToken

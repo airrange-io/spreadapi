@@ -956,23 +956,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     alias: newParam.name.toLowerCase()
                       .replace(/[\s-]+/g, '')
                       .replace(/[^a-z0-9]/g, ''),
-                    // Preserve format information when editing
-                    // Use new format from selectedCellInfo if available, otherwise preserve existing format
-                    ...(selectedCellInfo?.format?.format ? {
-                      format: selectedCellInfo.format.format,
-                      formatter: selectedCellInfo.format.formatter,
-                      // JavaScript-friendly metadata
-                      ...(selectedCellInfo.format.currencySymbol && { currencySymbol: selectedCellInfo.format.currencySymbol }),
-                      ...(selectedCellInfo.format.decimals !== null && selectedCellInfo.format.decimals !== undefined && { decimals: selectedCellInfo.format.decimals }),
-                      ...(selectedCellInfo.format.thousandsSeparator !== null && selectedCellInfo.format.thousandsSeparator !== undefined && { thousandsSeparator: selectedCellInfo.format.thousandsSeparator })
-                    } : p.format ? {
-                      // Preserve existing format fields
-                      format: p.format,
-                      formatter: p.formatter,
-                      ...(p.currencySymbol && { currencySymbol: p.currencySymbol }),
-                      ...(p.decimals !== null && p.decimals !== undefined && { decimals: p.decimals }),
-                      ...(p.thousandsSeparator !== null && p.thousandsSeparator !== undefined && { thousandsSeparator: p.thousandsSeparator })
-                    } : {})
+                    // Store only the simple formatString (user can edit this)
+                    ...(newParam.formatString && { formatString: newParam.formatString })
                   } : p));
                 } else {
                   setOutputs(prev => [...prev, {
@@ -983,15 +968,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     sheetName: selectedCellInfo.sheetName || 'Sheet1',
                     rowCount: selectedCellInfo.rowCount,
                     colCount: selectedCellInfo.colCount,
-                    // Include format information for proper display
-                    ...(selectedCellInfo?.format?.format && {
-                      format: selectedCellInfo.format.format,
-                      formatter: selectedCellInfo.format.formatter,
-                      // JavaScript-friendly metadata
-                      ...(selectedCellInfo.format.currencySymbol && { currencySymbol: selectedCellInfo.format.currencySymbol }),
-                      ...(selectedCellInfo.format.decimals !== null && selectedCellInfo.format.decimals !== undefined && { decimals: selectedCellInfo.format.decimals }),
-                      ...(selectedCellInfo.format.thousandsSeparator !== null && selectedCellInfo.format.thousandsSeparator !== undefined && { thousandsSeparator: selectedCellInfo.format.thousandsSeparator })
-                    })
+                    // Store only the simple formatString (user can edit this)
+                    ...(newParam.formatString && { formatString: newParam.formatString })
                   }]);
                 }
               }

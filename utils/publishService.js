@@ -198,12 +198,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       direction: 'output',
       ...(output.description && { description: output.description }),
       ...(output.aiPresentationHint && { aiPresentationHint: output.aiPresentationHint }),
-      // Include format information for proper display
-      ...(output.format && { format: output.format }),
-      ...(output.formatter && { formatter: output.formatter }),
-      ...(output.currencySymbol && { currencySymbol: output.currencySymbol }),
-      ...(output.decimals !== undefined && output.decimals !== null && { decimals: output.decimals }),
-      ...(output.thousandsSeparator !== undefined && output.thousandsSeparator !== null && { thousandsSeparator: output.thousandsSeparator })
+      // Store only the simple, editable format string
+      ...(output.formatString && { formatString: output.formatString })
     };
   });
 

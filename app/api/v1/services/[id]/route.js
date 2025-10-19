@@ -124,7 +124,8 @@ export async function GET(request, { params }) {
           outputs: apiDefinition.outputs.map(o => ({
             name: o.alias || o.name,
             type: o.type || 'any',
-            description: o.description || ''
+            description: o.description || '',
+            ...(o.formatString && { formatString: o.formatString })
           }))
         })
       };

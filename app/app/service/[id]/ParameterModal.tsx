@@ -46,12 +46,7 @@ interface OutputDefinition {
   direction: 'output';
   description?: string;
   aiPresentationHint?: string;
-  format?: string; // e.g., 'percentage', 'currency', 'date', etc.
-  formatter?: string; // Raw Excel format string (e.g., "0.00%", "$#,##0.00")
-  // JavaScript-friendly formatting metadata
-  currencySymbol?: string; // e.g., '$', '€', '£'
-  decimals?: number; // Number of decimal places
-  thousandsSeparator?: boolean; // Whether to use thousands separator
+  formatString?: string; // Simple, editable format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.00%")
 }
 
 interface SelectedCellInfo {
@@ -342,7 +337,36 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             : (selectedCellInfo?.dropdownItems || undefined),
           allowedValuesRange: editingParameter && 'allowedValuesRange' in editingParameter ? editingParameter.allowedValuesRange : undefined,
           allowedValuesCaseSensitive: editingParameter && 'allowedValuesCaseSensitive' in editingParameter ? editingParameter.allowedValuesCaseSensitive : false,
-          defaultValue: editingParameter && 'defaultValue' in editingParameter ? editingParameter.defaultValue : undefined
+          defaultValue: editingParameter && 'defaultValue' in editingParameter ? editingParameter.defaultValue : undefined,
+          // Format string (for outputs) - build simple format from detected Excel format
+          formatString: (() => {
+            // If editing existing parameter, use its formatString
+            if (editingParameter && 'formatString' in editingParameter) {
+              return editingParameter.formatString;
+            }
+            // Otherwise, build from detected Excel format
+            if (selectedCellInfo?.format?.format) {
+              const { format, currencySymbol, decimals, thousandsSeparator } = selectedCellInfo.format;
+              if (format === 'percentage') {
+                const d = decimals || 0;
+                return d > 0 ? '0.' + '0'.repeat(d) + '%' : '0%';
+              } else if (format === 'currency') {
+                const symbol = currencySymbol || '$';
+                const thousands = thousandsSeparator ? '#,##0' : '#';
+                const d = decimals !== null && decimals !== undefined ? decimals : 2;
+                const decimalPart = d > 0 ? '.' + '0'.repeat(d) : '';
+                return `${symbol}${thousands}${decimalPart}`;
+              } else if (format === 'date') {
+                return 'date';
+              } else if (format === 'decimal') {
+                const thousands = thousandsSeparator ? '#,##0' : '#';
+                const d = decimals !== null && decimals !== undefined ? decimals : 2;
+                const decimalPart = d > 0 ? '.' + '0'.repeat(d) : '';
+                return `${thousands}${decimalPart}`;
+              }
+            }
+            return undefined;
+          })()
         }}
       >
         {/* View Switcher */}
@@ -474,21 +498,15 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
               />
             )}
 
-            {selectedCellInfo?.format?.format && parameterType === 'output' && (
-              <Alert
-                description={
-                  selectedCellInfo.format.format === 'percentage'
-                    ? `Format: ${selectedCellInfo.format.decimals > 0 ? '0.' + '0'.repeat(selectedCellInfo.format.decimals) : '0'}%` :
-                  selectedCellInfo.format.format === 'currency'
-                    ? `Format: ${selectedCellInfo.format.currencySymbol || '$'}${selectedCellInfo.format.thousandsSeparator ? '#,##0' : '#'}${selectedCellInfo.format.decimals > 0 ? '.' + '0'.repeat(selectedCellInfo.format.decimals) : ''}` :
-                  selectedCellInfo.format.format === 'date'
-                    ? `Format: date` :
-                  `Format: ${selectedCellInfo.format.format}`
-                }
-                type="info"
-                showIcon={false}
-                style={{ marginBottom: 16, padding: '8px 12px' }}
-              />
+            {/* Format String - Only for Output Parameters */}
+            {parameterType === 'output' && (
+              <Form.Item
+                label="Format String (Optional)"
+                name="formatString"
+                help="Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date"
+              >
+                <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg" />
+              </Form.Item>
             )}
 
             {parameterType === 'input' && (

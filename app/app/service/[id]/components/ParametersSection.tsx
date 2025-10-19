@@ -42,12 +42,7 @@ export interface OutputDefinition {
   direction: 'output';
   description?: string;
   aiPresentationHint?: string;
-  format?: string; // e.g., 'percentage', 'currency', 'date', etc.
-  formatter?: string; // Raw Excel format string (e.g., "0.00%", "$#,##0.00")
-  // JavaScript-friendly formatting metadata
-  currencySymbol?: string; // e.g., '$', '€', '£'
-  decimals?: number; // Number of decimal places
-  thousandsSeparator?: boolean; // Whether to use thousands separator
+  formatString?: string; // Simple, editable format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.00%")
 }
 
 export interface AreaPermissions {
@@ -165,7 +160,9 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                   >
                     <Space direction="vertical" size={0}>
                       <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                        <strong>{input.name}</strong>
+                        <strong style={{ color: input.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
+                          {input.name}
+                        </strong>
                       </Space>
                       <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
                         {useCompactLayout ? (

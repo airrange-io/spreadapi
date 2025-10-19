@@ -47,7 +47,8 @@ export async function GET(request) {
         alias: output.alias || output.name,
         type: output.type || "number",
         description: output.description,
-        address: output.address
+        address: output.address,
+        ...(output.formatString && { formatString: output.formatString })
       }))
     };
     

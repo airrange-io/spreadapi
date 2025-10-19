@@ -440,12 +440,19 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         );
       }
 
-      answerOutputs.push({
+      const outputObj = {
         name: output.name,
         alias: output.alias,
         title: output.title || output.name,  // Include title field
         value: cellResult,
-      });
+      };
+
+      // Include simple format string if available (e.g., "€#,##0.00", "#,##0.0 kg")
+      if (output.formatString) {
+        outputObj.formatString = output.formatString;
+      }
+
+      answerOutputs.push(outputObj);
     }
 
     // Determine cache layer for metadata
