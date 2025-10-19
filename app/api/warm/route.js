@@ -3,9 +3,14 @@ import { NextResponse } from 'next/server';
 let redis;
 let spreadjsModule;
 
+// Warming cooldown: only warm once every 3 minutes (180 seconds)
+// This prevents DDoS attacks from exhausting serverless resources
+const WARMING_COOLDOWN_SECONDS = 180;
+const WARMING_LOCK_KEY = 'system:warming:last_run';
+
 export async function GET(request) {
   const startTime = Date.now();
-  
+
   try {
     // Log headers for debugging (only in development)
     if (process.env.NODE_ENV === 'development') {
@@ -15,10 +20,49 @@ export async function GET(request) {
       });
       console.log('[WARM] Request headers:', headers);
     }
-    
-    // Note: Vercel cron jobs can only be triggered by Vercel itself
-    // They are inherently secure, so additional auth is optional
-    // If you want to add auth, set CRON_SECRET in Vercel env vars
+
+    // DDoS Protection: Rate limit warming operations
+    // Only actually warm if enough time has passed since last warm
+    // This makes repeated calls harmless - they return cached status without doing work
+    let shouldWarm = true;
+    let cachedResponse = null;
+
+    try {
+      if (!redis) {
+        redis = (await import('../../../lib/redis')).default;
+      }
+
+      // Check last warming time
+      const lastWarmData = await redis.get(WARMING_LOCK_KEY);
+
+      if (lastWarmData) {
+        const lastWarm = JSON.parse(lastWarmData);
+        const timeSinceLastWarm = (Date.now() - lastWarm.timestamp) / 1000;
+
+        if (timeSinceLastWarm < WARMING_COOLDOWN_SECONDS) {
+          shouldWarm = false;
+          cachedResponse = {
+            status: 'cached',
+            message: 'Warming skipped - recently warmed',
+            timeMs: Date.now() - startTime,
+            timestamp: new Date().toISOString(),
+            lastWarm: {
+              timestamp: new Date(lastWarm.timestamp).toISOString(),
+              secondsAgo: Math.round(timeSinceLastWarm),
+              nextWarmIn: Math.round(WARMING_COOLDOWN_SECONDS - timeSinceLastWarm)
+            },
+            services: lastWarm.services,
+            environment: process.env.NODE_ENV
+          };
+
+          console.log(`[WARM] Skipped - last warm was ${Math.round(timeSinceLastWarm)}s ago`);
+          return NextResponse.json(cachedResponse);
+        }
+      }
+    } catch (err) {
+      console.error('[WARM] Rate limit check failed, proceeding with warm:', err.message);
+      // If rate limit check fails, allow warming to proceed
+    }
     
     // Lazy load and initialize SpreadJS
     let spreadJsStatus = 'not tested';
@@ -107,9 +151,30 @@ export async function GET(request) {
         'user-agent': request.headers.get('user-agent')
       }
     };
-    
+
     console.log('[WARM] Warming completed:', response);
-    
+
+    // Cache this warming result in Redis for DDoS protection
+    // Subsequent requests within cooldown period will use this cached response
+    try {
+      const cacheData = {
+        timestamp: Date.now(),
+        services: response.services
+      };
+
+      // Store with TTL slightly longer than cooldown to ensure it's available
+      await redis.setEx(
+        WARMING_LOCK_KEY,
+        WARMING_COOLDOWN_SECONDS + 60,
+        JSON.stringify(cacheData)
+      );
+
+      console.log('[WARM] Cached warming result for future requests');
+    } catch (err) {
+      console.error('[WARM] Failed to cache warming result:', err.message);
+      // Don't fail the warming just because caching failed
+    }
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('[WARM] Warming failed:', error);

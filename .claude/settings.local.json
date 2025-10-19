@@ -31,7 +31,9 @@
       "WebFetch(domain:support.claude.com)",
       "WebFetch(domain:apidog.com)",
       "WebFetch(domain:developers.openai.com)",
-      "WebFetch(domain:developer.mescius.com)"
+      "WebFetch(domain:developer.mescius.com)",
+      "Bash(for file in /Users/stephanmethner/AR/repos/spreadapi/app/api/**/route.js)",
+      "Bash(do if ! grep -q \"try {\" \"$file\")"
     ],
     "deny": []
   }
