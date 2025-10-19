@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { validateRangeFormat } from '@/lib/rangeValidation';
 
 interface InputDefinition {
   id: string;
@@ -24,6 +25,10 @@ interface InputDefinition {
   format?: 'percentage';
   percentageDecimals?: number;
   aiExamples?: string[];
+  allowedValues?: string[];
+  allowedValuesRange?: string;
+  allowedValuesCaseSensitive?: boolean;
+  defaultValue?: any;
 }
 
 interface OutputDefinition {
@@ -41,6 +46,12 @@ interface OutputDefinition {
   direction: 'output';
   description?: string;
   aiPresentationHint?: string;
+  format?: string; // e.g., 'percentage', 'currency', 'date', etc.
+  formatter?: string; // Raw Excel format string (e.g., "0.00%", "$#,##0.00")
+  // JavaScript-friendly formatting metadata
+  currencySymbol?: string; // e.g., '$', '€', '£'
+  decimals?: number; // Number of decimal places
+  thousandsSeparator?: boolean; // Whether to use thousands separator
 }
 
 interface SelectedCellInfo {
@@ -58,7 +69,14 @@ interface SelectedCellInfo {
   format?: {
     isPercentage: boolean;
     percentageDecimals: number;
+    format: string | null; // Generic format type: 'percentage', 'currency', 'date', etc.
+    formatter: string | null; // Raw Excel format string
+    // JavaScript-friendly metadata
+    currencySymbol?: string | null;
+    decimals?: number | null;
+    thousandsSeparator?: boolean | null;
   };
+  dropdownItems?: any[];
 }
 
 interface ParameterModalProps {
@@ -74,21 +92,21 @@ interface ParameterModalProps {
 // Helper function to parse cell address (e.g., "Sheet1!A1" or "Sheet1!A1:B10")
 const parseAddress = (address: string): { sheet: string; startCell: string; endCell?: string; isValid: boolean } => {
   if (!address) return { sheet: '', startCell: '', isValid: false };
-  
+
   // Split by sheet separator
   const parts = address.split('!');
   if (parts.length !== 2) return { sheet: '', startCell: '', isValid: false };
-  
+
   const sheet = parts[0];
   const cellPart = parts[1];
-  
+
   // Check if it's a range
   if (cellPart.includes(':')) {
     const rangeParts = cellPart.split(':');
     if (rangeParts.length !== 2) return { sheet, startCell: '', isValid: false };
     return { sheet, startCell: rangeParts[0], endCell: rangeParts[1], isValid: true };
   }
-  
+
   return { sheet, startCell: cellPart, isValid: true };
 };
 
@@ -116,17 +134,17 @@ const columnIndexToLetters = (index: number): string => {
 const parseCellReference = (cellRef: string): { row: number; col: number; isValid: boolean } => {
   const match = cellRef.match(/^([A-Z]+)(\d+)$/);
   if (!match) return { row: -1, col: -1, isValid: false };
-  
+
   const col = columnLettersToIndex(match[1]);
   const row = parseInt(match[2]) - 1; // Convert to 0-based
-  
+
   return { row, col, isValid: row >= 0 && col >= 0 };
 };
 
 // Helper function to validate and normalize address
-const validateAndNormalizeAddress = (address: string): { 
-  normalized: string; 
-  isValid: boolean; 
+const validateAndNormalizeAddress = (address: string): {
+  normalized: string;
+  isValid: boolean;
   error?: string;
   row?: number;
   col?: number;
@@ -137,27 +155,27 @@ const validateAndNormalizeAddress = (address: string): {
   if (!parsed.isValid) {
     return { normalized: address, isValid: false, error: 'Invalid address format. Use Sheet!Cell (e.g., Sheet1!A1)' };
   }
-  
+
   const startCell = parseCellReference(parsed.startCell);
   if (!startCell.isValid) {
     return { normalized: address, isValid: false, error: 'Invalid cell reference' };
   }
-  
+
   if (parsed.endCell) {
     const endCell = parseCellReference(parsed.endCell);
     if (!endCell.isValid) {
       return { normalized: address, isValid: false, error: 'Invalid end cell in range' };
     }
-    
+
     // Normalize range (ensure start is before end)
     const minRow = Math.min(startCell.row, endCell.row);
     const maxRow = Math.max(startCell.row, endCell.row);
     const minCol = Math.min(startCell.col, endCell.col);
     const maxCol = Math.max(startCell.col, endCell.col);
-    
+
     const normalizedStart = `${columnIndexToLetters(minCol)}${minRow + 1}`;
     const normalizedEnd = `${columnIndexToLetters(maxCol)}${maxRow + 1}`;
-    
+
     return {
       normalized: `${parsed.sheet}!${normalizedStart}:${normalizedEnd}`,
       isValid: true,
@@ -167,7 +185,7 @@ const validateAndNormalizeAddress = (address: string): {
       colCount: maxCol - minCol + 1
     };
   }
-  
+
   return {
     normalized: `${parsed.sheet}!${parsed.startCell}`,
     isValid: true,
@@ -191,10 +209,11 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   const [addressError, setAddressError] = useState<string>('');
   const [parsedAddress, setParsedAddress] = useState<any>(null);
   const [activeView, setActiveView] = useState<'parameter' | 'ai'>('parameter');
-  
+  const [showAdvancedAllowedValues, setShowAdvancedAllowedValues] = useState<boolean>(false);
+
   // Check if this is a range selection
   const isRange = selectedCellInfo && !selectedCellInfo.isSingleCell;
-  
+
   // Get initial address
   const getInitialAddress = () => {
     if (editingParameter) {
@@ -207,7 +226,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const address = e.target.value;
     const validation = validateAndNormalizeAddress(address);
-    
+
     if (validation.isValid) {
       setAddressError('');
       setParsedAddress(validation);
@@ -218,7 +237,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
       setParsedAddress(null);
     }
   };
-  
+
   // Initialize address validation for editing parameter
   React.useEffect(() => {
     if (open && editingParameter) {
@@ -227,6 +246,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         setParsedAddress(validation);
         setAddressError('');
       }
+
+      // Show advanced options if allowedValuesRange is set
+      if ('allowedValuesRange' in editingParameter && editingParameter.allowedValuesRange) {
+        setShowAdvancedAllowedValues(true);
+      }
+    } else if (open && !editingParameter) {
+      // Reset advanced options for new parameters
+      setShowAdvancedAllowedValues(false);
     }
   }, [open, editingParameter]);
 
@@ -237,7 +264,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
     }
     return editingParameter?.type || selectedCellInfo?.detectedDataType || 'string';
   };
-  
+
   // Validate initial address when modal opens (for new parameters)
   useEffect(() => {
     if (open && !editingParameter) {
@@ -309,7 +336,13 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
           max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined,
           aiExamples: editingParameter && 'aiExamples' in editingParameter ? editingParameter.aiExamples : undefined,
-          aiPresentationHint: editingParameter && 'aiPresentationHint' in editingParameter ? editingParameter.aiPresentationHint : undefined
+          aiPresentationHint: editingParameter && 'aiPresentationHint' in editingParameter ? editingParameter.aiPresentationHint : undefined,
+          allowedValues: editingParameter && 'allowedValues' in editingParameter
+            ? editingParameter.allowedValues
+            : (selectedCellInfo?.dropdownItems || undefined),
+          allowedValuesRange: editingParameter && 'allowedValuesRange' in editingParameter ? editingParameter.allowedValuesRange : undefined,
+          allowedValuesCaseSensitive: editingParameter && 'allowedValuesCaseSensitive' in editingParameter ? editingParameter.allowedValuesCaseSensitive : false,
+          defaultValue: editingParameter && 'defaultValue' in editingParameter ? editingParameter.defaultValue : undefined
         }}
       >
         {/* View Switcher */}
@@ -330,166 +363,335 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         {activeView === 'parameter' && (
           <>
             <div style={{ display: 'flex', gap: '16px' }}>
-          <Form.Item
-            label="Parameter Name"
-            name="name"
-            rules={[{ required: true, message: 'Please enter a parameter name' }]}
-            style={{ flex: 1 }}
-          >
-            <Input placeholder="e.g., amount, rate, result" />
-          </Form.Item>
+              <Form.Item
+                label="Parameter Name"
+                name="name"
+                rules={[{ required: true, message: 'Please enter a parameter name' }]}
+                style={{ flex: 1 }}
+              >
+                <Input placeholder="e.g., amount, rate, result" />
+              </Form.Item>
 
-          <Form.Item
-            label="Data Type"
-            name="dataType"
-            style={{ width: '150px' }}
-            tooltip={isRange ? "Range selections are automatically treated as arrays" : undefined}
-          >
-            <Select disabled={isRange}>
-              {isRange && <Select.Option value="array">Array (Range)</Select.Option>}
-              <Select.Option value="string">String</Select.Option>
-              <Select.Option value="number">Number</Select.Option>
-              <Select.Option value="boolean">Boolean</Select.Option>
-            </Select>
-          </Form.Item>
-        </div>
+              <Form.Item
+                label="Data Type"
+                name="dataType"
+                style={{ width: '150px' }}
+                tooltip={isRange ? "Range selections are automatically treated as arrays" : undefined}
+              >
+                <Select disabled={isRange}>
+                  {isRange && <Select.Option value="array">Array (Range)</Select.Option>}
+                  <Select.Option value="string">String</Select.Option>
+                  <Select.Option value="number">Number</Select.Option>
+                  <Select.Option value="boolean">Boolean</Select.Option>
+                </Select>
+              </Form.Item>
+            </div>
 
-        <Form.Item
-          label="Original Title"
-          name="title"
-        >
-          <Input placeholder="e.g., Interest Rate, Total Amount" />
-        </Form.Item>
-
-        <Form.Item
-          label={
-            <Space>
-              Cell Address
-              <InfoCircleOutlined 
-                style={{ color: '#8c8c8c', fontSize: '12px' }}
-                title="Enter the cell or range address (e.g., Sheet1!A1 or Sheet1!A1:B10)"
-              />
-            </Space>
-          }
-          name="address"
-          rules={[
-            { required: true, message: 'Cell address is required' },
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve();
-                const validation = validateAndNormalizeAddress(value);
-                if (validation.isValid) {
-                  return Promise.resolve();
-                }
-                return Promise.reject(new Error(validation.error || 'Invalid address'));
-              }
-            }
-          ]}
-          validateStatus={addressError ? 'error' : ''}
-          help={addressError}
-        >
-          <Input 
-            placeholder="e.g., Sheet1!A1 or Sheet1!A1:B10"
-            onChange={handleAddressChange}
-            onBlur={(e) => {
-              // Normalize address on blur
-              const validation = validateAndNormalizeAddress(e.target.value);
-              if (validation.isValid) {
-                form.setFieldsValue({ address: validation.normalized });
-              }
-            }}
-          />
-        </Form.Item>
-
-        {parsedAddress && parsedAddress.rowCount > 1 && (
-          <Alert
-            message="Range Selection"
-            description={`This is a range of ${parsedAddress.rowCount} rows × ${parsedAddress.colCount} columns. The entire range will be returned as an array of values.`}
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {isRange && !parsedAddress && (
-          <Alert
-            message="Range Selection"
-            description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {selectedCellInfo?.format?.isPercentage && (
-          <Alert
-            message="Percentage Format Detected"
-            description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        {parameterType === 'input' && (
-          <>
             <Form.Item
-              noStyle
-              shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
+              label="Original Title"
+              name="title"
             >
-              {({ getFieldValue }) =>
-                getFieldValue('dataType') === 'number' ? (
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <Form.Item
-                      label="Min Value"
-                      name="min"
-                      style={{ flex: 1 }}
-                    >
-                      <Input type="number" placeholder="Optional" />
-                    </Form.Item>
-                    <Form.Item
-                      label="Max Value"
-                      name="max"
-                      style={{ flex: 1 }}
-                    >
-                      <Input type="number" placeholder="Optional" />
-                    </Form.Item>
-                  </div>
-                ) : null
-              }
+              <Input placeholder="e.g., Interest Rate, Total Amount" />
             </Form.Item>
-          </>
-        )}
 
-        <Form.Item style={{ marginBottom: 8 }}>
-          <div style={{
-            padding: '12px',
-            background: '#f5f5f5',
-            borderRadius: '4px',
-            fontSize: '12px'
-          }}>
-            <strong>Selected Cell:</strong> {selectedCellInfo?.address}
-            {selectedCellInfo?.hasFormula && (
-              <div style={{ marginTop: '4px', color: '#52c41a' }}>
-                ✓ Contains formula (recommended as output)
-              </div>
+            <Form.Item
+              label={
+                <Space>
+                  Cell Address
+                  <InfoCircleOutlined
+                    style={{ color: '#8c8c8c', fontSize: '12px' }}
+                    title="Enter the cell or range address (e.g., Sheet1!A1 or Sheet1!A1:B10)"
+                  />
+                  {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && !selectedCellInfo?.hasFormula && (
+                    <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}>
+                      (Current: {selectedCellInfo.value})
+                    </span>
+                  )}
+                  {selectedCellInfo?.hasFormula && (
+                    <span style={{ color: '#52c41a', fontSize: '12px', fontWeight: 'normal' }}>
+                      (✓ Formula)
+                    </span>
+                  )}
+                </Space>
+              }
+              name="address"
+              rules={[
+                { required: true, message: 'Cell address is required' },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    const validation = validateAndNormalizeAddress(value);
+                    if (validation.isValid) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error(validation.error || 'Invalid address'));
+                  }
+                }
+              ]}
+              validateStatus={addressError ? 'error' : ''}
+              help={addressError}
+            >
+              <Input
+                placeholder="e.g., Sheet1!A1 or Sheet1!A1:B10"
+                onChange={handleAddressChange}
+                onBlur={(e) => {
+                  // Normalize address on blur
+                  const validation = validateAndNormalizeAddress(e.target.value);
+                  if (validation.isValid) {
+                    form.setFieldsValue({ address: validation.normalized });
+                  }
+                }}
+              />
+            </Form.Item>
+
+            {parsedAddress && parsedAddress.rowCount > 1 && (
+              <Alert
+                message="Range Selection"
+                description={`This is a range of ${parsedAddress.rowCount} rows × ${parsedAddress.colCount} columns. The entire range will be returned as an array of values.`}
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
             )}
-            {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && (
-              <div style={{ marginTop: '4px' }}>
-                Current value: {selectedCellInfo.value}
-              </div>
+
+            {isRange && !parsedAddress && (
+              <Alert
+                message="Range Selection"
+                description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
             )}
-          </div>
-        </Form.Item>
-        
-        {parameterType === 'input' && (
-          <Form.Item
-            name="mandatory"
-            valuePropName="checked"
-          >
-            <Checkbox>Mandatory parameter</Checkbox>
-          </Form.Item>
-        )}
+
+            {selectedCellInfo?.format?.isPercentage && parameterType === 'input' && (
+              <Alert
+                message="Percentage Format Detected"
+                description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
+
+            {selectedCellInfo?.format?.format && parameterType === 'output' && (
+              <Alert
+                description={
+                  selectedCellInfo.format.format === 'percentage'
+                    ? `Format: ${selectedCellInfo.format.decimals > 0 ? '0.' + '0'.repeat(selectedCellInfo.format.decimals) : '0'}%` :
+                  selectedCellInfo.format.format === 'currency'
+                    ? `Format: ${selectedCellInfo.format.currencySymbol || '$'}${selectedCellInfo.format.thousandsSeparator ? '#,##0' : '#'}${selectedCellInfo.format.decimals > 0 ? '.' + '0'.repeat(selectedCellInfo.format.decimals) : ''}` :
+                  selectedCellInfo.format.format === 'date'
+                    ? `Format: date` :
+                  `Format: ${selectedCellInfo.format.format}`
+                }
+                type="info"
+                showIcon={false}
+                style={{ marginBottom: 16, padding: '8px 12px' }}
+              />
+            )}
+
+            {parameterType === 'input' && (
+              <>
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
+                >
+                  {({ getFieldValue }) =>
+                    getFieldValue('dataType') === 'number' ? (
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <Form.Item
+                          label="Min Value"
+                          name="min"
+                          style={{ flex: 1 }}
+                        >
+                          <Input type="number" placeholder="Optional" />
+                        </Form.Item>
+                        <Form.Item
+                          label="Max Value"
+                          name="max"
+                          style={{ flex: 1 }}
+                        >
+                          <Input type="number" placeholder="Optional" />
+                        </Form.Item>
+                      </div>
+                    ) : null
+                  }
+                </Form.Item>
+
+                {/* Allowed Values (Enum Validation) */}
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
+                >
+                  {({ getFieldValue }) => {
+                    const dataType = getFieldValue('dataType');
+                    const isNumberOrString = dataType === 'number' || dataType === 'string' || !dataType;
+
+                    return isNumberOrString ? (
+                      <>
+                        <Form.Item
+                          label={
+                            <Space>
+                              Allowed Values (Optional)
+                              <InfoCircleOutlined
+                                style={{ color: '#8c8c8c', fontSize: '12px' }}
+                                title="Restrict input to specific values. Leave empty to allow any value."
+                              />
+                              <Button
+                                type="link"
+                                size="small"
+                                onClick={() => setShowAdvancedAllowedValues(!showAdvancedAllowedValues)}
+                                style={{ padding: 0, height: 'auto', fontSize: '12px' }}
+                              >
+                                {showAdvancedAllowedValues ? 'Hide Advanced' : 'Advanced'}
+                              </Button>
+                            </Space>
+                          }
+                          name="allowedValues"
+                          help={
+                            selectedCellInfo?.dropdownItems && !editingParameter
+                              ? `✓ Auto-detected from cell dropdown (${selectedCellInfo.dropdownItems.length} items)`
+                              : undefined
+                          }
+                        >
+                          <Select
+                            mode="tags"
+                            placeholder={dataType === 'number' ? 'e.g., 1, 2, 3' : 'e.g., Angestellt, Selbstständig, Unbekannt'}
+                            tokenSeparators={[',']}
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+
+                        {showAdvancedAllowedValues && (
+                          <>
+                            <div style={{ height: 12 }} />
+
+                            <Form.Item
+                              label={
+                                <Space>
+                                  Or Load from Worksheet Range
+                                  <InfoCircleOutlined
+                                    style={{ color: '#8c8c8c', fontSize: '12px' }}
+                                    title="Values will be extracted from this range when you publish the service"
+                                  />
+                                </Space>
+                              }
+                              name="allowedValuesRange"
+                              help="Extract allowed values from a worksheet range at publish time (e.g., Values!B2:B24)"
+                              rules={[
+                                {
+                                  validator: (_, value) => {
+                                    if (!value || value.trim() === '') {
+                                      return Promise.resolve();
+                                    }
+                                    const validation = validateRangeFormat(value);
+                                    if (validation.valid) {
+                                      return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error(validation.error));
+                                  }
+                                }
+                              ]}
+                            >
+                              <Input
+                                placeholder="e.g., Values!B2:B24 or 'Jahr 2025'!B2:B44"
+                              />
+                            </Form.Item>
+                          </>
+                        )}
+
+                        <Form.Item
+                          noStyle
+                          shouldUpdate={(prev, curr) => prev.allowedValues !== curr.allowedValues}
+                        >
+                          {({ getFieldValue: getVal }) => {
+                            const hasAllowedValues = getVal('allowedValues')?.length > 0;
+                            return hasAllowedValues && dataType === 'string' ? (
+                              <Form.Item
+                                name="allowedValuesCaseSensitive"
+                                valuePropName="checked"
+                                style={{ marginTop: -8, marginBottom: 16 }}
+                              >
+                                <Checkbox>Case-sensitive matching</Checkbox>
+                              </Form.Item>
+                            ) : null;
+                          }}
+                        </Form.Item>
+                      </>
+                    ) : null;
+                  }}
+                </Form.Item>
+
+                {/* Default Value (for optional parameters only) */}
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.dataType !== currentValues.dataType ||
+                    prevValues.mandatory !== currentValues.mandatory ||
+                    prevValues.allowedValues !== currentValues.allowedValues
+                  }
+                >
+                  {({ getFieldValue }) => {
+                    const dataType = getFieldValue('dataType');
+                    const isMandatory = getFieldValue('mandatory');
+                    const allowedValues = getFieldValue('allowedValues');
+
+                    // Only show for optional parameters
+                    return !isMandatory ? (
+                      <Form.Item
+                        label="Default Value (Optional)"
+                        name="defaultValue"
+                        help="Value to use when this parameter is not provided"
+                        rules={[
+                          {
+                            validator: (_, value) => {
+                              if (!value || !allowedValues || allowedValues.length === 0) {
+                                return Promise.resolve();
+                              }
+
+                              // Validate that default value is in allowedValues
+                              const valueStr = String(value);
+                              const caseSensitive = getFieldValue('allowedValuesCaseSensitive') === true;
+                              const valueToCheck = caseSensitive ? valueStr : valueStr.toLowerCase();
+                              const allowedSet = caseSensitive
+                                ? allowedValues
+                                : allowedValues.map((v: any) => String(v).toLowerCase());
+
+                              if (!allowedSet.includes(valueToCheck)) {
+                                return Promise.reject(new Error(`Default value must be one of: ${allowedValues.join(', ')}`));
+                              }
+
+                              return Promise.resolve();
+                            }
+                          }
+                        ]}
+                      >
+                        {dataType === 'number' ? (
+                          <Input type="number" placeholder="Optional default" />
+                        ) : dataType === 'boolean' ? (
+                          <Select placeholder="Select default" allowClear>
+                            <Select.Option value={true}>True</Select.Option>
+                            <Select.Option value={false}>False</Select.Option>
+                          </Select>
+                        ) : (
+                          <Input placeholder="Optional default" />
+                        )}
+                      </Form.Item>
+                    ) : null;
+                  }}
+                </Form.Item>
+              </>
+            )}
+
+            {parameterType === 'input' && (
+              <Form.Item
+                name="mandatory"
+                valuePropName="checked"
+              >
+                <Checkbox>Mandatory parameter</Checkbox>
+              </Form.Item>
+            )}
           </>
         )}
 

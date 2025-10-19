@@ -2,6 +2,7 @@ import redis from '@/lib/redis';
 import { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } from '@/lib/cacheHelpers';
 import { getApiDefinition } from '@/utils/helperApi';
 import { validateServiceToken } from '@/utils/tokenAuth';
+import { validateParameters, applyDefaults, coerceTypes } from '@/lib/parameterValidation.js';
 import {
   getSheetNameFromAddress,
   getIsSingleCellFromAddress,
@@ -178,6 +179,30 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     const apiInputs = apiJson?.inputs || apiJson?.input || [];
     const apiOutputs = apiJson?.outputs || apiJson?.output || [];
 
+    // ============================================================================
+    // VALIDATION: Do this BEFORE loading any expensive modules or workbooks
+    // ============================================================================
+
+    // Step 1: Validate provided inputs (mandatory, type, bounds, enums)
+    const validation = validateParameters(inputs, apiInputs);
+    if (!validation.valid) {
+      return {
+        error: validation.error,
+        message: validation.message,
+        details: validation.details
+      };
+    }
+
+    // Step 2: Apply default values for missing optional parameters
+    const inputsWithDefaults = applyDefaults(inputs, apiInputs);
+
+    // Step 3: Coerce types (convert strings to numbers/booleans)
+    const finalInputs = coerceTypes(inputsWithDefaults, apiInputs);
+
+    // ============================================================================
+    // End of validation - now safe to proceed with expensive operations
+    // ============================================================================
+
     // Get SpreadJS functions early - this initializes base SpreadJS
     const spreadjsLoadStart = Date.now();
     const spreadjs = getSpreadjsModule();
@@ -332,9 +357,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     let actualSheet = spread.getActiveSheet();
     let actualSheetName = actualSheet.name();
 
-    // Process inputs
+    // Process inputs (validation and type coercion already done - just set cell values)
     const answerInputs = [];
-    const inputList = Object.entries(inputs).map(([key, value]) => ({
+    const inputList = Object.entries(finalInputs).map(([key, value]) => ({
       name: key.toLowerCase(),
       value: value
     }));
@@ -348,6 +373,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       );
 
       if (inputDef) {
+        // Value is already validated and type-coerced
+        const cellValue = input.value;
+
         let inputSheetName = getSheetNameFromAddress(inputDef.address);
         if (inputSheetName !== actualSheetName) {
           actualSheet = spread.getSheetFromName(inputSheetName);
@@ -357,12 +385,12 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           actualSheetName = actualSheet.name();
         }
 
-        actualSheet.getCell(inputDef.row, inputDef.col).value(input.value);
+        actualSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
         answerInputs.push({
           name: inputDef.name ?? input.name,
           alias: inputDef.alias ?? input.alias,
           title: inputDef.title || inputDef.name || input.name,
-          value: input.value,
+          value: cellValue,
         });
       }
     }

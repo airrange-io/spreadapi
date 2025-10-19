@@ -211,9 +211,21 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       isSingleCell: (param.rowCount || 1) === 1 && (param.colCount || 1) === 1,
       detectedDataType: param.dataType || param.type, // Use dataType if available, fallback to type
       suggestedName: param.name,
-      suggestedTitle: param.title || param.name
+      suggestedTitle: param.title || param.name,
+      // Include format information if it exists
+      ...(param.format && {
+        format: {
+          format: param.format,
+          formatter: param.formatter,
+          isPercentage: param.format === 'percentage',
+          percentageDecimals: param.percentageDecimals || 0,
+          currencySymbol: param.currencySymbol,
+          decimals: param.decimals,
+          thousandsSeparator: param.thousandsSeparator
+        }
+      })
     };
-    
+
     setSelectedCellInfo(cellInfo);
     setSuggestedParamName(param.name);
     setParameterType(param.direction || (param.type === 'input' ? 'input' : 'output'));
@@ -367,11 +379,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     let detectedType = 'string';
     let titleText = '';
     let cellFormat = null;
-    
+    let dropdownItems = null;
+
     try {
       value = sheet.getValue(currentSelection.row, currentSelection.col);
       hasFormula = sheet.getFormula(currentSelection.row, currentSelection.col) ? true : false;
-      
+
       // Detect data type
       if (typeof value === 'number') {
         detectedType = 'number';
@@ -384,30 +397,142 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           detectedType = 'number';
         }
       }
-      
-      // Detect cell format (for percentage detection)
+
+      // Detect cell format (for percentage detection) and dropdown items
       if (currentSelection.rowCount === 1 && currentSelection.colCount === 1) {
         try {
           const cell = sheet.getCell(currentSelection.row, currentSelection.col);
           const formatter = cell.formatter();
           const style = sheet.getStyle(currentSelection.row, currentSelection.col);
-          
+
+          const formatterString = formatter || (style && style.formatter) || null;
+
           cellFormat = {
-            formatter: formatter || (style && style.formatter) || null,
+            formatter: formatterString,
             isPercentage: false,
-            percentageDecimals: 0
+            percentageDecimals: 0,
+            format: null, // Generic format type: 'percentage', 'currency', 'date', etc.
+            // JavaScript-friendly metadata
+            currencySymbol: null,
+            decimals: null,
+            thousandsSeparator: null
           };
-          
-          if (cellFormat.formatter && cellFormat.formatter.includes('%')) {
-            cellFormat.isPercentage = true;
-            // Extract decimal places from format like "0.00%"
-            const match = cellFormat.formatter.match(/0\.(0+)%/);
-            if (match) {
-              cellFormat.percentageDecimals = match[1].length;
+
+          if (formatterString) {
+            // Detect percentage format
+            if (formatterString.includes('%')) {
+              cellFormat.isPercentage = true;
+              cellFormat.format = 'percentage';
+              // Extract decimal places from format like "0.00%"
+              const match = formatterString.match(/0\.(0+)%/);
+              if (match) {
+                cellFormat.percentageDecimals = match[1].length;
+                cellFormat.decimals = match[1].length;
+              } else {
+                cellFormat.decimals = 0;
+              }
+            }
+            // Detect currency format
+            else if (formatterString.includes('$') || formatterString.includes('€') ||
+                     formatterString.includes('£') || formatterString.includes('¥') ||
+                     formatterString.includes('₹') || formatterString.includes('CHF')) {
+              cellFormat.format = 'currency';
+
+              // Extract currency symbol
+              if (formatterString.includes('€')) cellFormat.currencySymbol = '€';
+              else if (formatterString.includes('$')) cellFormat.currencySymbol = '$';
+              else if (formatterString.includes('£')) cellFormat.currencySymbol = '£';
+              else if (formatterString.includes('¥')) cellFormat.currencySymbol = '¥';
+              else if (formatterString.includes('₹')) cellFormat.currencySymbol = '₹';
+              else if (formatterString.includes('CHF')) cellFormat.currencySymbol = 'CHF';
+
+              // Extract decimal places (look for pattern like #,##0.00)
+              const decimalMatch = formatterString.match(/0\.(0+)/);
+              if (decimalMatch) {
+                cellFormat.decimals = decimalMatch[1].length;
+              } else if (formatterString.includes('.')) {
+                cellFormat.decimals = 2; // default
+              } else {
+                cellFormat.decimals = 0;
+              }
+
+              // Detect thousands separator
+              cellFormat.thousandsSeparator = formatterString.includes('#,##') || formatterString.includes('#.##');
+            }
+            // Detect date/time formats
+            else if (formatterString.match(/[dmyDMY]{1,4}|h{1,2}|s{1,2}/)) {
+              cellFormat.format = 'date';
+            }
+          }
+
+          // Detect SpreadJS dropdown in cell
+
+          // Method 1: Check cellType (for combo box cell types)
+          if (style && style.cellType) {
+            const cellType = style.cellType;
+            if (cellType.typeName === 'combobox' || cellType.type === 'combobox') {
+              if (cellType.items || cellType.option?.items) {
+                dropdownItems = cellType.items || cellType.option.items;
+              }
+            }
+          }
+
+          // Method 2: Check data validation (most common method)
+          if (!dropdownItems) {
+            const dataValidation = sheet.getDataValidator(currentSelection.row, currentSelection.col);
+
+            if (dataValidation && dataValidation.type() === 3) {
+              // Type 3 is list validation in SpreadJS
+              // Use getValidList to get the actual dropdown items
+              try {
+                const validList = dataValidation.getValidList(sheet, currentSelection.row, currentSelection.col);
+                if (validList && Array.isArray(validList) && validList.length > 0) {
+                  dropdownItems = validList;
+                }
+              } catch (e) {
+                // Fallback: Try manual extraction from formula
+                let formula = null;
+                if (dataValidation._S && dataValidation._S[0]) {
+                  formula = dataValidation._S[0];
+                }
+
+                // Check if formula is a range reference object
+                if (formula && typeof formula === 'object' &&
+                    'row' in formula && 'col' in formula &&
+                    'rowCount' in formula && 'colCount' in formula) {
+                  // Extract values from the range
+                  dropdownItems = [];
+                  for (let r = formula.row; r < formula.row + formula.rowCount; r++) {
+                    for (let c = formula.col; c < formula.col + formula.colCount; c++) {
+                      const value = sheet.getValue(r, c);
+                      if (value !== null && value !== undefined && value !== '') {
+                        dropdownItems.push(value);
+                      }
+                    }
+                  }
+                } else if (formula && typeof formula === 'string') {
+                  // Parse comma-separated list
+                  dropdownItems = formula.split(',').map(item => item.trim().replace(/^["']|["']$/g, ''));
+                }
+              }
+            }
+          }
+
+          // Method 3: Check cellButtons and dropDowns (legacy method)
+          if (!dropdownItems && style && style.cellButtons && style.cellButtons.length > 0) {
+            const hasDropdown = style.cellButtons.some((btn: any) =>
+              btn.command === 'openList' || btn.imageType === 1
+            );
+
+            if (hasDropdown && style.dropDowns && style.dropDowns.length > 0) {
+              const dropdown = style.dropDowns[0];
+              if (dropdown && dropdown.option && dropdown.option.items) {
+                dropdownItems = dropdown.option.items;
+              }
             }
           }
         } catch (e) {
-          console.log('Could not get cell format');
+          console.log('Could not get cell format or dropdown:', e);
         }
       }
       
@@ -554,7 +679,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       detectedDataType: detectedType,
       suggestedName,
       suggestedTitle,
-      format: cellFormat
+      format: cellFormat,
+      dropdownItems: dropdownItems // Auto-detected dropdown items from SpreadJS
     };
 
     setSelectedCellInfo(cellInfo);
@@ -787,10 +913,22 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     alias: newParam.name.toLowerCase()
                       .replace(/[\s-]+/g, '')
                       .replace(/[^a-z0-9]/g, ''),
-                    ...(selectedCellInfo?.format?.isPercentage && {
+                    // Use new format from selectedCellInfo if available, otherwise preserve existing format
+                    ...(selectedCellInfo?.format?.isPercentage ? {
                       format: 'percentage' as const,
-                      percentageDecimals: selectedCellInfo.format.percentageDecimals
-                    })
+                      percentageDecimals: selectedCellInfo.format.percentageDecimals,
+                      // Add AI examples to help AI understand decimal format
+                      aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
+                        ? newParam.aiExamples
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
+                    } : p.format === 'percentage' ? {
+                      // Preserve existing percentage format
+                      format: 'percentage' as const,
+                      percentageDecimals: p.percentageDecimals,
+                      aiExamples: p.aiExamples && p.aiExamples.length > 0
+                        ? p.aiExamples
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
+                    } : {})
                   } : p));
                 } else {
                   setInputs(prev => [...prev, {
@@ -803,7 +941,11 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     colCount: selectedCellInfo.colCount,
                     ...(selectedCellInfo?.format?.isPercentage && {
                       format: 'percentage' as const,
-                      percentageDecimals: selectedCellInfo.format.percentageDecimals
+                      percentageDecimals: selectedCellInfo.format.percentageDecimals,
+                      // Add AI examples to help AI understand decimal format
+                      aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
+                        ? newParam.aiExamples
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
                     })
                   }]);
                 }
@@ -813,7 +955,24 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     ...newParam,
                     alias: newParam.name.toLowerCase()
                       .replace(/[\s-]+/g, '')
-                      .replace(/[^a-z0-9]/g, '')
+                      .replace(/[^a-z0-9]/g, ''),
+                    // Preserve format information when editing
+                    // Use new format from selectedCellInfo if available, otherwise preserve existing format
+                    ...(selectedCellInfo?.format?.format ? {
+                      format: selectedCellInfo.format.format,
+                      formatter: selectedCellInfo.format.formatter,
+                      // JavaScript-friendly metadata
+                      ...(selectedCellInfo.format.currencySymbol && { currencySymbol: selectedCellInfo.format.currencySymbol }),
+                      ...(selectedCellInfo.format.decimals !== null && selectedCellInfo.format.decimals !== undefined && { decimals: selectedCellInfo.format.decimals }),
+                      ...(selectedCellInfo.format.thousandsSeparator !== null && selectedCellInfo.format.thousandsSeparator !== undefined && { thousandsSeparator: selectedCellInfo.format.thousandsSeparator })
+                    } : p.format ? {
+                      // Preserve existing format fields
+                      format: p.format,
+                      formatter: p.formatter,
+                      ...(p.currencySymbol && { currencySymbol: p.currencySymbol }),
+                      ...(p.decimals !== null && p.decimals !== undefined && { decimals: p.decimals }),
+                      ...(p.thousandsSeparator !== null && p.thousandsSeparator !== undefined && { thousandsSeparator: p.thousandsSeparator })
+                    } : {})
                   } : p));
                 } else {
                   setOutputs(prev => [...prev, {
@@ -823,7 +982,16 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                       .replace(/[^a-z0-9]/g, ''),
                     sheetName: selectedCellInfo.sheetName || 'Sheet1',
                     rowCount: selectedCellInfo.rowCount,
-                    colCount: selectedCellInfo.colCount
+                    colCount: selectedCellInfo.colCount,
+                    // Include format information for proper display
+                    ...(selectedCellInfo?.format?.format && {
+                      format: selectedCellInfo.format.format,
+                      formatter: selectedCellInfo.format.formatter,
+                      // JavaScript-friendly metadata
+                      ...(selectedCellInfo.format.currencySymbol && { currencySymbol: selectedCellInfo.format.currencySymbol }),
+                      ...(selectedCellInfo.format.decimals !== null && selectedCellInfo.format.decimals !== undefined && { decimals: selectedCellInfo.format.decimals }),
+                      ...(selectedCellInfo.format.thousandsSeparator !== null && selectedCellInfo.format.thousandsSeparator !== undefined && { thousandsSeparator: selectedCellInfo.format.thousandsSeparator })
+                    })
                   }]);
                 }
               }

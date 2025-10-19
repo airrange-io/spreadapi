@@ -1163,20 +1163,38 @@ async function handleJsonRpc(request, auth) {
                 responseText += `• ${input.name}`;
                 if (input.alias) responseText += ` (alias: ${input.alias})`;
                 responseText += ` - ${input.type}`;
-                if (input.mandatory) responseText += ' [REQUIRED]';
+                if (input.mandatory !== false) responseText += ' [REQUIRED]';
                 if (input.format === 'percentage') {
                   responseText += ' [PERCENTAGE: Enter as decimal, e.g., 0.05 for 5%]';
                 }
                 if (input.description) responseText += `\n  ${input.description}`;
+
+                // Add allowed values (enum validation)
+                if (input.allowedValues && input.allowedValues.length > 0) {
+                  const caseSensitive = input.allowedValuesCaseSensitive === true;
+                  responseText += `\n  Allowed values${caseSensitive ? ' (case-sensitive)' : ''}: ${input.allowedValues.join(', ')}`;
+
+                  // Show source range if values were extracted from worksheet
+                  if (input.allowedValuesRange) {
+                    responseText += `\n  (Values loaded from: ${input.allowedValuesRange} - republish service to update)`;
+                  }
+                }
+
+                // Add default value
+                if (input.defaultValue !== undefined && input.defaultValue !== null) {
+                  responseText += `\n  Default: ${input.defaultValue}`;
+                }
 
                 // Add AI examples if available
                 if (input.aiExamples && input.aiExamples.length > 0) {
                   responseText += `\n  Examples: ${input.aiExamples.join(', ')}`;
                 }
 
+                // Add min/max range
                 if (input.min !== undefined || input.max !== undefined) {
-                  responseText += `\n  Range: ${input.min || '*'} to ${input.max || '*'}`;
+                  responseText += `\n  Range: ${input.min !== undefined ? input.min : '*'} to ${input.max !== undefined ? input.max : '*'}`;
                 }
+
                 responseText += '\n';
               });
             }
@@ -1186,6 +1204,24 @@ async function handleJsonRpc(request, auth) {
               apiDefinition.outputs.forEach(output => {
                 responseText += `• ${output.name} - ${output.type}`;
                 if (output.description) responseText += `: ${output.description}`;
+
+                // Add format information
+                if (output.format) {
+                  if (output.format === 'percentage') {
+                    responseText += ` [PERCENTAGE FORMAT: Value is decimal, display as percentage]`;
+                  } else if (output.format === 'currency') {
+                    responseText += ` [CURRENCY FORMAT]`;
+                  } else if (output.format === 'date') {
+                    responseText += ` [DATE FORMAT]`;
+                  } else {
+                    responseText += ` [FORMAT: ${output.format}]`;
+                  }
+                }
+
+                // Add raw formatter string if available
+                if (output.formatter && output.format !== 'percentage') {
+                  responseText += `\n  Formatter: ${output.formatter}`;
+                }
 
                 // Add presentation hint if available
                 if (output.aiPresentationHint) {

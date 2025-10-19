@@ -30,7 +30,8 @@
       "WebFetch(domain:support.anthropic.com)",
       "WebFetch(domain:support.claude.com)",
       "WebFetch(domain:apidog.com)",
-      "WebFetch(domain:developers.openai.com)"
+      "WebFetch(domain:developers.openai.com)",
+      "WebFetch(domain:developer.mescius.com)"
     ],
     "deny": []
   }

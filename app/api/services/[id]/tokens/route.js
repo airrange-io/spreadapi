@@ -15,8 +15,9 @@ export async function GET(request, { params }) {
     const currentUserId = request.headers.get('x-user-id');
     
     console.log(`[TOKENS] Current user ID: ${currentUserId}, Service ID: ${id}`);
-    
+
     if (!currentUserId) {
+      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -27,8 +28,9 @@ export async function GET(request, { params }) {
     console.time(`[TOKENS] Check service ownership`);
     const serviceUserId = await redis.hGet(`service:${id}`, 'userId');
     console.timeEnd(`[TOKENS] Check service ownership`);
-    
+
     if (!serviceUserId) {
+      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
@@ -39,6 +41,7 @@ export async function GET(request, { params }) {
     
     if (serviceUserId !== currentUserId && !isDemoAccess) {
       console.log(`[TOKENS] Access denied. Owner: ${serviceUserId}, User: ${currentUserId}, Demo: ${isDemoAccess}`);
+      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -91,6 +94,12 @@ export async function GET(request, { params }) {
     
   } catch (error) {
     console.error('Error listing tokens:', error);
+    // Clean up any running timers
+    try {
+      console.timeEnd(`[TOKENS] Total time for service ${id}`);
+    } catch (e) {
+      // Timer might not be running
+    }
     return NextResponse.json(
       { error: 'Failed to list tokens' },
       { status: 500 }

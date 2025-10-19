@@ -22,6 +22,11 @@ export interface InputDefinition {
   description?: string;
   format?: 'percentage';
   percentageDecimals?: number;
+  aiExamples?: string[];
+  allowedValues?: string[];
+  allowedValuesRange?: string;
+  allowedValuesCaseSensitive?: boolean;
+  defaultValue?: any;
 }
 
 export interface OutputDefinition {
@@ -36,6 +41,13 @@ export interface OutputDefinition {
   value?: any;
   direction: 'output';
   description?: string;
+  aiPresentationHint?: string;
+  format?: string; // e.g., 'percentage', 'currency', 'date', etc.
+  formatter?: string; // Raw Excel format string (e.g., "0.00%", "$#,##0.00")
+  // JavaScript-friendly formatting metadata
+  currencySymbol?: string; // e.g., '$', '€', '£'
+  decimals?: number; // Number of decimal places
+  thousandsSeparator?: boolean; // Whether to use thousands separator
 }
 
 export interface AreaPermissions {

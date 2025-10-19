@@ -1,6 +1,8 @@
 // Client-safe publish service utilities
 // NOTE: This file must not import any server-side modules like Redis
 
+import { extractRangeValues } from '@/lib/rangeValidation';
+
 // Helper function to get object size in bytes
 function getObjectSize(obj) {
   const jsonString = JSON.stringify(obj);
@@ -106,8 +108,9 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     const addressParts = input.address.split('!');
     const sheetName = addressParts[0];
     const cellRef = addressParts[1];
-    
-    return {
+
+    // Prepare the base input object
+    const transformedInput = {
       id: input.id,
       address: input.address,
       name: input.name,
@@ -122,8 +125,57 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       ...(input.min !== undefined && { min: input.min }),
       ...(input.max !== undefined && { max: input.max }),
       ...(input.description && { description: input.description }),
-      ...(input.aiExamples && input.aiExamples.length > 0 && { aiExamples: input.aiExamples })
+      ...(input.aiExamples && input.aiExamples.length > 0 && { aiExamples: input.aiExamples }),
+      ...(input.allowedValuesCaseSensitive !== undefined && { allowedValuesCaseSensitive: input.allowedValuesCaseSensitive }),
+      ...(input.defaultValue !== undefined && { defaultValue: input.defaultValue })
     };
+
+    // Extract values from worksheet range if specified
+    if (input.allowedValuesRange && input.allowedValuesRange.trim() !== '') {
+      try {
+        // Parse the range to get sheet name
+        const rangeParts = input.allowedValuesRange.match(/^(?:'([^']+)'|([^!]+))!(.+)$/);
+        if (rangeParts) {
+          const rangeSheetName = rangeParts[1] || rangeParts[2];
+          const worksheet = spreadInstance.getSheetFromName(rangeSheetName);
+
+          if (worksheet) {
+            const extraction = extractRangeValues(worksheet, input.allowedValuesRange);
+
+            if (extraction.success) {
+              transformedInput.allowedValues = extraction.values;
+              transformedInput.allowedValuesRange = input.allowedValuesRange; // Keep source reference
+              console.log(`[Publish] Extracted ${extraction.count} values from range ${input.allowedValuesRange} for parameter ${input.name}`);
+            } else {
+              console.warn(`[Publish] Failed to extract values from range ${input.allowedValuesRange}: ${extraction.error}`);
+              // Keep manual allowedValues if extraction fails
+              if (input.allowedValues && input.allowedValues.length > 0) {
+                transformedInput.allowedValues = input.allowedValues;
+              }
+              transformedInput.allowedValuesRange = input.allowedValuesRange;
+            }
+          } else {
+            console.warn(`[Publish] Sheet '${rangeSheetName}' not found for range ${input.allowedValuesRange}`);
+            // Keep manual allowedValues if sheet not found
+            if (input.allowedValues && input.allowedValues.length > 0) {
+              transformedInput.allowedValues = input.allowedValues;
+            }
+            transformedInput.allowedValuesRange = input.allowedValuesRange;
+          }
+        }
+      } catch (error) {
+        console.error(`[Publish] Error extracting range values for ${input.name}:`, error);
+        // Keep manual allowedValues on error
+        if (input.allowedValues && input.allowedValues.length > 0) {
+          transformedInput.allowedValues = input.allowedValues;
+        }
+      }
+    } else if (input.allowedValues && input.allowedValues.length > 0) {
+      // No range specified - use manual allowedValues
+      transformedInput.allowedValues = input.allowedValues;
+    }
+
+    return transformedInput;
   });
 
   // Transform output definitions
@@ -132,7 +184,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     const addressParts = output.address.split('!');
     const sheetName = addressParts[0];
     const cellRef = addressParts[1];
-    
+
     return {
       id: output.id,
       address: output.address,
@@ -145,7 +197,13 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       value: output.value || '',
       direction: 'output',
       ...(output.description && { description: output.description }),
-      ...(output.aiPresentationHint && { aiPresentationHint: output.aiPresentationHint })
+      ...(output.aiPresentationHint && { aiPresentationHint: output.aiPresentationHint }),
+      // Include format information for proper display
+      ...(output.format && { format: output.format }),
+      ...(output.formatter && { formatter: output.formatter }),
+      ...(output.currencySymbol && { currencySymbol: output.currencySymbol }),
+      ...(output.decimals !== undefined && output.decimals !== null && { decimals: output.decimals }),
+      ...(output.thousandsSeparator !== undefined && output.thousandsSeparator !== null && { thousandsSeparator: output.thousandsSeparator })
     };
   });
 
@@ -198,18 +256,17 @@ export async function publishService(serviceId, publishData, tenant = null) {
         tenant
       })
     });
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to publish service');
     }
-    
+
     const result = await response.json();
-    
-    
+
     return result;
   } catch (error) {
-    // Error publishing service
+    console.error('Error publishing service:', error);
     throw error;
   }
 }

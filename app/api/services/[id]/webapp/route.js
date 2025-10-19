@@ -47,11 +47,31 @@ export async function GET(request, { params }) {
     const inputs = JSON.parse(serviceData.inputs || '[]');
     const outputs = JSON.parse(serviceData.outputs || '[]');
 
+    // Note: inputs and outputs include format information:
+    // - inputs: format, percentageDecimals, allowedValues, min, max, defaultValue, etc.
+    // - outputs: format, formatter (for percentage, currency, date display)
+    // This allows web apps to properly format and display values
+
     const response = {
       name: serviceData.name || '',
       description: serviceData.description || '',
-      inputs: inputs,
-      outputs: outputs,
+      inputs: inputs.map(input => ({
+        ...input,
+        // Ensure format information is included
+        ...(input.format && { format: input.format }),
+        ...(input.percentageDecimals !== undefined && { percentageDecimals: input.percentageDecimals }),
+        ...(input.formatter && { formatter: input.formatter })
+      })),
+      outputs: outputs.map(output => ({
+        ...output,
+        // Ensure format information is included for proper display
+        ...(output.format && { format: output.format }),
+        ...(output.formatter && { formatter: output.formatter }),
+        // JavaScript-friendly formatting metadata
+        ...(output.currencySymbol && { currencySymbol: output.currencySymbol }),
+        ...(output.decimals !== undefined && { decimals: output.decimals }),
+        ...(output.thousandsSeparator !== undefined && { thousandsSeparator: output.thousandsSeparator })
+      })),
       webAppEnabled: serviceData.webAppEnabled === 'true',
       webAppToken: serviceData.webAppToken
     };

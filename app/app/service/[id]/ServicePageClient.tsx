@@ -117,6 +117,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
+  const [showApiDefinitionModal, setShowApiDefinitionModal] = useState(false); // View API Definition modal
+  const [apiDefinitionData, setApiDefinitionData] = useState<any>(null); // API definition data
+  const [loadingApiDefinition, setLoadingApiDefinition] = useState(false); // Loading state for API definition
   const zoomHandlerRef = useRef<any>(null); // Reference to the zoom handler function
   const [saveProgress, setSaveProgress] = useState<{ visible: boolean; percent: number; status: string }>({
     visible: false,
@@ -373,10 +376,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               workbookUrl: data.service?.workbookUrl || null
             });
 
+            // Filter out undefined/null values from aiExamples in inputs
+            const sanitizedInputs = (data.service.inputs || []).map((input: any) => ({
+              ...input,
+              aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
+            }));
+
             const loadedConfig = {
               name: data.service.name || '',
               description: data.service.description || '',
-              inputs: data.service.inputs || [],
+              inputs: sanitizedInputs,
               outputs: data.service.outputs || [],
               areas: data.service.areas || [],
               enableCaching: data.service.enableCaching !== false,
@@ -403,10 +412,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               workbookUrl: data.workbookUrl || null
             });
 
+            // Filter out undefined/null values from aiExamples in inputs
+            const sanitizedInputs = (data.inputs || []).map((input: any) => ({
+              ...input,
+              aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
+            }));
+
             const loadedConfig = {
               name: data.name || '',
               description: data.description || '',
-              inputs: data.inputs || [],
+              inputs: sanitizedInputs,
               outputs: data.outputs || [],
               areas: data.areas || [],
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
@@ -645,17 +660,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       // Update the service status
-      setServiceStatus({
+      setServiceStatus(prevStatus => ({
+        ...prevStatus,
         published: true,
         status: 'published',
         publishedAt: new Date().toISOString(),
         useCaching: apiConfig.enableCaching,
         needsToken: apiConfig.requireToken
-      });
+      }));
+
+      setLoading(false);
 
     } catch (error) {
+      console.error('Failed to publish service:', error);
       message.error('Failed to publish service: ' + (error.message || 'Unknown error'));
-    } finally {
       setLoading(false);
     }
   };
@@ -682,18 +700,45 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       message.success('Service unpublished successfully!');
 
       // Update the service status
-      setServiceStatus({
+      setServiceStatus(prevStatus => ({
+        ...prevStatus,
         published: false,
         status: 'draft',
-        publishedAt: null,
-        useCaching: false,
-        needsToken: false
-      });
+        publishedAt: null
+      }));
 
     } catch (error) {
       message.error('Failed to unpublish: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewApiDefinition = async () => {
+    try {
+      setLoadingApiDefinition(true);
+      setShowApiDefinitionModal(true);
+
+      // Fetch the complete API definition
+      const response = await fetch(`/api/v1/services/${serviceId}/definition`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          message.error('Service not published yet. Please publish the service first.');
+          setShowApiDefinitionModal(false);
+          return;
+        }
+        throw new Error('Failed to fetch API definition');
+      }
+
+      const data = await response.json();
+      setApiDefinitionData(data);
+
+    } catch (error) {
+      message.error('Failed to load API definition: ' + (error.message || 'Unknown error'));
+      setShowApiDefinitionModal(false);
+    } finally {
+      setLoadingApiDefinition(false);
     }
   };
 
@@ -1357,7 +1402,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         height: 56,
         flexShrink: 0,
         background: 'white',
-        padding: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
         paddingLeft: 16,
         paddingRight: 12,
         display: 'flex',
@@ -1475,9 +1521,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               disabled={loading}
             >
               <Button style={{
-
-                
                 borderRadius: 6,
+                paddingTop: 4,
+                paddingBottom: 4,
                 paddingLeft: 12,
                 paddingRight: 12,
                 minWidth: 108,
@@ -1512,6 +1558,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Dropdown
             menu={{
               items: [
+                {
+                  key: 'view-definition',
+                  label: 'View API Definition',
+                  icon: <FileExcelOutlined />,
+                  onClick: handleViewApiDefinition,
+                  disabled: !serviceStatus?.published
+                },
+                {
+                  type: 'divider'
+                },
                 {
                   key: 'import-excel',
                   label: 'Import from Excel',
@@ -1839,6 +1895,154 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             Large files may take a moment to save...
           </p>
         </div>
+      </Modal>
+
+      {/* API Definition Modal */}
+      <Modal
+        title="API Definition"
+        open={showApiDefinitionModal}
+        onCancel={() => setShowApiDefinitionModal(false)}
+        footer={[
+          <Button key="close" onClick={() => setShowApiDefinitionModal(false)}>
+            Close
+          </Button>,
+          <Button
+            key="copy"
+            type="primary"
+            icon={<FileExcelOutlined />}
+            onClick={() => {
+              navigator.clipboard.writeText(JSON.stringify(apiDefinitionData, null, 2));
+              message.success('API definition copied to clipboard!');
+            }}
+            disabled={!apiDefinitionData}
+          >
+            Copy JSON
+          </Button>
+        ]}
+        width={800}
+        styles={{
+          body: { maxHeight: '70vh', overflow: 'auto' }
+        }}
+      >
+        {loadingApiDefinition ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="default" />
+            <p style={{ marginTop: 16, color: '#666' }}>Loading API definition...</p>
+          </div>
+        ) : apiDefinitionData ? (
+          <div>
+            {/* Service Info */}
+            <div style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
+              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 8 }}>
+                {apiDefinitionData.name}
+              </Typography.Title>
+              {apiDefinitionData.description && (
+                <Typography.Text type="secondary">{apiDefinitionData.description}</Typography.Text>
+              )}
+              <div style={{ marginTop: 12 }}>
+                <Tag color={apiDefinitionData.metadata?.requiresToken ? 'orange' : 'green'}>
+                  {apiDefinitionData.metadata?.requiresToken ? 'Token Required' : 'Public'}
+                </Tag>
+                <Tag>{apiDefinitionData.metadata?.category || 'General'}</Tag>
+                {apiDefinitionData.metadata?.totalCalls > 0 && (
+                  <Tag color="blue">{apiDefinitionData.metadata.totalCalls.toLocaleString()} calls</Tag>
+                )}
+              </div>
+            </div>
+
+            {/* Inputs */}
+            {apiDefinitionData.api?.inputs && apiDefinitionData.api.inputs.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <Typography.Title level={5}>Inputs ({apiDefinitionData.api.inputs.length})</Typography.Title>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {apiDefinitionData.api.inputs.map((input: any, idx: number) => (
+                    <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <Typography.Text strong>{input.name}</Typography.Text>
+                        <Tag color="blue" style={{ margin: 0 }}>{input.type}</Tag>
+                        {input.mandatory && <Tag color="red" style={{ margin: 0 }}>Required</Tag>}
+                      </div>
+                      {input.description && (
+                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 8 }}>
+                          {input.description}
+                        </Typography.Text>
+                      )}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 12 }}>
+                        {input.min !== undefined && <span>Min: <strong>{input.min}</strong></span>}
+                        {input.max !== undefined && <span>Max: <strong>{input.max}</strong></span>}
+                        {input.defaultValue !== undefined && <span>Default: <strong>{JSON.stringify(input.defaultValue)}</strong></span>}
+                        {input.allowedValues && input.allowedValues.length > 0 && (
+                          <div style={{ width: '100%', marginTop: 4 }}>
+                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                              Allowed values{input.allowedValuesCaseSensitive && ' (case-sensitive)'}:
+                            </Typography.Text>
+                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {input.allowedValues.map((val: any, i: number) => (
+                                <Tag key={i} style={{ margin: 0 }}>{String(val)}</Tag>
+                              ))}
+                            </div>
+                            {input.allowedValuesRange && (
+                              <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+                                Source: {input.allowedValuesRange}
+                              </Typography.Text>
+                            )}
+                          </div>
+                        )}
+                        {input.aiExamples && input.aiExamples.length > 0 && (
+                          <div style={{ width: '100%', marginTop: 4 }}>
+                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Examples:</Typography.Text>
+                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {input.aiExamples.map((ex: any, i: number) => (
+                                <Tag key={i} color="cyan" style={{ margin: 0 }}>{String(ex)}</Tag>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Outputs */}
+            {apiDefinitionData.api?.outputs && apiDefinitionData.api.outputs.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <Typography.Title level={5}>Outputs ({apiDefinitionData.api.outputs.length})</Typography.Title>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {apiDefinitionData.api.outputs.map((output: any, idx: number) => (
+                    <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <Typography.Text strong>{output.name}</Typography.Text>
+                        <Tag color="green" style={{ margin: 0 }}>{output.type}</Tag>
+                      </div>
+                      {output.description && (
+                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
+                          {output.description}
+                        </Typography.Text>
+                      )}
+                      {output.aiPresentationHint && (
+                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11, marginTop: 4 }}>
+                          Presentation: {output.aiPresentationHint}
+                        </Typography.Text>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Endpoint Info */}
+            <div style={{ padding: 12, background: '#f5f5f5', borderRadius: 6 }}>
+              <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>Execute Endpoint:</Typography.Text>
+              <Typography.Text code copyable style={{ fontSize: 12 }}>
+                {apiDefinitionData.endpoint?.execute}
+              </Typography.Text>
+            </div>
+          </div>
+        ) : (
+          <Typography.Text type="secondary">No data available</Typography.Text>
+        )}
       </Modal>
     </Layout>
   );
