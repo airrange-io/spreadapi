@@ -6,6 +6,7 @@ import { getApiDefinition } from '../../../../utils/helperApi';
 import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
 import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
+import { saveState, loadState, listStates } from '../../../../lib/mcpState.js';
 
 /**
  * MCP (Model Context Protocol) Server - Bridge Endpoint
@@ -606,9 +607,75 @@ async function handleJsonRpc(request, auth) {
               },
               required: ['calculations']
             }
+          },
+          {
+            name: 'spreadapi_save_state',
+            description: 'Save calculation results for later reference. WHEN TO USE: When the user says "remember this", "save this scenario", "let\'s compare this later", or when you want to preserve calculation results for multi-turn workflows. Examples: "Calculate my mortgage and save it", "Remember this as my baseline scenario".',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                serviceId: {
+                  type: 'string',
+                  description: 'The service that was used for calculation'
+                },
+                inputs: {
+                  type: 'object',
+                  description: 'The input parameters that were used'
+                },
+                outputs: {
+                  type: 'object',
+                  description: 'The calculation results to save'
+                },
+                label: {
+                  type: 'string',
+                  description: 'Human-readable label for this saved state (e.g., "30-year mortgage option", "aggressive investment scenario")'
+                },
+                ttl: {
+                  type: 'number',
+                  description: 'Time-to-live in seconds. Defaults to 3600 (1 hour) for temporary states, use 86400 for 24-hour saved scenarios',
+                  default: 3600
+                }
+              },
+              required: ['serviceId', 'inputs', 'outputs', 'label'],
+              additionalProperties: false
+            }
+          },
+          {
+            name: 'spreadapi_load_state',
+            description: 'Retrieve previously saved calculation results. WHEN TO USE: When the user refers to a previous calculation like "the mortgage we calculated earlier", "compare with the scenario I saved", or "show me that calculation again". This retrieves both inputs and outputs.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                stateId: {
+                  type: 'string',
+                  description: 'The state ID returned from spreadapi_save_state'
+                }
+              },
+              required: ['stateId'],
+              additionalProperties: false
+            }
+          },
+          {
+            name: 'spreadapi_list_saved_states',
+            description: 'List all saved calculation states for the current user. WHEN TO USE: When the user asks "what scenarios have I saved?", "show me my saved calculations", or when you need to help the user recall previous work. Returns a list with state IDs, labels, and metadata.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                serviceId: {
+                  type: 'string',
+                  description: 'Optional: filter by specific service. If omitted, shows all saved states across all services'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of states to return (default: 10, max: 50)',
+                  default: 10
+                }
+              },
+              additionalProperties: false
+            }
           }
         ];
-        
+
         // For backward compatibility: include service-specific tools if requested
         const includeServiceSpecificTools = params.includeServiceSpecificTools || false;
         
@@ -1324,7 +1391,159 @@ async function handleJsonRpc(request, auth) {
             };
           }
         }
-        
+
+        // Handle state management tools
+        if (name === 'spreadapi_save_state') {
+          try {
+            const { serviceId, inputs, outputs, label, ttl } = args;
+
+            if (!serviceId || !inputs || !outputs || !label) {
+              throw new Error('serviceId, inputs, outputs, and label are required');
+            }
+
+            // Save state to Redis
+            const result = await saveState(
+              auth.userId,
+              serviceId,
+              inputs,
+              outputs,
+              label,
+              ttl
+            );
+
+            return {
+              jsonrpc: '2.0',
+              result: {
+                content: [{
+                  type: 'text',
+                  text: `✅ Saved state: "${label}"\n\nState ID: ${result.stateId}\nExpires: ${result.expiresAt}\n\nYou can retrieve this later using spreadapi_load_state with the state ID.`
+                }],
+                metadata: result
+              },
+              id
+            };
+
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Failed to save state: ${error.message}`
+              },
+              id
+            };
+          }
+        }
+
+        if (name === 'spreadapi_load_state') {
+          try {
+            const { stateId } = args;
+
+            if (!stateId) {
+              throw new Error('stateId is required');
+            }
+
+            // Load state from Redis
+            const state = await loadState(auth.userId, stateId);
+
+            // Format response
+            let responseText = `📋 Loaded state: "${state.label}"\n\n`;
+            responseText += `Service: ${state.serviceId}\n`;
+            responseText += `Created: ${new Date(state.created).toISOString()}\n\n`;
+
+            responseText += `INPUTS:\n`;
+            for (const [key, value] of Object.entries(state.inputs)) {
+              responseText += `  ${key}: ${value}\n`;
+            }
+
+            responseText += `\nOUTPUTS:\n`;
+            for (const [key, value] of Object.entries(state.outputs)) {
+              responseText += `  ${key}: ${value}\n`;
+            }
+
+            return {
+              jsonrpc: '2.0',
+              result: {
+                content: [{
+                  type: 'text',
+                  text: responseText
+                }],
+                metadata: state
+              },
+              id
+            };
+
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Failed to load state: ${error.message}`
+              },
+              id
+            };
+          }
+        }
+
+        if (name === 'spreadapi_list_saved_states') {
+          try {
+            const { serviceId, limit } = args;
+
+            // List states from Redis
+            const states = await listStates(auth.userId, serviceId, limit);
+
+            if (states.length === 0) {
+              return {
+                jsonrpc: '2.0',
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: serviceId
+                      ? `No saved states found for service "${serviceId}".`
+                      : 'No saved states found. Use spreadapi_save_state to save calculation results.'
+                  }]
+                },
+                id
+              };
+            }
+
+            // Format response
+            let responseText = `📚 Saved States (${states.length}):\n\n`;
+
+            states.forEach((state, index) => {
+              const createdDate = new Date(state.created).toLocaleString();
+              responseText += `${index + 1}. "${state.label}"\n`;
+              responseText += `   State ID: ${state.stateId}\n`;
+              responseText += `   Service: ${state.serviceId}\n`;
+              responseText += `   Created: ${createdDate}\n\n`;
+            });
+
+            responseText += `Use spreadapi_load_state(stateId) to retrieve any of these states.`;
+
+            return {
+              jsonrpc: '2.0',
+              result: {
+                content: [{
+                  type: 'text',
+                  text: responseText
+                }],
+                metadata: { states }
+              },
+              id
+            };
+
+          } catch (error) {
+            return {
+              jsonrpc: '2.0',
+              error: {
+                code: INTERNAL_ERROR,
+                message: `Failed to list states: ${error.message}`
+              },
+              id
+            };
+          }
+        }
+
         // Handle backward compatibility: service-specific area read tool
         if (name.startsWith('spreadapi_read_area_')) {
           const serviceId = name.replace('spreadapi_read_area_', '');
