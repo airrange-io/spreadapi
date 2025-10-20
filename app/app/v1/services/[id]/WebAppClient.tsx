@@ -122,19 +122,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     }
     try {
       const config = JSON.parse(serviceData.webAppConfig);
-
-      // Debug: Log available outputs and rules
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Debug] Available outputs:', serviceData.outputs.map(o => o.name));
-        console.log('[Debug] Rules:', config.rules);
-      }
-
       return config.rules || [];
     } catch (e) {
       console.error('Failed to parse webAppConfig:', e);
       return [];
     }
-  }, [serviceData.webAppConfig, serviceData.outputs]);
+  }, [serviceData.webAppConfig]);
 
   // Create a mapping from input name/alias to form field key
   const inputNameToFieldKey = useMemo(() => {
@@ -171,14 +164,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     const currentValue = formValues[fieldKey];
 
     // Evaluate the rule
-    const result = String(currentValue) === String(rule.visible.equals);
-
-    // Debug logging for troubleshooting
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Rule Check] Output: ${outputName}, Current: "${currentValue}", Expected: "${rule.visible.equals}", Match: ${result}`);
-    }
-
-    return result;
+    return String(currentValue) === String(rule.visible.equals);
   }, [appRules, formValues, inputNameToFieldKey]);
 
   // Function to check if an input should be visible based on rules
@@ -202,14 +188,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     const currentValue = formValues[fieldKey];
 
     // Evaluate the rule
-    const result = String(currentValue) === String(rule.visible.equals);
-
-    // Debug logging for troubleshooting
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Rule Check] Input: ${inputName}, Current: "${currentValue}", Expected: "${rule.visible.equals}", Match: ${result}`);
-    }
-
-    return result;
+    return String(currentValue) === String(rule.visible.equals);
   }, [appRules, formValues, inputNameToFieldKey]);
 
   // Initialize form with defaults
@@ -742,21 +721,10 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
                   position: 'relative'
                 }}>
                   {serviceData.outputs
-                    .filter(output => {
-                      const visible = isOutputVisible(output.name);
-                      if (process.env.NODE_ENV === 'development') {
-                        console.log(`[Render] Output: ${output.name}, Visible: ${visible}, Value: ${results?.[output.name]}`);
-                      }
-                      return visible;
-                    })
+                    .filter(output => isOutputVisible(output.name))
                     .map((output, index, filteredArray) => {
                       const value = results[output.name];
-                      if (value === undefined || value === null) {
-                        if (process.env.NODE_ENV === 'development') {
-                          console.log(`[Render Skip] Output: ${output.name}, value is ${value}`);
-                        }
-                        return null;
-                      }
+                      if (value === undefined || value === null) return null;
 
                       return (
                         <div
