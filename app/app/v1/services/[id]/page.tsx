@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Card, Form, Input, InputNumber, Button, Space, Alert, Spin, Typography } from 'antd';
+import { Card, Form, Input, InputNumber, Select, Button, Space, Alert, Spin, Typography } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -21,6 +21,10 @@ interface ServiceData {
     max?: number;
     value?: any;
     aiExamples?: string[];
+    allowedValues?: string[];
+    allowedValuesRange?: string;
+    allowedValuesCaseSensitive?: boolean;
+    defaultValue?: any;
   }>;
   outputs: Array<{
     name: string;
@@ -92,8 +96,15 @@ export default function WebAppPage() {
         const defaults: Record<string, any> = {};
         (data.inputs || []).forEach((input: any) => {
           const key = input.alias || input.name;
+
+          // Priority: value from spreadsheet > defaultValue > first allowedValue (if mandatory) > type default
           if (input.value !== undefined && input.value !== null) {
             defaults[key] = input.value;
+          } else if (input.defaultValue !== undefined && input.defaultValue !== null) {
+            defaults[key] = input.defaultValue;
+          } else if (input.allowedValues && input.allowedValues.length > 0 && input.mandatory !== false) {
+            // For mandatory dropdowns, select the first allowed value
+            defaults[key] = input.allowedValues[0];
           } else if (input.type === 'number') {
             defaults[key] = input.min || 0;
           } else if (input.type === 'boolean') {
@@ -254,6 +265,33 @@ export default function WebAppPage() {
         )}
       </div>
     );
+
+    // If input has allowedValues, render a dropdown
+    if (input.allowedValues && input.allowedValues.length > 0) {
+      return (
+        <Form.Item
+          key={fieldName}
+          name={fieldName}
+          label={label}
+          rules={[{ required: input.mandatory !== false, message: `Please select ${input.title || input.name}` }]}
+          style={{ marginBottom: 12 }}
+        >
+          <Select
+            placeholder={`Select ${input.title || input.name}`}
+            size="middle"
+            showSearch
+            optionFilterProp="children"
+            filterOption={(inputValue, option) =>
+              (option?.label ?? '').toLowerCase().includes(inputValue.toLowerCase())
+            }
+            options={input.allowedValues.map(value => ({
+              value: value,
+              label: value
+            }))}
+          />
+        </Form.Item>
+      );
+    }
 
     if (input.type === 'number') {
       return (
