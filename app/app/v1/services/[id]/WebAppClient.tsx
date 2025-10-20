@@ -49,9 +49,10 @@ interface AppRule {
 interface Props {
   serviceId: string;
   serviceData: ServiceData;
+  initialLanguage: 'de' | 'en';
 }
 
-export default function WebAppClient({ serviceId, serviceData }: Props) {
+export default function WebAppClient({ serviceId, serviceData, initialLanguage }: Props) {
   const [form] = Form.useForm();
   const [executing, setExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,13 +74,8 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     });
   }, [results, lastCalculatedValues, formValues]);
 
-  // Detect user's locale from browser
-  const userLocale = useMemo(() => {
-    if (typeof navigator !== 'undefined') {
-      return navigator.language || 'en-US';
-    }
-    return 'en-US';
-  }, []);
+  // Use language provided by server (from Accept-Language header) to avoid hydration mismatch
+  const userLocale = initialLanguage === 'de' ? 'de-DE' : 'en-US';
 
   // Simple translations for German
   const translations = {
@@ -126,12 +122,19 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     }
     try {
       const config = JSON.parse(serviceData.webAppConfig);
+
+      // Debug: Log available outputs and rules
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Debug] Available outputs:', serviceData.outputs.map(o => o.name));
+        console.log('[Debug] Rules:', config.rules);
+      }
+
       return config.rules || [];
     } catch (e) {
       console.error('Failed to parse webAppConfig:', e);
       return [];
     }
-  }, [serviceData.webAppConfig]);
+  }, [serviceData.webAppConfig, serviceData.outputs]);
 
   // Create a mapping from input name/alias to form field key
   const inputNameToFieldKey = useMemo(() => {
@@ -168,7 +171,14 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     const currentValue = formValues[fieldKey];
 
     // Evaluate the rule
-    return String(currentValue) === String(rule.visible.equals);
+    const result = String(currentValue) === String(rule.visible.equals);
+
+    // Debug logging for troubleshooting
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Rule Check] Output: ${outputName}, Current: "${currentValue}", Expected: "${rule.visible.equals}", Match: ${result}`);
+    }
+
+    return result;
   }, [appRules, formValues, inputNameToFieldKey]);
 
   // Function to check if an input should be visible based on rules
@@ -192,7 +202,14 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     const currentValue = formValues[fieldKey];
 
     // Evaluate the rule
-    return String(currentValue) === String(rule.visible.equals);
+    const result = String(currentValue) === String(rule.visible.equals);
+
+    // Debug logging for troubleshooting
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Rule Check] Input: ${inputName}, Current: "${currentValue}", Expected: "${rule.visible.equals}", Match: ${result}`);
+    }
+
+    return result;
   }, [appRules, formValues, inputNameToFieldKey]);
 
   // Initialize form with defaults
@@ -725,10 +742,21 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
                   position: 'relative'
                 }}>
                   {serviceData.outputs
-                    .filter(output => isOutputVisible(output.name))
+                    .filter(output => {
+                      const visible = isOutputVisible(output.name);
+                      if (process.env.NODE_ENV === 'development') {
+                        console.log(`[Render] Output: ${output.name}, Visible: ${visible}, Value: ${results?.[output.name]}`);
+                      }
+                      return visible;
+                    })
                     .map((output, index, filteredArray) => {
                       const value = results[output.name];
-                      if (value === undefined || value === null) return null;
+                      if (value === undefined || value === null) {
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log(`[Render Skip] Output: ${output.name}, value is ${value}`);
+                        }
+                        return null;
+                      }
 
                       return (
                         <div

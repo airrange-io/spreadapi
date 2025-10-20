@@ -134,6 +134,9 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
     const inputs = JSON.parse(serviceData.inputs || '[]');
     const outputs = JSON.parse(serviceData.outputs || '[]');
 
+    // Detect user's language from Accept-Language header
+    const userLanguage = acceptLanguage?.toLowerCase().includes('de') ? 'de' : 'en';
+
     const serviceInfo = {
       name: serviceData.name || 'Calculation Service',
       description: serviceData.description || '',
@@ -142,8 +145,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       webAppConfig: serviceData.webAppConfig || ''
     };
 
-    // Pass pre-fetched data to client component
-    return <WebAppClient serviceId={serviceId} serviceData={serviceInfo} />;
+    // Pass pre-fetched data and language to client component
+    return <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} />;
   } catch (error) {
     console.error('Error loading web app:', error);
     notFound();
