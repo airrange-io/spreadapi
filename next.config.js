@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -45,8 +45,22 @@ const nextConfig = {
         canvas: 'commonjs canvas',
         'mock-browser': 'commonjs mock-browser',
       });
+
+      // Add polyfill for MutationObserver on server (Next.js DevTools bug workaround)
+      const originalEntry = config.entry;
+      config.entry = async () => {
+        const entries = await originalEntry();
+
+        if (entries['main-app']) {
+          if (Array.isArray(entries['main-app'])) {
+            entries['main-app'].unshift('./lib/mutation-observer-polyfill.js');
+          }
+        }
+
+        return entries;
+      };
     }
-    
+
     // Ignore native modules on client
     if (!isServer) {
       config.resolve.alias = {
