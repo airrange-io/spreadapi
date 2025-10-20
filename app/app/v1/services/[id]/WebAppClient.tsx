@@ -65,11 +65,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   const formValues = Form.useWatch([], form);
 
   // Check if current form values differ from last calculated values
+  // Only compare visible fields since hidden fields can't be changed by the user
   const resultsAreStale = useMemo(() => {
     if (!results || !lastCalculatedValues || !formValues) return false;
 
-    // Compare current values with values used for last calculation
-    return Object.keys(lastCalculatedValues).some(key => {
+    // Only check visible form fields (hidden fields use defaults and can't change)
+    return Object.keys(formValues).some(key => {
       return String(formValues[key]) !== String(lastCalculatedValues[key]);
     });
   }, [results, lastCalculatedValues, formValues]);
@@ -315,8 +316,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   const handleSubmit = async (values: any) => {
     const startTime = Date.now();
 
+    // Include values for all inputs, including hidden ones
+    // This is necessary because hidden mandatory fields still need to be submitted
+    const allValues = { ...initialValues, ...values };
+
     // Store the values being used for calculation
-    setLastCalculatedValues({ ...values });
+    setLastCalculatedValues({ ...allValues });
 
     // Cancel previous request
     if (abortControllerRef.current) {
@@ -332,7 +337,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
 
       // Build query string
       const params = new URLSearchParams();
-      Object.entries(values).forEach(([key, value]) => {
+      Object.entries(allValues).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           params.append(key, String(value));
         }
