@@ -422,6 +422,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
             }));
 
+            console.log('Loading service - webAppConfig from API:', data.webAppConfig);
+
             const loadedConfig = {
               name: data.name || '',
               description: data.description || '',
@@ -441,6 +443,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               webAppToken: data.webAppToken || '',
               webAppConfig: data.webAppConfig || ''
             };
+
+            console.log('Loading service - webAppConfig in loadedConfig:', loadedConfig.webAppConfig);
+
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
             setConfigLoaded(true); // Mark config as loaded

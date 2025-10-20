@@ -81,6 +81,44 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     return 'en-US';
   }, []);
 
+  // Simple translations for German
+  const translations = {
+    en: {
+      optional: 'Optional',
+      pleaseSelect: 'Please select',
+      pleaseEnter: 'Please enter',
+      select: 'Select',
+      enter: 'Enter',
+      calculateResults: 'Calculate Results',
+      calculating: 'Calculating...',
+      results: 'Results',
+      staleWarning: "Input values have changed. Click 'Calculate Results' to update.",
+      error: 'Error',
+      executionFailed: 'Failed to execute calculation',
+      spreadapi: 'SpreadAPI'
+    },
+    de: {
+      optional: 'Optional',
+      pleaseSelect: 'Bitte wählen Sie',
+      pleaseEnter: 'Bitte geben Sie ein',
+      select: 'Auswählen',
+      enter: 'Eingeben',
+      calculateResults: 'Ergebnisse berechnen',
+      calculating: 'Berechnung läuft...',
+      results: 'Ergebnisse',
+      staleWarning: 'Eingabewerte wurden geändert. Klicken Sie auf „Ergebnisse berechnen", um zu aktualisieren.',
+      error: 'Fehler',
+      executionFailed: 'Berechnung fehlgeschlagen',
+      spreadapi: 'SpreadAPI'
+    }
+  };
+
+  // Get translation helper
+  const t = useCallback((key: keyof typeof translations.en): string => {
+    const lang = userLocale.startsWith('de') ? 'de' : 'en';
+    return translations[lang][key];
+  }, [userLocale]);
+
   // Parse app rules from webAppConfig
   const appRules = useMemo<AppRule[]>(() => {
     if (!serviceData.webAppConfig || !serviceData.webAppConfig.trim()) {
@@ -334,7 +372,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
       setExecutionTime(data.metadata?.executionTime || Date.now() - startTime);
     } catch (err: any) {
       if (err.name === 'AbortError') return;
-      setError(err.message || 'Failed to execute calculation');
+      setError(err.message || t('executionFailed'));
       setResults(null);
     } finally {
       setExecuting(false);
@@ -403,7 +441,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
       <div>
         <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
           {input.title || input.name}
-          {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(Optional)</Text>}
+          {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
         </div>
         {input.description && (
           <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginBottom: 4 }}>
@@ -420,11 +458,11 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
           key={fieldName}
           name={fieldName}
           label={label}
-          rules={[{ required: input.mandatory !== false, message: `Please select ${input.title || input.name}` }]}
+          rules={[{ required: input.mandatory !== false, message: `${t('pleaseSelect')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
         >
           <Select
-            placeholder={`Select ${input.title || input.name}`}
+            placeholder={`${t('select')} ${input.title || input.name}`}
             size="middle"
             showSearch
             optionFilterProp="children"
@@ -504,7 +542,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
             key={fieldName}
             name={fieldName}
             label={label}
-            rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+            rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
             style={{ marginBottom: 12 }}
           >
             <SliderWithInput />
@@ -518,7 +556,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
           key={fieldName}
           name={fieldName}
           label={label}
-          rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+          rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
         >
           <InputNumber
@@ -526,7 +564,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
             min={minValue}
             max={maxValue}
             step={getSmartStep(input.value, minValue, maxValue)}
-            placeholder={`Enter ${input.title || input.name}`}
+            placeholder={`${t('enter')} ${input.title || input.name}`}
             size="middle"
             keyboard={true}
             formatter={(value) => {
@@ -552,7 +590,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
           <div>
             <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
               {input.title || input.name}
-              {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(Optional)</Text>}
+              {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
             </div>
             {input.description && (
               <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
@@ -581,16 +619,16 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
         key={fieldName}
         name={fieldName}
         label={label}
-        rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+        rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
         style={{ marginBottom: 12 }}
       >
         <Input
-          placeholder={`Enter ${input.title || input.name}`}
+          placeholder={`${t('enter')} ${input.title || input.name}`}
           size="middle"
         />
       </Form.Item>
     );
-  }, [formatters]);
+  }, [formatters, t]);
 
   return (
     <div style={{
@@ -611,7 +649,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
 
           {error && (
             <Alert
-              message="Error"
+              message={t('error')}
               description={error}
               type="error"
               showIcon
@@ -659,7 +697,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
                   fontWeight: 600
                 }}
               >
-                {executing ? 'Calculating...' : 'Calculate Results'}
+                {executing ? t('calculating') : t('calculateResults')}
               </Button>
             </Form.Item>
           </Form>
@@ -668,7 +706,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
             <>
               {resultsAreStale && (
                 <Alert
-                  message="Input values have changed. Click 'Calculate Results' to update."
+                  message={t('staleWarning')}
                   type="warning"
                   showIcon={false}
                   style={{ marginTop: 24 }}
@@ -676,7 +714,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
               )}
               <div style={{ marginTop: resultsAreStale ? 16 : 32 }}>
                 <Title level={4} style={{ marginBottom: 16 }}>
-                  Results
+                  {t('results')}
                 </Title>
                 <div style={{
                   backgroundColor: '#f8f8f8',
@@ -738,7 +776,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
                   rel="noopener noreferrer"
                   style={{ color: '#4F2D7F', textDecoration: 'none' }}
                 >
-                  SpreadAPI
+                  {t('spreadapi')}
                 </a>
               </div>
             </>

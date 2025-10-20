@@ -1,5 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import redis from '@/lib/redis';
 import WebAppClient from './WebAppClient';
 
@@ -8,10 +9,40 @@ interface PageProps {
   searchParams: Promise<{ token?: string }>;
 }
 
+// Simple German translations for error pages
+const translations = {
+  en: {
+    accessDenied: 'Access Denied',
+    noToken: 'No access token provided',
+    notEnabled: 'Web App Not Enabled',
+    enableInSettings: 'Please enable web app in Settings and click Save.',
+    invalidToken: 'Invalid Token',
+    checkUrl: 'Please check your URL or regenerate the token.'
+  },
+  de: {
+    accessDenied: 'Zugriff verweigert',
+    noToken: 'Kein Zugriffstoken angegeben',
+    notEnabled: 'Web-App nicht aktiviert',
+    enableInSettings: 'Bitte aktivieren Sie die Web-App in den Einstellungen und klicken Sie auf Speichern.',
+    invalidToken: 'Ungültiges Token',
+    checkUrl: 'Bitte überprüfen Sie Ihre URL oder generieren Sie das Token neu.'
+  }
+};
+
+function getTranslations(acceptLanguage: string | null) {
+  const lang = acceptLanguage?.toLowerCase().includes('de') ? 'de' : 'en';
+  return translations[lang];
+}
+
 // Server Component - Pre-fetch data for faster initial load
 export default async function WebAppPage({ params, searchParams }: PageProps) {
   const { id: serviceId } = await params;
   const { token } = await searchParams;
+
+  // Get user's language from Accept-Language header
+  const headersList = await headers();
+  const acceptLanguage = headersList.get('accept-language');
+  const t = getTranslations(acceptLanguage);
 
   if (!token) {
     return (
@@ -31,8 +62,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>Access Denied</div>
-          <div style={{ color: '#666' }}>No access token provided</div>
+          <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.accessDenied}</div>
+          <div style={{ color: '#666' }}>{t.noToken}</div>
         </div>
       </div>
     );
@@ -67,8 +98,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>Web App Not Enabled</div>
-            <div style={{ color: '#666' }}>Please enable web app in Settings and click Save.</div>
+            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.notEnabled}</div>
+            <div style={{ color: '#666' }}>{t.enableInSettings}</div>
           </div>
         </div>
       );
@@ -92,8 +123,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>Invalid Token</div>
-            <div style={{ color: '#666' }}>Please check your URL or regenerate the token.</div>
+            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.invalidToken}</div>
+            <div style={{ color: '#666' }}>{t.checkUrl}</div>
           </div>
         </div>
       );

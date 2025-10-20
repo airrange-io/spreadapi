@@ -117,7 +117,8 @@ export async function GET(request, { params }) {
         category: serviceData.category || '',
         // Web App settings
         webAppEnabled: serviceData.webAppEnabled === 'true' || serviceData.webAppEnabled === true,
-        webAppToken: serviceData.webAppToken || ''
+        webAppToken: serviceData.webAppToken || '',
+        webAppConfig: serviceData.webAppConfig || ''
       },
       
       // Status information
