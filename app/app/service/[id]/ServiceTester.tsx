@@ -208,7 +208,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     };
 
     // Helper function to determine smart step size
-    const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
+    const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined, fieldName: string) => {
       // If we have min and max, calculate step based on range
       if (min !== undefined && max !== undefined) {
         const range = max - min;
@@ -218,11 +218,12 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
         if (range <= 1000) return 10;
         return 100;
       }
-      
+
       // Otherwise, base step on current value
-      const currentValue = value || form.getFieldValue(input.alias || input.name) || 0;
+      // Use parameterValues instead of form.getFieldValue to avoid warning during initial render
+      const currentValue = value || parameterValues[fieldName] || 0;
       const absValue = Math.abs(currentValue);
-      
+
       if (absValue === 0) return 1;
       if (absValue < 1) return 0.01;
       if (absValue < 10) return 0.1;
@@ -233,7 +234,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
     // Check both type and dataType properties
     const inputType = input.type || input.dataType;
-    
+    const fieldName = input.alias || input.name;
+
     switch (inputType) {
       case 'number':
         return (
@@ -241,7 +243,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             {...commonProps}
             min={input.min}
             max={input.max}
-            step={getSmartStep(input.value, input.min, input.max)}
+            step={getSmartStep(input.value, input.min, input.max, fieldName)}
             placeholder={`Enter ${input.name}`}
             keyboard={true}
             controls={true}
@@ -272,22 +274,22 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
         <div style={{ width: '100%' }}>
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
           {/* Input Parameters Form */}
-          {inputs.length > 0 && (
-            <div style={{ width: '100%' }}>
-              <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                Input Parameters
-              </Typography.Text>
-              <Form
-                form={form}
-                layout="vertical"
-                initialValues={parameterValues}
-                style={{ width: '100%' }}
-                onValuesChange={(changedValues, allValues) => {
-                  setParameterValues(allValues);
-                  // Update URL immediately when values change
-                  setWizardUrl(buildWizardUrl(allValues));
-                }}
-              >
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={parameterValues}
+            style={{ width: '100%' }}
+            onValuesChange={(changedValues, allValues) => {
+              setParameterValues(allValues);
+              // Update URL immediately when values change
+              setWizardUrl(buildWizardUrl(allValues));
+            }}
+          >
+            {inputs.length > 0 && (
+              <div style={{ width: '100%' }}>
+                <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
+                  Input Parameters
+                </Typography.Text>
                 <Row gutter={[16, 8]}>
                   {inputs.map((input) => {
                     // Only span full width if the input has a description or is a text area
@@ -318,9 +320,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     );
                   })}
                 </Row>
-              </Form>
-            </div>
-          )}
+              </div>
+            )}
+          </Form>
 
           {/* Dynamic URL Input */}
           <div>
