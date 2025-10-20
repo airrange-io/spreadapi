@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Progress } from 'antd';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -31,6 +31,19 @@ const StatusBar = dynamic(() => import('./StatusBar'), {
   loading: () => null,
   ssr: false
 });
+
+// Lazy load ApiDefinitionModal as it's only shown on demand
+const ApiDefinitionModal = dynamic(() => import('./components/ApiDefinitionModal'), {
+  loading: () => null,
+  ssr: false
+});
+
+// Lazy load SaveProgressModal as it's only shown during large file saves
+const SaveProgressModal = dynamic(() => import('./components/SaveProgressModal'), {
+  loading: () => null,
+  ssr: false
+});
+
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 import { appStore } from '../../../stores/AppStore';
 import { isDemoService } from '@/lib/constants';
@@ -1887,177 +1900,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       />
 
       {/* Save Progress Modal */}
-      <Modal
-        title="Saving Large File"
-        open={saveProgress.visible}
-        footer={null}
-        closable={false}
-        centered
-        width={400}
-      >
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Progress
-            percent={saveProgress.percent}
-            status="active"
-            strokeColor={{
-              '0%': '#108ee9',
-              '100%': '#87d068',
-            }}
-          />
-          <p style={{ marginTop: 16, color: '#666' }}>{saveProgress.status}</p>
-          <p style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-            Large files may take a moment to save...
-          </p>
-        </div>
-      </Modal>
+      <SaveProgressModal
+        visible={saveProgress.visible}
+        percent={saveProgress.percent}
+        status={saveProgress.status}
+      />
 
       {/* API Definition Modal */}
-      <Modal
-        title="API Definition"
-        open={showApiDefinitionModal}
-        onCancel={() => setShowApiDefinitionModal(false)}
-        footer={[
-          <Button key="close" onClick={() => setShowApiDefinitionModal(false)}>
-            Close
-          </Button>,
-          <Button
-            key="copy"
-            type="primary"
-            icon={<FileExcelOutlined />}
-            onClick={() => {
-              navigator.clipboard.writeText(JSON.stringify(apiDefinitionData, null, 2));
-              message.success('API definition copied to clipboard!');
-            }}
-            disabled={!apiDefinitionData}
-          >
-            Copy JSON
-          </Button>
-        ]}
-        width={800}
-        styles={{
-          body: { maxHeight: '70vh', overflow: 'auto' }
-        }}
-      >
-        {loadingApiDefinition ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <Spin size="default" />
-            <p style={{ marginTop: 16, color: '#666' }}>Loading API definition...</p>
-          </div>
-        ) : apiDefinitionData ? (
-          <div>
-            {/* Service Info */}
-            <div style={{ marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
-              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 8 }}>
-                {apiDefinitionData.name}
-              </Typography.Title>
-              {apiDefinitionData.description && (
-                <Typography.Text type="secondary">{apiDefinitionData.description}</Typography.Text>
-              )}
-              <div style={{ marginTop: 12 }}>
-                <Tag color={apiDefinitionData.metadata?.requiresToken ? 'orange' : 'green'}>
-                  {apiDefinitionData.metadata?.requiresToken ? 'Token Required' : 'Public'}
-                </Tag>
-                <Tag>{apiDefinitionData.metadata?.category || 'General'}</Tag>
-                {apiDefinitionData.metadata?.totalCalls > 0 && (
-                  <Tag color="blue">{apiDefinitionData.metadata.totalCalls.toLocaleString()} calls</Tag>
-                )}
-              </div>
-            </div>
-
-            {/* Inputs */}
-            {apiDefinitionData.api?.inputs && apiDefinitionData.api.inputs.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <Typography.Title level={5}>Inputs ({apiDefinitionData.api.inputs.length})</Typography.Title>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {apiDefinitionData.api.inputs.map((input: any, idx: number) => (
-                    <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <Typography.Text strong>{input.name}</Typography.Text>
-                        <Tag color="blue" style={{ margin: 0 }}>{input.type}</Tag>
-                        {input.mandatory && <Tag color="red" style={{ margin: 0 }}>Required</Tag>}
-                      </div>
-                      {input.description && (
-                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 8 }}>
-                          {input.description}
-                        </Typography.Text>
-                      )}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 12 }}>
-                        {input.min !== undefined && <span>Min: <strong>{input.min}</strong></span>}
-                        {input.max !== undefined && <span>Max: <strong>{input.max}</strong></span>}
-                        {input.defaultValue !== undefined && <span>Default: <strong>{JSON.stringify(input.defaultValue)}</strong></span>}
-                        {input.allowedValues && input.allowedValues.length > 0 && (
-                          <div style={{ width: '100%', marginTop: 4 }}>
-                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                              Allowed values{input.allowedValuesCaseSensitive && ' (case-sensitive)'}:
-                            </Typography.Text>
-                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                              {input.allowedValues.map((val: any, i: number) => (
-                                <Tag key={i} style={{ margin: 0 }}>{String(val)}</Tag>
-                              ))}
-                            </div>
-                            {input.allowedValuesRange && (
-                              <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
-                                Source: {input.allowedValuesRange}
-                              </Typography.Text>
-                            )}
-                          </div>
-                        )}
-                        {input.aiExamples && input.aiExamples.length > 0 && (
-                          <div style={{ width: '100%', marginTop: 4 }}>
-                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>Examples:</Typography.Text>
-                            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                              {input.aiExamples.map((ex: any, i: number) => (
-                                <Tag key={i} color="cyan" style={{ margin: 0 }}>{String(ex)}</Tag>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Outputs */}
-            {apiDefinitionData.api?.outputs && apiDefinitionData.api.outputs.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <Typography.Title level={5}>Outputs ({apiDefinitionData.api.outputs.length})</Typography.Title>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {apiDefinitionData.api.outputs.map((output: any, idx: number) => (
-                    <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <Typography.Text strong>{output.name}</Typography.Text>
-                        <Tag color="green" style={{ margin: 0 }}>{output.type}</Tag>
-                      </div>
-                      {output.description && (
-                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12 }}>
-                          {output.description}
-                        </Typography.Text>
-                      )}
-                      {output.aiPresentationHint && (
-                        <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11, marginTop: 4 }}>
-                          Presentation: {output.aiPresentationHint}
-                        </Typography.Text>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Endpoint Info */}
-            <div style={{ padding: 12, background: '#f5f5f5', borderRadius: 6 }}>
-              <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>Execute Endpoint:</Typography.Text>
-              <Typography.Text code copyable style={{ fontSize: 12 }}>
-                {apiDefinitionData.endpoint?.execute}
-              </Typography.Text>
-            </div>
-          </div>
-        ) : (
-          <Typography.Text type="secondary">No data available</Typography.Text>
-        )}
-      </Modal>
+      <ApiDefinitionModal
+        visible={showApiDefinitionModal}
+        onClose={() => setShowApiDefinitionModal(false)}
+        data={apiDefinitionData}
+        loading={loadingApiDefinition}
+      />
     </Layout>
   );
 }
