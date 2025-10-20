@@ -35,6 +35,7 @@ interface ApiTestViewProps {
     requireToken?: boolean;
     webAppEnabled?: boolean;
     webAppToken?: string;
+    webAppConfig?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -163,10 +164,12 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           serviceId={serviceId}
           webAppEnabled={apiConfig.webAppEnabled || false}
           webAppToken={apiConfig.webAppToken || ''}
+          webAppConfig={apiConfig.webAppConfig || ''}
           isLoading={isLoading}
           hasUnsavedChanges={hasUnsavedChanges}
           onWebAppEnabledChange={(webAppEnabled) => onConfigChange?.({ webAppEnabled })}
           onWebAppTokenChange={(webAppToken) => onConfigChange?.({ webAppToken })}
+          onWebAppConfigChange={(webAppConfig) => onConfigChange?.({ webAppConfig })}
         />
       </Space>
     </div>

@@ -68,7 +68,8 @@ export async function GET(request, { params }) {
         ...(output.formatString && { formatString: output.formatString })
       })),
       webAppEnabled: serviceData.webAppEnabled === 'true',
-      webAppToken: serviceData.webAppToken
+      webAppToken: serviceData.webAppToken,
+      webAppConfig: serviceData.webAppConfig || ''
     };
 
     return NextResponse.json(response, {

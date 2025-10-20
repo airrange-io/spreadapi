@@ -34,6 +34,16 @@ interface ServiceData {
   description: string;
   inputs: Input[];
   outputs: Output[];
+  webAppConfig?: string;
+}
+
+interface AppRule {
+  output?: string;
+  input?: string;
+  visible: {
+    input: string;
+    equals: string;
+  };
 }
 
 interface Props {
@@ -48,6 +58,20 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
   const [results, setResults] = useState<Record<string, any> | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [lastCalculatedValues, setLastCalculatedValues] = useState<Record<string, any> | null>(null);
+
+  // Watch all form values for rule evaluation
+  const formValues = Form.useWatch([], form);
+
+  // Check if current form values differ from last calculated values
+  const resultsAreStale = useMemo(() => {
+    if (!results || !lastCalculatedValues || !formValues) return false;
+
+    // Compare current values with values used for last calculation
+    return Object.keys(lastCalculatedValues).some(key => {
+      return String(formValues[key]) !== String(lastCalculatedValues[key]);
+    });
+  }, [results, lastCalculatedValues, formValues]);
 
   // Detect user's locale from browser
   const userLocale = useMemo(() => {
@@ -56,6 +80,82 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     }
     return 'en-US';
   }, []);
+
+  // Parse app rules from webAppConfig
+  const appRules = useMemo<AppRule[]>(() => {
+    if (!serviceData.webAppConfig || !serviceData.webAppConfig.trim()) {
+      return [];
+    }
+    try {
+      const config = JSON.parse(serviceData.webAppConfig);
+      return config.rules || [];
+    } catch (e) {
+      console.error('Failed to parse webAppConfig:', e);
+      return [];
+    }
+  }, [serviceData.webAppConfig]);
+
+  // Create a mapping from input name/alias to form field key
+  const inputNameToFieldKey = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    serviceData.inputs.forEach(input => {
+      const fieldKey = input.alias || input.name;
+      // Map both name and alias to the field key
+      mapping[input.name] = fieldKey;
+      if (input.alias) {
+        mapping[input.alias] = fieldKey;
+      }
+    });
+    return mapping;
+  }, [serviceData.inputs]);
+
+  // Function to check if an output should be visible based on rules
+  const isOutputVisible = useCallback((outputName: string): boolean => {
+    // Find rule for this output
+    const rule = appRules.find(r => r.output === outputName);
+
+    // No rule means always visible
+    if (!rule) return true;
+
+    // If formValues is not ready yet, show all outputs
+    if (!formValues) return true;
+
+    // Get the form field key for the input (handles aliases)
+    const fieldKey = inputNameToFieldKey[rule.visible.input];
+    if (!fieldKey) {
+      console.warn(`Rule references unknown input: ${rule.visible.input}`);
+      return true;
+    }
+
+    const currentValue = formValues[fieldKey];
+
+    // Evaluate the rule
+    return String(currentValue) === String(rule.visible.equals);
+  }, [appRules, formValues, inputNameToFieldKey]);
+
+  // Function to check if an input should be visible based on rules
+  const isInputVisible = useCallback((inputName: string): boolean => {
+    // Find rule for this input
+    const rule = appRules.find(r => r.input === inputName);
+
+    // No rule means always visible
+    if (!rule) return true;
+
+    // If formValues is not ready yet, show all inputs
+    if (!formValues) return true;
+
+    // Get the form field key for the condition input (handles aliases)
+    const fieldKey = inputNameToFieldKey[rule.visible.input];
+    if (!fieldKey) {
+      console.warn(`Rule references unknown input: ${rule.visible.input}`);
+      return true;
+    }
+
+    const currentValue = formValues[fieldKey];
+
+    // Evaluate the rule
+    return String(currentValue) === String(rule.visible.equals);
+  }, [appRules, formValues, inputNameToFieldKey]);
 
   // Initialize form with defaults
   const initialValues = useMemo(() => {
@@ -180,6 +280,9 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
 
   const handleSubmit = async (values: any) => {
     const startTime = Date.now();
+
+    // Store the values being used for calculation
+    setLastCalculatedValues({ ...values });
 
     // Cancel previous request
     if (abortControllerRef.current) {
@@ -529,6 +632,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
               gap: '0 16px'
             }}>
               {serviceData.inputs
+                .filter(input => isInputVisible(input.name))
                 .slice()
                 .sort((a, b) => {
                   // Sort boolean inputs to the end
@@ -562,7 +666,15 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
 
           {results && (
             <>
-              <div style={{ marginTop: 32 }}>
+              {resultsAreStale && (
+                <Alert
+                  message="Input values have changed. Click 'Calculate Results' to update."
+                  type="warning"
+                  showIcon={false}
+                  style={{ marginTop: 24 }}
+                />
+              )}
+              <div style={{ marginTop: resultsAreStale ? 16 : 32 }}>
                 <Title level={4} style={{ marginBottom: 16 }}>
                   Results
                 </Title>
@@ -570,36 +682,39 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
                   backgroundColor: '#f8f8f8',
                   borderRadius: '6px',
                   overflow: 'hidden',
-                  opacity: executing ? 0.5 : 1,
-                  transition: 'opacity 0.3s ease'
+                  opacity: executing ? 0.5 : (resultsAreStale ? 0.4 : 1),
+                  transition: 'opacity 0.3s ease',
+                  position: 'relative'
                 }}>
-                  {serviceData.outputs.map((output, index) => {
-                    const value = results[output.name];
-                    if (value === undefined || value === null) return null;
+                  {serviceData.outputs
+                    .filter(output => isOutputVisible(output.name))
+                    .map((output, index, filteredArray) => {
+                      const value = results[output.name];
+                      if (value === undefined || value === null) return null;
 
-                    return (
-                      <div
-                        key={output.name}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '12px 16px',
-                          borderBottom: index < serviceData.outputs.length - 1 ? '1px solid #e8e8e8' : 'none'
-                        }}
-                      >
-                        <Text style={{ fontSize: 14 }}>
-                          {output.title || output.name}:
-                        </Text>
-                        <Text strong style={{
-                          fontSize: 16,
-                          color: '#4F2D7F'
-                        }}>
-                          {formatOutput(output, value)}
-                        </Text>
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div
+                          key={output.name}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            borderBottom: index < filteredArray.length - 1 ? '1px solid #e8e8e8' : 'none'
+                          }}
+                        >
+                          <Text style={{ fontSize: 14 }}>
+                            {output.title || output.name}:
+                          </Text>
+                          <Text strong style={{
+                            fontSize: 16,
+                            color: '#4F2D7F'
+                          }}>
+                            {formatOutput(output, value)}
+                          </Text>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
 

@@ -107,7 +107,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       name: serviceData.name || 'Calculation Service',
       description: serviceData.description || '',
       inputs,
-      outputs
+      outputs,
+      webAppConfig: serviceData.webAppConfig || ''
     };
 
     // Pass pre-fetched data to client component
