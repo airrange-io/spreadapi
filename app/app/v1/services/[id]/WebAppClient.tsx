@@ -152,9 +152,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     // No rule means always visible
     if (!rule) return true;
 
-    // If formValues is not ready yet, show all outputs
-    if (!formValues) return true;
-
     // Get the form field key for the input (handles aliases)
     const fieldKey = inputNameToFieldKey[rule.visible.input];
     if (!fieldKey) {
@@ -162,11 +159,20 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
       return true;
     }
 
-    const currentValue = formValues[fieldKey];
+    // Get current value - use formValues if available, otherwise get initial value from input definition
+    let currentValue = formValues?.[fieldKey];
+
+    // If formValues not ready yet, get initial value from input definition (prevents flicker)
+    if (currentValue === undefined) {
+      const inputDef = serviceData.inputs.find(i => (i.alias || i.name) === fieldKey);
+      if (inputDef) {
+        currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
+      }
+    }
 
     // Evaluate the rule
     return String(currentValue) === String(rule.visible.equals);
-  }, [appRules, formValues, inputNameToFieldKey]);
+  }, [appRules, formValues, inputNameToFieldKey, serviceData.inputs]);
 
   // Function to check if an input should be visible based on rules
   const isInputVisible = useCallback((inputName: string): boolean => {
@@ -176,9 +182,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     // No rule means always visible
     if (!rule) return true;
 
-    // If formValues is not ready yet, show all inputs
-    if (!formValues) return true;
-
     // Get the form field key for the condition input (handles aliases)
     const fieldKey = inputNameToFieldKey[rule.visible.input];
     if (!fieldKey) {
@@ -186,11 +189,20 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
       return true;
     }
 
-    const currentValue = formValues[fieldKey];
+    // Get current value - use formValues if available, otherwise get initial value from input definition
+    let currentValue = formValues?.[fieldKey];
+
+    // If formValues not ready yet, get initial value from input definition (prevents flicker)
+    if (currentValue === undefined) {
+      const inputDef = serviceData.inputs.find(i => (i.alias || i.name) === fieldKey);
+      if (inputDef) {
+        currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
+      }
+    }
 
     // Evaluate the rule
     return String(currentValue) === String(rule.visible.equals);
-  }, [appRules, formValues, inputNameToFieldKey]);
+  }, [appRules, formValues, inputNameToFieldKey, serviceData.inputs]);
 
   // Initialize form with defaults
   const initialValues = useMemo(() => {
@@ -316,9 +328,45 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   const handleSubmit = async (values: any) => {
     const startTime = Date.now();
 
-    // Include values for all inputs, including hidden ones
-    // This is necessary because hidden mandatory fields still need to be submitted
-    const allValues = { ...initialValues, ...values };
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Web App] Input definitions:', serviceData.inputs.map(i => ({
+        name: i.name,
+        alias: i.alias,
+        type: i.type,
+        mandatory: i.mandatory,
+        defaultValue: i.defaultValue,
+        value: i.value,
+        visible: isInputVisible(i.name)
+      })));
+      console.log('[Web App] Output definitions:', serviceData.outputs.map(o => ({
+        name: o.name,
+        alias: o.alias,
+        type: o.type,
+        visible: isOutputVisible(o.name)
+      })));
+    }
+
+    // Start with visible field values
+    const allValues = { ...values };
+
+    // Add hidden fields that should be sent to the API
+    // Note: Hidden fields should use their initial values (from form initialization)
+    serviceData.inputs.forEach(input => {
+      const fieldKey = input.alias || input.name;
+      const isMandatory = input.mandatory !== false;
+      const hasValue = input.value !== undefined && input.value !== null;
+      const hasDefaultValue = input.defaultValue !== undefined && input.defaultValue !== null;
+      const isBoolean = input.type === 'boolean'; // Booleans always have a default (false)
+      const isVisible = isInputVisible(input.name);
+
+      // If field is hidden and (mandatory OR has value OR has default OR is boolean), include it
+      if (!isVisible && (isMandatory || hasValue || hasDefaultValue || isBoolean)) {
+        // Only add if not already in values (visible fields take precedence)
+        if (allValues[fieldKey] === undefined) {
+          allValues[fieldKey] = initialValues[fieldKey];
+        }
+      }
+    });
 
     // Store the values being used for calculation
     setLastCalculatedValues({ ...allValues });

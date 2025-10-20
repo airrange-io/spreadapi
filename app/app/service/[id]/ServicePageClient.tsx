@@ -702,6 +702,93 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
+  const handleRepublish = async () => {
+    try {
+      // First ensure everything is saved
+      if (hasAnyChanges) {
+        message.warning('Please save your changes before republishing');
+        return;
+      }
+
+      // If workbook not loaded, we need to load it first
+      if (!spreadInstance) {
+        // Check if we even have a workbook to load
+        const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
+
+        if (!hasWorkbook) {
+          message.error('Cannot republish: No parameters defined. Please add inputs or outputs first.');
+          return;
+        }
+
+        // Show modal asking user to switch to Workbook view
+        Modal.confirm({
+          title: 'Workbook Required for Republishing',
+          content: 'Republishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try republishing again.',
+          okText: 'Switch to Workbook',
+          cancelText: 'Cancel',
+          onOk: () => {
+            setActiveView('Workbook');
+            message.info('Please wait for the workbook to load, then click Republish again.');
+          }
+        });
+
+        return;
+      }
+
+      if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
+        message.error('Please define at least one input, output, or editable area');
+        return;
+      }
+
+      setLoading(true);
+      message.info('Republishing service...');
+
+      // Prepare the publish data
+      const publishData = await prepareServiceForPublish(
+        spreadInstance,
+        apiConfig,
+        {
+          enableCaching: apiConfig.enableCaching,
+          requireToken: apiConfig.requireToken,
+          cacheTableSheetData: apiConfig.cacheTableSheetData,
+          tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
+          tokens: [] // Will add token management later
+        }
+      );
+
+      // Publish the service (backend handles update)
+      const result = await publishService(serviceId, publishData);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      message.success('Service republished successfully! Cache will update within 10 minutes.');
+
+      // Set a flag to refresh the service list
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('refreshServiceList', Date.now().toString());
+      }
+
+      // Update the service status
+      setServiceStatus(prevStatus => ({
+        ...prevStatus,
+        published: true,
+        status: 'published',
+        publishedAt: new Date().toISOString(),
+        useCaching: apiConfig.enableCaching,
+        needsToken: apiConfig.requireToken
+      }));
+
+      setLoading(false);
+
+    } catch (error) {
+      console.error('Failed to republish service:', error);
+      message.error('Failed to republish service: ' + (error.message || 'Unknown error'));
+      setLoading(false);
+    }
+  };
+
   const handleUnpublish = async () => {
     try {
       if (hasAnyChanges) {
@@ -1178,6 +1265,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       updates.hasOwnProperty('description') &&
       updates.hasOwnProperty('inputs');
 
+    // Warn user if modifying parameters on a published service
+    if (serviceStatus.published && (updates.inputs || updates.outputs)) {
+      message.warning({
+        content: 'Service is published. Even after republishing, it may take up to 10 minutes for caches to fully update.',
+        duration: 8,
+        key: 'cache-delay-warning'
+      });
+    }
+
     if (isFullConfig) {
       // Full config replacement
       const hasActualChanges = JSON.stringify(updates) !== JSON.stringify(savedConfig);
@@ -1192,7 +1288,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return newConfig;
       });
     }
-  }, [savedConfig]);
+  }, [savedConfig, serviceStatus.published, message]);
 
   const handleImportExcel = useCallback(async (file: File) => {
     try {
@@ -1527,20 +1623,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               menu={{
                 items: [
                   serviceStatus?.published ? {
-                    key: 'unpublish',
-                    label: 'Unpublish this service',
-                    icon: <CloseCircleOutlined />,
-                    danger: true,
-                    onClick: handleUnpublish,
-                    disabled: hasAnyChanges
+                    key: 'republish',
+                    label: 'Republish this service',
+                    icon: <CheckCircleOutlined />,
+                    onClick: handleRepublish,
+                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
                   } : {
                     key: 'publish',
                     label: 'Publish this service',
                     icon: <CheckCircleOutlined />,
                     onClick: handlePublish,
                     disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                  }
-                ]
+                  },
+                  serviceStatus?.published ? {
+                    key: 'unpublish',
+                    label: 'Unpublish this service',
+                    icon: <CloseCircleOutlined />,
+                    danger: true,
+                    onClick: handleUnpublish,
+                    disabled: hasAnyChanges
+                  } : null
+                ].filter(Boolean)
               }}
               trigger={['click']}
               disabled={loading}
