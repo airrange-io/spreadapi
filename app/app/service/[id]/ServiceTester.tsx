@@ -519,6 +519,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             serviceName={serviceName}
             requireToken={requireToken}
             parameterValues={parameterValues}
+            inputs={inputs}
+            outputs={outputs}
           />
         </Suspense>
       </CollapsibleSection>

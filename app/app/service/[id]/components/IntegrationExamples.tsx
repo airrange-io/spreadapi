@@ -13,13 +13,17 @@ interface IntegrationExamplesProps {
   serviceName?: string;
   requireToken?: boolean;
   parameterValues?: Record<string, any>;
+  inputs?: any[];
+  outputs?: any[];
 }
 
 const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
   serviceId,
   serviceName,
   requireToken,
-  parameterValues = {}
+  parameterValues = {},
+  inputs = [],
+  outputs = []
 }) => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -249,18 +253,31 @@ if ($httpCode == 200) {
           .map(key => `        ${key}: document.getElementById('${key}').value`)
           .join(',\n');
 
+        // Create output format map for formatting
+        const outputFormats = outputs.reduce((acc: any, output: any) => {
+          if (output.formatString) {
+            acc[output.name] = output.formatString;
+          }
+          return acc;
+        }, {});
+        const outputFormatsJson = JSON.stringify(outputFormats);
+
         const resultFields = Object.keys(parameterValues).length > 0
-          ? `Object.entries(data.outputs).forEach(([key, value]) => {
+          ? `// Handle both array and object output formats
+        const outputsArray = Array.isArray(data.outputs) ? data.outputs : Object.entries(data.outputs).map(([k, v]) => ({name: k, value: v}));
+
+        outputsArray.forEach((output) => {
           const row = document.createElement('div');
           row.className = 'result-row';
-          // Extract the label from title, alias, or name property
-          const label = (typeof value === 'object' && value !== null)
-            ? (value.title || value.alias || value.name || key)
-            : key;
-          // Extract the value property if the output is an object with a value field
-          const displayValue = (typeof value === 'object' && value !== null && 'value' in value)
-            ? value.value
-            : (typeof value === 'object' ? JSON.stringify(value, null, 2) : value);
+
+          // Extract output name and value
+          const outputName = output.name || output.alias || 'result';
+          const label = output.title || output.alias || output.name || outputName;
+          const rawValue = output.value !== undefined ? output.value : output;
+
+          // Apply formatting if available
+          const displayValue = formatOutput(outputName, rawValue);
+
           row.innerHTML = \`
             <span class="result-label">\${label}:</span>
             <span class="result-value">\${displayValue}</span>
@@ -412,6 +429,49 @@ ${inputFields}
     const content = document.getElementById('content');
     const error = document.getElementById('error');
     const time = document.getElementById('time');
+
+    // Output format strings for each parameter
+    const outputFormats = ${outputFormatsJson};
+
+    // Format output values based on formatString
+    function formatOutput(outputName, value) {
+      if (typeof value !== 'number' || !outputFormats[outputName]) {
+        return value;
+      }
+
+      const formatStr = outputFormats[outputName].trim();
+
+      // Handle percentage formats: "0.00%", "0.0%"
+      if (formatStr.includes('%')) {
+        const decimals = (formatStr.match(/\\.0+/)?.[0].length || 1) - 1;
+        return value.toFixed(decimals) + '%';
+      }
+
+      // Handle date format
+      if (formatStr.toLowerCase() === 'date') {
+        return new Date(value).toLocaleDateString();
+      }
+
+      // Parse the format string for currency/unit symbols and decimal places
+      // Examples: "€#,##0.00", "$#,##0.00", "#,##0.0 kg", "#,##0 units"
+      const prefixMatch = formatStr.match(/^([^#0,.\\s]+)/);
+      const suffixMatch = formatStr.match(/([^#0,.\\s]+)$/);
+      const decimalMatch = formatStr.match(/\\.0+/);
+      const hasThousands = formatStr.includes(',');
+
+      const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
+      const prefix = prefixMatch ? prefixMatch[1] : '';
+      const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
+
+      // Format the number
+      const formattedNum = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: hasThousands
+      }).format(value);
+
+      return prefix + formattedNum + suffix;
+    }
 
     form.onsubmit = async (e) => {
       e.preventDefault();
