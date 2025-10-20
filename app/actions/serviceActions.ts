@@ -13,11 +13,11 @@ export async function deleteServiceAction(serviceId: string, userId?: string): P
     }
     
     // Check if service exists
-    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    const serviceData = await redis.hGetAll(`service:${serviceId}`) as unknown as Record<string, string>;
     if (!serviceData || Object.keys(serviceData).length === 0) {
       return { success: false, error: 'Service not found' };
     }
-    
+
     // Verify ownership
     if (serviceData.userId !== userId) {
       return { success: false, error: 'Unauthorized - you can only delete your own services' };

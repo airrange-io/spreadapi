@@ -40,7 +40,7 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
 
   // Server-side data fetching - much faster than client-side
   try {
-    const serviceData = await redis.hGetAll(`service:${serviceId}`);
+    const serviceData = await redis.hGetAll(`service:${serviceId}`) as unknown as Record<string, string>;
 
     if (!serviceData || Object.keys(serviceData).length === 0) {
       notFound();

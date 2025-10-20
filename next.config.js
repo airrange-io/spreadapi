@@ -38,7 +38,7 @@ const nextConfig = {
     workerThreads: false,
     cpus: 1,
   },
-  webpack: (config, { isServer, nextRuntime }) => {
+  webpack: (config, { isServer, nextRuntime, webpack }) => {
     // Avoid bundling native modules on the server
     if (isServer && nextRuntime === 'nodejs') {
       config.externals.push({
@@ -46,19 +46,25 @@ const nextConfig = {
         'mock-browser': 'commonjs mock-browser',
       });
 
-      // Add polyfill for MutationObserver on server (Next.js DevTools bug workaround)
-      const originalEntry = config.entry;
-      config.entry = async () => {
-        const entries = await originalEntry();
-
-        if (entries['main-app']) {
-          if (Array.isArray(entries['main-app'])) {
-            entries['main-app'].unshift('./lib/mutation-observer-polyfill.js');
-          }
+      // Inject MutationObserver polyfill globally on server (Next.js DevTools bug workaround)
+      const polyfillCode = `
+        if (typeof global !== 'undefined' && typeof global.MutationObserver === 'undefined') {
+          global.MutationObserver = class MutationObserver {
+            constructor() {}
+            observe() {}
+            disconnect() {}
+            takeRecords() { return []; }
+          };
         }
+      `;
 
-        return entries;
-      };
+      config.plugins.push(
+        new webpack.BannerPlugin({
+          banner: polyfillCode,
+          raw: true,
+          entryOnly: false,
+        })
+      );
     }
 
     // Ignore native modules on client
