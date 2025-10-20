@@ -660,6 +660,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
             initialValues={initialValues}
             size="middle"
           >
+            {/* Non-boolean inputs (text, number, select, slider) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -667,13 +668,19 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
             }}>
               {serviceData.inputs
                 .filter(input => isInputVisible(input.name))
-                .slice()
-                .sort((a, b) => {
-                  // Sort boolean inputs to the end
-                  if (a.type === 'boolean' && b.type !== 'boolean') return 1;
-                  if (a.type !== 'boolean' && b.type === 'boolean') return -1;
-                  return 0;
-                })
+                .filter(input => input.type !== 'boolean')
+                .map((input) => renderInputControl(input))}
+            </div>
+
+            {/* Boolean inputs (switches) - separate grid to ensure they start on new row */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '0 16px'
+            }}>
+              {serviceData.inputs
+                .filter(input => isInputVisible(input.name))
+                .filter(input => input.type === 'boolean')
                 .map((input) => renderInputControl(input))}
             </div>
 
