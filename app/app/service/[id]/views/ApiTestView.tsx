@@ -43,6 +43,7 @@ interface ApiTestViewProps {
   isDemoMode?: boolean;
   configLoaded?: boolean;
   isLoading?: boolean;
+  hasUnsavedChanges?: boolean;
   onRequireTokenChange?: (value: boolean) => void;
   onTokenCountChange?: (count: number) => void;
   onTokensChange?: (tokens: any[]) => void;
@@ -57,6 +58,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
   isDemoMode = false,
   configLoaded = false,
   isLoading = false,
+  hasUnsavedChanges = false,
   onRequireTokenChange,
   onTokenCountChange,
   onTokensChange,
@@ -162,6 +164,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           webAppEnabled={apiConfig.webAppEnabled || false}
           webAppToken={apiConfig.webAppToken || ''}
           isLoading={isLoading}
+          hasUnsavedChanges={hasUnsavedChanges}
           onWebAppEnabledChange={(webAppEnabled) => onConfigChange?.({ webAppEnabled })}
           onWebAppTokenChange={(webAppToken) => onConfigChange?.({ webAppToken })}
         />

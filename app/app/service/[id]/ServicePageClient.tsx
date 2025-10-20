@@ -1677,6 +1677,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         isDemoMode={isDemoMode}
                         configLoaded={configLoaded}
                         isLoading={!configLoaded}
+                        hasUnsavedChanges={configHasChanges}
                         onRequireTokenChange={(value) => {
                           handleConfigChange({ requireToken: value });
                         }}
@@ -1793,6 +1794,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     isDemoMode={isDemoMode}
                     configLoaded={configLoaded}
                     isLoading={!configLoaded}
+                    hasUnsavedChanges={configHasChanges}
                     onRequireTokenChange={(value) => {
                       handleConfigChange({ requireToken: value });
                     }}

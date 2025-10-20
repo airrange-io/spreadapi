@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col } from 'antd';
+import { Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -62,16 +62,26 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     const defaults: Record<string, any> = {};
     serviceData.inputs.forEach((input) => {
       const key = input.alias || input.name;
-      if (input.value !== undefined && input.value !== null) {
-        defaults[key] = input.value;
-      } else if (input.defaultValue !== undefined && input.defaultValue !== null) {
-        defaults[key] = input.defaultValue;
+
+      // Get the value (prefer input.value over defaultValue)
+      let value = input.value !== undefined && input.value !== null ? input.value : input.defaultValue;
+
+      // Handle boolean conversion (Redis returns strings, Excel returns "TRUE"/"FALSE")
+      if (input.type === 'boolean') {
+        if (value !== undefined && value !== null) {
+          // Convert various true representations to boolean
+          const valueStr = String(value).toLowerCase();
+          const boolValue = value === true || valueStr === 'true' || valueStr === '1' || value === 1;
+          defaults[key] = boolValue;
+        } else {
+          defaults[key] = false;
+        }
+      } else if (value !== undefined && value !== null) {
+        defaults[key] = value;
       } else if (input.allowedValues && input.allowedValues.length > 0 && input.mandatory !== false) {
         defaults[key] = input.allowedValues[0];
       } else if (input.type === 'number') {
         defaults[key] = input.min || 0;
-      } else if (input.type === 'boolean') {
-        defaults[key] = false;
       } else {
         defaults[key] = '';
       }
@@ -84,6 +94,44 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     integer: new Intl.NumberFormat(userLocale, { maximumFractionDigits: 0 }),
     decimal: new Intl.NumberFormat(userLocale, { maximumFractionDigits: 2 })
   }), [userLocale]);
+
+  // Detect locale-specific separators
+  const separators = useMemo(() => {
+    const testNumber = 1234.56;
+    const formatted = new Intl.NumberFormat(userLocale).format(testNumber);
+
+    // Find thousands separator (between 1 and 2)
+    const thousandsSep = formatted.charAt(1);
+
+    // Find decimal separator (between 4 and 5)
+    const decimalSep = formatted.charAt(formatted.length - 3);
+
+    return {
+      thousands: thousandsSep === '1' ? '' : thousandsSep, // No separator if directly adjacent
+      decimal: decimalSep
+    };
+  }, [userLocale]);
+
+  // Locale-aware parser for InputNumber
+  const parseLocaleNumber = useCallback((value: string | undefined): number => {
+    if (!value) return 0;
+
+    // Remove thousands separators and replace decimal separator with dot
+    let cleaned = value.toString();
+
+    // Remove all thousands separators
+    if (separators.thousands) {
+      cleaned = cleaned.replace(new RegExp(`\\${separators.thousands}`, 'g'), '');
+    }
+
+    // Replace locale decimal separator with dot
+    if (separators.decimal !== '.') {
+      cleaned = cleaned.replace(separators.decimal, '.');
+    }
+
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  }, [separators]);
 
   const formatOutput = useCallback((output: Output, value: any) => {
     if (output.formatString && typeof value === 'number') {
@@ -193,12 +241,22 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
 
   // Smart step size calculator - aims for ~2-5% steps
   const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
+    // Convert to numbers in case they're strings
+    const minNum = min !== undefined ? Number(min) : undefined;
+    const maxNum = max !== undefined ? Number(max) : undefined;
+    const valueNum = value !== undefined ? Number(value) : undefined;
+
     // If we have a range, use 1% of the range (max 100 steps)
-    if (min !== undefined && max !== undefined) {
-      const range = max - min;
+    if (minNum !== undefined && maxNum !== undefined && !isNaN(minNum) && !isNaN(maxNum)) {
+      const range = maxNum - minNum;
       const step = range / 100;
 
-      if (Number.isInteger(min) && Number.isInteger(max)) {
+      // For small ranges (like 0-1 for percentages), use decimal steps even if min/max are integers
+      if (range <= 10) {
+        return Math.max(step, 0.01);
+      }
+
+      if (Number.isInteger(minNum) && Number.isInteger(maxNum)) {
         // For integer ranges, round to nice numbers
         const intStep = Math.floor(step);
         if (intStep >= 10) return Math.round(intStep / 10) * 10; // Round to nearest 10
@@ -210,7 +268,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     }
 
     // No range defined - use percentage of current value
-    const currentValue = value || 0;
+    const currentValue = (valueNum !== undefined && !isNaN(valueNum)) ? valueNum : 0;
     const absValue = Math.abs(currentValue);
 
     // For very small values, use fixed small steps
@@ -280,12 +338,64 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     }
 
     if (input.type === 'number') {
-      const hasRange = input.min !== undefined && input.max !== undefined;
-      const rangeSize = hasRange ? input.max! - input.min! : 0;
+      // Ensure min/max are numbers
+      const minValue = input.min !== undefined ? Number(input.min) : undefined;
+      const maxValue = input.max !== undefined ? Number(input.max) : undefined;
+
+      const hasRange = minValue !== undefined && maxValue !== undefined && !isNaN(minValue) && !isNaN(maxValue);
+      const rangeSize = hasRange ? maxValue! - minValue! : 0;
       const useSlider = hasRange && rangeSize > 0 && rangeSize <= 10000; // Use slider for reasonable ranges
 
       if (useSlider) {
         // Combined Slider + InputNumber for best UX
+        // Use a custom component to synchronize both controls
+        const SliderWithInput = ({ value, onChange }: { value?: number; onChange?: (val: number) => void }) => (
+          <Row gutter={16} align="middle">
+            <Col flex="auto">
+              <Slider
+                value={value}
+                onChange={onChange}
+                min={minValue}
+                max={maxValue}
+                step={getSmartStep(input.value, minValue, maxValue)}
+                tooltip={{
+                  formatter: (val) => {
+                    if (val === null || val === undefined) return '';
+                    const num = typeof val === 'number' ? val : parseFloat(val);
+                    if (isNaN(num)) return '';
+                    if (Number.isInteger(num)) {
+                      return formatters.integer.format(num);
+                    }
+                    return formatters.decimal.format(num);
+                  }
+                }}
+              />
+            </Col>
+            <Col flex="120px">
+              <InputNumber
+                value={value}
+                onChange={onChange}
+                style={{ width: '100%' }}
+                min={minValue}
+                max={maxValue}
+                step={getSmartStep(input.value, minValue, maxValue)}
+                size="middle"
+                keyboard={true}
+                formatter={(val) => {
+                  if (!val) return '';
+                  const num = parseFloat(val.toString());
+                  if (isNaN(num)) return val.toString();
+                  if (Number.isInteger(num)) {
+                    return formatters.integer.format(num);
+                  }
+                  return formatters.decimal.format(num);
+                }}
+                parser={parseLocaleNumber}
+              />
+            </Col>
+          </Row>
+        );
+
         return (
           <Form.Item
             key={fieldName}
@@ -294,48 +404,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
             rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
             style={{ marginBottom: 12 }}
           >
-            <Row gutter={16} align="middle">
-              <Col flex="auto">
-                <Slider
-                  min={input.min}
-                  max={input.max}
-                  step={getSmartStep(input.value, input.min, input.max)}
-                  tooltip={{
-                    formatter: (value) => {
-                      if (!value) return '';
-                      if (Number.isInteger(value)) {
-                        return formatters.integer.format(value);
-                      }
-                      return formatters.decimal.format(value);
-                    }
-                  }}
-                />
-              </Col>
-              <Col flex="120px">
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={input.min}
-                  max={input.max}
-                  step={getSmartStep(input.value, input.min, input.max)}
-                  size="middle"
-                  keyboard={true}
-                  formatter={(value) => {
-                    if (!value) return '';
-                    const num = parseFloat(value.toString());
-                    if (isNaN(num)) return value.toString();
-                    if (Number.isInteger(num)) {
-                      return formatters.integer.format(num);
-                    }
-                    return formatters.decimal.format(num);
-                  }}
-                  parser={(value) => {
-                    if (!value) return 0;
-                    const parsed = parseFloat(value.replace(/,/g, ''));
-                    return isNaN(parsed) ? 0 : parsed;
-                  }}
-                />
-              </Col>
-            </Row>
+            <SliderWithInput />
           </Form.Item>
         );
       }
@@ -351,9 +420,9 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
         >
           <InputNumber
             style={{ width: '100%' }}
-            min={input.min}
-            max={input.max}
-            step={getSmartStep(input.value, input.min, input.max)}
+            min={minValue}
+            max={maxValue}
+            step={getSmartStep(input.value, minValue, maxValue)}
             placeholder={`Enter ${input.title || input.name}`}
             size="middle"
             keyboard={true}
@@ -366,29 +435,39 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
               }
               return formatters.decimal.format(num);
             }}
-            parser={(value) => {
-              if (!value) return 0;
-              const parsed = parseFloat(value.replace(/,/g, ''));
-              return isNaN(parsed) ? 0 : parsed;
-            }}
+            parser={parseLocaleNumber}
           />
         </Form.Item>
       );
     }
 
     if (input.type === 'boolean') {
+      // Custom component to properly receive checked prop from Form.Item
+      const SwitchWithLabel = ({ checked, onChange }: { checked?: boolean; onChange?: (val: boolean) => void }) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Switch checked={checked} onChange={onChange} />
+          <div>
+            <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
+              {input.title || input.name}
+              {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(Optional)</Text>}
+            </div>
+            {input.description && (
+              <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
+                {input.description}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
       return (
         <Form.Item
           key={fieldName}
           name={fieldName}
-          label={label}
           valuePropName="checked"
           style={{ marginBottom: 12 }}
         >
-          <Input
-            type="checkbox"
-            size="middle"
-          />
+          <SwitchWithLabel />
         </Form.Item>
       );
     }
@@ -449,7 +528,15 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '0 16px'
             }}>
-              {serviceData.inputs.map((input) => renderInputControl(input))}
+              {serviceData.inputs
+                .slice()
+                .sort((a, b) => {
+                  // Sort boolean inputs to the end
+                  if (a.type === 'boolean' && b.type !== 'boolean') return 1;
+                  if (a.type !== 'boolean' && b.type === 'boolean') return -1;
+                  return 0;
+                })
+                .map((input) => renderInputControl(input))}
             </div>
 
             <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>

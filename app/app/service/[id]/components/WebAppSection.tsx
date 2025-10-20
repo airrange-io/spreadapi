@@ -10,6 +10,7 @@ interface WebAppSectionProps {
   webAppToken?: string;
   serviceId: string;
   isLoading?: boolean;
+  hasUnsavedChanges?: boolean;
   onWebAppEnabledChange: (checked: boolean) => void;
   onWebAppTokenChange: (token: string) => void;
 }
@@ -19,6 +20,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   webAppToken,
   serviceId,
   isLoading = false,
+  hasUnsavedChanges = false,
   onWebAppEnabledChange,
   onWebAppTokenChange,
 }) => {
@@ -121,7 +123,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
               </div>
             )}
 
-            {webAppToken && (
+            {webAppToken && hasUnsavedChanges && (
               <Alert
                 message="Remember to click the Save button at the top to activate your web app settings"
                 type="info"
