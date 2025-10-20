@@ -71,7 +71,15 @@ export async function GET(request, { params }) {
       webAppToken: serviceData.webAppToken
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        // Cache for 60 seconds, allow stale content while revalidating
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+        // Security headers for embedded contexts
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN'
+      }
+    });
   } catch (error) {
     console.error('Error fetching web app service:', error);
     return NextResponse.json(

@@ -33,7 +33,7 @@ const nextConfig = {
   
   experimental: {
     // Optimize package imports (removed @mescius packages as they're in serverExternalPackages)
-    optimizePackageImports: ['antd', '@ant-design/icons'],
+    optimizePackageImports: ['antd', '@ant-design/icons', 'rc-slider'],
     // Better memory usage
     workerThreads: false,
     cpus: 1,
