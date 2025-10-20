@@ -1265,15 +1265,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       updates.hasOwnProperty('description') &&
       updates.hasOwnProperty('inputs');
 
-    // Warn user if modifying parameters on a published service
-    if (serviceStatus.published && (updates.inputs || updates.outputs)) {
-      message.warning({
-        content: 'Service is published. Even after republishing, it may take up to 10 minutes for caches to fully update.',
-        duration: 8,
-        key: 'cache-delay-warning'
-      });
-    }
-
     if (isFullConfig) {
       // Full config replacement
       const hasActualChanges = JSON.stringify(updates) !== JSON.stringify(savedConfig);
@@ -1367,7 +1358,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     // Check for unsaved changes
     const hasUnsavedChanges = workbookRef.current?.hasChanges?.() || false;
-    
+
     Modal.confirm({
       title: 'Import Excel File',
       content: (
@@ -1398,14 +1389,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           try {
             // Show loading message
             message.loading('Importing Excel file...', 0);
-            
+
             // Use existing import function
             await handleImportExcel(file);
-            
+
             // Clear loading and show success
             message.destroy();
             message.success('Excel file imported successfully! Remember to save your changes.');
-            
+
             // Mark as having changes so save button is enabled
             setWorkbookChangeCount(prev => prev + 1);
           } catch (error: any) {
@@ -1476,12 +1467,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Memoize spreadsheetData to prevent unnecessary re-renders
   const memoizedSpreadsheetData = useMemo(() => {
     if (!spreadsheetData) return null;
-    
+
     // For object types, create a stable reference
     if (spreadsheetData.type === 'sjs' || spreadsheetData.type === 'excel') {
       return spreadsheetData;
     }
-    
+
     // For JSON data, only update if content actually changed
     return spreadsheetData;
   }, [
@@ -1610,7 +1601,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             </Button>
           )}
           {isDemoMode ? (
-            <Tag color='geekblue' style={{ 
+            <Tag color='geekblue' style={{
               cursor: 'default',
               fontSize: '12px',
               padding: '4px 12px',
