@@ -9,6 +9,11 @@ export function IntercomScript() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Don't load Intercom in development mode
+  if (process.env.NODE_ENV === 'development') {
+    return null;
+  }
+
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {

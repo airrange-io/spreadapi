@@ -19,6 +19,9 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
   const [shouldInitialize, setShouldInitialize] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Don't initialize Intercom in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -35,8 +38,8 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
 
   // Sync initialization with script loading
   useEffect(() => {
-    // Don't initialize on mobile
-    if (isMobile) return;
+    // Don't initialize on mobile or in development
+    if (isMobile || isDevelopment) return;
     
     const checkIntercomLoaded = () => {
       if (typeof window !== 'undefined' && window.Intercom) {
@@ -59,12 +62,12 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
       clearInterval(interval);
       clearTimeout(timeout);
     };
-  }, [isMobile]);
+  }, [isMobile, isDevelopment]);
 
   useEffect(() => {
-    // Don't boot on mobile
-    if (isMobile) return;
-    
+    // Don't boot on mobile or in development
+    if (isMobile || isDevelopment) return;
+
     if (shouldInitialize && typeof window !== 'undefined' && window.Intercom) {
       const bootData: any = {
         app_id: appId,
@@ -80,27 +83,27 @@ const IntercomProviderInner = observer(({ children }: { children?: React.ReactNo
 
       window.Intercom('boot', bootData);
     }
-  }, [shouldInitialize, appId, appStore.user.isRegistered, appStore.user.userId, isMobile]);
+  }, [shouldInitialize, appId, appStore.user.isRegistered, appStore.user.userId, isMobile, isDevelopment]);
 
   useEffect(() => {
-    // Don't update on mobile
-    if (isMobile) return;
-    
+    // Don't update on mobile or in development
+    if (isMobile || isDevelopment) return;
+
     if (typeof window !== 'undefined' && window.Intercom) {
       window.Intercom('update');
     }
-  }, [pathname, searchParams, isMobile]);
+  }, [pathname, searchParams, isMobile, isDevelopment]);
 
   useEffect(() => {
     return () => {
-      // Don't shutdown on mobile (it was never initialized)
-      if (isMobile) return;
-      
+      // Don't shutdown on mobile or in development (it was never initialized)
+      if (isMobile || isDevelopment) return;
+
       if (typeof window !== 'undefined' && window.Intercom) {
         window.Intercom('shutdown');
       }
     };
-  }, [isMobile]);
+  }, [isMobile, isDevelopment]);
 
   return <>{children}</>;
 });
