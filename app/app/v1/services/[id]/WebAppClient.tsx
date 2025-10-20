@@ -49,6 +49,14 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Detect user's locale from browser
+  const userLocale = useMemo(() => {
+    if (typeof navigator !== 'undefined') {
+      return navigator.language || 'en-US';
+    }
+    return 'en-US';
+  }, []);
+
   // Initialize form with defaults
   const initialValues = useMemo(() => {
     const defaults: Record<string, any> = {};
@@ -71,11 +79,11 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     return defaults;
   }, [serviceData.inputs]);
 
-  // Memoize formatters
+  // Memoize formatters with user's locale
   const formatters = useMemo(() => ({
-    integer: new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }),
-    decimal: new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
-  }), []);
+    integer: new Intl.NumberFormat(userLocale, { maximumFractionDigits: 0 }),
+    decimal: new Intl.NumberFormat(userLocale, { maximumFractionDigits: 2 })
+  }), [userLocale]);
 
   const formatOutput = useCallback((output: Output, value: any) => {
     if (output.formatString && typeof value === 'number') {
@@ -84,12 +92,16 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
       // Handle percentage
       if (formatStr.includes('%')) {
         const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
-        return `${value.toFixed(decimals)}%`;
+        const formattedNum = new Intl.NumberFormat(userLocale, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        }).format(value);
+        return `${formattedNum}%`;
       }
 
       // Handle date
       if (formatStr.toLowerCase() === 'date') {
-        return new Date(value).toLocaleDateString();
+        return new Date(value).toLocaleDateString(userLocale);
       }
 
       // Parse format string
@@ -102,7 +114,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
       const prefix = prefixMatch ? prefixMatch[1] : '';
       const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
 
-      const formattedNum = new Intl.NumberFormat('en-US', {
+      const formattedNum = new Intl.NumberFormat(userLocale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
         useGrouping: hasThousands
@@ -116,7 +128,7 @@ export default function WebAppClient({ serviceId, serviceData }: Props) {
     }
 
     return value;
-  }, [formatters]);
+  }, [formatters, userLocale]);
 
   const handleSubmit = async (values: any) => {
     const startTime = Date.now();
