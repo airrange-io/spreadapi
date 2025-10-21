@@ -74,12 +74,15 @@ export async function middleware(req: NextRequest) {
   // Extract service ID from pathname
   const serviceIdMatch = pathname.match(/\/(app\/service|service|api\/services|api\/workbook)\/([^\/]+)/);
   const serviceId = serviceIdMatch ? serviceIdMatch[2] : null;
-  
+
   // Allow unauthenticated access to demo services (both page and API routes)
   const isDemoServiceRequest = serviceId && isDemoService(serviceId);
-  
+
+  // Check if this is a web app request (has token query parameter)
+  const isWebAppRequest = pathname.match(/^\/app\/v1\/services\/[^\/]+$/) && req.nextUrl.searchParams.has('token');
+
   // Skip auth for public routes and demo service
-  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest) {
     // For demo service, add a header to indicate read-only mode
     if (isDemoServiceRequest) {
       const requestHeaders = new Headers(req.headers);
@@ -93,19 +96,31 @@ export async function middleware(req: NextRequest) {
       });
     }
     
-    // For v1 API endpoints, pass through without auth
-    // The endpoints themselves will check if the service requires a token
-    if (isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+    // For web app requests, add header to indicate public access
+    if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);
-      requestHeaders.set('x-public-access', 'true');
-      
+      requestHeaders.set('x-webapp-access', 'true');
+
       return NextResponse.next({
         request: {
           headers: requestHeaders,
         },
       });
     }
-    
+
+    // For v1 API endpoints, pass through without auth
+    // The endpoints themselves will check if the service requires a token
+    if (isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-public-access', 'true');
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+
     return NextResponse.next();
   }
   
