@@ -63,24 +63,34 @@ export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
 </div>
     `.trim(),
     css: `
+body {
+  background: var(--container-bg);
+  margin: 0;
+  padding: var(--container-padding);
+}
+
 .view-minimal {
   font-family: Arial, sans-serif;
   padding: 20px;
   max-width: 600px;
   margin: 0 auto;
+  background: var(--content-bg);
+  border: var(--content-border);
+  border-radius: var(--content-border-radius);
+  box-shadow: var(--content-shadow);
 }
 
 .view-minimal h2 {
   margin-top: 0;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-color);
   font-size: 20px;
 }
 
 .input-section {
-  background: #f9f9f9;
+  background: var(--container-bg);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: var(--input-border-radius);
   margin-bottom: 20px;
 }
 
@@ -92,26 +102,34 @@ export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
   display: block;
   font-weight: 500;
   margin-bottom: 4px;
-  color: #333;
+  color: var(--label-color);
   font-size: 14px;
 }
 
 .input-group input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  background: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
   font-size: 14px;
+  color: var(--text-color);
   box-sizing: border-box;
+  transition: border 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border: var(--input-focus-border);
 }
 
 .btn-calculate {
   width: 100%;
   padding: 12px;
-  background: #1890ff;
-  color: white;
+  background: var(--button-bg);
+  color: var(--button-color);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -119,17 +137,17 @@ export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
 }
 
 .btn-calculate:hover {
-  background: #096dd9;
+  background: var(--button-hover-bg);
 }
 
 .results-section {
-  background: white;
+  background: transparent;
 }
 
 .result-item {
   margin-bottom: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--content-border);
 }
 
 .result-item:last-child {
@@ -137,12 +155,12 @@ export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
 }
 
 .result-item strong {
-  color: #666;
+  color: var(--label-color);
   margin-right: 8px;
 }
 
 .result-item span {
-  color: #333;
+  color: var(--text-color);
   font-weight: 500;
 }
     `.trim()
@@ -201,7 +219,8 @@ body {
   justify-content: center;
   min-height: 100vh;
   margin: 0;
-  padding: 0;
+  padding: var(--container-padding);
+  background: var(--container-bg);
   box-sizing: border-box;
 }
 
@@ -210,15 +229,16 @@ body {
   width: 100%;
   min-width: 280px;
   margin: 0;
-  background: white;
-  border-radius: 8px;
+  background: var(--content-bg);
+  border-radius: var(--content-border-radius);
+  border: var(--content-border);
+  box-shadow: var(--content-shadow);
   overflow: hidden;
-  border: 1px solid #e0e0e0;
 }
 
 .card-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  color: var(--button-color);
   padding: 24px;
 }
 
@@ -229,9 +249,9 @@ body {
 }
 
 .card-inputs {
-  background: #f9f9f9;
+  background: var(--container-bg);
   padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: var(--content-border);
 }
 
 .input-group {
@@ -246,26 +266,34 @@ body {
   display: block;
   font-weight: 500;
   margin-bottom: 6px;
-  color: #333;
+  color: var(--label-color);
   font-size: 14px;
 }
 
 .input-group input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  background: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
   font-size: 14px;
+  color: var(--text-color);
   box-sizing: border-box;
+  transition: border 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border: var(--input-focus-border);
 }
 
 .btn-calculate {
   width: 100%;
   padding: 12px;
-  background: #667eea;
-  color: white;
+  background: var(--button-bg);
+  color: var(--button-color);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -273,7 +301,7 @@ body {
 }
 
 .btn-calculate:hover {
-  background: #5568d3;
+  background: var(--button-hover-bg);
 }
 
 .card-results {
@@ -284,7 +312,7 @@ body {
   display: flex;
   justify-content: space-between;
   padding: 14px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--content-border);
 }
 
 .result-row:last-child {
@@ -292,12 +320,12 @@ body {
 }
 
 .result-label {
-  color: #666;
+  color: var(--label-color);
   font-size: 14px;
 }
 
 .result-value {
-  color: #333;
+  color: var(--text-color);
   font-size: 16px;
   font-weight: 600;
 }
@@ -357,24 +385,34 @@ body {
 </div>
     `.trim(),
     css: `
+body {
+  background: var(--container-bg);
+  margin: 0;
+  padding: var(--container-padding);
+}
+
 .view-table {
   font-family: Arial, sans-serif;
   padding: 20px;
   max-width: 700px;
   margin: 0 auto;
+  background: var(--content-bg);
+  border: var(--content-border);
+  border-radius: var(--content-border-radius);
+  box-shadow: var(--content-shadow);
 }
 
 .view-table h2 {
   margin-top: 0;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--text-color);
   font-size: 22px;
 }
 
 .input-section {
-  background: #f9f9f9;
+  background: var(--container-bg);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: var(--input-border-radius);
   margin-bottom: 24px;
 }
 
@@ -390,26 +428,34 @@ body {
   display: block;
   font-weight: 500;
   margin-bottom: 6px;
-  color: #333;
+  color: var(--label-color);
   font-size: 14px;
 }
 
 .input-group input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  background: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
   font-size: 14px;
+  color: var(--text-color);
   box-sizing: border-box;
+  transition: border 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border: var(--input-focus-border);
 }
 
 .btn-calculate {
   width: 100%;
   padding: 12px;
-  background: #1890ff;
-  color: white;
+  background: var(--button-bg);
+  color: var(--button-color);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -417,37 +463,37 @@ body {
 }
 
 .btn-calculate:hover {
-  background: #096dd9;
+  background: var(--button-hover-bg);
 }
 
 .results-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: transparent;
 }
 
 .results-table thead {
-  background: #f5f5f5;
+  background: var(--container-bg);
 }
 
 .results-table th {
   padding: 14px 16px;
   text-align: left;
-  border: 1px solid #e0e0e0;
+  border: var(--content-border);
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
   font-size: 14px;
 }
 
 .results-table td {
   padding: 14px 16px;
-  border: 1px solid #e0e0e0;
+  border: var(--content-border);
   font-size: 14px;
-  color: #666;
+  color: var(--label-color);
 }
 
 .results-table td strong {
-  color: #333;
+  color: var(--text-color);
   font-size: 15px;
 }
     `.trim()
@@ -557,7 +603,7 @@ body {
 }
 
 .btn-calculate:hover {
-  background: #096dd9;
+  background: var(--button-hover-bg);
 }
 
 .compact-results {

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch } from 'antd';
+import { ConfigProvider, Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
+import type { ViewTheme } from '@/lib/viewThemes';
 
 const { Title, Text } = Typography;
 
@@ -50,9 +51,10 @@ interface Props {
   serviceId: string;
   serviceData: ServiceData;
   initialLanguage: 'de' | 'en';
+  themeStyles: ViewTheme['styles'];
 }
 
-export default function WebAppClient({ serviceId, serviceData, initialLanguage }: Props) {
+export default function WebAppClient({ serviceId, serviceData, initialLanguage, themeStyles }: Props) {
   const [form] = Form.useForm();
   const [executing, setExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -673,19 +675,30 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   }, [formatters, t]);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5',
-      padding: '16px'
-    }}>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: themeStyles.primaryColor || themeStyles.buttonBg,
+          borderRadius: parseInt(themeStyles.buttonBorderRadius || '4') || 4,
+        },
+      }}
+    >
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: themeStyles.containerBg || '#f5f5f5',
+        padding: themeStyles.containerPadding || '16px'
+      }}>
       <div style={{ maxWidth: '700px', margin: '0 auto' }}>
         <Card
           style={{
             marginTop: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: themeStyles.contentShadow || '0 2px 8px rgba(0,0,0,0.1)',
+            background: themeStyles.contentBg,
+            border: themeStyles.contentBorder,
+            borderRadius: themeStyles.contentBorderRadius
           }}
         >
-          <Title level={2} style={{ marginBottom: 24 }}>
+          <Title level={2} style={{ marginBottom: 24, color: themeStyles.headingColor || themeStyles.textColor }}>
             {serviceData.name}
           </Title>
 
@@ -739,11 +752,13 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
                 block
                 size="large"
                 style={{
-                  backgroundColor: '#4F2D7F',
-                  borderColor: '#4F2D7F',
+                  backgroundColor: themeStyles.buttonBg || themeStyles.primaryColor,
+                  borderColor: themeStyles.buttonBg || themeStyles.primaryColor,
+                  color: themeStyles.buttonColor,
                   height: 48,
-                  fontSize: 15,
-                  fontWeight: 600
+                  fontSize: themeStyles.buttonFontSize || 15,
+                  fontWeight: themeStyles.buttonFontWeight || 600,
+                  borderRadius: themeStyles.buttonBorderRadius
                 }}
               >
                 {executing ? t('calculating') : t('calculateResults')}
@@ -762,16 +777,17 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
                 />
               )}
               <div style={{ marginTop: resultsAreStale ? 16 : 32 }}>
-                <Title level={4} style={{ marginBottom: 16 }}>
+                <Title level={4} style={{ marginBottom: 16, color: themeStyles.headingColor || themeStyles.textColor }}>
                   {t('results')}
                 </Title>
                 <div style={{
-                  backgroundColor: '#f8f8f8',
-                  borderRadius: '6px',
+                  backgroundColor: themeStyles.inputSectionBg || themeStyles.containerBg || '#f8f8f8',
+                  borderRadius: themeStyles.contentBorderRadius || '6px',
                   overflow: 'hidden',
                   opacity: executing ? 0.5 : (resultsAreStale ? 0.4 : 1),
                   transition: 'opacity 0.3s ease',
-                  position: 'relative'
+                  position: 'relative',
+                  padding: '0 16px'
                 }}>
                   {serviceData.outputs
                     .filter(output => isOutputVisible(output.name))
@@ -786,16 +802,21 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            padding: '12px 16px',
-                            borderBottom: index < filteredArray.length - 1 ? '1px solid #e8e8e8' : 'none'
+                            padding: themeStyles.resultRowPadding || '12px 0',
+                            borderBottom: index < filteredArray.length - 1 ? `1px solid ${themeStyles.resultDividerColor || '#e8e8e8'}` : 'none'
                           }}
                         >
-                          <Text style={{ fontSize: 14 }}>
+                          <Text style={{
+                            fontSize: themeStyles.resultLabelFontSize || 14,
+                            color: themeStyles.resultLabelColor || themeStyles.labelColor,
+                            fontWeight: themeStyles.resultLabelFontWeight
+                          }}>
                             {output.title || output.name}:
                           </Text>
                           <Text strong style={{
-                            fontSize: 16,
-                            color: '#4F2D7F'
+                            fontSize: themeStyles.resultValueFontSize || 16,
+                            color: themeStyles.resultValueColor || themeStyles.primaryColor,
+                            fontWeight: themeStyles.resultValueFontWeight
                           }}>
                             {formatOutput(output, value)}
                           </Text>
@@ -823,7 +844,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
                   href="https://spreadapi.io"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: '#4F2D7F', textDecoration: 'none' }}
+                  style={{ color: themeStyles.primaryColor || '#4F2D7F', textDecoration: 'none' }}
                 >
                   {t('spreadapi')}
                 </a>
@@ -833,5 +854,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
         </Card>
       </div>
     </div>
+    </ConfigProvider>
   );
 }

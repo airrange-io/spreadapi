@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useRef, useState, useLayoutEffect, Suspense } from 'react';
-import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, Tabs, QRCode } from 'antd';
-import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, Tabs, QRCode, Select, Card, Row, Col } from 'antd';
+import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
+import { VIEW_THEMES } from '@/lib/viewThemes';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -19,6 +20,7 @@ interface AppsViewProps {
     webAppEnabled?: boolean;
     webAppToken?: string;
     webAppConfig?: string;
+    webAppTheme?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -161,7 +163,12 @@ const AppsView: React.FC<AppsViewProps> = ({
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
     const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
     const queryString = getDefaultQueryString();
-    return baseUrl + queryString;
+
+    // Add theme parameter if set
+    const theme = apiConfig.webAppTheme || 'default';
+    const themeParam = theme !== 'default' ? (queryString ? `&theme=${theme}` : `?theme=${theme}`) : '';
+
+    return baseUrl + queryString + themeParam;
   };
 
   // Get interactive embed URL
@@ -171,7 +178,12 @@ const AppsView: React.FC<AppsViewProps> = ({
     const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
     const queryString = getDefaultQueryString();
     const separator = queryString ? '&' : '?';
-    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true`;
+
+    // Add theme parameter if set
+    const theme = apiConfig.webAppTheme || 'default';
+    const themeParam = theme !== 'default' ? `&theme=${theme}` : '';
+
+    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}`;
   };
 
   // Get iframe code for snippet
@@ -251,6 +263,143 @@ const AppsView: React.FC<AppsViewProps> = ({
       );
     }
 
+    // Theme Selection
+    if (selectedKey === 'theme') {
+      const selectedTheme = apiConfig.webAppTheme || 'default';
+
+      return (
+        <div>
+          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Visual Theme</h3>
+          <p style={{ color: '#666', fontSize: 13, marginBottom: 24 }}>
+            Choose a visual theme for your embeddable snippets and web app. The theme will be applied to all views.
+          </p>
+
+          <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
+            Select Theme
+          </div>
+          <Select
+            value={selectedTheme}
+            onChange={(value) => onConfigChange?.({ webAppTheme: value })}
+            style={{ width: '100%', marginBottom: 24 }}
+            size="large"
+            disabled={isLoading}
+          >
+            {Object.values(VIEW_THEMES).map((theme) => (
+              <Select.Option key={theme.id} value={theme.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      background: theme.preview.primaryColor,
+                      border: '1px solid #e0e0e0'
+                    }}
+                  />
+                  <span style={{ fontWeight: 500 }}>{theme.name}</span>
+                  <span style={{ color: '#999', fontSize: 12 }}>- {theme.description}</span>
+                </div>
+              </Select.Option>
+            ))}
+          </Select>
+
+          {hasUnsavedChanges && (
+            <Alert
+              message="Remember to click the Save button at the top to save your theme selection"
+              type="info"
+              showIcon={false}
+              style={{ fontSize: 12, padding: '8px 12px', marginBottom: 24 }}
+            />
+          )}
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
+              Theme Preview
+            </div>
+            <Row gutter={16}>
+              {Object.values(VIEW_THEMES).filter(t => t.id === selectedTheme).map((theme) => (
+                <Col span={24} key={theme.id}>
+                  <Card
+                    bodyStyle={{ padding: '24px', minHeight: 220, background: theme.styles.containerBg === 'transparent' ? 'white' : theme.styles.containerBg }}
+                    style={{
+                      background: 'white',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 8,
+                      overflow: 'visible'
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: theme.styles.contentBg,
+                        border: theme.styles.contentBorder,
+                        borderRadius: theme.styles.contentBorderRadius,
+                        boxShadow: theme.styles.contentShadow,
+                        padding: '20px',
+                        minHeight: 180
+                      }}
+                    >
+                      <div style={{ color: theme.styles.textColor, fontSize: 16, fontWeight: 600, marginBottom: 12 }}>
+                        {theme.name} Theme
+                      </div>
+                      <div style={{ color: theme.styles.labelColor, fontSize: 12, marginBottom: 8 }}>
+                        Example Input
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Sample input field"
+                        readOnly
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          background: theme.styles.inputBg,
+                          border: theme.styles.inputBorder,
+                          borderRadius: theme.styles.inputBorderRadius,
+                          fontSize: 13,
+                          marginBottom: 16,
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        style={{
+                          padding: '8px 16px',
+                          background: theme.styles.buttonBg,
+                          color: theme.styles.buttonColor,
+                          border: 'none',
+                          borderRadius: theme.styles.buttonBorderRadius,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          fontWeight: 500
+                        }}
+                      >
+                        Sample Button
+                      </button>
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </div>
+
+          <div style={{ marginTop: 24, padding: '16px', background: '#f9f9f9', borderRadius: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#666' }}>
+              Advanced Customization
+            </div>
+            <div style={{ fontSize: 11, color: '#999', lineHeight: '1.6' }}>
+              You can override individual theme properties by adding URL parameters:
+              <br />
+              <code style={{ fontSize: 10, background: 'white', padding: '2px 6px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
+                &primaryColor=%23502D80&borderRadius=12px
+              </code>
+              <br />
+              <span style={{ marginTop: 4, display: 'block' }}>
+                Available parameters: primaryColor, contentBg, borderRadius, containerBg, buttonBg, and more.
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Web App
     if (selectedKey === 'webapp') {
       if (!webAppToken) {
@@ -264,7 +413,9 @@ const AppsView: React.FC<AppsViewProps> = ({
         );
       }
 
-      const webAppUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`;
+      const theme = apiConfig.webAppTheme || 'default';
+      const themeParam = theme !== 'default' ? `&theme=${theme}` : '';
+      const webAppUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}${themeParam}`;
 
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
@@ -593,6 +744,11 @@ const AppsView: React.FC<AppsViewProps> = ({
       key: 'intro',
       icon: <FileTextOutlined />,
       label: 'Intro & Token Management'
+    },
+    {
+      key: 'theme',
+      icon: <BgColorsOutlined />,
+      label: 'Theme'
     },
     {
       key: 'webapp-folder',

@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import redis from '@/lib/redis';
 import WebAppClient from './WebAppClient';
+import { VIEW_THEMES, applyThemeOverrides, type ViewTheme } from '@/lib/viewThemes';
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; theme?: string; [key: string]: string | string[] | undefined }>;
 }
 
 // Simple German translations for error pages
@@ -37,7 +38,8 @@ function getTranslations(acceptLanguage: string | null) {
 // Server Component - Pre-fetch data for faster initial load
 export default async function WebAppPage({ params, searchParams }: PageProps) {
   const { id: serviceId } = await params;
-  const { token } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const { token, theme } = resolvedSearchParams;
 
   // Get user's language from Accept-Language header
   const headersList = await headers();
@@ -135,6 +137,38 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
     // Detect user's language from Accept-Language header
     const userLanguage = acceptLanguage?.toLowerCase().includes('de') ? 'de' : 'en';
 
+    // Parse theme - use saved theme or URL parameter
+    const themeId = theme || serviceData.webAppTheme || 'default';
+    const baseTheme = VIEW_THEMES[themeId] || VIEW_THEMES.default;
+
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Web App Theme Debug]', {
+        urlTheme: theme,
+        savedTheme: serviceData.webAppTheme,
+        resolvedThemeId: themeId,
+        themePrimaryColor: baseTheme.styles.primaryColor
+      });
+    }
+
+    // Parse theme overrides from URL parameters
+    const themeOverrides: Partial<ViewTheme['styles']> = {};
+    const themeParams = [
+      'primaryColor', 'accentColor', 'textColor', 'labelColor',
+      'containerBg', 'contentBg', 'buttonBg', 'buttonColor',
+      'headingColor', 'resultValueColor', 'resultLabelColor',
+      'inputBg', 'inputBorder', 'contentBorderRadius'
+    ];
+
+    for (const param of themeParams) {
+      const value = resolvedSearchParams[param];
+      if (value && typeof value === 'string') {
+        themeOverrides[param as keyof ViewTheme['styles']] = decodeURIComponent(value);
+      }
+    }
+
+    const themeStyles = applyThemeOverrides(baseTheme, themeOverrides);
+
     const serviceInfo = {
       name: serviceData.name || 'Calculation Service',
       description: serviceData.description || '',
@@ -143,8 +177,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       webAppConfig: serviceData.webAppConfig || ''
     };
 
-    // Pass pre-fetched data and language to client component
-    return <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} />;
+    // Pass pre-fetched data, language, and theme to client component
+    return <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} themeStyles={themeStyles} />;
   } catch (error) {
     console.error('Error loading web app:', error);
     notFound();

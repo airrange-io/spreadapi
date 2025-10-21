@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
 import { renderTemplate, getInputType, formatValue } from '@/lib/mustacheRenderer';
+import { parseThemeFromQuery, applyThemeOverrides, generateThemeCSS, getAllSupportedParameters } from '@/lib/viewThemes';
 
 interface WebViewRendererProps {
   serviceId: string;
@@ -41,9 +42,22 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
         const apiUrl = new URL(`${origin}/api/v1/services/${serviceId}/execute`);
 
-        // Add all query params from URL to API call (exclude interactive and token)
+        // Parse theme from query params
+        const urlSearchParams = new URLSearchParams();
         Object.entries(queryParams).forEach(([key, value]) => {
-          if (value && !['viewId', 'interactive', 'token'].includes(key)) {
+          if (value) {
+            urlSearchParams.append(key, String(value));
+          }
+        });
+        const { theme, overrides } = parseThemeFromQuery(urlSearchParams);
+        const themeStyles = applyThemeOverrides(theme, overrides);
+
+        // Add all query params from URL to API call (exclude interactive, token, theme, and all theme parameters)
+        const themeParams = getAllSupportedParameters();
+        const excludeFromApi = ['viewId', 'interactive', 'token', 'theme', ...themeParams];
+
+        Object.entries(queryParams).forEach(([key, value]) => {
+          if (value && !excludeFromApi.includes(key)) {
             apiUrl.searchParams.append(key, String(value));
           }
         });
@@ -78,8 +92,9 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         // Render template
         let renderedHtml = renderTemplate(template.html, templateData);
 
-        // Inject CSS
-        renderedHtml = `<style>${template.css}</style>\n${renderedHtml}`;
+        // Inject theme CSS variables and template CSS
+        const themeCss = generateThemeCSS(themeStyles);
+        renderedHtml = `<style>${themeCss}\n\n${template.css}</style>\n${renderedHtml}`;
 
         // Add form handler for interactive mode
         if (isInteractive && template.settings.supportsInteractive) {
