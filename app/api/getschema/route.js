@@ -49,7 +49,7 @@ function buildExecuteTool(apiId, apiDefinition) {
             properties: {
               type: { type: "string", description: "Parameter type (input)" },
               name: { type: "string", description: "Parameter name" },
-              alias: { type: "string", description: "Parameter display name" },
+              title: { type: "string", description: "Parameter display title" },
               value: { description: "Parameter value" }
             }
           }
@@ -62,7 +62,7 @@ function buildExecuteTool(apiId, apiDefinition) {
             properties: {
               type: { type: "string", description: "Parameter type (output)" },
               name: { type: "string", description: "Parameter name" },
-              alias: { type: "string", description: "Parameter display name" },
+              title: { type: "string", description: "Parameter display title" },
               value: { description: "Calculated result value" }
             }
           }
@@ -78,21 +78,18 @@ function buildExecuteTool(apiId, apiDefinition) {
   for (const input of inputs) {
     if (input?.hasOwnProperty("row")) delete input.row;
     if (input?.hasOwnProperty("col")) delete input.col;
-    input.title = input.name;
-    input.name = input.alias ?? input.name;
-    
+    if (!input.title) input.title = input.name;
+
     // Add additional metadata for AI understanding
     input.type = input.datatype || "string";
     input.description = input.description || `Parameter for ${input.name}`;
     input.required = input.mandatory || false;
-    
+
     if (input.hasOwnProperty("min") || input.hasOwnProperty("max")) {
       input.constraints = {};
       if (input.hasOwnProperty("min")) input.constraints.minimum = input.min;
       if (input.hasOwnProperty("max")) input.constraints.maximum = input.max;
     }
-    
-    if (input?.hasOwnProperty("alias")) delete input.alias;
     if (input?.hasOwnProperty("direction")) delete input.direction;
   }
   tool.inputParameters = inputs;
@@ -104,14 +101,11 @@ function buildExecuteTool(apiId, apiDefinition) {
   for (const output of outputs) {
     if (output?.hasOwnProperty("row")) delete output.row;
     if (output?.hasOwnProperty("col")) delete output.col;
-    output.title = output.title || output.name;  // Preserve title for outputs
-    output.name = output.alias ?? output.name;
-    
+    if (!output.title) output.title = output.name;  // Preserve title for outputs
+
     // Add additional metadata for AI understanding
     output.type = output.datatype || "string";
     output.description = output.description || `Output result for ${output.title || output.name}`;
-    
-    if (output?.hasOwnProperty("alias")) delete output.alias;
     if (output?.hasOwnProperty("direction")) delete output.direction;
   }
   tool.outputParameters = outputs;
@@ -232,7 +226,7 @@ async function getServiceSchema(apiId, apiToken) {
             description: "Calculates the results based on input parameters",
             parameters: [
               ...(apiDefinition.apiJson.inputs || apiDefinition.apiJson.input || []).map(input => ({
-                name: input.name || input.alias,
+                name: input.name,
                 in: "query",
                 required: input.mandatory || false,
                 description: input.description || `Input parameter: ${input.name}`,

@@ -9,7 +9,6 @@ export interface InputDefinition {
   id: string;
   address: string;
   name: string;
-  alias: string;
   title?: string;
   row: number;
   col: number;
@@ -33,7 +32,6 @@ export interface OutputDefinition {
   id: string;
   address: string;
   name: string;
-  alias: string;
   title?: string;
   row: number;
   col: number;
@@ -61,7 +59,6 @@ export interface AreaPermissions {
 export interface AreaParameter {
   id?: string;
   name: string;
-  alias: string;
   address: string;
   description?: string;
   mode: 'readonly' | 'editable' | 'interactive';
@@ -380,7 +377,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
 
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500 }}>
-                    {area.alias || area.name}
+                    {area.name}
                   </div>
                   <div style={{
                     fontSize: '11px',

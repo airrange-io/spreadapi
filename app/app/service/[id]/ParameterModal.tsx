@@ -9,7 +9,6 @@ interface InputDefinition {
   id: string;
   address: string;
   name: string;
-  alias: string;
   title?: string;
   row: number;
   col: number;
@@ -35,7 +34,6 @@ interface OutputDefinition {
   id: string;
   address: string;
   name: string;
-  alias: string;
   title?: string;
   row: number;
   col: number;

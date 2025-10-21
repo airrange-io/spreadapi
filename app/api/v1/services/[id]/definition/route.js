@@ -85,7 +85,6 @@ export async function GET(request, { params }) {
         // Complete input definitions with ALL validation rules
         inputs: inputs.map(input => ({
           name: input.name,
-          alias: input.alias,
           title: input.title,
           type: input.type || 'string',
           mandatory: input.mandatory !== false,
@@ -122,7 +121,6 @@ export async function GET(request, { params }) {
         // Complete output definitions
         outputs: outputs.map(output => ({
           name: output.name,
-          alias: output.alias,
           title: output.title,
           type: output.type || 'string',
           description: output.description || '',

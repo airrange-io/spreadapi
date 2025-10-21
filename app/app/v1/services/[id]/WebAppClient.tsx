@@ -130,16 +130,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     }
   }, [serviceData.webAppConfig]);
 
-  // Create a mapping from input name/alias to form field key
+  // Create a mapping from input name to form field key (simplified - no alias)
   const inputNameToFieldKey = useMemo(() => {
     const mapping: Record<string, string> = {};
     serviceData.inputs.forEach(input => {
-      const fieldKey = input.alias || input.name;
-      // Map both name and alias to the field key
-      mapping[input.name] = fieldKey;
-      if (input.alias) {
-        mapping[input.alias] = fieldKey;
-      }
+      mapping[input.name] = input.name;
     });
     return mapping;
   }, [serviceData.inputs]);
@@ -164,7 +159,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
 
     // If formValues not ready yet, get initial value from input definition (prevents flicker)
     if (currentValue === undefined) {
-      const inputDef = serviceData.inputs.find(i => (i.alias || i.name) === fieldKey);
+      const inputDef = serviceData.inputs.find(i => i.name === fieldKey);
       if (inputDef) {
         currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
       }
@@ -194,7 +189,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
 
     // If formValues not ready yet, get initial value from input definition (prevents flicker)
     if (currentValue === undefined) {
-      const inputDef = serviceData.inputs.find(i => (i.alias || i.name) === fieldKey);
+      const inputDef = serviceData.inputs.find(i => i.name === fieldKey);
       if (inputDef) {
         currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
       }
@@ -208,7 +203,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   const initialValues = useMemo(() => {
     const defaults: Record<string, any> = {};
     serviceData.inputs.forEach((input) => {
-      const key = input.alias || input.name;
+      const key = input.name;
 
       // Get the value (prefer input.value over defaultValue)
       let value = input.value !== undefined && input.value !== null ? input.value : input.defaultValue;
@@ -331,7 +326,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     if (process.env.NODE_ENV === 'development') {
       console.log('[Web App] Input definitions:', serviceData.inputs.map(i => ({
         name: i.name,
-        alias: i.alias,
         type: i.type,
         mandatory: i.mandatory,
         defaultValue: i.defaultValue,
@@ -340,7 +334,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
       })));
       console.log('[Web App] Output definitions:', serviceData.outputs.map(o => ({
         name: o.name,
-        alias: o.alias,
         type: o.type,
         visible: isOutputVisible(o.name)
       })));
@@ -352,7 +345,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
     // Add hidden fields that should be sent to the API
     // Note: Hidden fields should use their initial values (from form initialization)
     serviceData.inputs.forEach(input => {
-      const fieldKey = input.alias || input.name;
+      const fieldKey = input.name;
       const isMandatory = input.mandatory !== false;
       const hasValue = input.value !== undefined && input.value !== null;
       const hasDefaultValue = input.defaultValue !== undefined && input.defaultValue !== null;
@@ -484,7 +477,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage }
   };
 
   const renderInputControl = useCallback((input: Input) => {
-    const fieldName = input.alias || input.name;
+    const fieldName = input.name;
 
     const label = (
       <div>

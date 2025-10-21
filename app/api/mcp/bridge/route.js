@@ -175,7 +175,7 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
   
   if (apiDefinition.inputs && Array.isArray(apiDefinition.inputs)) {
     apiDefinition.inputs.forEach(input => {
-      const paramName = input.alias || input.name;
+      const paramName = input.name;
       
       // Build description with format hint
       let description = input.description || `Parameter: ${input.name}`;
@@ -281,7 +281,7 @@ async function executeService(serviceId, inputs) {
       // Handle array format (from V1 API response)
       if (Array.isArray(outputs)) {
         outputs.forEach(output => {
-          resultText += `${output.alias || output.name}: ${output.value}\n`;
+          resultText += `${output.name}: ${output.value}\n`;
         });
       } else {
         // Handle object format (legacy)
@@ -761,7 +761,6 @@ async function handleJsonRpc(request, auth) {
                 // Build area descriptions with AI context
                 let areaDescriptions = areas.map(area => {
                   let desc = `${area.name}`;
-                  if (area.alias) desc += ` (${area.alias})`;
                   if (area.description) desc += `: ${area.description}`;
                   if (area.aiContext?.purpose) desc += ` | Purpose: ${area.aiContext.purpose}`;
                   return desc;
@@ -1161,7 +1160,6 @@ async function handleJsonRpc(request, auth) {
               responseText += 'INPUTS:\n';
               apiDefinition.inputs.forEach(input => {
                 responseText += `• ${input.name}`;
-                if (input.alias) responseText += ` (alias: ${input.alias})`;
                 responseText += ` - ${input.type}`;
                 if (input.mandatory !== false) responseText += ' [REQUIRED]';
                 if (input.format === 'percentage') {
@@ -1236,7 +1234,6 @@ async function handleJsonRpc(request, auth) {
               responseText += '\nEDITABLE AREAS:\n';
               areas.forEach(area => {
                 responseText += `• ${area.name}`;
-                if (area.alias) responseText += ` (alias: ${area.alias})`;
                 responseText += ` - ${area.mode}\n`;
                 responseText += `  Address: ${area.address}\n`;
                 if (area.description) responseText += `  Description: ${area.description}\n`;
@@ -1349,7 +1346,6 @@ async function handleJsonRpc(request, auth) {
                     serviceInfo.hasAreas = true;
                     serviceInfo.areas = areas.map(area => ({
                       name: area.name,
-                      alias: area.alias,
                       address: area.address,
                       mode: area.mode,
                       permissions: area.permissions
@@ -1397,8 +1393,7 @@ async function handleJsonRpc(request, auth) {
                 responseText += `   Areas:\n`;
                 for (const area of service.areas) {
                   responseText += `   - ${area.name}`;
-                  if (area.alias) responseText += ` (alias: ${area.alias})`;
-                  responseText += `: ${area.mode}`;
+                    responseText += `: ${area.mode}`;
                   responseText += ` [${area.address}]\n`;
                 }
               }

@@ -85,7 +85,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   };
 
   return (
-    <CollapsibleSection title="Web App" defaultOpen={false}>
+    <CollapsibleSection title="Create a Web Frontend for Your API" defaultOpen={false}>
       <Space direction="vertical" style={{ width: '100%' }} size={16}>
         <div>
           <Space align="center">

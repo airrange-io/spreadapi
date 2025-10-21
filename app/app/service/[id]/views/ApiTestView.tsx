@@ -26,6 +26,16 @@ const WebAppSection = dynamic(() => import('../components/WebAppSection'), {
   ssr: false
 });
 
+const IntegrationExamples = dynamic(() => import('../components/IntegrationExamples'), {
+  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
+  ssr: false
+});
+
+const CollapsibleSection = dynamic(() => import('../components/CollapsibleSection'), {
+  loading: () => <Skeleton active paragraph={{ rows: 2 }} />,
+  ssr: false
+});
+
 interface ApiTestViewProps {
   serviceId: string;
   apiConfig: {
@@ -158,6 +168,22 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           onTokenCountChange={onTokenCountChange}
           onTokensChange={onTokensChange}
         />
+
+        {/* Integration Examples Section */}
+        <CollapsibleSection
+          title="Integration Examples"
+          defaultOpen={false}
+          style={{ marginTop: 0 }}
+        >
+          <IntegrationExamples
+            serviceId={serviceId}
+            serviceName={apiConfig.name || ''}
+            requireToken={apiConfig.requireToken || false}
+            parameterValues={{}}
+            inputs={apiConfig.inputs || []}
+            outputs={apiConfig.outputs || []}
+          />
+        </CollapsibleSection>
 
         {/* Web App Section */}
         <WebAppSection

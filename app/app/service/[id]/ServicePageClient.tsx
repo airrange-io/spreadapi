@@ -44,6 +44,11 @@ const SaveProgressModal = dynamic(() => import('./components/SaveProgressModal')
   ssr: false
 });
 
+const TestPanel = dynamic(() => import('./components/TestPanel'), {
+  loading: () => null,
+  ssr: false
+});
+
 import { prepareServiceForPublish, publishService } from '@/utils/publishService';
 import { appStore } from '../../../stores/AppStore';
 import { isDemoService } from '@/lib/constants';
@@ -127,6 +132,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [spreadsheetVisible, setSpreadsheetVisible] = useState(false); // For fade-in transition
   const [configLoaded, setConfigLoaded] = useState(false); // Track if config has been loaded
   const [hasSetSmartDefault, setHasSetSmartDefault] = useState(false); // Track if we've set smart default
+  const [testPanelOpen, setTestPanelOpen] = useState(false); // Test panel state
   const [workbookLoading, setWorkbookLoading] = useState(false); // Track workbook loading state
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
@@ -1991,7 +1997,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         selectedCount={0}
         zoomLevel={zoomLevel}
         onZoomChange={handleZoomChange}
+        hasParameters={apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0}
+        onTestClick={() => setTestPanelOpen(!testPanelOpen)}
       />
+
+      {/* Test Panel */}
+      <ErrorBoundary>
+        <TestPanel
+          open={testPanelOpen}
+          onClose={() => setTestPanelOpen(false)}
+          serviceId={serviceId}
+          serviceName={apiConfig.name}
+          inputs={apiConfig.inputs || []}
+          outputs={apiConfig.outputs || []}
+          spreadInstance={spreadInstance}
+        />
+      </ErrorBoundary>
 
       {/* Save Progress Modal */}
       <SaveProgressModal

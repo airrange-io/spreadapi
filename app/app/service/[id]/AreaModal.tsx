@@ -23,7 +23,6 @@ interface AreaPermissions {
 interface AreaParameter {
   id?: string;
   name: string;
-  alias: string;
   address: string;
   description?: string;
   mode: 'readonly' | 'editable' | 'interactive';
@@ -138,15 +137,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
               <Input
                 value={editingArea.name}
                 onChange={e => onAreaChange({ ...editingArea, name: e.target.value })}
-                placeholder="e.g., sales_data"
-              />
-            </Form.Item>
-
-            <Form.Item label="Display Name">
-              <Input
-                value={editingArea.alias}
-                onChange={e => onAreaChange({ ...editingArea, alias: e.target.value })}
-                placeholder="e.g., Monthly Sales Data"
+                placeholder="e.g., sales_data or Monthly Sales Data"
               />
             </Form.Item>
 

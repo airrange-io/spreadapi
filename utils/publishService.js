@@ -114,7 +114,6 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       id: input.id,
       address: input.address,
       name: input.name,
-      alias: input.alias,
       title: input.title,  // Add the human-readable title
       row: input.row,
       col: input.col,
@@ -189,7 +188,6 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       id: output.id,
       address: output.address,
       name: output.name,
-      alias: output.alias,
       title: output.title,  // Add the human-readable title
       row: output.row,
       col: output.col,

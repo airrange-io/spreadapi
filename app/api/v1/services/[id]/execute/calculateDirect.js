@@ -373,7 +373,6 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     const inputDefMap = new Map();
     for (const inp of apiInputs) {
       if (inp.name) inputDefMap.set(inp.name.toLowerCase(), inp);
-      if (inp.alias) inputDefMap.set(inp.alias.toLowerCase(), inp);
       if (inp.address) inputDefMap.set(inp.address.toLowerCase(), inp);
     }
 
@@ -396,7 +395,6 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         actualSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
         answerInputs.push({
           name: inputDef.name ?? input.name,
-          alias: inputDef.alias ?? input.alias,
           title: inputDef.title || inputDef.name || input.name,
           value: cellValue,
         });
@@ -442,7 +440,6 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
       const outputObj = {
         name: output.name,
-        alias: output.alias,
         title: output.title || output.name,  // Include title field
         value: cellResult,
       };

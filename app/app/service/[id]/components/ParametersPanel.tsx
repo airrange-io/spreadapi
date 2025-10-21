@@ -737,7 +737,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     const newArea: AreaParameter = {
       id: newId,
       name: '',
-      alias: '',
       address: address,
       description: '',
       mode: 'editable',
@@ -910,9 +909,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                 if (editingParameter) {
                   setInputs(prev => prev.map(p => p.id === newParam.id ? {
                     ...newParam,
-                    alias: newParam.name.toLowerCase()
-                      .replace(/[\s-]+/g, '')
-                      .replace(/[^a-z0-9]/g, ''),
                     // Use new format from selectedCellInfo if available, otherwise preserve existing format
                     ...(selectedCellInfo?.format?.isPercentage ? {
                       format: 'percentage' as const,
@@ -933,9 +929,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                 } else {
                   setInputs(prev => [...prev, {
                     ...newParam,
-                    alias: newParam.name.toLowerCase()
-                      .replace(/[\s-]+/g, '')
-                      .replace(/[^a-z0-9]/g, ''),
                     sheetName: selectedCellInfo.sheetName || 'Sheet1',
                     rowCount: selectedCellInfo.rowCount,
                     colCount: selectedCellInfo.colCount,
@@ -953,18 +946,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                 if (editingParameter) {
                   setOutputs(prev => prev.map(p => p.id === newParam.id ? {
                     ...newParam,
-                    alias: newParam.name.toLowerCase()
-                      .replace(/[\s-]+/g, '')
-                      .replace(/[^a-z0-9]/g, ''),
                     // Store only the simple formatString (user can edit this)
                     ...(newParam.formatString && { formatString: newParam.formatString })
                   } : p));
                 } else {
                   setOutputs(prev => [...prev, {
                     ...newParam,
-                    alias: newParam.name.toLowerCase()
-                      .replace(/[\s-]+/g, '')
-                      .replace(/[^a-z0-9]/g, ''),
                     sheetName: selectedCellInfo.sheetName || 'Sheet1',
                     rowCount: selectedCellInfo.rowCount,
                     colCount: selectedCellInfo.colCount,

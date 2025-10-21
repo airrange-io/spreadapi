@@ -35,7 +35,7 @@ export async function handleReadArea(serviceId, areaName, format, auth) {
     // Get area definition
     const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
     const areas = publishedData.areas ? JSON.parse(publishedData.areas) : [];
-    const areaDef = areas.find(a => a.name === areaName || a.alias === areaName);
+    const areaDef = areas.find(a => a.name === areaName);
     
     if (!areaDef) {
       throw new Error(`Area '${areaName}' not found in service`);
@@ -107,7 +107,7 @@ export async function handleWriteArea(serviceId, areaName, changes, tableData, a
     // Get area definition
     const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
     const areas = publishedData.areas ? JSON.parse(publishedData.areas) : [];
-    const areaDef = areas.find(a => a.name === areaName || a.alias === areaName);
+    const areaDef = areas.find(a => a.name === areaName);
     
     if (!areaDef) {
       throw new Error(`Area '${areaName}' not found in service`);

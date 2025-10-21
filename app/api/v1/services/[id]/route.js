@@ -116,13 +116,13 @@ export async function GET(request, { params }) {
         requiresToken: publishedData?.needsToken === 'true',
         ...(apiDefinition && {
           inputs: apiDefinition.inputs.map(i => ({
-            name: i.alias || i.name,
+            name: i.name,
             type: i.type || 'any',
             required: i.mandatory !== false,
             description: i.description || ''
           })),
           outputs: apiDefinition.outputs.map(o => ({
-            name: o.alias || o.name,
+            name: o.name,
             type: o.type || 'any',
             description: o.description || '',
             ...(o.formatString && { formatString: o.formatString })

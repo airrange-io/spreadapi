@@ -20,7 +20,7 @@ export async function executeAreaRead(serviceId, areaName, options, auth) {
     const areas = publishedData.areas ? JSON.parse(publishedData.areas) : [];
     
     // Find the requested area
-    const area = areas.find(a => a.name === areaName || a.alias === areaName);
+    const area = areas.find(a => a.name === areaName);
     if (!area) {
       throw new Error(`Area '${areaName}' not found`);
     }
@@ -61,7 +61,6 @@ export async function executeAreaRead(serviceId, areaName, options, auth) {
     const response = {
       area: {
         name: area.name,
-        alias: area.alias,
         address: area.address,
         mode: area.mode,
         rows: rows,
@@ -155,7 +154,7 @@ export async function executeAreaUpdate(serviceId, updates, auth, returnOptions 
       const { areaName, changes } = update;
       
       // Find the area
-      const area = areas.find(a => a.name === areaName || a.alias === areaName);
+      const area = areas.find(a => a.name === areaName);
       if (!area) {
         results.push({
           area: areaName,
@@ -267,7 +266,7 @@ export async function executeAreaUpdate(serviceId, updates, auth, returnOptions 
         
         for (const result of results) {
           if (result.success && result.area) {
-            const area = areas.find(a => a.name === result.area || a.alias === result.area);
+            const area = areas.find(a => a.name === result.area);
             if (!area) continue;
             
             const range = getRangeAsOffset(area.address);

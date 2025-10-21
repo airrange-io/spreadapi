@@ -263,7 +263,7 @@ export async function GET(request, { params }) {
       // Handle both object and array formats
       if (Array.isArray(outputs)) {
         text = outputs
-          .map(output => `${output.alias || output.name}: ${output.value}`)
+          .map(output => `${output.name}: ${output.value}`)
           .join('\n');
       } else if (typeof outputs === 'object') {
         text = Object.entries(outputs)
@@ -287,7 +287,7 @@ export async function GET(request, { params }) {
 
       // Handle both object and array formats
       if (Array.isArray(outputs)) {
-        headers = outputs.map(o => o.alias || o.name).join(',');
+        headers = outputs.map(o => o.name).join(',');
         values = outputs.map(o => o.value).join(',');
       } else if (typeof outputs === 'object') {
         headers = Object.keys(outputs).join(',');

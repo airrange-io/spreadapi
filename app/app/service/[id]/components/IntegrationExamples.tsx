@@ -271,8 +271,8 @@ if ($httpCode == 200) {
           row.className = 'result-row';
 
           // Extract output name and value
-          const outputName = output.name || output.alias || 'result';
-          const label = output.title || output.alias || output.name || outputName;
+          const outputName = output.name || 'result';
+          const label = output.title || output.name || outputName;
           const rawValue = output.value !== undefined ? output.value : output;
 
           // Apply formatting if available

@@ -211,14 +211,14 @@ export async function getApiDefinition(apiId, apiToken) {
                   },
                   parameters: {
                     required: inputs.filter(i => i.mandatory !== false).map(i => ({
-                      name: i.alias || i.name,
+                      name: i.name,
                       type: i.type || "string",
                       description: i.description || "",
                       min: i.min,
                       max: i.max
                     })),
                     optional: inputs.filter(i => i.mandatory === false).map(i => ({
-                      name: i.alias || i.name,
+                      name: i.name,
                       type: i.type || "string",
                       description: i.description || "",
                       min: i.min,
@@ -226,7 +226,7 @@ export async function getApiDefinition(apiId, apiToken) {
                     }))
                   },
                   outputs: outputs.map(o => ({
-                    name: o.alias || o.name,
+                    name: o.name,
                     type: o.type || "any",
                     description: o.description || ""
                   })),
@@ -234,7 +234,7 @@ export async function getApiDefinition(apiId, apiToken) {
                     url: `https://spreadapi.io/api/v1/services/${apiId}/execute${
                       inputs.filter(i => i.mandatory !== false).length > 0
                         ? '?' + inputs.filter(i => i.mandatory !== false)
-                            .map(i => `${i.alias || i.name}={value}`)
+                            .map(i => `${i.name}={value}`)
                             .join('&')
                         : ''
                     }`,

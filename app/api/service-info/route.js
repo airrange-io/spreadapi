@@ -33,7 +33,7 @@ export async function GET(request) {
       description: apiJson.description || "No description available",
       inputs: inputs.map(input => ({
         name: input.name,
-        alias: input.alias || input.name,
+        name: input.name,
         type: input.type || "number",
         mandatory: input.mandatory || false,
         min: input.min,
@@ -44,7 +44,7 @@ export async function GET(request) {
       })),
       outputs: outputs.map(output => ({
         name: output.name,
-        alias: output.alias || output.name,
+        name: output.name,
         type: output.type || "number",
         description: output.description,
         address: output.address,

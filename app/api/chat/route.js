@@ -117,9 +117,9 @@ export async function POST(req) {
         name: serviceDetails?.name,
         description: serviceDetails?.description,
         inputCount: serviceDetails?.inputs?.length || 0,
-        inputs: serviceDetails?.inputs?.map(i => ({ alias: i.alias, title: i.title })),
+        inputs: serviceDetails?.inputs?.map(i => ({ name: i.name, title: i.title })),
         outputCount: serviceDetails?.outputs?.length || 0,
-        outputs: serviceDetails?.outputs?.map(o => ({ alias: o.alias, title: o.title }))
+        outputs: serviceDetails?.outputs?.map(o => ({ name: o.name, title: o.title }))
       });
       
       if (!serviceDetails) {
@@ -251,7 +251,7 @@ Keep response under 100 words.`;
         // Standard service with inputs - use calculation examples
         let paramContext = '';
         if (serviceDetails?.inputs) {
-          const inputNames = serviceDetails.inputs.map(i => i.alias || i.name).join(', ');
+          const inputNames = serviceDetails.inputs.map(i => i.name).join(', ');
           paramContext = `\nService expects: ${inputNames}`;
         }
 
@@ -384,7 +384,6 @@ This service includes EDITABLE AREAS - regions of the spreadsheet that contain d
 ### Available Areas in This Service:
 ${areas.map(area => {
   let desc = `- **${area.name}**`;
-  if (area.alias && area.alias !== area.name) desc += ` (alias: ${area.alias})`;
   desc += `: ${area.mode === 'readonly' ? 'Read-only' : 'Read/Write'}`;
   if (area.description) desc += ` - ${area.description}`;
   if (area.aiContext) {
@@ -633,7 +632,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
             schema = schema.optional();
           }
           
-          inputSchemas[input.alias] = schema;
+          inputSchemas[input.name] = schema;
         });
         
         // Create enhanced Zod schema with area update support
@@ -700,7 +699,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
                   resultText += `### Outputs\n`;
                   for (const [key, value] of Object.entries(result.outputs)) {
                     // Find output definition for formatting
-                    const outputDef = serviceDetails.outputs.find(o => o.alias === key || o.name === key);
+                    const outputDef = serviceDetails.outputs.find(o => o.name === key);
                     const displayName = outputDef?.title || outputDef?.name || key;
                     
                     let formattedValue = value;
@@ -760,8 +759,8 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
               // Create a map of output aliases to their titles/descriptions
               const outputInfo = {};
               serviceDetails.outputs.forEach(out => {
-                outputInfo[out.alias] = {
-                  title: out.title || out.name || out.alias,
+                outputInfo[out.name] = {
+                  title: out.title || out.name || out.name,
                   description: out.description || ''
                 };
               });
@@ -772,8 +771,8 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
                   let formattedValue = value;
                   
                   // Get the title from our service details
-                  const info = outputInfo[output.alias] || {};
-                  const displayName = info.title || output.title || output.alias;
+                  const info = outputInfo[output.name] || {};
+                  const displayName = info.title || output.title || output.name;
                   
                   // Format based on output type
                   if (output.format === 'currency' && typeof value === 'number') {
@@ -875,7 +874,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
                       formattedValue = value.toLocaleString('en-US', { maximumFractionDigits: 2 });
                     }
                     
-                    resultText += `- **${output.title || output.alias}**: ${formattedValue}\n`;
+                    resultText += `- **${output.title || output.name}**: ${formattedValue}\n`;
                   });
                 } else {
                   resultText += `\n**Error:** ${result.error}\n`;
@@ -898,7 +897,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
     if (Object.keys(tools).length > 0) {
       // Add tool usage examples based on service inputs
       const inputExamples = serviceDetails.inputs.map(input => 
-        `${input.alias}: <value> (${input.title}${input.format === 'percentage' ? ' as decimal' : ''})`
+        `${input.name}: <value> (${input.title}${input.format === 'percentage' ? ' as decimal' : ''})`
       ).join(', ');
       
       systemPrompt += `
@@ -981,7 +980,7 @@ ${(() => {
   
   let text = 'REQUIRED (must ask if missing):\n';
   required.forEach(input => {
-    text += `- ${input.alias} (${input.title || input.name || input.alias})`;
+    text += `- ${input.name} (${input.title || input.name || input.name})`;
     if (input.description) {
       text += `: ${input.description}`;
     }
@@ -991,7 +990,7 @@ ${(() => {
   if (optional.length > 0) {
     text += '\nOPTIONAL (omit if not provided by user):\n';
     optional.forEach(input => {
-      text += `- ${input.alias} (${input.title || input.name || input.alias})`;
+      text += `- ${input.name} (${input.title || input.name || input.name})`;
       if (input.description) {
         text += `: ${input.description}`;
       }
@@ -1057,8 +1056,8 @@ Analyze the service parameters and descriptions to understand what this service 
 
 Service: ${serviceDetails.name}
 Description: ${serviceDetails.description || serviceDetails.aiDescription || 'Not provided'}
-Input Parameters: ${serviceDetails.inputs.map(i => `${i.alias}: ${i.description || i.title || i.name || 'no description'}`).join(', ')}
-Output Parameters: ${serviceDetails.outputs.map(o => `${o.alias}: ${o.description || o.title || o.name || 'no description'}`).join(', ')}
+Input Parameters: ${serviceDetails.inputs.map(i => `${i.name}: ${i.description || i.title || i.name || 'no description'}`).join(', ')}
+Output Parameters: ${serviceDetails.outputs.map(o => `${o.name}: ${o.description || o.title || o.name || 'no description'}`).join(', ')}
 
 Based on the parameter names, descriptions, and data types, infer what kind of values make sense.
 Look for clues in:

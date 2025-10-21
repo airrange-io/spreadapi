@@ -58,7 +58,7 @@ export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = 
         const { areaName, changes } = update;
         
         // Find the area
-        const area = areas.find(a => a.name === areaName || a.alias === areaName);
+        const area = areas.find(a => a.name === areaName);
         if (!area) {
           areaUpdateResults.push({
             area: areaName,
@@ -154,7 +154,7 @@ export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = 
     // Now set input parameters
     if (apiDefinition.inputs && Array.isArray(apiDefinition.inputs)) {
       for (const inputDef of apiDefinition.inputs) {
-        const paramName = inputDef.alias || inputDef.name;
+        const paramName = inputDef.name;
         const value = inputs[paramName];
         
         if (value !== undefined && value !== null && value !== '') {
@@ -203,7 +203,7 @@ export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = 
           const sheet = spread.getSheetFromName(range.sheetName);
           
           if (sheet) {
-            const outputName = outputDef.alias || outputDef.name;
+            const outputName = outputDef.name;
             
             if (outputDef.row !== undefined && outputDef.col !== undefined) {
               // Single cell output
@@ -235,7 +235,7 @@ export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = 
       
       // Determine which areas to include
       const areasToRead = areaUpdates && areaUpdates.length > 0
-        ? areas.filter(a => areaUpdates.some(u => u.areaName === a.name || u.areaName === a.alias))
+        ? areas.filter(a => areaUpdates.some(u => u.areaName === a.name))
         : areas; // Include all areas if no specific updates
       
       for (const area of areasToRead) {
@@ -250,7 +250,6 @@ export async function executeEnhancedCalc(serviceId, inputs = {}, areaUpdates = 
           
           const areaInfo = {
             name: area.name,
-            alias: area.alias,
             address: area.address,
             mode: area.mode,
             rows: rows,

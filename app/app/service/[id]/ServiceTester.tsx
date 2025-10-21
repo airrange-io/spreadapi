@@ -1,13 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef, useLayoutEffect } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Divider, Spin } from 'antd';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Divider } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import CollapsibleSection from './components/CollapsibleSection';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
-
-// Lazy load the IntegrationExamples component
-const IntegrationExamples = lazy(() => import('./components/IntegrationExamples'));
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -52,7 +49,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   useEffect(() => {
     const initialValues: Record<string, any> = {};
     inputs.forEach(input => {
-      const key = input.alias || input.name;
+      const key = input.name;
       // Use the provided value, or set appropriate defaults
       if (input.value !== undefined && input.value !== null) {
         initialValues[key] = input.value;
@@ -234,7 +231,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
     // Check both type and dataType properties
     const inputType = input.type || input.dataType;
-    const fieldName = input.alias || input.name;
+    const fieldName = input.name;
 
     switch (inputType) {
       case 'number':
@@ -266,9 +263,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   return (
     <>
-      {/* Quick Test Section */}
-      <CollapsibleSection 
-        title="Quick Test"
+      {/* Test the Published API Section */}
+      <CollapsibleSection
+        title="Test the Published API"
         defaultOpen={false}
       >
         <div style={{ width: '100%' }}>
@@ -299,7 +296,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     return (
                       <Col key={input.id} span={colSpan}>
                         <Form.Item
-                          name={input.alias || input.name}
+                          name={input.name}
                           label={
                             <Space>
                               <span>{input.title || input.name}</span>
@@ -379,7 +376,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     {wizardResult.outputs.map((output: any) => {
                       
                       // Use title if available, otherwise alias or name
-                      const displayTitle = output.title || output.alias || output.name;
+                      const displayTitle = output.title || output.name;
                       
                       // Format the value based on type
                       let displayValue: string | number;
@@ -412,7 +409,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                       }
                       
                         return (
-                          <Col key={output.name || output.alias} span={getColumnSpan()}>
+                          <Col key={output.name} span={getColumnSpan()}>
                             <Statistic
                               title={displayTitle}
                               value={displayValue}
@@ -503,28 +500,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           )}
           </Space>
         </div>
-      </CollapsibleSection>
-
-      {/* Integration Examples Section */}
-      <CollapsibleSection 
-        title="Integration Examples" 
-        defaultOpen={false}
-        style={{ marginTop: 12 }}
-      >
-        <Suspense fallback={
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <Spin size="small" />
-          </div>
-        }>
-          <IntegrationExamples
-            serviceId={serviceId}
-            serviceName={serviceName}
-            requireToken={requireToken}
-            parameterValues={parameterValues}
-            inputs={inputs}
-            outputs={outputs}
-          />
-        </Suspense>
       </CollapsibleSection>
     </>
   );
