@@ -462,6 +462,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     const result = {
       apiId: serviceId,
+      serviceName: apiJson?.name || apiJson?.title || null,
+      serviceDescription: apiJson?.description || null,
       inputs: answerInputs,
       outputs: answerOutputs,
       metadata: {

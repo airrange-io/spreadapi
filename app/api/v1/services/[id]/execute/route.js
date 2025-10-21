@@ -126,6 +126,8 @@ export async function POST(request, { params}) {
 
     return NextResponse.json({
       serviceId,
+      serviceName: result.serviceName || null,
+      serviceDescription: result.serviceDescription || null,
       inputs: result.inputs || [],
       outputs: result.outputs || [],
       metadata: {
