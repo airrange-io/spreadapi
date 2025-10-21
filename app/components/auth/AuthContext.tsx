@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Hanko } from '@teamhanko/hanko-elements';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: any | null;
@@ -36,12 +36,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [hanko, setHanko] = useState<Hanko>();
   const router = useRouter();
-  
+  const pathname = usePathname();
+
+  // Check if we're on a public view route (embeddable snippets/apps)
+  const isViewRoute = pathname?.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+/);
 
   useEffect(() => {
+    // Skip Hanko initialization on public view routes
+    if (isViewRoute) {
+      setLoading(false);
+      return;
+    }
+
     const hankoInstance = new Hanko(hankoApi);
     setHanko(hankoInstance);
-  }, []);
+  }, [isViewRoute]);
 
   useEffect(() => {
     if (!hanko) return;

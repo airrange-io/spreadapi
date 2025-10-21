@@ -21,11 +21,6 @@ const TokenManagement = dynamic(() => import('../TokenManagement'), {
   ssr: false
 });
 
-const WebAppSection = dynamic(() => import('../components/WebAppSection'), {
-  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
-  ssr: false
-});
-
 const IntegrationExamples = dynamic(() => import('../components/IntegrationExamples'), {
   loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
   ssr: false
@@ -184,19 +179,6 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
             outputs={apiConfig.outputs || []}
           />
         </CollapsibleSection>
-
-        {/* Web App Section */}
-        <WebAppSection
-          serviceId={serviceId}
-          webAppEnabled={apiConfig.webAppEnabled || false}
-          webAppToken={apiConfig.webAppToken || ''}
-          webAppConfig={apiConfig.webAppConfig || ''}
-          isLoading={isLoading}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onWebAppEnabledChange={(webAppEnabled) => onConfigChange?.({ webAppEnabled })}
-          onWebAppTokenChange={(webAppToken) => onConfigChange?.({ webAppToken })}
-          onWebAppConfigChange={(webAppConfig) => onConfigChange?.({ webAppConfig })}
-        />
       </Space>
     </div>
   );

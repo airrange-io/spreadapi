@@ -16,6 +16,11 @@ const ApiTestView = dynamic(() => import('./views/ApiTestView'), {
   ssr: false
 });
 
+const AppsView = dynamic(() => import('./views/AppsView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
 const SettingsView = dynamic(() => import('./views/SettingsView'), {
   loading: () => <div style={{ padding: 20 }}></div>,
   ssr: false
@@ -71,12 +76,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
-  const [activeView, setActiveView] = useState<'Workbook' | 'API Test' | 'Settings' | 'Usage'>(() => {
+  const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage'>(() => {
     const savedView = getSavedView(serviceId);
-    if (savedView && ['Workbook', 'API Test', 'Settings', 'Usage'].includes(savedView)) {
-      return savedView as 'Workbook' | 'API Test' | 'Settings' | 'Usage';
+    if (savedView && ['Settings', 'Workbook', 'API', 'Apps', 'Usage'].includes(savedView)) {
+      return savedView as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
     }
-    // Default to Workbook for now, will update based on service status once loaded
+    // Default to Workbook (not Settings, even though Settings is first in navigation)
     return 'Workbook';
   });
   const [spreadsheetData, setSpreadsheetData] = useState<any>(null); // Start with null to prevent default data
@@ -102,7 +107,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiUsageExamples: [],
     aiTags: [],
     category: '',
-    webAppEnabled: false,
     webAppToken: '',
     webAppConfig: ''
   });
@@ -121,7 +125,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiUsageExamples: [],
     aiTags: [],
     category: '',
-    webAppEnabled: false,
     webAppToken: '',
     webAppConfig: ''
   });
@@ -236,7 +239,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       JSON.stringify(apiConfig.aiUsageExamples) !== JSON.stringify(savedConfig.aiUsageExamples) ||
       JSON.stringify(apiConfig.aiTags) !== JSON.stringify(savedConfig.aiTags) ||
       apiConfig.category !== savedConfig.category ||
-      apiConfig.webAppEnabled !== savedConfig.webAppEnabled ||
       apiConfig.webAppToken !== savedConfig.webAppToken ||
       apiConfig.webAppConfig !== savedConfig.webAppConfig;
 
@@ -419,7 +421,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiUsageExamples: data.service.aiUsageExamples || [],
               aiTags: data.service.aiTags || [],
               category: data.service.category || '',
-              webAppEnabled: data.service.webAppEnabled === 'true' || data.service.webAppEnabled === true,
               webAppToken: data.service.webAppToken || '',
               webAppConfig: data.service.webAppConfig || ''
             };
@@ -458,7 +459,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiUsageExamples: data.aiUsageExamples || [],
               aiTags: data.aiTags || [],
               category: data.category || '',
-              webAppEnabled: data.webAppEnabled === 'true' || data.webAppEnabled === true,
               webAppToken: data.webAppToken || '',
               webAppConfig: data.webAppConfig || ''
             };
@@ -496,7 +496,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             aiUsageExamples: [],
             aiTags: [],
             category: '',
-            webAppEnabled: false,
             webAppToken: '',
             webAppConfig: ''
           };
@@ -1023,7 +1022,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           aiUsageExamples: apiConfig.aiUsageExamples,
           aiTags: apiConfig.aiTags,
           category: apiConfig.category,
-          webAppEnabled: apiConfig.webAppEnabled,
           webAppToken: apiConfig.webAppToken,
           webAppConfig: apiConfig.webAppConfig,
           status: 'draft'
@@ -1572,17 +1570,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           value={activeView}
           // shape="round"
           onChange={(value) => {
-            const newView = value as 'Workbook' | 'API Test' | 'Settings' | 'Usage';
+            const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
             setActiveView(newView);
             // Save view preference using helper
             saveViewPreference(serviceId, newView);
           }}
           options={isMobile ? [
-            { value: 'Workbook', icon: <TableOutlined /> },
-            { value: 'API Test', icon: <CaretRightOutlined /> },
             { value: 'Settings', icon: <SettingOutlined /> },
+            { value: 'Workbook', icon: <TableOutlined /> },
+            { value: 'API', icon: <CaretRightOutlined /> },
+            { value: 'Apps', label: 'Apps' },
             { value: 'Usage', icon: <BarChartOutlined /> }
-          ] : ['Workbook', 'API Test', 'Settings', 'Usage']}
+          ] : ['Settings', 'Workbook', 'API', 'Apps', 'Usage']}
           style={{ marginLeft: 'auto', marginRight: 'auto' }}
         />
 
@@ -1789,9 +1788,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       )}
                     </div>
 
-                    {/* API Test View */}
+                    {/* API View */}
                     <div style={{
-                      display: activeView === 'API Test' ? 'block' : 'none',
+                      display: activeView === 'API' ? 'block' : 'none',
                       height: '100%'
                     }}>
                       <ApiTestView
@@ -1808,6 +1807,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         }}
                         onTokenCountChange={setTokenCount}
                         onTokensChange={setAvailableTokens}
+                        onConfigChange={handleConfigChange}
+                      />
+                    </div>
+
+                    {/* Apps View */}
+                    <div style={{
+                      display: activeView === 'Apps' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      <AppsView
+                        serviceId={serviceId}
+                        apiConfig={apiConfig}
+                        serviceStatus={serviceStatus}
+                        isDemoMode={isDemoMode}
+                        configLoaded={configLoaded}
+                        isLoading={!configLoaded}
+                        hasUnsavedChanges={configHasChanges}
                         onConfigChange={handleConfigChange}
                       />
                     </div>
@@ -1906,9 +1922,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   )}
                 </div>
 
-                {/* API Test View */}
+                {/* API View */}
                 <div style={{
-                  display: activeView === 'API Test' ? 'block' : 'none',
+                  display: activeView === 'API' ? 'block' : 'none',
                   height: '100%'
                 }}>
                   <ApiTestView
@@ -1925,6 +1941,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     }}
                     onTokenCountChange={setTokenCount}
                     onTokensChange={setAvailableTokens}
+                    onConfigChange={handleConfigChange}
+                  />
+                </div>
+
+                {/* Apps View */}
+                <div style={{
+                  display: activeView === 'Apps' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <AppsView
+                    serviceId={serviceId}
+                    apiConfig={apiConfig}
+                    serviceStatus={serviceStatus}
+                    isDemoMode={isDemoMode}
+                    configLoaded={configLoaded}
+                    isLoading={!configLoaded}
+                    hasUnsavedChanges={configHasChanges}
                     onConfigChange={handleConfigChange}
                   />
                 </div>

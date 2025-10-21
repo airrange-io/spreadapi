@@ -81,8 +81,11 @@ export async function middleware(req: NextRequest) {
   // Check if this is a web app request (has token query parameter)
   const isWebAppRequest = pathname.match(/^\/app\/v1\/services\/[^\/]+$/) && req.nextUrl.searchParams.has('token');
 
+  // Check if this is a view route (embeddable views - should be public or token-protected)
+  const isViewRoute = pathname.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+$/);
+
   // Skip auth for public routes and demo service
-  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest) {
+  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
     // For demo service, add a header to indicate read-only mode
     if (isDemoServiceRequest) {
       const requestHeaders = new Headers(req.headers);
@@ -100,6 +103,18 @@ export async function middleware(req: NextRequest) {
     if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-webapp-access', 'true');
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+
+    // For view routes, add header to indicate public/embeddable access
+    if (isViewRoute) {
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set('x-view-access', 'true');
 
       return NextResponse.next({
         request: {

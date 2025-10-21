@@ -77,10 +77,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       notFound();
     }
 
-    // Validate web app is enabled and token matches (Redis returns strings)
-    const webAppEnabled = serviceData.webAppEnabled === 'true';
-
-    if (!webAppEnabled) {
+    // Validate token matches - if no token is set, web app is disabled
+    if (!serviceData.webAppToken) {
       return (
         <div style={{
           display: 'flex',

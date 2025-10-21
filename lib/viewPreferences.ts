@@ -2,7 +2,7 @@
 
 export interface ViewPreference {
   serviceId: string;
-  view: 'Workbook' | 'API Test' | 'Settings';
+  view: 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
   lastAccessed: string;
 }
 
@@ -31,7 +31,7 @@ const updateViewPreferencesList = (serviceId: string, view: string): void => {
     const existingIndex = prefs.findIndex(p => p.serviceId === serviceId);
     const newPref: ViewPreference = {
       serviceId,
-      view: view as 'Workbook' | 'API Test' | 'Settings',
+      view: view as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage',
       lastAccessed: new Date().toISOString()
     };
     
@@ -78,17 +78,17 @@ export const clearAllViewPreferences = (): void => {
 };
 
 // Get smart default view based on service status
-export const getSmartDefaultView = (isPublished: boolean, hasWorkbook: boolean): 'Workbook' | 'API Test' | 'Settings' => {
-  // Published services default to API Test
+export const getSmartDefaultView = (isPublished: boolean, hasWorkbook: boolean): 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage' => {
+  // Published services default to API
   if (isPublished) {
-    return 'API Test';
+    return 'API';
   }
-  
+
   // Draft services without workbook default to Workbook (to create one)
   if (!hasWorkbook) {
     return 'Workbook';
   }
-  
+
   // Draft services with workbook default to Workbook (for editing)
   return 'Workbook';
 };
@@ -103,9 +103,11 @@ export const getViewUsageStats = (): { [key: string]: number } => {
     
     const prefs: ViewPreference[] = JSON.parse(allPrefs);
     const stats: { [key: string]: number } = {
+      'Settings': 0,
       'Workbook': 0,
-      'API Test': 0,
-      'Settings': 0
+      'API': 0,
+      'Apps': 0,
+      'Usage': 0
     };
     
     prefs.forEach(pref => {
