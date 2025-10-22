@@ -278,6 +278,116 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
   }, [separators]);
 
   const formatOutput = useCallback((output: Output, value: any) => {
+    // Handle arrays (cell ranges) - format as HTML table
+    if (Array.isArray(value)) {
+      // Helper to format individual cell values
+      const formatCell = (cellValue: any): string => {
+        if (cellValue === null || cellValue === undefined) return '';
+
+        // Apply formatString if available and value is a number
+        if (output.formatString && typeof cellValue === 'number') {
+          const formatStr = output.formatString.trim();
+
+          if (formatStr.includes('%')) {
+            const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
+            return new Intl.NumberFormat(userLocale, {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals
+            }).format(cellValue) + '%';
+          }
+
+          if (formatStr.toLowerCase() === 'date') {
+            return new Date(cellValue).toLocaleDateString(userLocale);
+          }
+
+          const prefixMatch = formatStr.match(/^([^#0,.\s]+)/);
+          const suffixMatch = formatStr.match(/([^#0,.\s]+)$/);
+          const decimalMatch = formatStr.match(/\.0+/);
+          const hasThousands = formatStr.includes(',');
+          const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
+          const prefix = prefixMatch ? prefixMatch[1] : '';
+          const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
+
+          return prefix + new Intl.NumberFormat(userLocale, {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+            useGrouping: hasThousands
+          }).format(cellValue) + suffix;
+        }
+
+        if (typeof cellValue === 'number') {
+          return Number.isInteger(cellValue)
+            ? formatters.integer.format(cellValue)
+            : formatters.decimal.format(cellValue);
+        }
+
+        return String(cellValue);
+      };
+
+      // Check if 2D array
+      if (value.length > 0 && Array.isArray(value[0])) {
+        // 2D array - create HTML table
+        return (
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '13px',
+            marginTop: '4px'
+          }}>
+            <tbody>
+              {value.map((row: any[], rowIndex: number) => (
+                <tr key={rowIndex}>
+                  {row.map((cell: any, colIndex: number) => (
+                    <td
+                      key={colIndex}
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e8e8e8',
+                        textAlign: typeof cell === 'number' ? 'right' : 'left',
+                        backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white',
+                        fontWeight: typeof cell === 'number' ? 500 : 400
+                      }}
+                    >
+                      {formatCell(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        // 1D array - create single-row table
+        return (
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '13px',
+            marginTop: '4px'
+          }}>
+            <tbody>
+              <tr>
+                {value.map((cell: any, colIndex: number) => (
+                  <td
+                    key={colIndex}
+                    style={{
+                      padding: '8px 12px',
+                      border: '1px solid #e8e8e8',
+                      textAlign: typeof cell === 'number' ? 'right' : 'left',
+                      backgroundColor: '#fafafa',
+                      fontWeight: typeof cell === 'number' ? 500 : 400
+                    }}
+                  >
+                    {formatCell(cell)}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        );
+      }
+    }
+
     if (output.formatString && typeof value === 'number') {
       const formatStr = output.formatString.trim();
 
@@ -324,22 +434,6 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
 
   const handleSubmit = async (values: any) => {
     const startTime = Date.now();
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Web App] Input definitions:', serviceData.inputs.map(i => ({
-        name: i.name,
-        type: i.type,
-        mandatory: i.mandatory,
-        defaultValue: i.defaultValue,
-        value: i.value,
-        visible: isInputVisible(i.name)
-      })));
-      console.log('[Web App] Output definitions:', serviceData.outputs.map(o => ({
-        name: o.name,
-        type: o.type,
-        visible: isOutputVisible(o.name)
-      })));
-    }
 
     // Start with visible field values
     const allValues = { ...values };
@@ -795,13 +889,16 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
                       const value = results[output.name];
                       if (value === undefined || value === null) return null;
 
+                      const isArrayValue = Array.isArray(value);
+                      const formattedValue = formatOutput(output, value);
+
                       return (
                         <div
                           key={output.name}
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            display: isArrayValue ? 'block' : 'flex',
+                            justifyContent: isArrayValue ? 'flex-start' : 'space-between',
+                            alignItems: isArrayValue ? 'flex-start' : 'center',
                             padding: themeStyles.resultRowPadding || '12px 0',
                             borderBottom: index < filteredArray.length - 1 ? `1px solid ${themeStyles.resultDividerColor || '#e8e8e8'}` : 'none'
                           }}
@@ -809,17 +906,25 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
                           <Text style={{
                             fontSize: themeStyles.resultLabelFontSize || 14,
                             color: themeStyles.resultLabelColor || themeStyles.labelColor,
-                            fontWeight: themeStyles.resultLabelFontWeight
+                            fontWeight: themeStyles.resultLabelFontWeight,
+                            marginBottom: isArrayValue ? '8px' : 0,
+                            display: isArrayValue ? 'block' : 'inline'
                           }}>
                             {output.title || output.name}:
                           </Text>
-                          <Text strong style={{
-                            fontSize: themeStyles.resultValueFontSize || 16,
-                            color: themeStyles.resultValueColor || themeStyles.primaryColor,
-                            fontWeight: themeStyles.resultValueFontWeight
-                          }}>
-                            {formatOutput(output, value)}
-                          </Text>
+                          {isArrayValue ? (
+                            <div style={{ width: '100%' }}>
+                              {formattedValue}
+                            </div>
+                          ) : (
+                            <Text strong style={{
+                              fontSize: themeStyles.resultValueFontSize || 16,
+                              color: themeStyles.resultValueColor || themeStyles.primaryColor,
+                              fontWeight: themeStyles.resultValueFontWeight
+                            }}>
+                              {formattedValue}
+                            </Text>
+                          )}
                         </div>
                       );
                     })}

@@ -426,14 +426,27 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         }
         cellResult = actualSheet.getCell(row, col).value();
       } else {
-        const range = getRangeAsOffset(output.address);
-        const rowTo = range.rowTo - range.rowFrom + 1;
-        const colTo = range.colTo - range.colFrom + 1;
+        // For cell ranges, prefer stored rowCount/colCount if available (more reliable)
+        // Otherwise calculate from address
+        let rowCount, colCount;
+
+        if (output.rowCount && output.colCount) {
+          // Use stored dimensions
+          rowCount = output.rowCount;
+          colCount = output.colCount;
+        } else {
+          // Calculate from address as fallback
+          const range = getRangeAsOffset(output.address);
+          // Make range inclusive: both start and end cells should be counted
+          rowCount = range.rowTo - range.rowFrom + 1;
+          colCount = range.colTo - range.colFrom + 1;
+        }
+
         cellResult = actualSheet.getArray(
           output.row,
           output.col,
-          rowTo,
-          colTo,
+          rowCount,
+          colCount,
           false
         );
       }

@@ -36,6 +36,59 @@ function parseAddress(address: string, paramName: string): { sheetName: string; 
   return { sheetName, cellRef };
 }
 
+// Helper to check if address is a single cell or range
+function isSingleCell(address: string): boolean {
+  if (!address) return false;
+
+  const sheetSepIndex = address.indexOf('!');
+  const cellAddress = sheetSepIndex > -1
+    ? address.substring(sheetSepIndex + 1)
+    : address;
+
+  const colonIndex = cellAddress.indexOf(':');
+  if (colonIndex === -1) return true;
+
+  const leftCell = cellAddress.substring(0, colonIndex);
+  const rightCell = cellAddress.substring(colonIndex + 1);
+  return leftCell === rightCell;
+}
+
+// Helper to calculate range dimensions from address (e.g., "A1:C5" -> {rowCount: 5, colCount: 3})
+function getRangeDimensions(address: string, startRow: number, startCol: number): { rowCount: number; colCount: number } {
+  const sheetSepIndex = address.indexOf('!');
+  const cellAddress = sheetSepIndex > -1
+    ? address.substring(sheetSepIndex + 1).replace(/[$']/g, '')
+    : address.replace(/[$']/g, '');
+
+  const colonIndex = cellAddress.indexOf(':');
+  if (colonIndex === -1) return { rowCount: 1, colCount: 1 };
+
+  const endCell = cellAddress.substring(colonIndex + 1);
+
+  // Parse end cell coordinates (e.g., "C5" -> row: 5, col: 3)
+  const endRow = parseInt(endCell.replace(/^[A-Z]+/, ''));
+  const colChars = endCell.replace(/\d+$/, '').split('').reverse();
+  let endCol = 0;
+  let multiplier = 1;
+
+  while (colChars.length) {
+    const char = colChars.shift();
+    if (char) {
+      endCol += (char.charCodeAt(0) - 64) * multiplier;
+      multiplier *= 26;
+    }
+  }
+
+  // Make range inclusive: need to add 1 to count both start and end cells
+  // Example: E3:F10 where startRow=3, startCol=5, endRow=10, endCol=6
+  // rowCount = 10 - 3 + 1 = 8 rows (3,4,5,6,7,8,9,10)
+  // colCount = 6 - 5 + 1 = 2 cols (E, F)
+  return {
+    rowCount: endRow - startRow + 1,
+    colCount: endCol - startCol + 1
+  };
+}
+
 const TestPanel: React.FC<TestPanelProps> = ({
   open,
   onClose,
@@ -87,6 +140,23 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
   // Format output values (simplified version of WebApp)
   const formatOutput = (output: any, value: any) => {
+    // Handle arrays (cell ranges)
+    if (Array.isArray(value)) {
+      // If it's a 2D array, format it as a table-like string
+      if (Array.isArray(value[0])) {
+        return value.map(row =>
+          row.map((cell: any) => formatSingleValue(output, cell)).join(', ')
+        ).join(' | ');
+      }
+      // If it's a 1D array
+      return value.map((cell: any) => formatSingleValue(output, cell)).join(', ');
+    }
+
+    return formatSingleValue(output, value);
+  };
+
+  // Format a single value (extracted for reuse)
+  const formatSingleValue = (output: any, value: any) => {
     if (output.formatString && typeof value === 'number') {
       const formatStr = output.formatString.trim();
 
@@ -126,7 +196,11 @@ const TestPanel: React.FC<TestPanelProps> = ({
       return formatter.format(value);
     }
 
-    return value;
+    if (value === null || value === undefined) {
+      return '-';
+    }
+
+    return String(value);
   };
 
   // Initialize form with input values
@@ -234,8 +308,16 @@ const TestPanel: React.FC<TestPanelProps> = ({
             throw new Error(`Missing row or column for output "${output.title || output.name}"`);
           }
 
-          // Read value from spreadsheet
-          const value = sheet.getValue(output.row, output.col);
+          // Check if single cell or range
+          let value;
+          if (isSingleCell(output.address)) {
+            // Single cell - read value directly
+            value = sheet.getValue(output.row, output.col);
+          } else {
+            // Cell range - read as 2D array
+            const dimensions = getRangeDimensions(output.address, output.row + 1, output.col + 1);
+            value = sheet.getArray(output.row, output.col, dimensions.rowCount, dimensions.colCount);
+          }
 
           const outputObj: any = {
             name: output.name,

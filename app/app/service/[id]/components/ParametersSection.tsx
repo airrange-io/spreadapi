@@ -55,6 +55,8 @@ export interface OutputDefinition {
   title?: string;
   row: number;
   col: number;
+  rowCount?: number; // For cell ranges
+  colCount?: number; // For cell ranges
   type: 'number' | 'string' | 'boolean';
   value?: any;
   direction: 'output';

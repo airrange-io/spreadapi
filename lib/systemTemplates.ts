@@ -163,6 +163,22 @@ body {
   color: var(--text-color);
   font-weight: 500;
 }
+
+/* Array output tables */
+.array-output-table {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.array-output-table td {
+  transition: background-color 0.15s ease;
+}
+
+.array-output-table tr:hover td {
+  background-color: #f0f0f0 !important;
+}
     `.trim()
   },
 
@@ -329,6 +345,22 @@ body {
   color: var(--result-value-color);
   font-size: var(--result-value-font-size);
   font-weight: var(--result-value-font-weight);
+}
+
+/* Array output tables */
+.array-output-table {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.array-output-table td {
+  transition: background-color 0.15s ease;
+}
+
+.array-output-table tr:hover td {
+  background-color: #f0f0f0 !important;
 }
     `.trim()
   },
@@ -499,6 +531,22 @@ body {
   font-size: var(--result-value-font-size);
   font-weight: var(--result-value-font-weight);
 }
+
+/* Array output tables */
+.array-output-table {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.array-output-table td {
+  transition: background-color 0.15s ease;
+}
+
+.array-output-table tr:hover td {
+  background-color: #f0f0f0 !important;
+}
     `.trim()
   },
 
@@ -630,6 +678,22 @@ body {
   color: #333;
   font-size: 14px;
   font-weight: 600;
+}
+
+/* Array output tables */
+.array-output-table {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.array-output-table td {
+  transition: background-color 0.15s ease;
+}
+
+.array-output-table tr:hover td {
+  background-color: #f0f0f0 !important;
 }
     `.trim()
   },
@@ -797,6 +861,22 @@ body {
   color: #666;
   margin-top: 8px;
   line-height: 1.5;
+}
+
+/* Array output tables */
+.array-output-table {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.array-output-table td {
+  transition: background-color 0.15s ease;
+}
+
+.array-output-table tr:hover td {
+  background-color: #f0f0f0 !important;
 }
     `.trim()
   }
