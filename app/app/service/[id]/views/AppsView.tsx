@@ -256,7 +256,7 @@ const AppsView: React.FC<AppsViewProps> = ({
             message="Build Web Applications & Embeddable Snippets"
             description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation."
             type="info"
-            style={{ marginTop: -2, marginBottom: 24 }}
+            style={{ marginTop: -2, marginBottom: 24, padding: 10, paddingLeft: 15 }}
           />
 
           <h3 style={{ marginTop: 0, marginBottom: 16 }}>Token Management</h3>
@@ -532,11 +532,10 @@ const AppsView: React.FC<AppsViewProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
           {isDemoMode && (
             <Alert
-              message="Demo Mode - Web App Preview"
-              description="You're viewing the web app in demo mode. This service is publicly accessible without requiring a token."
-              type="info"
-              showIcon
-              style={{ marginBottom: 0 }}
+              // message="Demo Mode - Web App Preview"
+              description="You're viewing the web app in demo mode. This service is publicly accessible."
+              // type="info"
+              style={{ marginBottom: 0, padding: 10, paddingLeft: 15 }}
             />
           )}
 
