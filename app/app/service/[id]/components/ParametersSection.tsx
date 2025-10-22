@@ -4,6 +4,22 @@ import React from 'react';
 import { Space, Tag, Button, Skeleton, Tooltip, Dropdown, Modal } from 'antd';
 import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableParameterItem } from './SortableParameterItem';
 
 export interface InputDefinition {
   id: string;
@@ -89,6 +105,8 @@ interface ParametersSectionProps {
   onRemoveArea: (index: number) => void;
   onNavigateToArea: (area: AreaParameter) => void;
   onShowHowItWorks: () => void;
+  onReorderInputs?: (newOrder: InputDefinition[]) => void;
+  onReorderOutputs?: (newOrder: OutputDefinition[]) => void;
 }
 
 const ParametersSection: React.FC<ParametersSectionProps> = ({
@@ -106,12 +124,52 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   onRemoveArea,
   onNavigateToArea,
   onShowHowItWorks,
+  onReorderInputs,
+  onReorderOutputs,
 }) => {
   // Check if we can interact with parameters (requires workbook to be loaded)
   const canInteract = !!onNavigateToParameter;
-  
+
   // Determine if cards should use compact layout
   const useCompactLayout = panelWidth && panelWidth < 380;
+
+  // Sensors for drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts (prevents accidental drags)
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end for inputs
+  const handleInputDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = inputs.findIndex((item) => item.id === active.id);
+      const newIndex = inputs.findIndex((item) => item.id === over.id);
+
+      const newOrder = arrayMove(inputs, oldIndex, newIndex);
+      onReorderInputs?.(newOrder);
+    }
+  };
+
+  // Handle drag end for outputs
+  const handleOutputDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = outputs.findIndex((item) => item.id === active.id);
+      const newIndex = outputs.findIndex((item) => item.id === over.id);
+
+      const newOrder = arrayMove(outputs, oldIndex, newIndex);
+      onReorderOutputs?.(newOrder);
+    }
+  };
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'readonly': return 'Read Only';
@@ -136,103 +194,40 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
         ) : inputs.length === 0 ? (
           <div style={{ color: '#999' }}>Select a spreadsheet cell and click "Add as Input Parameter"</div>
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {inputs.map((input) => (
-              <div key={input.id} style={{
-                padding: '8px 12px',
-                background: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e8e8e8'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div
-                    style={{ cursor: 'pointer', flex: 1 }}
-                    onClick={() => onNavigateToParameter(input)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.8';
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleInputDragEnd}
+          >
+            <SortableContext
+              items={inputs.map(i => i.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {inputs.map((input) => (
+                  <SortableParameterItem
+                    key={input.id}
+                    parameter={input}
+                    type="input"
+                    isDemoMode={isDemoMode}
+                    useCompactLayout={useCompactLayout}
+                    onNavigate={() => onNavigateToParameter(input)}
+                    onEdit={() => onEditParameter('input', input)}
+                    onDelete={() => {
+                      Modal.confirm({
+                        title: 'Delete this parameter?',
+                        content: 'This action cannot be undone.',
+                        okText: 'Yes',
+                        cancelText: 'No',
+                        okButtonProps: { danger: true },
+                        onOk: () => onDeleteParameter('input', input.id),
+                      });
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    <Space direction="vertical" size={0}>
-                      <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                        <strong style={{ color: input.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
-                          {input.name}
-                        </strong>
-                      </Space>
-                      <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                        {useCompactLayout ? (
-                          // In compact layout, show address instead of title
-                          <div style={{ color: '#888', fontSize: '11px' }}>{input.address}</div>
-                        ) : (
-                          // In normal layout, show title if different from name
-                          input.title && input.title !== input.name && (
-                            <div style={{ color: '#888', fontSize: '11px' }}>{input.title}</div>
-                          )
-                        )}
-                        {(input.min !== undefined || input.max !== undefined) && (
-                          <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                            {input.min !== undefined && `Min: ${input.min}`}
-                            {input.min !== undefined && input.max !== undefined && ' • '}
-                            {input.max !== undefined && `Max: ${input.max}`}
-                          </div>
-                        )}
-                        {input.description && (
-                          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                            {input.description}
-                          </div>
-                        )}
-                      </Space>
-                    </Space>
-                  </div>
-                  <Space size={4}>
-                    {!useCompactLayout && (
-                      <Tag color='purple' onClick={() => onNavigateToParameter(input)} style={{ cursor: 'pointer', padding: '4px 8px' }}>{input.address}</Tag>
-                    )}
-                    <Button
-                      size="small"
-                      type="text"
-                      icon={<EditOutlined />}
-                      onClick={() => onEditParameter('input', input)}
-                    />
-                    {!isDemoMode && (
-                      <Dropdown
-                        menu={{
-                          items: [
-                            {
-                              key: 'delete',
-                              label: 'Delete',
-                              icon: <DeleteOutlined />,
-                              danger: true,
-                              onClick: () => {
-                                Modal.confirm({
-                                  title: 'Delete this parameter?',
-                                  content: 'This action cannot be undone.',
-                                  okText: 'Yes',
-                                  cancelText: 'No',
-                                  okButtonProps: { danger: true },
-                                  onOk: () => onDeleteParameter('input', input.id),
-                                });
-                              },
-                            },
-                          ],
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                      >
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={<MoreOutlined />}
-                        />
-                      </Dropdown>
-                    )}
-                  </Space>
-                </div>
-              </div>
-            ))}
-          </Space>
+                  />
+                ))}
+              </Space>
+            </SortableContext>
+          </DndContext>
         )}
       </CollapsibleSection>
 
@@ -243,94 +238,40 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
         ) : outputs.length === 0 ? (
           <div style={{ color: '#999' }}>Select a spreadsheet cell or area and click "Add as Output Parameter"</div>
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
-            {outputs.map((output) => (
-              <div key={output.id} style={{
-                padding: '8px 12px',
-                background: 'white',
-                borderRadius: '8px',
-                border: '1px solid #e8e8e8'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div
-                    style={{ cursor: 'pointer', flex: 1 }}
-                    onClick={() => onNavigateToParameter(output)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.8';
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleOutputDragEnd}
+          >
+            <SortableContext
+              items={outputs.map(o => o.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {outputs.map((output) => (
+                  <SortableParameterItem
+                    key={output.id}
+                    parameter={output}
+                    type="output"
+                    isDemoMode={isDemoMode}
+                    useCompactLayout={useCompactLayout}
+                    onNavigate={() => onNavigateToParameter(output)}
+                    onEdit={() => onEditParameter('output', output)}
+                    onDelete={() => {
+                      Modal.confirm({
+                        title: 'Delete this parameter?',
+                        content: 'This action cannot be undone.',
+                        okText: 'Yes',
+                        cancelText: 'No',
+                        okButtonProps: { danger: true },
+                        onOk: () => onDeleteParameter('output', output.id),
+                      });
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    <Space direction="vertical" size={0}>
-                      <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                        <strong>{output.name}</strong>
-                      </Space>
-                      <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
-                        {useCompactLayout ? (
-                          // In compact layout, show address instead of title
-                          <div style={{ color: '#888', fontSize: '11px' }}>{output.address}</div>
-                        ) : (
-                          // In normal layout, show title if different from name
-                          output.title && output.title !== output.name && (
-                            <div style={{ color: '#888', fontSize: '11px' }}>{output.title}</div>
-                          )
-                        )}
-                        {output.description && (
-                          <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                            {output.description}
-                          </div>
-                        )}
-                      </Space>
-                    </Space>
-                  </div>
-                  <Space size={4}>
-                    {!useCompactLayout && (
-                      <Tag onClick={() => onNavigateToParameter(output)} color='geekblue' style={{ cursor: 'pointer', padding: '4px 8px' }}>{output.address}</Tag>
-                    )}
-                    <Button
-                      size="small"
-                      type="text"
-                      icon={<EditOutlined />}
-                      onClick={() => onEditParameter('output', output)}
-                    />
-                    {!isDemoMode && (
-                      <Dropdown
-                        menu={{
-                          items: [
-                            {
-                              key: 'delete',
-                              label: 'Delete',
-                              icon: <DeleteOutlined />,
-                              danger: true,
-                              onClick: () => {
-                                Modal.confirm({
-                                  title: 'Delete this parameter?',
-                                  content: 'This action cannot be undone.',
-                                  okText: 'Yes',
-                                  cancelText: 'No',
-                                  okButtonProps: { danger: true },
-                                  onOk: () => onDeleteParameter('output', output.id),
-                                });
-                              },
-                            },
-                          ],
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                      >
-                        <Button
-                          size="small"
-                          type="text"
-                          icon={<MoreOutlined />}
-                        />
-                      </Dropdown>
-                    )}
-                  </Space>
-                </div>
-              </div>
-            ))}
-          </Space>
+                  />
+                ))}
+              </Space>
+            </SortableContext>
+          </DndContext>
         )}
       </CollapsibleSection>
 

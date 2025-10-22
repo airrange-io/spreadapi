@@ -644,7 +644,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                       }}>
                         <iframe
                           src={snippetUrl}
-                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
                           title={`${template.name} Snippet Preview`}
                         />
                       </div>
@@ -721,7 +721,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                       }}>
                         <iframe
                           src={interactiveUrl}
-                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
                           title={`${template.name} Interactive Preview`}
                         />
                       </div>

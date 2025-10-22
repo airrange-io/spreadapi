@@ -323,6 +323,16 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     }
   }, []);
 
+  // Reorder inputs
+  const handleReorderInputs = useCallback((newOrder: InputDefinition[]) => {
+    setInputs(newOrder);
+  }, []);
+
+  // Reorder outputs
+  const handleReorderOutputs = useCallback((newOrder: OutputDefinition[]) => {
+    setOutputs(newOrder);
+  }, []);
+
   // Remove area
   const handleRemoveArea = useCallback((index: number) => {
     setAreas(prev => prev.filter((_, i) => i !== index));
@@ -858,6 +868,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             onRemoveArea={handleRemoveArea}
             onNavigateToArea={handleNavigateToArea}
             onShowHowItWorks={() => setShowHowItWorksModal(true)}
+            onReorderInputs={handleReorderInputs}
+            onReorderOutputs={handleReorderOutputs}
           />
         </Suspense>
       </div>
