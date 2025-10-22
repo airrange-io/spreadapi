@@ -31,7 +31,7 @@ const ProductPage: React.FC = () => {
     const isButtonVisible = typeof window !== 'undefined' && window.innerWidth >= 840;
     if (!isButtonVisible) return;
 
-    // Only load tour code AFTER initial page load is complete (3s delay)
+    // Only load tour code AFTER initial page load is complete (6s delay)
     const timer = setTimeout(async () => {
       // Double-check button is still visible
       if (window.innerWidth < 840) return;
@@ -59,7 +59,7 @@ const ProductPage: React.FC = () => {
       } catch (error) {
         console.error('Failed to load tour:', error);
       }
-    }, 3000); // 3s delay to not impact landing page performance
+    }, 6000); // 6s delay to not impact landing page performance
 
     return () => clearTimeout(timer);
   }, []);
