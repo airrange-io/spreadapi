@@ -48,6 +48,9 @@
       ],
       "@/data/*": [
         "data/*"
+      ],
+      "@/tours/*": [
+        "tours/*"
       ]
     },
     "plugins": [

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Tour } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -41,6 +41,8 @@ const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), 
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useTour } from '@/hooks/useTour';
+import { appTour } from '@/tours/appTour';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -59,6 +61,37 @@ const ListsPage: React.FC = observer(() => {
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
+
+  // Tour refs
+  const demoServicesRef = useRef<HTMLDivElement>(null);
+  const newServiceButtonRef = useRef<HTMLButtonElement>(null);
+  const mcpButtonRef = useRef<HTMLButtonElement>(null);
+  const chatButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Initialize tour with refs
+  const tourSteps = useMemo(() => [
+    {
+      ...appTour.steps[0],
+      target: () => demoServicesRef.current,
+    },
+    {
+      ...appTour.steps[1],
+      target: () => newServiceButtonRef.current,
+    },
+    {
+      ...appTour.steps[2],
+      target: () => mcpButtonRef.current,
+    },
+    {
+      ...appTour.steps[3],
+      target: () => chatButtonRef.current,
+    },
+  ], []);
+
+  const tour = useTour(
+    { ...appTour, steps: tourSteps },
+    { autoStart: true, delay: 1500 } // Start tour after 1.5s delay
+  );
 
   // Mark when we're on the client
   useEffect(() => {
@@ -388,6 +421,7 @@ const ListsPage: React.FC = observer(() => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
                 {/* Chat Button */}
                 <Button
+                  ref={chatButtonRef}
                   variant='filled'
                   color="default"
                   icon={<MessageOutlined />}
@@ -399,6 +433,7 @@ const ListsPage: React.FC = observer(() => {
 
                 {/* MCP Settings Button */}
                 <Button
+                  ref={mcpButtonRef}
                   variant='filled'
                   color="default"
                   icon={<AppstoreOutlined />}
@@ -410,6 +445,7 @@ const ListsPage: React.FC = observer(() => {
 
                 {/* New Service Button */}
                 <Button
+                  ref={newServiceButtonRef}
                   type="primary"
                   icon={isCreatingService ? <LoadingOutlined /> : <PlusOutlined />}
                   loading={isCreatingService}
@@ -493,11 +529,13 @@ const ListsPage: React.FC = observer(() => {
                   />
                 </div>
                 {/* Service List */}
-                {isClient ? (
-                  <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
-                ) : (
-                  <ServiceListSkeleton viewMode={viewMode} />
-                )}
+                <div ref={demoServicesRef}>
+                  {isClient ? (
+                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
+                  ) : (
+                    <ServiceListSkeleton viewMode={viewMode} />
+                  )}
+                </div>
                 {/* New here? Cards - show for users with less than 5 lists */}
                 {!searchQuery && appStore.list.length < 5 && (
                   <div style={{
@@ -698,6 +736,21 @@ const ListsPage: React.FC = observer(() => {
           <IntercomScript />
         </>
       )}
+
+      {/* Welcome Tour */}
+      <>
+        <style jsx global>{`
+          .ant-tour .ant-tour-content {
+            max-width: 400px !important;
+          }
+        `}</style>
+        <Tour
+          open={tour.open}
+          onClose={tour.onClose}
+          steps={tour.steps}
+          onChange={tour.onChange}
+        />
+      </>
     </>
   );
 });
