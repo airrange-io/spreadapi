@@ -23,6 +23,7 @@ interface StatusBarProps {
   onChangesClick?: () => void;
   hasParameters?: boolean;
   onTestClick?: () => void;
+  testButtonRef?: React.RefObject<HTMLButtonElement | HTMLAnchorElement>;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -39,6 +40,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onChangesClick,
   hasParameters = false,
   onTestClick,
+  testButtonRef,
 }) => {
   // Create a lighter version of the primary color
   const lighterPrimary = '#6B4A99'; // Lighter shade of #4F2D7F
@@ -94,6 +96,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
           <>
             <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} />
             <Button
+              ref={testButtonRef}
               type="text"
               size="small"
               icon={<CaretRightOutlined />}

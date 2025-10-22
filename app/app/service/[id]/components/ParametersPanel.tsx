@@ -45,6 +45,7 @@ interface ParametersPanelProps {
     outputs: OutputDefinition[];
     areas?: AreaParameter[];
   };
+  addButtonRef?: React.RefObject<HTMLDivElement>;
 }
 
 // Permission presets for areas
@@ -85,7 +86,7 @@ const PERMISSION_PRESETS = {
 };
 
 const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode
+  spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef
 }) => {
   const { message } = App.useApp();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
@@ -887,6 +888,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             isCompact={panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX}
             onAddFromSelection={handleAddParameterFromSelection}
             onAddAsEditableArea={handleAddAreaFromSelection}
+            buttonRef={addButtonRef}
           />
         </div>
       </Suspense>

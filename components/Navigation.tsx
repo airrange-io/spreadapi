@@ -15,9 +15,10 @@ interface NavigationProps {
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
+  getStartedRef?: React.RefObject<HTMLAnchorElement>;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', locale = 'en', showLanguageSwitcher = false }) => {
+const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', locale = 'en', showLanguageSwitcher = false, getStartedRef }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Always show language switcher on blog pages
@@ -86,7 +87,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
           }}>
             <LanguageSwitcher currentLocale={locale} />
           </div>
-          <Link href="/app" className="header-button hide-mobile-portrait">Get Started</Link>
+          <Link href="/app" ref={getStartedRef} className="header-button hide-mobile-portrait">Get Started</Link>
           <button
             className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

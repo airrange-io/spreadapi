@@ -13,6 +13,7 @@ interface ProductHeaderProps {
   secondaryButtonText?: string;
   secondaryButtonHref?: string;
   showImage?: boolean;
+  primaryButtonRef?: React.RefObject<HTMLAnchorElement>;
 }
 
 export default function ProductHeader({
@@ -23,7 +24,8 @@ export default function ProductHeader({
   primaryButtonHref = '/',
   secondaryButtonText,
   secondaryButtonHref,
-  showImage = false
+  showImage = false,
+  primaryButtonRef
 }: ProductHeaderProps) {
   return (
     <header className="section-home-header">
@@ -53,8 +55,8 @@ export default function ProductHeader({
                       <div className="margin-top margin-medium">
                         <div className="waitlist-form-signup" style={{ justifyContent: 'center', gap: '16px' }}>
                           {primaryButtonText && (
-                            <Link href={primaryButtonHref} className="button w-button" style={{ 
-                              width: 'auto', 
+                            <Link href={primaryButtonHref} ref={primaryButtonRef} className="button w-button" style={{
+                              width: 'auto',
                               padding: '14px 28px',
                               fontSize: '16px',
                               fontWeight: '600'

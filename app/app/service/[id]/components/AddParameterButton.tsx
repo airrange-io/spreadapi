@@ -13,6 +13,7 @@ interface AddParameterButtonProps {
   isCompact?: boolean;
   onAddFromSelection: () => void;
   onAddAsEditableArea: () => void;
+  buttonRef?: React.RefObject<HTMLDivElement>;
 }
 
 const AddParameterButton: React.FC<AddParameterButtonProps> = ({
@@ -24,6 +25,7 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   isCompact = false,
   onAddFromSelection,
   onAddAsEditableArea,
+  buttonRef,
 }) => {
   const getCellAddress = (row: number, col: number) => {
     let columnLetter = '';
@@ -105,7 +107,7 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
         flex: '0 0 auto'
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div ref={buttonRef} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <Button
           type="primary"
           icon={<PlusOutlined />}

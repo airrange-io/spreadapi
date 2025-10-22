@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Tour } from 'antd';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -41,8 +41,6 @@ const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), 
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { useAuth } from '@/components/auth/AuthContext';
-import { useTour } from '@/hooks/useTour';
-import { appTour } from '@/tours/appTour';
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -68,30 +66,71 @@ const ListsPage: React.FC = observer(() => {
   const mcpButtonRef = useRef<HTMLButtonElement>(null);
   const chatButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Initialize tour with refs
-  const tourSteps = useMemo(() => [
-    {
-      ...appTour.steps[0],
-      target: () => demoServicesRef.current,
-    },
-    {
-      ...appTour.steps[1],
-      target: () => newServiceButtonRef.current,
-    },
-    {
-      ...appTour.steps[2],
-      target: () => mcpButtonRef.current,
-    },
-    {
-      ...appTour.steps[3],
-      target: () => chatButtonRef.current,
-    },
-  ], []);
+  // Lazy load tour only when needed
+  const [tourState, setTourState] = useState<{
+    open: boolean;
+    steps: any[];
+    TourComponent: any;
+  } | null>(null);
 
-  const tour = useTour(
-    { ...appTour, steps: tourSteps },
-    { autoStart: true, delay: 1500 } // Start tour after 1.5s delay
-  );
+  // Load tour dynamically only when user hasn't seen it
+  useEffect(() => {
+    // Check localStorage first (zero cost for returning users)
+    const tourCompleted = typeof window !== 'undefined' &&
+      localStorage.getItem('spreadapi_tour_completed_app-welcome-tour') === 'true';
+
+    if (tourCompleted) return;
+
+    // Only load tour code if user hasn't seen it
+    const timer = setTimeout(async () => {
+      try {
+        // Dynamic imports - only loaded when needed
+        const [{ appTour }, { Tour }] = await Promise.all([
+          import('@/tours/appTour'),
+          import('antd')
+        ]);
+
+        // Create tour steps with refs
+        const steps = [
+          {
+            ...appTour.steps[0],
+            target: () => demoServicesRef.current,
+          },
+          {
+            ...appTour.steps[1],
+            target: () => newServiceButtonRef.current,
+          },
+          {
+            ...appTour.steps[2],
+            target: () => mcpButtonRef.current,
+          }
+        ];
+
+        setTourState({
+          open: true,
+          steps,
+          TourComponent: Tour
+        });
+      } catch (error) {
+        console.error('Failed to load tour:', error);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Handle tour close
+  const handleTourClose = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spreadapi_tour_completed_app-welcome-tour', 'true');
+    }
+    setTourState(null);
+  }, []);
+
+  // Handle tour step change
+  const handleTourChange = useCallback((current: number) => {
+    // Track step changes if needed
+  }, []);
 
   // Mark when we're on the client
   useEffect(() => {
@@ -737,20 +776,22 @@ const ListsPage: React.FC = observer(() => {
         </>
       )}
 
-      {/* Welcome Tour */}
-      <>
-        <style jsx global>{`
-          .ant-tour .ant-tour-content {
-            max-width: 400px !important;
-          }
-        `}</style>
-        <Tour
-          open={tour.open}
-          onClose={tour.onClose}
-          steps={tour.steps}
-          onChange={tour.onChange}
-        />
-      </>
+      {/* Welcome Tour - Lazy Loaded */}
+      {tourState && tourState.TourComponent && (
+        <>
+          <style jsx global>{`
+            .ant-tour .ant-tour-content {
+              max-width: 400px !important;
+            }
+          `}</style>
+          <tourState.TourComponent
+            open={tourState.open}
+            onClose={handleTourClose}
+            steps={tourState.steps}
+            onChange={handleTourChange}
+          />
+        </>
+      )}
     </>
   );
 });

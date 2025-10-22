@@ -38,7 +38,8 @@
       "Bash(tree:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm run typecheck:*)",
-      "WebFetch(domain:ant.design)"
+      "WebFetch(domain:ant.design)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

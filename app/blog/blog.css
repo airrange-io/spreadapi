@@ -96,17 +96,19 @@
   padding: 8px;
 }
 
+@media (max-width: 839px) {
+  .hide-mobile-portrait {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar-menu {
     display: none;
   }
-  
+
   .navbar-menu-button {
     display: block;
-  }
-  
-  .hide-mobile-portrait {
-    display: none;
   }
 }
 

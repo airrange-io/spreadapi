@@ -155,6 +155,88 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     status: ''
   }); // Save progress for large files
 
+  // Tour refs
+  const parametersPanelRef = useRef<HTMLDivElement>(null);
+  const addButtonRef = useRef<HTMLDivElement>(null);
+  const viewSwitcherRef = useRef<HTMLDivElement>(null);
+  const statusBarRef = useRef<HTMLDivElement>(null);
+  const testButtonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
+
+  // Lazy load tour only when needed
+  const [tourState, setTourState] = useState<{
+    open: boolean;
+    steps: any[];
+    TourComponent: any;
+  } | null>(null);
+
+  // Load tour dynamically only when conditions are met and tour hasn't been completed
+  useEffect(() => {
+    const shouldShowTour = isDemoMode && activeView === 'Workbook' && workbookLoaded;
+
+    if (!shouldShowTour) return;
+
+    // Check localStorage first (zero cost for returning users)
+    const tourCompleted = typeof window !== 'undefined' &&
+      localStorage.getItem('spreadapi_tour_completed_service-detail-tour') === 'true';
+
+    if (tourCompleted) return;
+
+    // Only load tour code if user hasn't seen it
+    const timer = setTimeout(async () => {
+      try {
+        // Dynamic imports - only loaded when needed
+        const [{ serviceDetailTour }, { Tour }, { useTour }] = await Promise.all([
+          import('@/tours/serviceDetailTour'),
+          import('antd'),
+          import('@/hooks/useTour')
+        ]);
+
+        // Create tour steps with refs
+        const steps = [
+          {
+            ...serviceDetailTour.steps[0],
+            target: () => parametersPanelRef.current,
+          },
+          {
+            ...serviceDetailTour.steps[1],
+            target: () => addButtonRef.current,
+          },
+          {
+            ...serviceDetailTour.steps[2],
+            target: () => viewSwitcherRef.current,
+          },
+          {
+            ...serviceDetailTour.steps[3],
+            target: () => testButtonRef.current,
+          },
+        ];
+
+        setTourState({
+          open: true,
+          steps,
+          TourComponent: Tour
+        });
+      } catch (error) {
+        console.error('Failed to load tour:', error);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [isDemoMode, activeView, workbookLoaded]);
+
+  // Handle tour close
+  const handleTourClose = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spreadapi_tour_completed_service-detail-tour', 'true');
+    }
+    setTourState(null);
+  }, []);
+
+  // Handle tour step change
+  const handleTourChange = useCallback((current: number) => {
+    // Track step changes if needed
+  }, []);
+
   // Custom hook for panel sizes
   const usePanelSizes = () => {
     const [sizes, setSizes] = useState<number[]>([30, 70]); // Default sizes - parameters panel 30%, content 70%
@@ -1461,23 +1543,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, [hasAnyChanges]);
 
   const parametersPanel = (
-    <ParametersPanel
-      spreadInstance={spreadInstance}
-      serviceId={serviceId}
-      onConfigChange={(updates) => {
-        // Only update parameters-related fields
-        if (updates.inputs !== undefined || updates.outputs !== undefined || updates.areas !== undefined) {
-          handleConfigChange(updates);
-        }
-      }}
-      initialConfig={{
+    <div ref={parametersPanelRef}>
+      <ParametersPanel
+        spreadInstance={spreadInstance}
+        serviceId={serviceId}
+        onConfigChange={(updates) => {
+          // Only update parameters-related fields
+          if (updates.inputs !== undefined || updates.outputs !== undefined || updates.areas !== undefined) {
+            handleConfigChange(updates);
+          }
+        }}
+        initialConfig={{
         inputs: apiConfig.inputs,
         outputs: apiConfig.outputs,
         areas: apiConfig.areas
       }}
       isLoading={!configLoaded}
       isDemoMode={isDemoMode}
+      addButtonRef={addButtonRef}
     />
+    </div>
   );
 
   // Memoize spreadsheetData to prevent unnecessary re-renders
@@ -1578,16 +1663,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           )}
         </Space>
 
-        <Segmented
-          value={activeView}
-          // shape="round"
-          onChange={(value) => {
-            const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
-            setActiveView(newView);
-            // Save view preference using helper
-            saveViewPreference(serviceId, newView);
-          }}
-          options={isMobile ? [
+        <div ref={viewSwitcherRef}>
+          <Segmented
+            value={activeView}
+            // shape="round"
+            onChange={(value) => {
+              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
+              setActiveView(newView);
+              // Save view preference using helper
+              saveViewPreference(serviceId, newView);
+            }}
+            options={isMobile ? [
             { value: 'Settings', icon: <SettingOutlined /> },
             { value: 'Workbook', icon: <TableOutlined /> },
             { value: 'API', icon: <CaretRightOutlined /> },
@@ -1596,6 +1682,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           ] : ['Settings', 'Workbook', 'API', 'Apps', 'Usage']}
           style={{ marginLeft: 'auto', marginRight: 'auto' }}
         />
+        </div>
 
         <Space>
           {hasAnyChanges && !isDemoMode && (
@@ -2041,14 +2128,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         </ErrorBoundary>
       </Drawer>
       {/* Status Bar */}
-      <StatusBar
-        recordCount={0}
-        selectedCount={0}
-        zoomLevel={zoomLevel}
-        onZoomChange={handleZoomChange}
-        hasParameters={apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0}
-        onTestClick={() => setTestPanelOpen(!testPanelOpen)}
-      />
+      <div ref={statusBarRef}>
+        <StatusBar
+          recordCount={0}
+          selectedCount={0}
+          zoomLevel={zoomLevel}
+          onZoomChange={handleZoomChange}
+          hasParameters={apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0}
+          onTestClick={() => setTestPanelOpen(!testPanelOpen)}
+          testButtonRef={testButtonRef}
+        />
+      </div>
 
       {/* Test Panel */}
       <ErrorBoundary>
@@ -2077,6 +2167,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         data={apiDefinitionData}
         loading={loadingApiDefinition}
       />
+
+      {/* Service Detail Tour (Demo Services Only) - Lazy Loaded */}
+      {tourState && tourState.TourComponent && (
+        <>
+          <style jsx global>{`
+            .ant-tour .ant-tour-content {
+              max-width: 400px !important;
+            }
+          `}</style>
+          <tourState.TourComponent
+            open={tourState.open}
+            onClose={handleTourClose}
+            steps={tourState.steps}
+            onChange={handleTourChange}
+          />
+        </>
+      )}
     </Layout>
   );
 }

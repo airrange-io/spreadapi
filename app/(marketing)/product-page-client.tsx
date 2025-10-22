@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import './product.css';
 import Footer from '@/components/product/Footer';
@@ -9,6 +9,87 @@ import ProductHeader from '@/components/product/ProductHeader';
 import Navigation from '@/components/Navigation';
 
 const ProductPage: React.FC = () => {
+  // Tour ref for header "Get Started" button
+  const getStartedRef = useRef<HTMLAnchorElement>(null);
+
+  // Lazy load tour only when needed
+  const [tourState, setTourState] = useState<{
+    open: boolean;
+    steps: any[];
+    TourComponent: any;
+  } | null>(null);
+
+  // Load tour dynamically only when user hasn't seen it and button is visible
+  useEffect(() => {
+    // Check localStorage first (zero cost for returning users)
+    const tourCompleted = typeof window !== 'undefined' &&
+      localStorage.getItem('spreadapi_tour_completed_marketing-welcome-tour') === 'true';
+
+    if (tourCompleted) return;
+
+    // Check if button is visible (viewport width >= 840px)
+    const isButtonVisible = typeof window !== 'undefined' && window.innerWidth >= 840;
+    if (!isButtonVisible) return;
+
+    // Only load tour code AFTER initial page load is complete (3s delay)
+    const timer = setTimeout(async () => {
+      // Double-check button is still visible
+      if (window.innerWidth < 840) return;
+
+      try {
+        // Dynamic imports - only loaded when needed
+        const [{ marketingTour }, { Tour }] = await Promise.all([
+          import('@/tours/marketingTour'),
+          import('antd')
+        ]);
+
+        // Create tour steps with refs
+        const steps = [
+          {
+            ...marketingTour.steps[0],
+            target: () => getStartedRef.current,
+          },
+        ];
+
+        setTourState({
+          open: true,
+          steps,
+          TourComponent: Tour
+        });
+      } catch (error) {
+        console.error('Failed to load tour:', error);
+      }
+    }, 3000); // 3s delay to not impact landing page performance
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Close tour if window is resized below 840px
+  useEffect(() => {
+    if (!tourState) return;
+
+    const handleResize = () => {
+      if (window.innerWidth < 840) {
+        setTourState(null);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [tourState]);
+
+  // Handle tour close
+  const handleTourClose = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spreadapi_tour_completed_marketing-welcome-tour', 'true');
+    }
+    setTourState(null);
+  }, []);
+
+  // Handle tour step change
+  const handleTourChange = useCallback((current: number) => {
+    // Track step changes if needed
+  }, []);
 
 
 
@@ -27,7 +108,7 @@ const ProductPage: React.FC = () => {
 
         <div className="page-wrapper">
           {/* Navigation */}
-          <Navigation currentPage="product" />
+          <Navigation currentPage="product" getStartedRef={getStartedRef} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -739,7 +820,7 @@ const ProductPage: React.FC = () => {
                             <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
 
                             {/* Column Headers */}
-                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8 8 0 0" />
+                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8" />
                             <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1" />
                             <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1" />
                             <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1" />
@@ -1171,6 +1252,23 @@ const ProductPage: React.FC = () => {
           <Footer />
         </div>
       </div>
+
+      {/* Marketing Tour - Lazy Loaded */}
+      {tourState && tourState.TourComponent && (
+        <>
+          <style jsx global>{`
+            .ant-tour .ant-tour-content {
+              max-width: 400px !important;
+            }
+          `}</style>
+          <tourState.TourComponent
+            open={tourState.open}
+            onClose={handleTourClose}
+            steps={tourState.steps}
+            onChange={handleTourChange}
+          />
+        </>
+      )}
     </>
   );
 };
