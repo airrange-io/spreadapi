@@ -269,10 +269,15 @@ const AppsView: React.FC<AppsViewProps> = ({
               <Button
                 type="primary"
                 onClick={handleGenerateToken}
-                disabled={isLoading}
+                disabled={isLoading || isDemoMode}
               >
                 Generate Token & Enable Web App
               </Button>
+              {isDemoMode && (
+                <div style={{ marginTop: 12, color: '#666', fontSize: 12 }}>
+                  Token generation is disabled in demo mode. You can still view the Web App features.
+                </div>
+              )}
             </div>
           ) : (
             <Space direction="vertical" style={{ width: '100%' }} size={16}>
@@ -286,17 +291,19 @@ const AppsView: React.FC<AppsViewProps> = ({
                     readOnly
                     style={{ flex: 1 }}
                   />
-                  <Tooltip title="Regenerate token">
+                  <Tooltip title={isDemoMode ? "Disabled in demo mode" : "Regenerate token"}>
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleGenerateToken}
+                      disabled={isDemoMode}
                     />
                   </Tooltip>
-                  <Tooltip title="Disable web app">
+                  <Tooltip title={isDemoMode ? "Disabled in demo mode" : "Disable web app"}>
                     <Button
                       danger
                       icon={<DeleteOutlined />}
                       onClick={handleDeleteToken}
+                      disabled={isDemoMode}
                     />
                   </Tooltip>
                 </Space.Compact>
@@ -329,7 +336,7 @@ const AppsView: React.FC<AppsViewProps> = ({
             onChange={(value) => onConfigChange?.({ webAppTheme: value })}
             style={{ width: '100%', marginBottom: 16 }}
             size="large"
-            disabled={isLoading}
+            disabled={isLoading || isDemoMode}
           >
             {Object.values(VIEW_THEMES).map((theme) => (
               <Select.Option key={theme.id} value={theme.id}>
@@ -373,7 +380,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                 fontFamily: 'monospace',
                 fontSize: 11,
               }}
-              disabled={isLoading}
+              disabled={isLoading || isDemoMode}
             />
             <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
               Enter parameters in URL format (without leading ? or &). See available parameters below.
@@ -505,7 +512,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
     // Web App
     if (selectedKey === 'webapp') {
-      if (!webAppToken) {
+      if (!webAppToken && !isDemoMode) {
         return (
           <Alert
             message="No Web App Token"
@@ -516,11 +523,23 @@ const AppsView: React.FC<AppsViewProps> = ({
         );
       }
 
-      const themeParam = buildThemeParam(true); // Always has params (token)
-      const webAppUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}${themeParam}`;
+      const themeParam = buildThemeParam(!!webAppToken); // Has params if token exists
+      const webAppUrl = webAppToken
+        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}${themeParam}`
+        : `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}${themeParam}`;
 
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
+          {isDemoMode && (
+            <Alert
+              message="Demo Mode - Web App Preview"
+              description="You're viewing the web app in demo mode. This service is publicly accessible without requiring a token."
+              type="info"
+              showIcon
+              style={{ marginBottom: 0 }}
+            />
+          )}
+
           {/* Configuration Section */}
           <div>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
@@ -603,7 +622,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                 fontSize: 12,
                 backgroundColor: '#f5f5f5'
               }}
-              disabled={isLoading}
+              disabled={isLoading || isDemoMode}
             />
             {configError && (
               <div style={{ fontSize: 11, color: '#ff4d4f', marginTop: 4 }}>
@@ -856,7 +875,7 @@ const AppsView: React.FC<AppsViewProps> = ({
       key: 'webapp-folder',
       icon: <AppstoreOutlined />,
       label: 'Web App',
-      children: webAppToken ? [
+      children: (webAppToken || isDemoMode) ? [
         {
           key: 'webapp',
           label: 'My Web App'
