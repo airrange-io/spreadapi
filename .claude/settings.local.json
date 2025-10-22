@@ -37,7 +37,8 @@
       "Bash(npm cache clean:*)",
       "Bash(tree:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm run typecheck:*)"
+      "Bash(pnpm run typecheck:*)",
+      "WebFetch(domain:ant.design)"
     ],
     "deny": []
   }

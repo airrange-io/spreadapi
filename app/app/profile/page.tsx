@@ -56,7 +56,7 @@ export default function ProfilePage() {
             </Title>
             
             <div style={{ 
-              background: '#fafafa', 
+              background: '#ffffff', // '#fafafa', 
               padding: '24px', 
               borderRadius: '8px',
               minHeight: '400px'

@@ -187,7 +187,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
           message="Sign in to Generate Tokens"
           description="You need to be signed in to create API tokens. The tokens allow Claude Desktop and other AI assistants to securely access your spreadsheet APIs."
           type="info"
-          showIcon
           action={
             <Button 
               type="primary" 
@@ -200,7 +199,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
               Sign In
             </Button>
           }
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: 24, padding: 10, paddingLeft: 15 }}
         />
       )}
 

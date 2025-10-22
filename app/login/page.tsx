@@ -40,8 +40,8 @@ export default function LoginPage() {
             </div>
 
             <div style={{ 
-              background: '#fafafa', 
-              padding: '24px', 
+              background: '#ffffff', 
+              padding: '0px', 
               borderRadius: '8px',
               minHeight: '400px'
             }}>
