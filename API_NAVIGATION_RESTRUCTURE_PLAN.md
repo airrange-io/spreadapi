@@ -511,7 +511,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <Spin size="large" />
+        <Spin size="default" />
         <div style={{ marginTop: 16 }}>Loading interactive documentation...</div>
       </div>
     );

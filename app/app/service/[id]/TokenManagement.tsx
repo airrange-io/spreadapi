@@ -332,8 +332,8 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
           {/* Tokens list */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <Spin size="small" />
+            <div style={{ textAlign: 'center', padding: '20px', paddingTop: '10%' }}>
+              <Spin size="default" />
             </div>
           ) : tokens.length === 0 ? (
             <Empty

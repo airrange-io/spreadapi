@@ -81,7 +81,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: 'center' }}>
+      <div style={{ padding: 40, paddingTop: "20%", textAlign: 'center' }}>
         <Spin size="default" />
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">Loading API documentation...</Text>
@@ -156,6 +156,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
           <style jsx global>{`
             .swagger-wrapper .swagger-ui {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              font-size: 13px;
             }
             .swagger-wrapper .swagger-ui .topbar {
               display: none;
@@ -166,6 +167,65 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
             .swagger-wrapper .swagger-ui .scheme-container {
               padding: 20px;
               background: #fafafa;
+            }
+
+            /* Reduce font sizes throughout */
+            .swagger-wrapper .swagger-ui h1 {
+              font-size: 24px;
+            }
+            .swagger-wrapper .swagger-ui h2 {
+              font-size: 20px;
+            }
+            .swagger-wrapper .swagger-ui h3 {
+              font-size: 16px;
+            }
+            .swagger-wrapper .swagger-ui h4 {
+              font-size: 14px;
+            }
+            .swagger-wrapper .swagger-ui h5 {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .info .title {
+              font-size: 24px;
+            }
+            .swagger-wrapper .swagger-ui .info .description {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .opblock-tag {
+              font-size: 16px;
+            }
+            .swagger-wrapper .swagger-ui .opblock .opblock-summary-description {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .opblock .opblock-summary-path {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .parameter__name {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .parameter__type {
+              font-size: 12px;
+            }
+            .swagger-wrapper .swagger-ui .response-col_status {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .response-col_description {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui table thead tr th {
+              font-size: 12px;
+            }
+            .swagger-wrapper .swagger-ui table tbody tr td {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .btn {
+              font-size: 13px;
+            }
+            .swagger-wrapper .swagger-ui .model-title {
+              font-size: 14px;
+            }
+            .swagger-wrapper .swagger-ui .model {
+              font-size: 12px;
             }
           `}</style>
           <SwaggerUI

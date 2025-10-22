@@ -884,11 +884,21 @@ const AppsView: React.FC<AppsViewProps> = ({
         transition: 'opacity 0.3s ease-in-out'
       }}
     >
+      <style jsx global>{`
+        .apps-navigation-menu .ant-menu-item-selected {
+          background-color: #f0f0f0 !important;
+        }
+        .apps-navigation-menu .ant-menu-item-selected:hover {
+          background-color: #e8e8e8 !important;
+        }
+      `}</style>
+
       {/* Left Menu */}
       <Menu
         mode="inline"
         selectedKeys={[selectedKey]}
         defaultOpenKeys={[]}
+        className="apps-navigation-menu"
         style={{
           width: 200,
           height: '100%',

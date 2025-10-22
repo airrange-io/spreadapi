@@ -64,7 +64,6 @@ interface ApiViewProps {
     webAppEnabled?: boolean;
     webAppToken?: string;
     webAppConfig?: string;
-    webhookEnabled?: boolean;
     webhookUrl?: string;
     webhookSecret?: string;
   };
@@ -186,7 +185,6 @@ const ApiView: React.FC<ApiViewProps> = ({
       'webhooks': (
         <WebhookManagement
           serviceId={serviceId}
-          webhookEnabled={apiConfig.webhookEnabled || false}
           webhookUrl={apiConfig.webhookUrl || ''}
           webhookSecret={apiConfig.webhookSecret || ''}
           isDemoMode={isDemoMode}

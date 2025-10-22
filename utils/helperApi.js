@@ -60,6 +60,8 @@ export async function getApiDefinition(apiId, apiToken) {
         "needsToken",
         "useCaching",
         "tokens",
+        "webhookUrl",
+        "webhookSecret",
       ]);
     } catch (redisError) {
       console.error(
@@ -86,6 +88,8 @@ export async function getApiDefinition(apiId, apiToken) {
     let needsToken = serviceInfo[2] === "true";
     let useCaching = serviceInfo[3] === "true";
     let tokens = serviceInfo[4] ? serviceInfo[4]?.split(",") : [];
+    let webhookUrl = serviceInfo[5] || '';
+    let webhookSecret = serviceInfo[6] || '';
 
     // check the tokens and flags
     if (!apiUrl) {
@@ -116,12 +120,14 @@ export async function getApiDefinition(apiId, apiToken) {
           if (result) {
             console.timeEnd("fetchData");
             // Store in process-level cache before returning
-            // Include needsToken and tokens info for validation
+            // Include needsToken, tokens, and webhook info
             const cacheData = {
               ...result,
               needsToken,
               tokens,
-              useCaching
+              useCaching,
+              webhookUrl,
+              webhookSecret
             };
             apiDefinitionCache.set(apiId, {
               data: cacheData,
@@ -281,12 +287,14 @@ export async function getApiDefinition(apiId, apiToken) {
 
     // Store in process-level cache
     if (result && !result.error) {
-      // Include needsToken and tokens info for validation
+      // Include needsToken, tokens, and webhook info
       const cacheData = {
         ...result,
         needsToken,
         tokens,
-        useCaching
+        useCaching,
+        webhookUrl,
+        webhookSecret
       };
       apiDefinitionCache.set(apiId, {
         data: cacheData,

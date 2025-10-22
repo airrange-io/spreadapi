@@ -41,7 +41,7 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
     {
       key: 'test',
       icon: <ApiOutlined />,
-      label: 'Test API'
+      label: 'API Testing'
     },
     {
       key: 'tokens',
@@ -82,20 +82,31 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
   ];
 
   return (
-    <Menu
-      mode="inline"
-      selectedKeys={[selectedKey]}
-      defaultOpenKeys={[]}
-      style={{
-        width: 220,
-        height: '100%',
-        borderRight: '1px solid #f0f0f0',
-        marginTop: 10,
-        paddingRight: 10
-      }}
-      items={menuItems}
-      onClick={({ key }) => onSelect(key as ApiMenuSection)}
-    />
+    <>
+      <style jsx global>{`
+        .api-navigation-menu .ant-menu-item-selected {
+          background-color: #f0f0f0 !important;
+        }
+        .api-navigation-menu .ant-menu-item-selected:hover {
+          background-color: #e8e8e8 !important;
+        }
+      `}</style>
+      <Menu
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        defaultOpenKeys={[]}
+        className="api-navigation-menu"
+        style={{
+          width: 220,
+          height: '100%',
+          borderRight: '1px solid #f0f0f0',
+          marginTop: 10,
+          paddingRight: 10
+        }}
+        items={menuItems}
+        onClick={({ key }) => onSelect(key as ApiMenuSection)}
+      />
+    </>
   );
 };
 

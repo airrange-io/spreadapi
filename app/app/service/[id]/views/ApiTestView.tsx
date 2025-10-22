@@ -51,7 +51,6 @@ interface ApiTestViewProps {
     webAppEnabled?: boolean;
     webAppToken?: string;
     webAppConfig?: string;
-    webhookEnabled?: boolean;
     webhookUrl?: string;
     webhookSecret?: string;
   };
@@ -180,7 +179,6 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
         {/* Webhook Management */}
         <WebhookManagement
           serviceId={serviceId}
-          webhookEnabled={apiConfig.webhookEnabled || false}
           webhookUrl={apiConfig.webhookUrl || ''}
           webhookSecret={apiConfig.webhookSecret || ''}
           isDemoMode={isDemoMode}

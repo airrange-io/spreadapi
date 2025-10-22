@@ -743,7 +743,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <Spin size="large" />
+        <Spin size="default" />
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">Loading API documentation...</Text>
         </div>

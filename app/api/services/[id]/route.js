@@ -123,7 +123,7 @@ export async function PUT(request, { params }) {
                          'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching',
                          'cacheTableSheetData', 'tableSheetCacheTTL',
                          'aiDescription', 'aiUsageGuidance', 'category', 'webAppToken', 'webAppConfig', 'webAppTheme', 'customThemeParams',
-                         'webhookEnabled', 'webhookUrl', 'webhookSecret'];
+                         'webhookUrl', 'webhookSecret'];
     simpleFields.forEach(field => {
       if (body[field] !== undefined) {
         updateData[field] = body[field].toString();
