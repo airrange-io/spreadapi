@@ -68,49 +68,6 @@ const AppsView: React.FC<AppsViewProps> = ({
     };
   }, []);
 
-  // Show skeleton until config is loaded
-  if (!configLoaded) {
-    return (
-      <div ref={containerRef} style={{ padding: '16px' }}>
-        <Skeleton active paragraph={{ rows: 4 }} />
-      </div>
-    );
-  }
-
-  const webAppToken = apiConfig.webAppToken || '';
-  const webAppConfig = apiConfig.webAppConfig || '';
-
-  // Handler for token generation
-  const handleGenerateToken = () => {
-    const token = crypto.randomUUID().replace(/-/g, '');
-    onConfigChange?.({ webAppToken: token });
-  };
-
-  // Handler for token deletion
-  const handleDeleteToken = () => {
-    Modal.confirm({
-      title: 'Disable Web App',
-      content: 'This will disable the web app and invalidate the current link. Are you sure?',
-      okText: 'Disable',
-      okButtonProps: { danger: true },
-      cancelText: 'Cancel',
-      onOk: () => {
-        onConfigChange?.({ webAppToken: '' });
-      }
-    });
-  };
-
-  // Handler for copying link
-  const handleCopyLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-  };
-
-  // Handler for showing QR code
-  const handleShowQrCode = (url: string) => {
-    setQrUrl(url);
-    setQrModalVisible(true);
-  };
-
   // Validation function (extracted for debouncing)
   const validateConfig = useCallback((value: string) => {
     if (!value.trim()) {
@@ -191,6 +148,49 @@ const AppsView: React.FC<AppsViewProps> = ({
 
     return hasExistingParams ? `&${params}` : `?${params}`;
   }, [apiConfig.webAppTheme, apiConfig.customThemeParams]);
+
+  // Show skeleton until config is loaded
+  if (!configLoaded) {
+    return (
+      <div ref={containerRef} style={{ padding: '16px' }}>
+        <Skeleton active paragraph={{ rows: 4 }} />
+      </div>
+    );
+  }
+
+  const webAppToken = apiConfig.webAppToken || '';
+  const webAppConfig = apiConfig.webAppConfig || '';
+
+  // Handler for token generation
+  const handleGenerateToken = () => {
+    const token = crypto.randomUUID().replace(/-/g, '');
+    onConfigChange?.({ webAppToken: token });
+  };
+
+  // Handler for token deletion
+  const handleDeleteToken = () => {
+    Modal.confirm({
+      title: 'Disable Web App',
+      content: 'This will disable the web app and invalidate the current link. Are you sure?',
+      okText: 'Disable',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancel',
+      onOk: () => {
+        onConfigChange?.({ webAppToken: '' });
+      }
+    });
+  };
+
+  // Handler for copying link
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+  };
+
+  // Handler for showing QR code
+  const handleShowQrCode = (url: string) => {
+    setQrUrl(url);
+    setQrModalVisible(true);
+  };
 
   // Build query string with default values for snippets
   const getDefaultQueryString = () => {

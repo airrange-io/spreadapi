@@ -30,7 +30,9 @@ import {
   DatabaseOutlined,
   CloudOutlined,
   DashboardOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  SendOutlined,
+  WarningOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
@@ -80,6 +82,16 @@ interface AnalyticsData {
       redis: number;
       blob: number;
     };
+  };
+  webhooks?: {
+    total: number;
+    success: number;
+    failed: number;
+    successRate: number;
+    lastSuccess: string | null;
+    lastFailure: string | null;
+    consecutiveFailures: number;
+    circuitBreakerOpen: boolean;
   };
   hourlyData: Array<{ hour: number; calls: number }>;
   dailyData: Array<{ date: string; calls: number; errors: number; avgResponseTime?: number }>;
@@ -272,6 +284,94 @@ const UsageView: React.FC<UsageViewProps> = ({
           </Card>
         </Col>
       </Row>
+
+      {/* Webhook Statistics */}
+      {analytics.webhooks && analytics.webhooks.total > 0 && (
+        <Card
+          title={
+            <span>
+              <SendOutlined style={{ marginRight: 8 }} />
+              Webhook Deliveries
+            </span>
+          }
+          size="small"
+          style={{ marginBottom: 16 }}
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Total Attempts"
+                value={analytics.webhooks.total}
+                valueStyle={{ fontSize: '18px' }}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Successful"
+                value={analytics.webhooks.success}
+                valueStyle={{ color: '#52c41a', fontSize: '18px' }}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Failed"
+                value={analytics.webhooks.failed}
+                valueStyle={{ color: analytics.webhooks.failed > 0 ? '#ff4d4f' : undefined, fontSize: '18px' }}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Success Rate"
+                value={analytics.webhooks.successRate}
+                suffix="%"
+                valueStyle={{
+                  color: analytics.webhooks.successRate >= 95 ? '#52c41a' : analytics.webhooks.successRate >= 80 ? '#faad14' : '#ff4d4f',
+                  fontSize: '18px'
+                }}
+              />
+            </Col>
+          </Row>
+
+          <div style={{ marginTop: 16 }}>
+            {analytics.webhooks.circuitBreakerOpen && (
+              <Alert
+                message="Circuit Breaker Open"
+                description={`Webhooks are temporarily disabled due to ${analytics.webhooks.consecutiveFailures} consecutive failures. Check your webhook endpoint and test it in the API section.`}
+                type="error"
+                icon={<WarningOutlined />}
+                showIcon
+                style={{ marginBottom: 12 }}
+              />
+            )}
+
+            <Row gutter={[16, 8]}>
+              {analytics.webhooks.lastSuccess && (
+                <Col xs={24} sm={12}>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Last Success: {dayjs(analytics.webhooks.lastSuccess).format('MMM D, YYYY h:mm A')}
+                  </Text>
+                </Col>
+              )}
+              {analytics.webhooks.lastFailure && (
+                <Col xs={24} sm={12}>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Last Failure: {dayjs(analytics.webhooks.lastFailure).format('MMM D, YYYY h:mm A')}
+                  </Text>
+                </Col>
+              )}
+            </Row>
+
+            {analytics.webhooks.consecutiveFailures > 0 && !analytics.webhooks.circuitBreakerOpen && (
+              <Alert
+                message={`${analytics.webhooks.consecutiveFailures} consecutive failures (${10 - analytics.webhooks.consecutiveFailures} remaining before circuit breaker opens)`}
+                type="warning"
+                showIcon
+                style={{ marginTop: 12 }}
+              />
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Charts - Lazy loaded */}
       <RechartsComponents

@@ -31,6 +31,11 @@ const CollapsibleSection = dynamic(() => import('../components/CollapsibleSectio
   ssr: false
 });
 
+const WebhookManagement = dynamic(() => import('../WebhookManagement'), {
+  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
+  ssr: false
+});
+
 interface ApiTestViewProps {
   serviceId: string;
   apiConfig: {
@@ -41,6 +46,9 @@ interface ApiTestViewProps {
     webAppEnabled?: boolean;
     webAppToken?: string;
     webAppConfig?: string;
+    webhookEnabled?: boolean;
+    webhookUrl?: string;
+    webhookSecret?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -162,6 +170,16 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           onRequireTokenChange={onRequireTokenChange}
           onTokenCountChange={onTokenCountChange}
           onTokensChange={onTokensChange}
+        />
+
+        {/* Webhook Management */}
+        <WebhookManagement
+          serviceId={serviceId}
+          webhookEnabled={apiConfig.webhookEnabled || false}
+          webhookUrl={apiConfig.webhookUrl || ''}
+          webhookSecret={apiConfig.webhookSecret || ''}
+          isDemoMode={isDemoMode}
+          onConfigChange={onConfigChange}
         />
 
         {/* Integration Examples Section */}

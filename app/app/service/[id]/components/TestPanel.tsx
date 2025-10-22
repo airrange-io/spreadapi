@@ -140,16 +140,102 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
   // Format output values (simplified version of WebApp)
   const formatOutput = (output: any, value: any) => {
-    // Handle arrays (cell ranges)
+    // Handle arrays (cell ranges) - format as HTML table
     if (Array.isArray(value)) {
-      // If it's a 2D array, format it as a table-like string
-      if (Array.isArray(value[0])) {
-        return value.map(row =>
-          row.map((cell: any) => formatSingleValue(output, cell)).join(', ')
-        ).join(' | ');
+      const formatCell = (cellValue: any): string => {
+        if (output.formatString && typeof cellValue === 'number') {
+          const formatStr = output.formatString.trim();
+
+          // Handle percentage
+          if (formatStr.includes('%')) {
+            const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
+            const formattedNum = new Intl.NumberFormat('de-DE', {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals
+            }).format(cellValue);
+            return `${formattedNum}%`;
+          }
+
+          // Handle currency
+          const currencyMatch = formatStr.match(/^["']?([€$£¥])["']?/);
+          if (currencyMatch) {
+            const symbol = currencyMatch[1];
+            const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
+            const formattedNum = new Intl.NumberFormat('de-DE', {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals
+            }).format(cellValue);
+            return `${symbol}${formattedNum}`;
+          }
+
+          // Handle thousand separator
+          if (formatStr.includes('#,##0')) {
+            const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
+            const formattedNum = new Intl.NumberFormat('de-DE', {
+              minimumFractionDigits: decimals,
+              maximumFractionDigits: decimals
+            }).format(cellValue);
+            const unitMatch = formatStr.match(/0\s+["']?([a-zA-Z]+)["']?$/);
+            return unitMatch ? `${formattedNum} ${unitMatch[1]}` : formattedNum;
+          }
+        }
+
+        return cellValue != null ? String(cellValue) : '';
+      };
+
+      // 2D array - create HTML table
+      if (value.length > 0 && Array.isArray(value[0])) {
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '4px' }}>
+            <tbody>
+              {value.map((row: any[], rowIndex: number) => (
+                <tr key={rowIndex}>
+                  {row.map((cell: any, colIndex: number) => (
+                    <td
+                      key={colIndex}
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e8e8e8',
+                        textAlign: typeof cell === 'number' ? 'right' : 'left',
+                        backgroundColor: rowIndex % 2 === 0 ? '#fafafa' : 'white',
+                        fontWeight: typeof cell === 'number' ? 500 : 400
+                      }}
+                    >
+                      {formatCell(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
       }
-      // If it's a 1D array
-      return value.map((cell: any) => formatSingleValue(output, cell)).join(', ');
+
+      // 1D array - horizontal row
+      if (value.length > 0) {
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '4px' }}>
+            <tbody>
+              <tr>
+                {value.map((cell: any, colIndex: number) => (
+                  <td
+                    key={colIndex}
+                    style={{
+                      padding: '8px 12px',
+                      border: '1px solid #e8e8e8',
+                      textAlign: typeof cell === 'number' ? 'right' : 'left',
+                      backgroundColor: '#fafafa',
+                      fontWeight: typeof cell === 'number' ? 500 : 400
+                    }}
+                  >
+                    {formatCell(cell)}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        );
+      }
     }
 
     return formatSingleValue(output, value);
@@ -459,26 +545,35 @@ const TestPanel: React.FC<TestPanelProps> = ({
                     {results.outputs.map((outputItem: any, index: number) => {
                       if (outputItem.value === undefined || outputItem.value === null) return null;
 
+                      const formattedValue = formatOutput(outputItem, outputItem.value);
+                      const isArray = Array.isArray(outputItem.value);
+
                       return (
                         <div
                           key={outputItem.name || index}
                           style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            display: isArray ? 'block' : 'flex',
+                            justifyContent: isArray ? 'normal' : 'space-between',
+                            alignItems: isArray ? 'flex-start' : 'center',
                             padding: '12px 16px',
                             borderBottom: index < results.outputs.length - 1 ? '1px solid #e8e8e8' : 'none'
                           }}
                         >
-                          <Typography.Text style={{ fontSize: 14 }}>
+                          <Typography.Text style={{ fontSize: 14, marginBottom: isArray ? '8px' : 0 }}>
                             {outputItem.title}:
                           </Typography.Text>
-                          <Typography.Text strong style={{
-                            fontSize: 16,
-                            color: '#4F2D7F'
-                          }}>
-                            {formatOutput(outputItem, outputItem.value)}
-                          </Typography.Text>
+                          {isArray ? (
+                            <div style={{ width: '100%' }}>
+                              {formattedValue}
+                            </div>
+                          ) : (
+                            <Typography.Text strong style={{
+                              fontSize: 16,
+                              color: '#4F2D7F'
+                            }}>
+                              {formattedValue}
+                            </Typography.Text>
+                          )}
                         </div>
                       );
                     })}

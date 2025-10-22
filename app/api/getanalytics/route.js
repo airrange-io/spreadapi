@@ -24,7 +24,12 @@ async function getServiceAnalytics(serviceId, options = {}) {
     }
     
     // Build specific fields to fetch (more efficient than hGetAll)
-    const fieldsToFetch = ['total', 'errors', 'avg_response_time', 'cache:hits', 'cache:misses'];
+    const fieldsToFetch = [
+      'total', 'errors', 'avg_response_time',
+      'cache:hits', 'cache:misses',
+      'webhooks:total', 'webhooks:success', 'webhooks:failed',
+      'webhooks:last_success', 'webhooks:last_failure', 'webhooks:consecutive_failures'
+    ];
     
     // Add hourly fields for today
     for (let hour = 0; hour <= currentHour; hour++) {
@@ -89,7 +94,18 @@ async function getServiceAnalytics(serviceId, options = {}) {
     const cacheMisses = parseInt(analyticsData['cache:misses'] || '0');
     const cacheTotal = cacheHits + cacheMisses;
     const cacheHitRate = cacheTotal > 0 ? (cacheHits / cacheTotal * 100).toFixed(1) : '0.0';
-    
+
+    // Parse webhook data
+    const webhookTotal = parseInt(analyticsData['webhooks:total'] || '0');
+    const webhookSuccess = parseInt(analyticsData['webhooks:success'] || '0');
+    const webhookFailed = parseInt(analyticsData['webhooks:failed'] || '0');
+    const webhookLastSuccess = analyticsData['webhooks:last_success'] || null;
+    const webhookLastFailure = analyticsData['webhooks:last_failure'] || null;
+    const webhookConsecutiveFailures = parseInt(analyticsData['webhooks:consecutive_failures'] || '0');
+    const webhookSuccessRate = webhookTotal > 0
+      ? ((webhookSuccess / webhookTotal) * 100).toFixed(1)
+      : '0.0';
+
     // Calculate success rate
     const successRate = totalCalls > 0 
       ? ((totalCalls - totalErrors) / totalCalls * 100).toFixed(1) 
@@ -161,6 +177,16 @@ async function getServiceAnalytics(serviceId, options = {}) {
         misses: cacheMisses,
         hitRate: parseFloat(cacheHitRate)
       },
+      webhooks: {
+        total: webhookTotal,
+        success: webhookSuccess,
+        failed: webhookFailed,
+        successRate: parseFloat(webhookSuccessRate),
+        lastSuccess: webhookLastSuccess ? new Date(parseInt(webhookLastSuccess)).toISOString() : null,
+        lastFailure: webhookLastFailure ? new Date(parseInt(webhookLastFailure)).toISOString() : null,
+        consecutiveFailures: webhookConsecutiveFailures,
+        circuitBreakerOpen: webhookConsecutiveFailures >= 10
+      },
       hourlyData: hourlyData.reverse(), // Most recent first
       dailyData: dailyData.reverse(), // Most recent first
       responseTimeDistribution,
@@ -188,6 +214,16 @@ async function getServiceAnalytics(serviceId, options = {}) {
         hits: 0,
         misses: 0,
         hitRate: 0
+      },
+      webhooks: {
+        total: 0,
+        success: 0,
+        failed: 0,
+        successRate: 0,
+        lastSuccess: null,
+        lastFailure: null,
+        consecutiveFailures: 0,
+        circuitBreakerOpen: false
       },
       hourlyData: [],
       dailyData: [],

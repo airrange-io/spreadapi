@@ -9,6 +9,8 @@ import {
   getRangeAsOffset,
   getDateForCallsLog,
 } from '@/utils/helper';
+import { analyticsQueue } from '@/lib/analyticsQueue.js';
+import { triggerWebhook } from '@/lib/webhookHelpers.js';
 
 // Lazy load SpreadJS to improve cold start
 let spreadjsModule = null;
@@ -29,53 +31,55 @@ const getSpreadjsModule = () => {
 // TableSheet data caching
 const tableSheetCache = require('@/lib/tableSheetDataCache');
 
-// Helper function to log API calls
-async function logCalls(apiId, apiToken) {
-  try {
-    const tenantId = await redis
-      .HGET(`service:${apiId}`, "tenantId")
-      .catch(() => null);
-    const dateString = getDateForCallsLog();
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const currentHour = now.getUTCHours();
+// Helper function to log API calls (optimized for zero blocking)
+function logCalls(apiId, apiToken) {
+  // Defer to next event loop tick - completely non-blocking
+  setImmediate(async () => {
+    try {
+      // This Redis call now happens AFTER the API response is sent
+      const tenantId = await redis
+        .HGET(`service:${apiId}`, "tenantId")
+        .catch(() => null);
+      const dateString = getDateForCallsLog();
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentHour = now.getUTCHours();
 
-    const multi = redis.multi();
+      const multi = redis.multi();
 
-    if (tenantId) {
-      multi.hIncrBy(`tenant:${tenantId}`, "calls", 1);
-      multi.hIncrBy(`tenant:${tenantId}`, `calls:${dateString}`, 1);
-      multi.hIncrBy(
-        `tenant:${tenantId}`,
-        `calls:${dateString}:service:${apiId}`,
-        1
-      );
+      if (tenantId) {
+        multi.hIncrBy(`tenant:${tenantId}`, "calls", 1);
+        multi.hIncrBy(`tenant:${tenantId}`, `calls:${dateString}`, 1);
+        multi.hIncrBy(
+          `tenant:${tenantId}`,
+          `calls:${dateString}:service:${apiId}`,
+          1
+        );
+      }
+
+      multi.hIncrBy(`service:${apiId}:published`, "calls", 1);
+      multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
+
+      // New analytics tracking
+      multi.hIncrBy(`service:${apiId}:analytics`, 'total', 1);
+      multi.hIncrBy(`service:${apiId}:analytics`, `${today}:${currentHour}`, 1);
+      multi.hIncrBy(`service:${apiId}:analytics`, `${today}:calls`, 1);
+
+      if (apiToken) {
+        multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
+        multi.hIncrBy(
+          `service:${apiId}`,
+          `calls:${dateString}:token:${apiToken}`,
+          1
+        );
+      }
+
+      // Execute - errors are logged but don't block
+      await multi.exec();
+    } catch (error) {
+      console.error("Log calls error:", error);
     }
-
-    multi.hIncrBy(`service:${apiId}:published`, "calls", 1);
-    multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
-
-    // New analytics tracking
-    multi.hIncrBy(`service:${apiId}:analytics`, 'total', 1);
-    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:${currentHour}`, 1);
-    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:calls`, 1);
-
-    if (apiToken) {
-      multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
-      multi.hIncrBy(
-        `service:${apiId}`,
-        `calls:${dateString}:token:${apiToken}`,
-        1
-      );
-    }
-
-    // Execute in a non-blocking way
-    multi.exec().catch((err) => console.error("Redis log error:", err));
-    return true;
-  } catch (error) {
-    console.error("Log calls error:", error);
-    return false;
-  }
+  });
 }
 
 /**
@@ -113,8 +117,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         if (cachedResultString) {
           const cachedResult = JSON.parse(cachedResultString);
 
-          // Track cache hit
-          redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:hits', 1).catch(() => {});
+          // Track cache hit (using analytics queue for better performance)
+          analyticsQueue.track(serviceId, 'cache:hits', 1);
 
           const totalTime = Date.now() - timeAll;
           console.log(`[calculateDirect] Result cache HIT for ${serviceId}, total time: ${totalTime}ms`);
@@ -142,8 +146,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       console.log(`[Result Cache] BYPASS due to nocache=true`);
     }
 
-    // Result cache miss - track it
-    redis.hIncrBy(`service:${serviceId}:analytics`, 'cache:misses', 1).catch(() => {});
+    // Result cache miss - track it (using analytics queue for better performance)
+    analyticsQueue.track(serviceId, 'cache:misses', 1);
 
     // Get API definition
     const apiDataStart = Date.now();
@@ -519,12 +523,15 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       }
     }
 
+    // Trigger webhook if configured (non-blocking)
+    triggerWebhook(apiDefinition, result);
+
     return result;
 
   } catch (error) {
     console.error("Direct calculation error:", error);
-    // Track error
-    redis.hIncrBy(`service:${serviceId}:analytics`, 'errors', 1).catch(() => {});
+    // Track error (using analytics queue for better performance)
+    analyticsQueue.track(serviceId, 'errors', 1);
     return { error: "calculation failed: " + (error.message || "unknown error") };
   }
 }
