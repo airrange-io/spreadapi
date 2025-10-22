@@ -34,7 +34,10 @@
       "WebFetch(domain:developer.mescius.com)",
       "Bash(for file in /Users/stephanmethner/AR/repos/spreadapi/app/api/**/route.js)",
       "Bash(do if ! grep -q \"try {\" \"$file\")",
-      "Bash(npm cache clean:*)"
+      "Bash(npm cache clean:*)",
+      "Bash(tree:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run typecheck:*)"
     ],
     "deny": []
   }

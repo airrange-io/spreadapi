@@ -36,6 +36,11 @@ const WebhookManagement = dynamic(() => import('../WebhookManagement'), {
   ssr: false
 });
 
+const ApiDocumentation = dynamic(() => import('../components/ApiDocumentation'), {
+  loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
+  ssr: false
+});
+
 interface ApiTestViewProps {
   serviceId: string;
   apiConfig: {
@@ -181,6 +186,18 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
           isDemoMode={isDemoMode}
           onConfigChange={onConfigChange}
         />
+
+        {/* API Documentation Section */}
+        <CollapsibleSection
+          title="API Documentation"
+          defaultOpen={false}
+          style={{ marginTop: 0 }}
+        >
+          <ApiDocumentation
+            serviceId={serviceId}
+            isPublished={serviceStatus?.published || false}
+          />
+        </CollapsibleSection>
 
         {/* Integration Examples Section */}
         <CollapsibleSection
