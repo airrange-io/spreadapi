@@ -23,6 +23,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   const [spec, setSpec] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [swaggerLoaded, setSwaggerLoaded] = useState(false);
 
   useEffect(() => {
     if (!isPublished) {
@@ -82,7 +83,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <Spin size="large" />
+        <Spin size="default" />
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">Loading API documentation...</Text>
         </div>
@@ -150,12 +151,17 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
 
       {/* Tabs for different views */}
       <Tabs
-        defaultActiveKey="interactive"
+        defaultActiveKey="quickstart"
+        onChange={(key) => {
+          if (key === 'interactive' && !swaggerLoaded) {
+            setSwaggerLoaded(true);
+          }
+        }}
         items={[
           {
             key: 'interactive',
             label: 'Interactive Docs',
-            children: spec ? (
+            children: spec && swaggerLoaded ? (
               <div className="swagger-wrapper" style={{ padding: 0 }}>
                 <style jsx global>{`
                   .swagger-wrapper .swagger-ui {
@@ -182,7 +188,11 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
                   showCommonExtensions={true}
                 />
               </div>
-            ) : null
+            ) : (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <Text type="secondary">Click to load interactive API documentation</Text>
+              </div>
+            )
           },
           {
             key: 'quickstart',

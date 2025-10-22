@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { calculateDirect } from './calculateDirect';
+import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
+import { createErrorResponse } from '@/lib/errors';
 
 /**
  * Execute a SpreadAPI service calculation
@@ -19,10 +21,40 @@ export async function POST(request, { params}) {
 
     // Validate request
     if (!body.inputs || typeof body.inputs !== 'object') {
-      return NextResponse.json({
-        error: 'Invalid request',
-        message: 'Request body must contain "inputs" object'
-      }, { status: 400 });
+      const { body: errorBody, status } = createErrorResponse(
+        'INVALID_REQUEST',
+        'Request body must contain "inputs" object'
+      );
+      return NextResponse.json(errorBody, { status });
+    }
+
+    // Rate limiting check
+    const token = body.token;
+    const clientIp = request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown';
+
+    // Determine rate limit tier (simplified - using token presence)
+    const rateLimitConfig = token ? RATE_LIMITS.PRO : RATE_LIMITS.IP_LIMIT;
+    const rateLimitKey = token ? `service:${serviceId}:token:${token}` : `ip:${clientIp}`;
+
+    const rateLimitResult = await checkRateLimit(rateLimitKey, rateLimitConfig);
+
+    if (!rateLimitResult.allowed) {
+      const { body: errorBody, status } = createErrorResponse(
+        'RATE_LIMIT_EXCEEDED',
+        `Rate limit exceeded. Maximum ${rateLimitConfig.maxRequests} requests per minute.`,
+        {
+          details: {
+            limit: rateLimitResult.limit,
+            reset: rateLimitResult.reset
+          }
+        }
+      );
+      return NextResponse.json(errorBody, {
+        status,
+        headers: getRateLimitHeaders(rateLimitResult)
+      });
     }
 
     // Check if service exists and is published
@@ -109,6 +141,7 @@ export async function POST(request, { params}) {
     // nocache = bypass ALL caches (HTTP/edge + Redis)
     const headers = {
       'Access-Control-Allow-Origin': '*', // CORS for browser requests
+      ...getRateLimitHeaders(rateLimitResult) // Add rate limit headers
     };
 
     if (body.nocdn || body.nocache) {

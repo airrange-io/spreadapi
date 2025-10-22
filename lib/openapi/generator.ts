@@ -33,6 +33,8 @@ export function generateOpenAPISpec(
     ] : [],
     paths: {
       [`/api/v1/services/${serviceId}/execute`]: generateExecuteEndpoint(serviceId, definition),
+      [`/api/v1/services/${serviceId}/validate`]: generateValidateEndpoint(serviceId, definition),
+      [`/api/v1/services/${serviceId}/batch`]: generateBatchEndpoint(serviceId, definition),
       [`/api/v1/services/${serviceId}/definition`]: generateDefinitionEndpoint(),
     },
     components: {
@@ -48,6 +50,7 @@ export function generateOpenAPISpec(
     },
     tags: [
       { name: 'execution', description: 'Execute spreadsheet calculations' },
+      { name: 'validation', description: 'Validate inputs without execution' },
       { name: 'metadata', description: 'Service metadata and definition' }
     ]
   };
@@ -212,6 +215,174 @@ function generateDefinitionEndpoint() {
   };
 }
 
+function generateValidateEndpoint(serviceId: string, definition: ServiceDefinition) {
+  return {
+    post: {
+      tags: ['validation'],
+      summary: 'Validate inputs without execution',
+      description: 'Test input parameters against validation rules without executing the service or counting against quotas. Perfect for client-side validation.',
+      operationId: 'validateInputs',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['inputs'],
+              properties: {
+                inputs: {
+                  type: 'object',
+                  description: 'Input parameters to validate',
+                  properties: definition.inputs.reduce((acc: any, input: any) => {
+                    acc[input.name] = mapTypeToSchema(input);
+                    return acc;
+                  }, {})
+                }
+              }
+            }
+          }
+        }
+      },
+      responses: {
+        '200': {
+          description: 'Validation results',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  valid: { type: 'boolean' },
+                  errors: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        code: { type: 'string' },
+                        field: { type: 'string' },
+                        message: { type: 'string' }
+                      }
+                    }
+                  },
+                  warnings: { type: 'array' },
+                  summary: {
+                    type: 'object',
+                    properties: {
+                      totalInputs: { type: 'number' },
+                      providedInputs: { type: 'number' },
+                      validInputs: { type: 'number' },
+                      errors: { type: 'number' },
+                      warnings: { type: 'number' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '404': { $ref: '#/components/responses/NotFound' }
+      }
+    }
+  };
+}
+
+function generateBatchEndpoint(serviceId: string, definition: ServiceDefinition) {
+  return {
+    post: {
+      tags: ['execution'],
+      summary: 'Batch execution',
+      description: 'Execute multiple calculations in a single request. Maximum 100 requests per batch. Reduces network overhead for bulk operations.',
+      operationId: 'batchExecute',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['requests'],
+              properties: {
+                requests: {
+                  type: 'array',
+                  description: 'Array of requests to execute',
+                  maxItems: 100,
+                  items: {
+                    type: 'object',
+                    required: ['inputs'],
+                    properties: {
+                      inputs: {
+                        type: 'object',
+                        description: 'Input parameters for this request'
+                      }
+                    }
+                  }
+                },
+                token: {
+                  type: 'string',
+                  description: 'API token (applies to all requests)'
+                },
+                nocdn: {
+                  type: 'boolean',
+                  description: 'Bypass HTTP/CDN cache for all requests'
+                },
+                nocache: {
+                  type: 'boolean',
+                  description: 'Bypass all caches for all requests'
+                }
+              }
+            },
+            example: {
+              requests: [
+                { inputs: { amount: 1000, rate: 0.05 } },
+                { inputs: { amount: 2000, rate: 0.06 } }
+              ]
+            }
+          }
+        }
+      },
+      responses: {
+        '200': {
+          description: 'Batch execution results',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  serviceId: { type: 'string' },
+                  batch: {
+                    type: 'object',
+                    properties: {
+                      total: { type: 'number' },
+                      successful: { type: 'number' },
+                      failed: { type: 'number' },
+                      executionTime: { type: 'number' }
+                    }
+                  },
+                  results: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        index: { type: 'number' },
+                        success: { type: 'boolean' },
+                        outputs: { type: 'array' },
+                        error: { type: 'string' },
+                        message: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '404': { $ref: '#/components/responses/NotFound' },
+        '429': { $ref: '#/components/responses/RateLimitExceeded' }
+      }
+    }
+  };
+}
+
 function mapTypeToSchema(input: any) {
   const schema: any = {};
 
@@ -347,7 +518,7 @@ function generateCommonResponses() {
             invalidInput: {
               summary: 'Invalid input parameter',
               value: {
-                error: 'Invalid request',
+                error: 'INVALID_REQUEST',
                 message: 'Parameter "amount" must be a positive number',
                 field: 'amount'
               }
@@ -362,7 +533,7 @@ function generateCommonResponses() {
         'application/json': {
           schema: { $ref: '#/components/schemas/ErrorResponse' },
           example: {
-            error: 'Unauthorized',
+            error: 'UNAUTHORIZED',
             message: 'Valid API token required'
           }
         }
@@ -374,8 +545,42 @@ function generateCommonResponses() {
         'application/json': {
           schema: { $ref: '#/components/schemas/ErrorResponse' },
           example: {
-            error: 'Not found',
+            error: 'NOT_FOUND',
             message: 'Service not found or not published'
+          }
+        }
+      }
+    },
+    RateLimitExceeded: {
+      description: 'Rate limit exceeded',
+      headers: {
+        'X-RateLimit-Limit': {
+          schema: { type: 'integer' },
+          description: 'Total requests allowed per window'
+        },
+        'X-RateLimit-Remaining': {
+          schema: { type: 'integer' },
+          description: 'Remaining requests in current window'
+        },
+        'X-RateLimit-Reset': {
+          schema: { type: 'integer' },
+          description: 'Unix timestamp when the rate limit resets'
+        },
+        'Retry-After': {
+          schema: { type: 'integer' },
+          description: 'Seconds until rate limit resets'
+        }
+      },
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/ErrorResponse' },
+          example: {
+            error: 'RATE_LIMIT_EXCEEDED',
+            message: 'Rate limit exceeded. Maximum 100 requests per minute.',
+            details: {
+              limit: 100,
+              reset: 1698765432
+            }
           }
         }
       }
