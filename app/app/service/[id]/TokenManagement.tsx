@@ -18,7 +18,6 @@ import {
   Card,
   Alert
 } from 'antd';
-import CollapsibleSection from './components/CollapsibleSection';
 import {
   PlusOutlined,
   KeyOutlined,
@@ -305,35 +304,31 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
 
   return (
     <>
-      {/* Tokens Card */}
-      <CollapsibleSection
-        title="API Tokens"
-        defaultOpen={false}
-        extra={
+      <div style={{ width: '100%' }}>
+        {/* Header with create button */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16
+        }}>
+          <Typography.Title level={4} style={{ margin: 0 }}>API Tokens</Typography.Title>
           <Tooltip title={isDemoMode ? "Token creation is disabled in demo mode" : "Create new API token"}>
             <Button
-              type="text"
+              type="primary"
               icon={<PlusOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 if (!isDemoMode) {
                   setShowCreateModal(true);
                 }
               }}
               disabled={isDemoMode}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                padding: '5px',
-                marginTop: -3,
-                opacity: isDemoMode ? 0.5 : 1
-              }}
-            />
+            >
+              Create Token
+            </Button>
           </Tooltip>
-        }
-      >
+        </div>
+
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
           {/* Tokens list */}
           {loading ? (
@@ -384,7 +379,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             </Text>
           </div>
         </Space>
-      </CollapsibleSection>
+      </div>
 
       {/* Create token modal */}
       <Modal

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Switch, Input, Button, Space, Alert, Spin, Typography, message } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import CollapsibleSection from './components/CollapsibleSection';
 
 const { Text } = Typography;
 
@@ -66,10 +65,8 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
   };
 
   return (
-    <CollapsibleSection
-      title="Webhook Automation"
-      defaultOpen={false}
-    >
+    <div style={{ width: '100%' }}>
+      <Typography.Title level={4} style={{ marginBottom: 16 }}>Webhook Automation</Typography.Title>
       <Space direction="vertical" style={{ width: '100%' }} size={16}>
         {/* Enable/Disable Toggle */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -220,7 +217,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
           />
         )}
       </Space>
-    </CollapsibleSection>
+    </div>
   );
 };
 

@@ -256,8 +256,7 @@ const AppsView: React.FC<AppsViewProps> = ({
             message="Build Web Applications & Embeddable Snippets"
             description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation."
             type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
+            style={{ marginTop: -2, marginBottom: 24 }}
           />
 
           <h3 style={{ marginTop: 0, marginBottom: 16 }}>Token Management</h3>
@@ -738,7 +737,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                       </div>
                       <div style={{
                         width: '100%',
-                        height: 'calc(100vh - 500px)',
+                        height: 'calc(100vh - 520px)',
                         minHeight: 300,
                         border: '1px solid #d9d9d9',
                         borderRadius: 4,
@@ -815,7 +814,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                       </div>
                       <div style={{
                         width: '100%',
-                        height: 'calc(100vh - 430px)',
+                        height: 'calc(100vh - 460px)',
                         minHeight: 400,
                         border: '1px solid #d9d9d9',
                         borderRadius: 4,
@@ -846,7 +845,7 @@ const AppsView: React.FC<AppsViewProps> = ({
     {
       key: 'intro',
       icon: <FileTextOutlined />,
-      label: 'Intro & Token Management'
+      label: 'Intro'
     },
     {
       key: 'theme',
@@ -889,12 +888,13 @@ const AppsView: React.FC<AppsViewProps> = ({
       <Menu
         mode="inline"
         selectedKeys={[selectedKey]}
-        defaultOpenKeys={['webapp-folder', 'templates-folder']}
+        defaultOpenKeys={[]}
         style={{
-          width: 250,
+          width: 200,
           height: '100%',
           borderRight: '1px solid #f0f0f0',
-          marginTop: 10
+          marginTop: 10,
+          paddingRight: 10
         }}
         items={menuItems}
         onClick={({ key }) => setSelectedKey(key)}
@@ -904,7 +904,7 @@ const AppsView: React.FC<AppsViewProps> = ({
       <div
         style={{
           flex: 1,
-          padding: '24px 24px 10px 24px',
+          padding: '16px',
           overflow: 'auto',
           height: '100%',
           display: 'flex',

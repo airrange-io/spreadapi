@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Divider } from 'antd';
+import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined } from '@ant-design/icons';
-import CollapsibleSection from './components/CollapsibleSection';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 
 const { Text } = Typography;
@@ -39,9 +38,11 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [wizardError, setWizardError] = useState<string>('');
   const [wizardResponseTime, setWizardResponseTime] = useState<number>(0);
   const [totalCalls, setTotalCalls] = useState<number>(0);
+  const [responseBoxHeight, setResponseBoxHeight] = useState<number>(200);
   const containerWidth = propsContainerWidth || 0;
   const isMounted = useRef(false);
-  
+  const responseBoxRef = useRef<HTMLDivElement>(null);
+
   // Prewarm the service when component mounts
   useServicePrewarm(serviceId, isPublished);
 
@@ -63,7 +64,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
       }
     });
     setParameterValues(initialValues);
-  }, [inputs]);
+    // Update form fields with initial values
+    form.setFieldsValue(initialValues);
+  }, [inputs, form]);
 
 
   const handleWizardTest = async () => {
@@ -164,7 +167,37 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     };
   }, []);
 
-  // Sync form values when parameterValues change  
+  // Calculate dynamic height for API Response box
+  useEffect(() => {
+    const calculateHeight = () => {
+      if (responseBoxRef.current && wizardResult) {
+        const rect = responseBoxRef.current.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const bottomMargin = 60;
+        const minHeight = 200;
+
+        // Calculate available space: viewport height - element top position - bottom margin
+        const availableHeight = viewportHeight - rect.top - bottomMargin;
+
+        // Use the larger of minHeight or availableHeight
+        const dynamicHeight = Math.max(minHeight, availableHeight);
+
+        setResponseBoxHeight(dynamicHeight);
+      }
+    };
+
+    // Calculate on mount and when result changes
+    calculateHeight();
+
+    // Recalculate on window resize
+    window.addEventListener('resize', calculateHeight);
+
+    return () => {
+      window.removeEventListener('resize', calculateHeight);
+    };
+  }, [wizardResult, wizardError]);
+
+  // Sync form values when parameterValues change
   // No need for this effect since we're using initialValues on the Form
   // and onValuesChange to keep parameterValues in sync
 
@@ -262,14 +295,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   };
 
   return (
-    <>
-      {/* Test the Published API Section */}
-      <CollapsibleSection
-        title="Test the Published API"
-        defaultOpen={false}
-      >
-        <div style={{ width: '100%' }}>
-          <Space direction="vertical" style={{ width: '100%' }} size={16}>
+    <div style={{ width: '100%' }}>
+      <Space direction="vertical" style={{ width: '100%' }} size={8}>
           {/* Input Parameters Form */}
           <Form
             form={form}
@@ -284,10 +311,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           >
             {inputs.length > 0 && (
               <div style={{ width: '100%' }}>
-                <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                  Input Parameters
-                </Typography.Text>
-                <Row gutter={[16, 8]}>
+                <Row gutter={[16, 4]}>
                   {inputs.map((input) => {
                     // Only span full width if the input has a description or is a text area
                     const shouldSpanFull = false; // Allow all inputs to use responsive columns
@@ -357,6 +381,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             loading={wizardTesting}
             disabled={!isPublished}
             block
+            style={{ marginTop: 15, marginBottom: 15 }}
           >
             Run Test
           </Button>
@@ -364,15 +389,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {/* Results Section */}
           {(wizardResult || wizardError) && (
             <>
-              <Divider style={{ margin: '16px 0' }} />
-              
               {/* Output Results Statistics */}
               {wizardResult && wizardResult.outputs && wizardResult.outputs.length > 0 && (
                 <>
-                  <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
-                    Output Results
-                  </Typography.Text>
-                  <Row gutter={[16, 8]}>
+                  <Row gutter={[16, 4]}>
                     {wizardResult.outputs.map((output: any) => {
                       
                       // Use title if available, otherwise alias or name
@@ -427,10 +447,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               )}
               
               {/* Call Statistics */}
-              <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 12 }}>
+              <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginTop: 12, marginBottom: 4 }}>
                 Call Statistics
               </Typography.Text>
-              <Row gutter={[16, 8]}>
+              <Row gutter={[16, 4]}>
                 <Col span={getStatColumnSpan()}>
                   <Statistic
                     title="Calculation Time"
@@ -482,13 +502,16 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 8 }}>
                       API Response
                     </Typography.Text>
-                    <div style={{
-                      background: '#f5f5f5',
-                      padding: 12,
-                      borderRadius: 4,
-                      maxHeight: 300,
-                      overflow: 'auto'
-                    }}>
+                    <div
+                      ref={responseBoxRef}
+                      style={{
+                        background: '#f5f5f5',
+                        padding: 12,
+                        borderRadius: 4,
+                        height: responseBoxHeight,
+                        overflow: 'auto'
+                      }}
+                    >
                       <pre style={{ margin: 0, fontSize: 12 }}>
                         {JSON.stringify(wizardResult, null, 2)}
                       </pre>
@@ -498,10 +521,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               </div>
             </>
           )}
-          </Space>
-        </div>
-      </CollapsibleSection>
-    </>
+      </Space>
+    </div>
   );
 };
 

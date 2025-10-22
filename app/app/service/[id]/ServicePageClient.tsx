@@ -11,7 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
 
 // Lazy load views that are not immediately visible
-const ApiTestView = dynamic(() => import('./views/ApiTestView'), {
+const ApiView = dynamic(() => import('./views/ApiView'), {
   loading: () => <div style={{ padding: 20 }}></div>,
   ssr: false
 });
@@ -1805,7 +1805,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       display: activeView === 'API' ? 'block' : 'none',
                       height: '100%'
                     }}>
-                      <ApiTestView
+                      <ApiView
                         serviceId={serviceId}
                         apiConfig={apiConfig}
                         serviceStatus={serviceStatus}
@@ -1939,7 +1939,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   display: activeView === 'API' ? 'block' : 'none',
                   height: '100%'
                 }}>
-                  <ApiTestView
+                  <ApiView
                     serviceId={serviceId}
                     apiConfig={apiConfig}
                     serviceStatus={serviceStatus}
