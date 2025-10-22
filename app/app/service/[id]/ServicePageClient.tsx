@@ -1847,6 +1847,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     }}>
                       <SettingsView
                         apiConfig={apiConfig}
+                        spreadsheetData={spreadsheetData}
+                        workbookLoaded={workbookLoaded}
                         serviceId={serviceId}
                         serviceStatus={serviceStatus}
                         availableTokens={availableTokens}
@@ -1981,6 +1983,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 }}>
                   <SettingsView
                     apiConfig={apiConfig}
+                    spreadsheetData={spreadsheetData}
+                    workbookLoaded={workbookLoaded}
                     serviceId={serviceId}
                     serviceStatus={serviceStatus}
                     availableTokens={availableTokens}

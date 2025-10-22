@@ -11,6 +11,8 @@ interface SettingsSectionProps {
   enableCaching: boolean;
   cacheTableSheetData: boolean;
   tableSheetCacheTTL: number;
+  hasTableSheets: boolean;
+  workbookLoaded: boolean;
   aiDescription: string;
   aiUsageExamples: string[];
   aiTags: string[];
@@ -35,6 +37,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   enableCaching,
   cacheTableSheetData,
   tableSheetCacheTTL,
+  hasTableSheets,
+  workbookLoaded,
   aiDescription,
   aiUsageExamples,
   aiTags,
@@ -52,6 +56,24 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   onCategoryChange,
   onAiUsageGuidanceChange,
 }) => {
+  // Determine if cache options should be disabled and why
+  const cacheOptionsDisabled = !workbookLoaded || !hasTableSheets;
+
+  // Generate tooltip text based on state
+  const getCacheTooltip = (optionName: string) => {
+    if (!workbookLoaded) {
+      return `Load the workbook first to determine if this service uses external data sources. ${optionName} settings are only available for services with TableSheet data connections.`;
+    }
+    if (!hasTableSheets) {
+      return `This option is only available for services with TableSheet data connections. Caching is always enabled for services without external data sources.`;
+    }
+    // Workbook loaded and has TableSheets - show regular help text
+    if (optionName === 'Response caching') {
+      return "Cache API responses for improved performance. Disable if your TableSheet data changes frequently and you need real-time results.";
+    }
+    return "Cache external TableSheet data sources for better performance. Disable for real-time data that changes frequently.";
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -84,39 +106,39 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
           </div>
 
           <div style={{ marginTop: '0px' }}>
-            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Advanced Options</strong></div>
+            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>External Data Caching</strong></div>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Space align="center">
                 <Checkbox
                   checked={enableCaching}
                   onChange={(e) => onEnableCachingChange(e.target.checked)}
-                  disabled={isLoading}
+                  disabled={isLoading || cacheOptionsDisabled}
                 >
                   Enable response caching
                 </Checkbox>
-                <Tooltip title="Cache API responses for improved performance. Users can bypass CDN cache with nocdn=true or bypass all caches with nocache=true.">
+                <Tooltip title={getCacheTooltip('Response caching')}>
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
                 </Tooltip>
               </Space>
-              
+
               <Space align="center">
                 <Checkbox
                   checked={cacheTableSheetData}
                   onChange={(e) => onCacheTableSheetDataChange(e.target.checked)}
-                  disabled={isLoading}
+                  disabled={isLoading || cacheOptionsDisabled}
                 >
                   Cache TableSheet data
                 </Checkbox>
-                <Tooltip title="Cache external TableSheet data for better performance. Disable for real-time data that changes frequently.">
+                <Tooltip title={getCacheTooltip('TableSheet caching')}>
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
                 </Tooltip>
               </Space>
-              
-              {cacheTableSheetData && (
+
+              {cacheTableSheetData && workbookLoaded && hasTableSheets && (
                 <Space align="center" style={{ marginLeft: '24px' }}>
                   <span style={{ color: '#666' }}>Cache duration:</span>
-                  <Select 
-                    value={tableSheetCacheTTL} 
+                  <Select
+                    value={tableSheetCacheTTL}
                     onChange={onTableSheetCacheTTLChange}
                     style={{ width: '120px' }}
                     disabled={isLoading}

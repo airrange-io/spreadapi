@@ -27,6 +27,8 @@ interface ApiConfig {
 interface SettingsViewProps {
   // Settings props
   apiConfig: ApiConfig;
+  spreadsheetData?: any;
+  workbookLoaded?: boolean;
 
   // Token props
   serviceId: string;
@@ -45,6 +47,8 @@ interface SettingsViewProps {
 
 const SettingsView: React.FC<SettingsViewProps> = ({
   apiConfig,
+  spreadsheetData,
+  workbookLoaded = false,
   serviceId,
   serviceStatus,
   availableTokens = [],
@@ -56,7 +60,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const debounceTimers = useRef<{ [key: string]: NodeJS.Timeout }>({});
-  
+
   // Local state for immediate UI updates
   const [localConfig, setLocalConfig] = useState<Partial<ApiConfig>>({
     name: apiConfig.name,
@@ -64,6 +68,24 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     aiDescription: apiConfig.aiDescription,
     aiUsageGuidance: apiConfig.aiUsageGuidance
   });
+
+  // Detect if workbook has TableSheets (external data connections)
+  const hasTableSheets = React.useMemo(() => {
+    const fileJson = spreadsheetData?.fileJson || spreadsheetData;
+    if (!fileJson || !fileJson.sheets) return false;
+
+    // Check if any sheet has TableSheet data connections
+    for (const sheet of Object.values(fileJson.sheets) as any[]) {
+      if (sheet && sheet.dataManager && sheet.dataManager.tables) {
+        const tables = sheet.dataManager.tables;
+        if (typeof tables === 'object' && Object.keys(tables).length > 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }, [spreadsheetData]);
 
   // Update local state when props change
   useEffect(() => {
@@ -120,6 +142,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           enableCaching={apiConfig.enableCaching || false}
           cacheTableSheetData={apiConfig.cacheTableSheetData || false}
           tableSheetCacheTTL={apiConfig.tableSheetCacheTTL || 300}
+          hasTableSheets={hasTableSheets}
+          workbookLoaded={workbookLoaded}
           aiDescription={localConfig.aiDescription || apiConfig.aiDescription || ''}
           aiUsageGuidance={localConfig.aiUsageGuidance || apiConfig.aiUsageGuidance || ''}
           aiUsageExamples={apiConfig.aiUsageExamples || []}
