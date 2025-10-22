@@ -62,6 +62,10 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
           <div
             {...attributes}
             {...listeners}
+            role="button"
+            aria-label={`Drag to reorder ${parameter.name}`}
+            aria-describedby={`drag-hint-${parameter.id}`}
+            tabIndex={0}
             style={{
               cursor: 'grab',
               padding: '4px',
@@ -76,8 +80,18 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
             onMouseLeave={(e) => {
               e.currentTarget.style.color = '#999';
             }}
+            onKeyDown={(e) => {
+              // Improve keyboard accessibility
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+              }
+            }}
           >
             <HolderOutlined />
+            {/* Hidden hint for screen readers */}
+            <span id={`drag-hint-${parameter.id}`} style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}>
+              Press space to start dragging. Use arrow keys to reorder. Press space again to drop.
+            </span>
           </div>
 
           {/* Parameter Content */}

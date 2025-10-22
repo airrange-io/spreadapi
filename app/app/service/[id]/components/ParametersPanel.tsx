@@ -6,8 +6,9 @@ import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import * as GC from '@mescius/spread-sheets';
 
-// Import types from ParametersSection
+// Import types and constants from ParametersSection
 import type { InputDefinition, OutputDefinition, AreaParameter, AreaPermissions } from './ParametersSection';
+import { COMPACT_LAYOUT_BREAKPOINT_PX } from './ParametersSection';
 
 // Lazy load components
 const ParametersSection = lazy(() => import('./ParametersSection'));
@@ -883,7 +884,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             spreadInstance={spreadInstance}
             inputs={inputs}
             outputs={outputs}
-            isCompact={panelWidth < 380}
+            isCompact={panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX}
             onAddFromSelection={handleAddParameterFromSelection}
             onAddAsEditableArea={handleAddAreaFromSelection}
           />

@@ -108,7 +108,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiTags: [],
     category: '',
     webAppToken: '',
-    webAppConfig: ''
+    webAppConfig: '',
+    webAppTheme: 'default',
+    customThemeParams: ''
   });
   const [savedConfig, setSavedConfig] = useState({
     name: '',
@@ -126,7 +128,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     aiTags: [],
     category: '',
     webAppToken: '',
-    webAppConfig: ''
+    webAppConfig: '',
+    webAppTheme: 'default',
+    customThemeParams: ''
   });
   const [configHasChanges, setConfigHasChanges] = useState(false);
   const [workbookChangeCount, setWorkbookChangeCount] = useState(0);
@@ -422,7 +426,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiTags: data.service.aiTags || [],
               category: data.service.category || '',
               webAppToken: data.service.webAppToken || '',
-              webAppConfig: data.service.webAppConfig || ''
+              webAppConfig: data.service.webAppConfig || '',
+              webAppTheme: data.service.webAppTheme || 'default',
+              customThemeParams: data.service.customThemeParams || ''
             };
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
@@ -460,7 +466,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiTags: data.aiTags || [],
               category: data.category || '',
               webAppToken: data.webAppToken || '',
-              webAppConfig: data.webAppConfig || ''
+              webAppConfig: data.webAppConfig || '',
+              webAppTheme: data.webAppTheme || 'default',
+              customThemeParams: data.customThemeParams || ''
             };
 
             console.log('Loading service - webAppConfig in loadedConfig:', loadedConfig.webAppConfig);
@@ -497,7 +505,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             aiTags: [],
             category: '',
             webAppToken: '',
-            webAppConfig: ''
+            webAppConfig: '',
+            webAppTheme: 'default',
+            customThemeParams: ''
           };
           setApiConfig(newConfig);
           setSavedConfig(newConfig); // Set same config to prevent immediate "Save Changes"
@@ -1024,6 +1034,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           category: apiConfig.category,
           webAppToken: apiConfig.webAppToken,
           webAppConfig: apiConfig.webAppConfig,
+          webAppTheme: apiConfig.webAppTheme,
+          customThemeParams: apiConfig.customThemeParams,
           status: 'draft'
         })
       });

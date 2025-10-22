@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useLayoutEffect, Suspense } from 'react';
+import React, { useRef, useState, useLayoutEffect, Suspense, useEffect, useCallback } from 'react';
 import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, Tabs, QRCode, Select, Card, Row, Col } from 'antd';
 import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
@@ -9,6 +9,9 @@ import { VIEW_THEMES } from '@/lib/viewThemes';
 
 const { TextArea } = Input;
 const { Text } = Typography;
+
+// Debounce delay for validation (milliseconds)
+const VALIDATION_DEBOUNCE_DELAY = 300;
 
 interface AppsViewProps {
   serviceId: string;
@@ -21,6 +24,7 @@ interface AppsViewProps {
     webAppToken?: string;
     webAppConfig?: string;
     webAppTheme?: string;
+    customThemeParams?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -48,10 +52,20 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [configError, setConfigError] = useState<string | null>(null);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [qrUrl, setQrUrl] = useState<string>('');
+  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track fade-in effect separately
   useLayoutEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Cleanup validation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current);
+      }
+    };
   }, []);
 
   // Show skeleton until config is loaded
@@ -97,46 +111,86 @@ const AppsView: React.FC<AppsViewProps> = ({
     setQrModalVisible(true);
   };
 
-  // Handler for config change
-  const handleConfigChange = (value: string) => {
-    onConfigChange?.({ webAppConfig: value });
+  // Validation function (extracted for debouncing)
+  const validateConfig = useCallback((value: string) => {
+    if (!value.trim()) {
+      setConfigError(null);
+      return;
+    }
 
-    // Validate JSON if not empty
-    if (value.trim()) {
-      try {
-        const parsed = JSON.parse(value);
+    try {
+      const parsed = JSON.parse(value);
 
-        // Validate structure
-        if (!parsed.rules || !Array.isArray(parsed.rules)) {
-          setConfigError('Config must have a "rules" array');
+      // Validate structure
+      if (!parsed.rules || !Array.isArray(parsed.rules)) {
+        setConfigError('Config must have a "rules" array');
+        return;
+      }
+
+      // Validate each rule
+      for (let i = 0; i < parsed.rules.length; i++) {
+        const rule = parsed.rules[i];
+        if (!rule.output && !rule.input) {
+          setConfigError(`Rule ${i + 1}: Must have either "output" or "input" field`);
           return;
         }
-
-        // Validate each rule
-        for (let i = 0; i < parsed.rules.length; i++) {
-          const rule = parsed.rules[i];
-          if (!rule.output && !rule.input) {
-            setConfigError(`Rule ${i + 1}: Must have either "output" or "input" field`);
-            return;
-          }
-          if (rule.output && rule.input) {
-            setConfigError(`Rule ${i + 1}: Cannot have both "output" and "input" fields`);
-            return;
-          }
-          if (!rule.visible) {
-            setConfigError(`Rule ${i + 1}: Missing "visible" field`);
-            return;
-          }
+        if (rule.output && rule.input) {
+          setConfigError(`Rule ${i + 1}: Cannot have both "output" and "input" fields`);
+          return;
         }
-
-        setConfigError(null);
-      } catch (e) {
-        setConfigError(e instanceof Error ? e.message : 'Invalid JSON');
+        if (!rule.visible) {
+          setConfigError(`Rule ${i + 1}: Missing "visible" field`);
+          return;
+        }
       }
-    } else {
+
       setConfigError(null);
+    } catch (e) {
+      setConfigError(e instanceof Error ? e.message : 'Invalid JSON');
     }
-  };
+  }, []);
+
+  // Handler for config change with debounced validation
+  const handleConfigChange = useCallback((value: string) => {
+    // Update config immediately
+    onConfigChange?.({ webAppConfig: value });
+
+    // Clear previous validation timer
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+    }
+
+    // Debounce validation
+    validationTimerRef.current = setTimeout(() => {
+      validateConfig(value);
+    }, VALIDATION_DEBOUNCE_DELAY);
+  }, [onConfigChange, validateConfig]);
+
+  // Helper to build theme parameter (includes base theme + custom overrides)
+  const buildThemeParam = useCallback((hasExistingParams: boolean) => {
+    const theme = apiConfig.webAppTheme || 'default';
+    const customParams = apiConfig.customThemeParams?.trim() || '';
+
+    let params = '';
+
+    // Add base theme if not default
+    if (theme !== 'default') {
+      params = `theme=${theme}`;
+    }
+
+    // Add custom parameters
+    if (customParams) {
+      // Remove leading ? or & if user added it
+      const cleanParams = customParams.replace(/^[?&]+/, '');
+      if (cleanParams) {
+        params = params ? `${params}&${cleanParams}` : cleanParams;
+      }
+    }
+
+    if (!params) return '';
+
+    return hasExistingParams ? `&${params}` : `?${params}`;
+  }, [apiConfig.webAppTheme, apiConfig.customThemeParams]);
 
   // Build query string with default values for snippets
   const getDefaultQueryString = () => {
@@ -163,10 +217,7 @@ const AppsView: React.FC<AppsViewProps> = ({
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
     const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
     const queryString = getDefaultQueryString();
-
-    // Add theme parameter if set
-    const theme = apiConfig.webAppTheme || 'default';
-    const themeParam = theme !== 'default' ? (queryString ? `&theme=${theme}` : `?theme=${theme}`) : '';
+    const themeParam = buildThemeParam(!!queryString);
 
     return baseUrl + queryString + themeParam;
   };
@@ -178,10 +229,7 @@ const AppsView: React.FC<AppsViewProps> = ({
     const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
     const queryString = getDefaultQueryString();
     const separator = queryString ? '&' : '?';
-
-    // Add theme parameter if set
-    const theme = apiConfig.webAppTheme || 'default';
-    const themeParam = theme !== 'default' ? `&theme=${theme}` : '';
+    const themeParam = buildThemeParam(true); // Always has params (token + interactive)
 
     return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}`;
   };
@@ -280,7 +328,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           <Select
             value={selectedTheme}
             onChange={(value) => onConfigChange?.({ webAppTheme: value })}
-            style={{ width: '100%', marginBottom: 24 }}
+            style={{ width: '100%', marginBottom: 16 }}
             size="large"
             disabled={isLoading}
           >
@@ -303,9 +351,39 @@ const AppsView: React.FC<AppsViewProps> = ({
             ))}
           </Select>
 
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+              Custom Theme Parameters (Optional)
+              <Tooltip title={
+                <div style={{ fontSize: 11 }}>
+                  Override individual theme properties using URL parameter format.
+                  <br /><br />
+                  <strong>Example:</strong><br />
+                  primaryColor=%23FF0000&resultValueFontSize=18px
+                </div>
+              }>
+                <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14, cursor: 'help' }} />
+              </Tooltip>
+            </div>
+            <TextArea
+              value={apiConfig.customThemeParams || ''}
+              onChange={(e) => onConfigChange?.({ customThemeParams: e.target.value })}
+              placeholder="primaryColor=%23502D80&resultValueFontSize=18px&contentBorderRadius=12px"
+              rows={3}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: 11,
+              }}
+              disabled={isLoading}
+            />
+            <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+              Enter parameters in URL format (without leading ? or &). See available parameters below.
+            </div>
+          </div>
+
           {hasUnsavedChanges && (
             <Alert
-              message="Remember to click the Save button at the top to save your theme selection"
+              message="Remember to click the Save button at the top to save your theme settings"
               type="info"
               showIcon={false}
               style={{ fontSize: 12, padding: '8px 12px', marginBottom: 24 }}
@@ -320,7 +398,13 @@ const AppsView: React.FC<AppsViewProps> = ({
               {Object.values(VIEW_THEMES).filter(t => t.id === selectedTheme).map((theme) => (
                 <Col span={24} key={theme.id}>
                   <Card
-                    bodyStyle={{ padding: '24px', minHeight: 220, background: theme.styles.containerBg === 'transparent' ? 'white' : theme.styles.containerBg }}
+                    styles={{
+                      body: {
+                        padding: '24px',
+                        minHeight: 220,
+                        background: theme.styles.containerBg === 'transparent' ? 'white' : theme.styles.containerBg
+                      }
+                    }}
                     style={{
                       background: 'white',
                       border: '1px solid #f0f0f0',
@@ -388,12 +472,32 @@ const AppsView: React.FC<AppsViewProps> = ({
               You can override individual theme properties by adding URL parameters:
               <br />
               <code style={{ fontSize: 10, background: 'white', padding: '2px 6px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
-                &primaryColor=%23502D80&borderRadius=12px
+                &primaryColor=%23502D80&contentBorderRadius=12px
               </code>
               <br />
-              <span style={{ marginTop: 4, display: 'block' }}>
-                Available parameters: primaryColor, contentBg, borderRadius, containerBg, buttonBg, and more.
-              </span>
+              <div style={{ marginTop: 8, marginBottom: 4, fontWeight: 500, color: '#666' }}>
+                Available parameters:
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: 10, fontFamily: 'monospace' }}>
+                <div><strong>Container:</strong> containerBg, containerPadding</div>
+                <div><strong>Content:</strong> contentBg, contentBorder, contentBorderRadius, contentShadow, contentPadding</div>
+                <div><strong>Typography:</strong> fontFamily, headingFontFamily</div>
+                <div><strong>Colors:</strong> primaryColor, accentColor, textColor, labelColor</div>
+                <div><strong>Headings:</strong> headingColor, headingFontSize, headingFontWeight</div>
+                <div><strong>Result Labels:</strong> resultLabelColor, resultLabelFontSize, resultLabelFontWeight</div>
+                <div><strong>Result Values:</strong> resultValueColor, resultValueFontSize, resultValueFontWeight</div>
+                <div><strong>Result Dividers:</strong> resultDividerColor, resultRowPadding</div>
+                <div><strong>Inputs:</strong> inputBg, inputBorder, inputBorderRadius, inputFocusBorder, inputFontSize</div>
+                <div><strong>Input Labels:</strong> inputLabelColor, inputLabelFontSize, inputLabelFontWeight</div>
+                <div><strong>Buttons:</strong> buttonBg, buttonColor, buttonBorderRadius, buttonHoverBg, buttonFontSize, buttonFontWeight, buttonPadding</div>
+                <div><strong>Card Header:</strong> cardHeaderBg, cardHeaderColor, cardHeaderGradientStart, cardHeaderGradientEnd</div>
+                <div><strong>Table:</strong> tableHeaderBg, tableHeaderColor, tableBorderColor, tableRowHoverBg</div>
+                <div><strong>Sections:</strong> inputSectionBg, resultsSectionBg</div>
+                <div><strong>Spacing:</strong> sectionSpacing, inputGroupSpacing, resultItemSpacing, headerPadding</div>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 10, color: '#999' }}>
+                Total: 65 customizable properties
+              </div>
             </div>
           </div>
         </div>
@@ -413,8 +517,7 @@ const AppsView: React.FC<AppsViewProps> = ({
         );
       }
 
-      const theme = apiConfig.webAppTheme || 'default';
-      const themeParam = theme !== 'default' ? `&theme=${theme}` : '';
+      const themeParam = buildThemeParam(true); // Always has params (token)
       const webAppUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}${themeParam}`;
 
       return (

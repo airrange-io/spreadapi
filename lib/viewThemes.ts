@@ -712,93 +712,160 @@ export function getAllSupportedParameters(): string[] {
 }
 
 /**
- * Generate CSS variables from theme
+ * Sanitize CSS value to prevent injection attacks
+ * Allows: colors (hex, rgb, rgba, hsl, hsla, named), sizes (px, em, rem, %, etc.),
+ * borders, shadows, font names, and common CSS values
+ */
+function sanitizeCSSValue(value: any, propertyType: 'color' | 'size' | 'shadow' | 'border' | 'font' | 'generic' = 'generic'): string {
+  if (value === undefined || value === null) return 'inherit';
+
+  const strValue = String(value).trim();
+
+  // Allow common safe values
+  const safeValues = ['none', 'inherit', 'initial', 'unset', 'auto', 'transparent',
+                      'normal', 'bold', 'italic', 'left', 'right', 'center'];
+  if (safeValues.includes(strValue.toLowerCase())) {
+    return strValue;
+  }
+
+  // Property-specific validation
+  switch (propertyType) {
+    case 'color':
+      // Hex colors: #RGB, #RRGGBB, #RRGGBBAA
+      if (/^#[0-9A-Fa-f]{3,8}$/.test(strValue)) return strValue;
+      // RGB/RGBA: rgb(r,g,b) or rgba(r,g,b,a)
+      if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*[\d.]+\s*)?\)$/.test(strValue)) return strValue;
+      // HSL/HSLA: hsl(h,s%,l%) or hsla(h,s%,l%,a)
+      if (/^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*[\d.]+\s*)?\)$/.test(strValue)) return strValue;
+      // Named colors
+      if (/^[a-z]+$/.test(strValue.toLowerCase())) return strValue;
+      break;
+
+    case 'size':
+      // Sizes: 12px, 1.5em, 100%, 2rem, etc.
+      if (/^[\d.]+\s*(px|em|rem|%|vh|vw|vmin|vmax|ch|ex)$/.test(strValue)) return strValue;
+      break;
+
+    case 'shadow':
+      // Box shadow: 0 2px 8px rgba(0,0,0,0.1), multiple shadows, inset, etc.
+      if (/^(inset\s+)?[\d.\s]+(px|em|rem)\s+[\d.\s]+(px|em|rem)\s+[\d.\s]+(px|em|rem)(\s+[\d.\s]+(px|em|rem))?\s+(#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-z]+)(\s*,\s*(inset\s+)?[\d.\s]+(px|em|rem)\s+[\d.\s]+(px|em|rem)\s+[\d.\s]+(px|em|rem)(\s+[\d.\s]+(px|em|rem))?\s+(#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-z]+))*$/i.test(strValue)) {
+        return strValue;
+      }
+      break;
+
+    case 'border':
+      // Border: 1px solid #ccc, 2px dashed red, none, etc.
+      if (/^([\d.]+\s*(px|em|rem)\s+)?(solid|dashed|dotted|double|groove|ridge|inset|outset)(\s+(#[0-9A-Fa-f]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-z]+))?$/i.test(strValue)) {
+        return strValue;
+      }
+      break;
+
+    case 'font':
+      // Font family: Arial, "Times New Roman", sans-serif, etc.
+      if (/^[a-zA-Z0-9\s"',\-]+$/.test(strValue)) return strValue;
+      break;
+
+    case 'generic':
+      // Generic safe CSS value (alphanumeric, spaces, common punctuation, no script tags)
+      if (/^[a-zA-Z0-9\s\-_.,()%#]+$/.test(strValue) && !/<|>|script|javascript:/i.test(strValue)) {
+        return strValue;
+      }
+      break;
+  }
+
+  // If validation fails, log warning and return safe default
+  console.warn(`Invalid CSS value detected and sanitized: ${strValue}`);
+  return 'inherit';
+}
+
+/**
+ * Generate CSS variables from theme with sanitization
  */
 export function generateThemeCSS(styles: ViewTheme['styles']): string {
   return `
     :root {
       /* Container */
-      --container-bg: ${styles.containerBg};
-      --container-padding: ${styles.containerPadding};
+      --container-bg: ${sanitizeCSSValue(styles.containerBg, 'color')};
+      --container-padding: ${sanitizeCSSValue(styles.containerPadding, 'size')};
 
       /* Content area */
-      --content-bg: ${styles.contentBg};
-      --content-border: ${styles.contentBorder};
-      --content-border-radius: ${styles.contentBorderRadius};
-      --content-shadow: ${styles.contentShadow};
-      --content-padding: ${styles.contentPadding};
+      --content-bg: ${sanitizeCSSValue(styles.contentBg, 'color')};
+      --content-border: ${sanitizeCSSValue(styles.contentBorder, 'border')};
+      --content-border-radius: ${sanitizeCSSValue(styles.contentBorderRadius, 'size')};
+      --content-shadow: ${sanitizeCSSValue(styles.contentShadow, 'shadow')};
+      --content-padding: ${sanitizeCSSValue(styles.contentPadding, 'size')};
 
       /* Typography */
-      --font-family: ${styles.fontFamily};
-      --heading-font-family: ${styles.headingFontFamily};
+      --font-family: ${sanitizeCSSValue(styles.fontFamily, 'font')};
+      --heading-font-family: ${sanitizeCSSValue(styles.headingFontFamily, 'font')};
 
       /* Colors */
-      --primary-color: ${styles.primaryColor};
-      --accent-color: ${styles.accentColor};
-      --text-color: ${styles.textColor};
-      --label-color: ${styles.labelColor};
+      --primary-color: ${sanitizeCSSValue(styles.primaryColor, 'color')};
+      --accent-color: ${sanitizeCSSValue(styles.accentColor, 'color')};
+      --text-color: ${sanitizeCSSValue(styles.textColor, 'color')};
+      --label-color: ${sanitizeCSSValue(styles.labelColor, 'color')};
 
       /* Headings */
-      --heading-color: ${styles.headingColor};
-      --heading-font-size: ${styles.headingFontSize};
-      --heading-font-weight: ${styles.headingFontWeight};
+      --heading-color: ${sanitizeCSSValue(styles.headingColor, 'color')};
+      --heading-font-size: ${sanitizeCSSValue(styles.headingFontSize, 'size')};
+      --heading-font-weight: ${sanitizeCSSValue(styles.headingFontWeight, 'generic')};
 
       /* Result Labels */
-      --result-label-color: ${styles.resultLabelColor};
-      --result-label-font-size: ${styles.resultLabelFontSize};
-      --result-label-font-weight: ${styles.resultLabelFontWeight};
+      --result-label-color: ${sanitizeCSSValue(styles.resultLabelColor, 'color')};
+      --result-label-font-size: ${sanitizeCSSValue(styles.resultLabelFontSize, 'size')};
+      --result-label-font-weight: ${sanitizeCSSValue(styles.resultLabelFontWeight, 'generic')};
 
       /* Result Values */
-      --result-value-color: ${styles.resultValueColor};
-      --result-value-font-size: ${styles.resultValueFontSize};
-      --result-value-font-weight: ${styles.resultValueFontWeight};
+      --result-value-color: ${sanitizeCSSValue(styles.resultValueColor, 'color')};
+      --result-value-font-size: ${sanitizeCSSValue(styles.resultValueFontSize, 'size')};
+      --result-value-font-weight: ${sanitizeCSSValue(styles.resultValueFontWeight, 'generic')};
 
       /* Result Dividers */
-      --result-divider-color: ${styles.resultDividerColor};
-      --result-row-padding: ${styles.resultRowPadding};
+      --result-divider-color: ${sanitizeCSSValue(styles.resultDividerColor, 'color')};
+      --result-row-padding: ${sanitizeCSSValue(styles.resultRowPadding, 'generic')};
 
       /* Inputs */
-      --input-bg: ${styles.inputBg};
-      --input-border: ${styles.inputBorder};
-      --input-border-radius: ${styles.inputBorderRadius};
-      --input-focus-border: ${styles.inputFocusBorder};
-      --input-font-size: ${styles.inputFontSize};
+      --input-bg: ${sanitizeCSSValue(styles.inputBg, 'color')};
+      --input-border: ${sanitizeCSSValue(styles.inputBorder, 'border')};
+      --input-border-radius: ${sanitizeCSSValue(styles.inputBorderRadius, 'size')};
+      --input-focus-border: ${sanitizeCSSValue(styles.inputFocusBorder, 'border')};
+      --input-font-size: ${sanitizeCSSValue(styles.inputFontSize, 'size')};
 
       /* Input Labels */
-      --input-label-color: ${styles.inputLabelColor};
-      --input-label-font-size: ${styles.inputLabelFontSize};
-      --input-label-font-weight: ${styles.inputLabelFontWeight};
+      --input-label-color: ${sanitizeCSSValue(styles.inputLabelColor, 'color')};
+      --input-label-font-size: ${sanitizeCSSValue(styles.inputLabelFontSize, 'size')};
+      --input-label-font-weight: ${sanitizeCSSValue(styles.inputLabelFontWeight, 'generic')};
 
       /* Buttons */
-      --button-bg: ${styles.buttonBg};
-      --button-color: ${styles.buttonColor};
-      --button-border-radius: ${styles.buttonBorderRadius};
-      --button-hover-bg: ${styles.buttonHoverBg};
-      --button-font-size: ${styles.buttonFontSize};
-      --button-font-weight: ${styles.buttonFontWeight};
-      --button-padding: ${styles.buttonPadding};
+      --button-bg: ${sanitizeCSSValue(styles.buttonBg, 'color')};
+      --button-color: ${sanitizeCSSValue(styles.buttonColor, 'color')};
+      --button-border-radius: ${sanitizeCSSValue(styles.buttonBorderRadius, 'size')};
+      --button-hover-bg: ${sanitizeCSSValue(styles.buttonHoverBg, 'color')};
+      --button-font-size: ${sanitizeCSSValue(styles.buttonFontSize, 'size')};
+      --button-font-weight: ${sanitizeCSSValue(styles.buttonFontWeight, 'generic')};
+      --button-padding: ${sanitizeCSSValue(styles.buttonPadding, 'size')};
 
       /* Card Header */
-      --card-header-bg: ${styles.cardHeaderBg};
-      --card-header-color: ${styles.cardHeaderColor};
-      --card-header-gradient-start: ${styles.cardHeaderGradientStart};
-      --card-header-gradient-end: ${styles.cardHeaderGradientEnd};
+      --card-header-bg: ${sanitizeCSSValue(styles.cardHeaderBg, 'generic')};
+      --card-header-color: ${sanitizeCSSValue(styles.cardHeaderColor, 'color')};
+      --card-header-gradient-start: ${sanitizeCSSValue(styles.cardHeaderGradientStart, 'color')};
+      --card-header-gradient-end: ${sanitizeCSSValue(styles.cardHeaderGradientEnd, 'color')};
 
       /* Table Styling */
-      --table-header-bg: ${styles.tableHeaderBg};
-      --table-header-color: ${styles.tableHeaderColor};
-      --table-border-color: ${styles.tableBorderColor};
-      --table-row-hover-bg: ${styles.tableRowHoverBg};
+      --table-header-bg: ${sanitizeCSSValue(styles.tableHeaderBg, 'color')};
+      --table-header-color: ${sanitizeCSSValue(styles.tableHeaderColor, 'color')};
+      --table-border-color: ${sanitizeCSSValue(styles.tableBorderColor, 'color')};
+      --table-row-hover-bg: ${sanitizeCSSValue(styles.tableRowHoverBg, 'color')};
 
       /* Section Backgrounds */
-      --input-section-bg: ${styles.inputSectionBg};
-      --results-section-bg: ${styles.resultsSectionBg};
+      --input-section-bg: ${sanitizeCSSValue(styles.inputSectionBg, 'color')};
+      --results-section-bg: ${sanitizeCSSValue(styles.resultsSectionBg, 'color')};
 
       /* Spacing */
-      --section-spacing: ${styles.sectionSpacing};
-      --input-group-spacing: ${styles.inputGroupSpacing};
-      --result-item-spacing: ${styles.resultItemSpacing};
-      --header-padding: ${styles.headerPadding};
+      --section-spacing: ${sanitizeCSSValue(styles.sectionSpacing, 'size')};
+      --input-group-spacing: ${sanitizeCSSValue(styles.inputGroupSpacing, 'size')};
+      --result-item-spacing: ${sanitizeCSSValue(styles.resultItemSpacing, 'size')};
+      --header-padding: ${sanitizeCSSValue(styles.headerPadding, 'size')};
     }
   `.trim();
 }

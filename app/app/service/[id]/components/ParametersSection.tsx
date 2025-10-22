@@ -21,6 +21,10 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableParameterItem } from './SortableParameterItem';
 
+// Drag & Drop Configuration
+const DRAG_ACTIVATION_DISTANCE_PX = 8; // Pixels of movement required before drag starts (prevents accidental drags)
+export const COMPACT_LAYOUT_BREAKPOINT_PX = 380; // Panel width below which compact layout is used
+
 export interface InputDefinition {
   id: string;
   address: string;
@@ -131,13 +135,13 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   const canInteract = !!onNavigateToParameter;
 
   // Determine if cards should use compact layout
-  const useCompactLayout = panelWidth && panelWidth < 380;
+  const useCompactLayout = panelWidth && panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX;
 
   // Sensors for drag & drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px movement before drag starts (prevents accidental drags)
+        distance: DRAG_ACTIVATION_DISTANCE_PX,
       },
     }),
     useSensor(KeyboardSensor, {
