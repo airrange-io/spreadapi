@@ -84,8 +84,10 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
             placeholder: input.placeholder || ''
           })),
           outputs: (data.outputs || []).map((output: any) => ({
-            ...output,
-            value: formatValue(output)
+            name: output.name,
+            title: output.title || output.name,  // Ensure title is always set
+            value: formatValue(output),
+            formatString: output.formatString
           }))
         };
 
