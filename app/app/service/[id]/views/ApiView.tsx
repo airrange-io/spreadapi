@@ -2,9 +2,11 @@
 
 import React, { lazy, Suspense, useRef, useState, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Skeleton, Space, Alert } from 'antd';
+import { Skeleton, Space, Alert, Button } from 'antd';
+import { FullscreenOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import ApiNavigationMenu, { type ApiMenuSection } from '../components/ApiNavigationMenu';
+import FullScreenPreview from '@/components/FullScreenPreview';
 
 // Dynamically import components
 const ServiceTester = dynamic(() => import('../ServiceTester'), {
@@ -98,6 +100,7 @@ const ApiView: React.FC<ApiViewProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [selectedKey, setSelectedKey] = useState<ApiMenuSection>('test');
+  const [fullScreenOpen, setFullScreenOpen] = useState(false);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
 
   // Use robust container width measurement
@@ -117,6 +120,16 @@ const ApiView: React.FC<ApiViewProps> = ({
     if (tokenManagementRef.current) {
       await tokenManagementRef.current.refreshTokens();
     }
+  };
+
+  // Handler for opening fullscreen preview
+  const handleOpenFullScreen = () => {
+    setFullScreenOpen(true);
+  };
+
+  // Handler for closing fullscreen preview
+  const handleCloseFullScreen = () => {
+    setFullScreenOpen(false);
   };
 
   // Render content based on selected menu item
@@ -178,6 +191,18 @@ const ApiView: React.FC<ApiViewProps> = ({
             requireToken={apiConfig.requireToken || false}
           />
           <div style={{ marginTop: 16 }}>
+            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
+                API Tester
+              </div>
+              <Button
+                type="text"
+                size="small"
+                icon={<FullscreenOutlined />}
+                onClick={handleOpenFullScreen}
+                style={{ fontSize: 14 }}
+              />
+            </div>
             <ServiceTester
               serviceId={serviceId}
               serviceName={apiConfig.name}
@@ -276,6 +301,27 @@ const ApiView: React.FC<ApiViewProps> = ({
       }}>
         {renderContent()}
       </div>
+
+      {/* Full Screen Preview */}
+      <FullScreenPreview
+        open={fullScreenOpen}
+        onClose={handleCloseFullScreen}
+        title="API Tester"
+      >
+        <div style={{ padding: '24px', height: '100%', overflow: 'auto' }}>
+          <ServiceTester
+            serviceId={serviceId}
+            serviceName={apiConfig.name}
+            isPublished={serviceStatus?.published || false}
+            inputs={apiConfig.inputs || []}
+            outputs={apiConfig.outputs || []}
+            requireToken={apiConfig.requireToken}
+            existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
+            containerWidth={typeof window !== 'undefined' ? window.innerWidth - 48 : 800}
+            onTestComplete={handleTestComplete}
+          />
+        </div>
+      </FullScreenPreview>
     </div>
   );
 };

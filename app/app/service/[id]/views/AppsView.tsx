@@ -2,10 +2,11 @@
 
 import React, { useRef, useState, useLayoutEffect, Suspense, useEffect, useCallback } from 'react';
 import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, Tabs, QRCode, Select, Card, Row, Col } from 'antd';
-import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
 import { VIEW_THEMES } from '@/lib/viewThemes';
+import FullScreenPreview from '@/components/FullScreenPreview';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -52,6 +53,8 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [configError, setConfigError] = useState<string | null>(null);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [qrUrl, setQrUrl] = useState<string>('');
+  const [fullScreenOpen, setFullScreenOpen] = useState(false);
+  const [fullScreenContent, setFullScreenContent] = useState<{ url: string; title: string } | null>(null);
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track fade-in effect separately
@@ -190,6 +193,18 @@ const AppsView: React.FC<AppsViewProps> = ({
   const handleShowQrCode = (url: string) => {
     setQrUrl(url);
     setQrModalVisible(true);
+  };
+
+  // Handler for opening fullscreen preview
+  const handleOpenFullScreen = (url: string, title: string) => {
+    setFullScreenContent({ url, title });
+    setFullScreenOpen(true);
+  };
+
+  // Handler for closing fullscreen preview
+  const handleCloseFullScreen = () => {
+    setFullScreenOpen(false);
+    setFullScreenContent(null);
   };
 
   // Build query string with default values for snippets
@@ -635,8 +650,15 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           {/* Preview Section */}
           <div style={{ flex: 1, minHeight: 400 }}>
-            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-              Live Preview
+            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Live Preview</span>
+              <Button
+                type="text"
+                size="small"
+                icon={<FullscreenOutlined />}
+                onClick={() => handleOpenFullScreen(webAppUrl, 'Web App Preview')}
+                style={{ fontSize: 14 }}
+              />
             </div>
             <div style={{
               width: '100%',
@@ -750,8 +772,15 @@ const AppsView: React.FC<AppsViewProps> = ({
 
                     {/* Preview */}
                     <div style={{ marginTop: 'auto' }}>
-                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                        Live Preview
+                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>Live Preview</span>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<FullscreenOutlined />}
+                          onClick={() => handleOpenFullScreen(snippetUrl, `${template.name} - Snippet Mode`)}
+                          style={{ fontSize: 14 }}
+                        />
                       </div>
                       <div style={{
                         width: '100%',
@@ -827,8 +856,15 @@ const AppsView: React.FC<AppsViewProps> = ({
 
                     {/* Preview */}
                     <div style={{ marginTop: 'auto' }}>
-                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                        Live Preview
+                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>Live Preview</span>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<FullscreenOutlined />}
+                          onClick={() => handleOpenFullScreen(interactiveUrl, `${template.name} - Interactive Mode`)}
+                          style={{ fontSize: 14 }}
+                        />
                       </div>
                       <div style={{
                         width: '100%',
@@ -877,14 +913,14 @@ const AppsView: React.FC<AppsViewProps> = ({
       children: (webAppToken || isDemoMode) ? [
         {
           key: 'webapp',
-          label: 'My Web App'
+          label: 'Default App'
         }
       ] : []
     },
     {
       key: 'templates-folder',
       icon: <FolderOutlined />,
-      label: 'Templates',
+      label: 'Web Snippets',
       children: Object.values(SYSTEM_TEMPLATES).map(template => ({
         key: template.id,
         label: template.name
@@ -999,6 +1035,25 @@ const AppsView: React.FC<AppsViewProps> = ({
           </Button>
         </div>
       </Modal>
+
+      {/* Full Screen Preview */}
+      <FullScreenPreview
+        open={fullScreenOpen}
+        onClose={handleCloseFullScreen}
+        title={fullScreenContent?.title}
+      >
+        {fullScreenContent && (
+          <iframe
+            src={fullScreenContent.url}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none'
+            }}
+            title={fullScreenContent.title}
+          />
+        )}
+      </FullScreenPreview>
     </div>
   );
 };
