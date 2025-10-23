@@ -19,6 +19,8 @@ interface Input {
   value?: any;
   allowedValues?: string[];
   defaultValue?: any;
+  format?: 'percentage'; // Indicates if this is a percentage input
+  formatString?: string; // Display format (e.g., "€#,##0.00", "#,##0.0 kg", "0.0%")
 }
 
 interface Output {
@@ -518,6 +520,31 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     }
   };
 
+  // Parse formatString to extract prefix, suffix, decimals, and thousands separator
+  const parseFormatString = useCallback((formatStr: string | undefined): {
+    prefix: string;
+    suffix: string;
+    decimals: number;
+    hasThousands: boolean;
+    isPercentage: boolean;
+  } => {
+    if (!formatStr) {
+      return { prefix: '', suffix: '', decimals: 2, hasThousands: false, isPercentage: false };
+    }
+
+    const isPercentage = formatStr.includes('%');
+    const prefixMatch = formatStr.match(/^([^#0,.%]+)/);
+    const suffixMatch = formatStr.match(/([^#0,.%]+)$/);
+    const decimalMatch = formatStr.match(/\.0+/);
+    const hasThousands = formatStr.includes(',');
+
+    const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
+    const prefix = prefixMatch ? prefixMatch[1].trim() : '';
+    const suffix = suffixMatch ? suffixMatch[1].trim() : '';
+
+    return { prefix, suffix, decimals, hasThousands, isPercentage };
+  }, []);
+
   // Smart step size calculator - aims for ~2-5% steps
   const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
     // Convert to numbers in case they're strings
@@ -617,9 +644,33 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     }
 
     if (input.type === 'number') {
-      // Ensure min/max are numbers
-      const minValue = input.min !== undefined ? Number(input.min) : undefined;
-      const maxValue = input.max !== undefined ? Number(input.max) : undefined;
+      // Ensure min/max are numbers (treat empty strings and null as undefined)
+      // Note: Redis can return these as strings or empty strings
+      const parseMinMax = (val: any): number | undefined => {
+        if (val === undefined || val === null || val === '') return undefined;
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+      };
+      const minValue = parseMinMax(input.min);
+      const maxValue = parseMinMax(input.max);
+
+      // Check if this is a percentage field
+      // For inputs: format is a string 'percentage'
+      // For outputs: formatString contains '%'
+      const isPercentage = input.format === 'percentage' || input.formatString?.includes('%');
+
+      // Parse formatString to get prefix, suffix, decimals
+      const formatInfo = parseFormatString(input.formatString);
+
+      // Use decimals from formatInfo (parsed from formatString)
+      const decimals = formatInfo.decimals;
+
+      // Create number formatter with proper decimal places
+      const numberFormatter = new Intl.NumberFormat(userLocale, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: formatInfo.hasThousands
+      });
 
       const hasRange = minValue !== undefined && maxValue !== undefined && !isNaN(minValue) && !isNaN(maxValue);
       const rangeSize = hasRange ? maxValue! - minValue! : 0;
@@ -628,52 +679,86 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       if (useSlider) {
         // Combined Slider + InputNumber for best UX
         // Use a custom component to synchronize both controls
-        const SliderWithInput = ({ value, onChange }: { value?: number; onChange?: (val: number) => void }) => (
-          <Row gutter={16} align="middle">
-            <Col flex="auto">
-              <Slider
-                value={value}
-                onChange={onChange}
-                min={minValue}
-                max={maxValue}
-                step={getSmartStep(input.value, minValue, maxValue)}
-                tooltip={{
-                  formatter: (val) => {
-                    if (val === null || val === undefined) return '';
-                    const num = typeof val === 'number' ? val : parseFloat(val);
-                    if (isNaN(num)) return '';
+        const SliderWithInput = ({ value, onChange }: { value?: number; onChange?: (val: number) => void }) => {
+          // For percentage: display value is stored value * 100
+          const displayValue = isPercentage && value !== undefined ? value * 100 : value;
+          const displayMin = isPercentage && minValue !== undefined ? minValue * 100 : minValue;
+          const displayMax = isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue;
+          const displayStep = isPercentage ? getSmartStep(input.value ? input.value * 100 : undefined, displayMin, displayMax) : getSmartStep(input.value, minValue, maxValue);
+
+          return (
+            <Row gutter={16} align="middle">
+              <Col flex="auto">
+                <Slider
+                  value={displayValue}
+                  onChange={(val) => onChange?.(isPercentage ? val / 100 : val)}
+                  min={displayMin}
+                  max={displayMax}
+                  step={displayStep}
+                  tooltip={{
+                    formatter: (val) => {
+                      if (val === null || val === undefined) return '';
+                      const num = typeof val === 'number' ? val : parseFloat(val);
+                      if (isNaN(num)) return '';
+
+                      // Use formatString if available
+                      if (input.formatString) {
+                        return `${formatInfo.prefix}${numberFormatter.format(num)}${formatInfo.suffix}${isPercentage ? '%' : ''}`;
+                      }
+
+                      // Fallback to default formatting
+                      if (Number.isInteger(num)) {
+                        return formatters.integer.format(num);
+                      }
+                      return formatters.decimal.format(num);
+                    }
+                  }}
+                />
+              </Col>
+              <Col flex="120px">
+                <InputNumber
+                  value={displayValue}
+                  onChange={(val) => onChange?.(isPercentage && val !== null && val !== undefined ? val / 100 : val)}
+                  style={{ width: '100%' }}
+                  min={displayMin}
+                  max={displayMax}
+                  step={displayStep}
+                  size="middle"
+                  keyboard={true}
+                  formatter={(val) => {
+                    if (!val) return '';
+                    const num = parseFloat(val.toString());
+                    if (isNaN(num)) return val.toString();
+
+                    // Use formatString if available
+                    if (input.formatString) {
+                      return `${formatInfo.prefix}${numberFormatter.format(num)}${formatInfo.suffix}${isPercentage ? '%' : ''}`;
+                    }
+
+                    // Fallback to default formatting
                     if (Number.isInteger(num)) {
                       return formatters.integer.format(num);
                     }
                     return formatters.decimal.format(num);
-                  }
-                }}
-              />
-            </Col>
-            <Col flex="120px">
-              <InputNumber
-                value={value}
-                onChange={onChange}
-                style={{ width: '100%' }}
-                min={minValue}
-                max={maxValue}
-                step={getSmartStep(input.value, minValue, maxValue)}
-                size="middle"
-                keyboard={true}
-                formatter={(val) => {
-                  if (!val) return '';
-                  const num = parseFloat(val.toString());
-                  if (isNaN(num)) return val.toString();
-                  if (Number.isInteger(num)) {
-                    return formatters.integer.format(num);
-                  }
-                  return formatters.decimal.format(num);
-                }}
-                parser={parseLocaleNumber}
-              />
-            </Col>
-          </Row>
-        );
+                  }}
+                  parser={(val) => {
+                    if (!val) return 0;
+                    // Remove prefix, suffix, and percentage sign
+                    let cleanedValue = val.toString();
+                    if (formatInfo.prefix) {
+                      cleanedValue = cleanedValue.replace(formatInfo.prefix, '');
+                    }
+                    if (formatInfo.suffix) {
+                      cleanedValue = cleanedValue.replace(formatInfo.suffix, '');
+                    }
+                    cleanedValue = cleanedValue.replace('%', '').trim();
+                    return parseLocaleNumber(cleanedValue);
+                  }}
+                />
+              </Col>
+            </Row>
+          );
+        };
 
         return (
           <Form.Item
@@ -689,6 +774,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       }
 
       // Regular InputNumber without slider
+      // For percentage fields: transform between display (percentage) and storage (decimal)
+      const displayMin = isPercentage && minValue !== undefined ? minValue * 100 : minValue;
+      const displayMax = isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue;
+      const displayStep = isPercentage ? getSmartStep(input.value ? input.value * 100 : undefined, displayMin, displayMax) : getSmartStep(input.value, minValue, maxValue);
+
       return (
         <Form.Item
           key={fieldName}
@@ -696,12 +786,14 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           label={label}
           rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
+          normalize={isPercentage ? (value) => (value !== null && value !== undefined ? value / 100 : value) : undefined}
+          getValueProps={isPercentage ? (value) => ({ value: value !== null && value !== undefined ? value * 100 : value }) : undefined}
         >
           <InputNumber
             style={{ width: '100%' }}
-            min={minValue}
-            max={maxValue}
-            step={getSmartStep(input.value, minValue, maxValue)}
+            min={displayMin}
+            max={displayMax}
+            step={displayStep}
             placeholder={`${t('enter')} ${input.title || input.name}`}
             size="middle"
             keyboard={true}
@@ -709,12 +801,31 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
               if (!value) return '';
               const num = parseFloat(value.toString());
               if (isNaN(num)) return value.toString();
+
+              // Use formatString if available
+              if (input.formatString) {
+                return `${formatInfo.prefix}${numberFormatter.format(num)}${formatInfo.suffix}${isPercentage ? '%' : ''}`;
+              }
+
+              // Fallback to default formatting
               if (Number.isInteger(num)) {
                 return formatters.integer.format(num);
               }
               return formatters.decimal.format(num);
             }}
-            parser={parseLocaleNumber}
+            parser={(val) => {
+              if (!val) return 0;
+              // Remove prefix, suffix, and percentage sign
+              let cleanedValue = val.toString();
+              if (formatInfo.prefix) {
+                cleanedValue = cleanedValue.replace(formatInfo.prefix, '');
+              }
+              if (formatInfo.suffix) {
+                cleanedValue = cleanedValue.replace(formatInfo.suffix, '');
+              }
+              cleanedValue = cleanedValue.replace('%', '').trim();
+              return parseLocaleNumber(cleanedValue);
+            }}
           />
         </Form.Item>
       );
@@ -766,7 +877,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         />
       </Form.Item>
     );
-  }, [formatters, t]);
+  }, [formatters, t, parseFormatString, parseLocaleNumber, userLocale]);
 
   return (
     <ConfigProvider

@@ -40,7 +40,7 @@ export interface InputDefinition {
   max?: number;
   description?: string;
   format?: 'percentage';
-  percentageDecimals?: number;
+  formatString?: string; // Display format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.0%")
   aiExamples?: string[];
   allowedValues?: string[];
   allowedValuesRange?: string;

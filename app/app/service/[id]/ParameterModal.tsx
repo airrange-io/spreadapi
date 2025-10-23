@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented } from 'antd';
+import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { validateRangeFormat } from '@/lib/rangeValidation';
 
@@ -22,7 +22,7 @@ interface InputDefinition {
   max?: number;
   description?: string;
   format?: 'percentage';
-  percentageDecimals?: number;
+  formatString?: string; // Display format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.0%")
   aiExamples?: string[];
   allowedValues?: string[];
   allowedValuesRange?: string;
@@ -287,10 +287,18 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         layout="vertical"
         variant={'filled'}
         onFinish={(values) => {
+          // For input parameters, detect and set format based on formatString
+          let processedValues = { ...values };
+          if (parameterType === 'input' && values.formatString) {
+            if (values.formatString.includes('%')) {
+              processedValues.format = 'percentage';
+            }
+          }
+
           // Add parsed address data to the values
           if (parsedAddress) {
             onSubmit({
-              ...values,
+              ...processedValues,
               address: parsedAddress.normalized,
               row: parsedAddress.row,
               col: parsedAddress.col,
@@ -300,7 +308,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           } else if (editingParameter) {
             // For editing, keep existing row/col if address wasn't changed
             onSubmit({
-              ...values,
+              ...processedValues,
               address: values.address || editingParameter.address,
               row: editingParameter.row,
               col: editingParameter.col,
@@ -310,7 +318,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           } else {
             // For new parameters, use cell info
             onSubmit({
-              ...values,
+              ...processedValues,
               address: values.address || selectedCellInfo?.address,
               row: selectedCellInfo?.row,
               col: selectedCellInfo?.col,
@@ -471,8 +479,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                 message="Range Selection"
                 description={`This is a range of ${parsedAddress.rowCount} rows × ${parsedAddress.colCount} columns. The entire range will be returned as an array of values.`}
                 type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
               />
             )}
 
@@ -481,31 +488,36 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                 message="Range Selection"
                 description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
                 type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
               />
             )}
 
-            {selectedCellInfo?.format?.isPercentage && parameterType === 'input' && (
+            {/* {selectedCellInfo?.format?.isPercentage && parameterType === 'input' && (
               <Alert
-                message="Percentage Format Detected"
-                description="This cell is formatted as a percentage in Excel. Users should enter decimal values (e.g., 0.05 for 5%)."
+                description="This cell is formatted as a percentage in Excel. The format will be applied to the web app input field."
                 type="info"
+                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
                 showIcon
-                style={{ marginBottom: 16 }}
               />
-            )}
+            )} */}
 
-            {/* Format String - Only for Output Parameters */}
-            {parameterType === 'output' && (
-              <Form.Item
-                label="Format String (Optional)"
-                name="formatString"
-                help="Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date"
-              >
-                <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg" />
-              </Form.Item>
-            )}
+            {/* Format String - For both Input and Output Parameters */}
+            <Form.Item
+              label={
+                <Space>
+                  {parameterType === 'input' ? "Display Format (Optional)" : "Format String (Optional)"}
+                  <Tooltip title={parameterType === 'input'
+                    ? "How this input appears in web apps. Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%"
+                    : "Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date"
+                  }>
+                    <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+                  </Tooltip>
+                </Space>
+              }
+              name="formatString"
+            >
+              <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
+            </Form.Item>
 
             {parameterType === 'input' && (
               <>

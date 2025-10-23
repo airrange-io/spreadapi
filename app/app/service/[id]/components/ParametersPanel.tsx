@@ -220,7 +220,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           format: param.format,
           formatter: param.formatter,
           isPercentage: param.format === 'percentage',
-          percentageDecimals: param.percentageDecimals || 0,
           currencySymbol: param.currencySymbol,
           decimals: param.decimals,
           thousandsSeparator: param.thousandsSeparator
@@ -422,7 +421,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           cellFormat = {
             formatter: formatterString,
             isPercentage: false,
-            percentageDecimals: 0,
             format: null, // Generic format type: 'percentage', 'currency', 'date', etc.
             // JavaScript-friendly metadata
             currencySymbol: null,
@@ -438,7 +436,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               // Extract decimal places from format like "0.00%"
               const match = formatterString.match(/0\.(0+)%/);
               if (match) {
-                cellFormat.percentageDecimals = match[1].length;
                 cellFormat.decimals = match[1].length;
               } else {
                 cellFormat.decimals = 0;
@@ -927,7 +924,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     // Use new format from selectedCellInfo if available, otherwise preserve existing format
                     ...(selectedCellInfo?.format?.isPercentage ? {
                       format: 'percentage' as const,
-                      percentageDecimals: selectedCellInfo.format.percentageDecimals,
                       // Add AI examples to help AI understand decimal format
                       aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
                         ? newParam.aiExamples
@@ -935,7 +931,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     } : p.format === 'percentage' ? {
                       // Preserve existing percentage format
                       format: 'percentage' as const,
-                      percentageDecimals: p.percentageDecimals,
                       aiExamples: p.aiExamples && p.aiExamples.length > 0
                         ? p.aiExamples
                         : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
@@ -949,7 +944,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                     colCount: selectedCellInfo.colCount,
                     ...(selectedCellInfo?.format?.isPercentage && {
                       format: 'percentage' as const,
-                      percentageDecimals: selectedCellInfo.format.percentageDecimals,
                       // Add AI examples to help AI understand decimal format
                       aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
                         ? newParam.aiExamples

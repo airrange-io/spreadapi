@@ -159,7 +159,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
                 };
                 input.click();
               }}
-              style={{ padding: 0, height: 'auto', fontSize: 12 }}
+              style={{ padding: 0, height: 'auto', fontSize: 12, color: '#502D80' }}
             >
               Import an existing Service Package
             </Button>

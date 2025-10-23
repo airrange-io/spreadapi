@@ -143,6 +143,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [workbookLoading, setWorkbookLoading] = useState(false); // Track workbook loading state
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
+  const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const [showApiDefinitionModal, setShowApiDefinitionModal] = useState(false); // View API Definition modal
@@ -448,6 +449,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Skip if component unmounted (prevents double fetch in StrictMode)
       if (!mounted) return;
 
+      // Skip if we're importing a service package
+      if (isImporting) {
+        console.log('[Load] Skipping API load - importing service package');
+        return;
+      }
+
       // Parallel load all data for optimal performance
       setLoadingMessage('Loading service data...');
 
@@ -646,7 +653,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       mounted = false;
       controller.abort();
     };
-  }, [serviceId, isMobile]);
+  }, [serviceId, isMobile, isImporting]);
 
   // Handle initial loading state based on spreadsheet data
   useEffect(() => {
@@ -984,6 +991,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Get workbook JSON
       const workbookJSON = spreadInstance.toJSON();
 
+      console.log('[Export] Workbook JSON:', workbookJSON);
+      console.log('[Export] ApiConfig:', {
+        inputs: apiConfig.inputs,
+        outputs: apiConfig.outputs,
+        areas: apiConfig.areas
+      });
+
       // Create service package with all configuration
       const servicePackage = {
         version: '1.0.0',
@@ -992,14 +1006,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           name: apiConfig.name || 'Untitled Service',
           description: apiConfig.description || '',
           aiDescription: apiConfig.aiDescription || '',
+          aiUsageGuidance: apiConfig.aiUsageGuidance || '',
+          aiUsageExamples: apiConfig.aiUsageExamples || [],
+          aiTags: apiConfig.aiTags || [],
+          category: apiConfig.category || '',
           requireToken: apiConfig.requireToken || false,
           enableCaching: apiConfig.enableCaching !== false,
+          cacheTableSheetData: apiConfig.cacheTableSheetData !== false,
+          tableSheetCacheTTL: apiConfig.tableSheetCacheTTL || 300,
           inputs: apiConfig.inputs || [],
           outputs: apiConfig.outputs || [],
           areas: apiConfig.areas || [],
+          webAppToken: apiConfig.webAppToken || '',
+          webAppConfig: apiConfig.webAppConfig || '',
+          webAppTheme: apiConfig.webAppTheme || 'default',
+          customThemeParams: apiConfig.customThemeParams || '',
           workbook: workbookJSON
         }
       };
+
+      console.log('[Export] Service package:', servicePackage);
 
       // Create and download JSON file
       const blob = new Blob([JSON.stringify(servicePackage, null, 2)], { type: 'application/json' });
@@ -1570,6 +1596,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Handle Service Package import
   const handleImportServicePackage = useCallback(async (file: File) => {
     try {
+      // Set importing flag to prevent config from being overwritten by API load
+      setIsImporting(true);
       message.loading('Importing service package...', 0);
 
       const reader = new FileReader();
@@ -1578,6 +1606,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           const jsonContent = e.target?.result as string;
           const servicePackage = JSON.parse(jsonContent);
 
+          console.log('[Import] Parsed service package:', servicePackage);
+
           // Validate package structure
           if (!servicePackage.version || !servicePackage.service) {
             throw new Error('Invalid service package format');
@@ -1585,23 +1615,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           const { service } = servicePackage;
 
-          // First, set the configuration
-          setApiConfig(prev => ({
-            ...prev,
-            name: service.name || 'Imported Service',
-            description: service.description || '',
-            aiDescription: service.aiDescription || '',
-            requireToken: service.requireToken || false,
-            enableCaching: service.enableCaching !== false,
-            inputs: service.inputs || [],
-            outputs: service.outputs || [],
-            areas: service.areas || []
-          }));
+          console.log('[Import] Service data:', {
+            name: service.name,
+            inputs: service.inputs,
+            outputs: service.outputs,
+            hasWorkbook: !!service.workbook
+          });
 
-          // Mark config as changed so it can be saved
-          setConfigHasChanges(true);
-
-          // Then, load the workbook
+          // First, hide empty state and load the workbook
           if (service.workbook) {
             setShowEmptyState(false);
             setSpreadsheetData({
@@ -1614,23 +1635,64 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             setDefaultSpreadsheetData();
           }
 
+          // Small delay to ensure workbook loads first
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Then, set the configuration (include ALL properties)
+          setApiConfig(prev => {
+            const newConfig = {
+              ...prev,
+              name: service.name || 'Imported Service',
+              description: service.description || '',
+              aiDescription: service.aiDescription || '',
+              aiUsageGuidance: service.aiUsageGuidance || '',
+              aiUsageExamples: service.aiUsageExamples || [],
+              aiTags: service.aiTags || [],
+              category: service.category || '',
+              requireToken: service.requireToken || false,
+              enableCaching: service.enableCaching !== false,
+              cacheTableSheetData: service.cacheTableSheetData !== false,
+              tableSheetCacheTTL: service.tableSheetCacheTTL || 300,
+              inputs: service.inputs || [],
+              outputs: service.outputs || [],
+              areas: service.areas || [],
+              webAppToken: service.webAppToken || '',
+              webAppConfig: service.webAppConfig || '',
+              webAppTheme: service.webAppTheme || 'default',
+              customThemeParams: service.customThemeParams || ''
+            };
+            console.log('[Import] Setting apiConfig:', newConfig);
+            return newConfig;
+          });
+
+          // Set config as loaded
+          setConfigLoaded(true);
+
+          // Mark config as changed so it can be saved
+          setConfigHasChanges(true);
+
           message.destroy();
           message.success('Service package imported successfully! Remember to save your changes.');
         } catch (error: any) {
+          console.error('[Import] Error:', error);
           message.destroy();
           message.error('Failed to parse service package: ' + (error.message || 'Invalid JSON'));
+          setIsImporting(false);
         }
       };
 
       reader.onerror = () => {
         message.destroy();
         message.error('Failed to read file');
+        setIsImporting(false);
       };
 
       reader.readAsText(file);
     } catch (error: any) {
+      console.error('[Import] Outer error:', error);
       message.destroy();
       message.error('Failed to import service package: ' + (error.message || 'Unknown error'));
+      setIsImporting(false);
     }
   }, []);
 
