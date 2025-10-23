@@ -34,13 +34,14 @@ interface WorkbookViewProps {
   isDemoMode: boolean;
   zoomLevel: number;
   onWorkbookInit: (instance: any) => void;
-  onEmptyStateAction: (action: 'start' | 'import', file?: File) => void;
+  onEmptyStateAction: (action: 'start' | 'import' | 'importPackage', file?: File) => void;
   onZoomHandlerReady?: (handler: (zoom: number) => void) => void;
   onEditableAreaAdd?: (area: any) => void;
   onEditableAreaUpdate?: (area: any) => void;
   onEditableAreaRemove?: (areaId: string) => void;
   onImportExcel?: (file: File) => void;
   onWorkbookChange?: () => void;
+  onImportServicePackage?: (file: File) => void;
 }
 
 const WorkbookView = forwardRef<any, WorkbookViewProps>(({
@@ -55,7 +56,8 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   onEditableAreaUpdate,
   onEditableAreaRemove,
   onImportExcel,
-  onWorkbookChange
+  onWorkbookChange,
+  onImportServicePackage
 }, ref) => {
   const [mounted, setMounted] = React.useState(false);
 
@@ -68,6 +70,7 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
       <EmptyWorkbookState
         onStartFromScratch={() => onEmptyStateAction('start')}
         onImportFile={(file) => onEmptyStateAction('import', file)}
+        onImportServicePackage={onImportServicePackage}
       />
     );
   }

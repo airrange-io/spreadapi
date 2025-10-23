@@ -136,12 +136,33 @@ const ApiView: React.FC<ApiViewProps> = ({
       />
     );
 
+    // Generate example parameter values from inputs
+    const parameterValues: Record<string, any> = {};
+    (apiConfig.inputs || []).forEach((input: any) => {
+      // Generate example value based on input type
+      if (input.type === 'number') {
+        // Use default value or generate based on constraints
+        if (input.default !== undefined && input.default !== null) {
+          parameterValues[input.name] = input.default;
+        } else if (input.min !== undefined) {
+          parameterValues[input.name] = input.min;
+        } else if (input.max !== undefined) {
+          parameterValues[input.name] = Math.round(input.max * 0.5);
+        } else {
+          parameterValues[input.name] = 100; // Default numeric value
+        }
+      } else {
+        // String type
+        parameterValues[input.name] = input.default || input.name;
+      }
+    });
+
     // Prepare common props for integration examples
     const exampleProps = {
       serviceId,
       serviceName: apiConfig.name,
       requireToken: apiConfig.requireToken,
-      parameterValues: {}, // Could be populated with example values
+      parameterValues,
       inputs: apiConfig.inputs || [],
       outputs: apiConfig.outputs || []
     };

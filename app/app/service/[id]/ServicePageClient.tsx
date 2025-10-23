@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
@@ -972,6 +972,54 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
+  const handleExportServicePackage = async () => {
+    try {
+      if (!spreadInstance) {
+        message.error('Spreadsheet not loaded');
+        return;
+      }
+
+      message.loading('Exporting service package...', 0);
+
+      // Get workbook JSON
+      const workbookJSON = spreadInstance.toJSON();
+
+      // Create service package with all configuration
+      const servicePackage = {
+        version: '1.0.0',
+        exportDate: new Date().toISOString(),
+        service: {
+          name: apiConfig.name || 'Untitled Service',
+          description: apiConfig.description || '',
+          aiDescription: apiConfig.aiDescription || '',
+          requireToken: apiConfig.requireToken || false,
+          enableCaching: apiConfig.enableCaching !== false,
+          inputs: apiConfig.inputs || [],
+          outputs: apiConfig.outputs || [],
+          areas: apiConfig.areas || [],
+          workbook: workbookJSON
+        }
+      };
+
+      // Create and download JSON file
+      const blob = new Blob([JSON.stringify(servicePackage, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(apiConfig.name || 'service').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_package.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      message.destroy();
+      message.success('Service package exported successfully');
+    } catch (error) {
+      message.destroy();
+      message.error('Failed to export package: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const isSavingRef = useRef(false);
 
   const handleSave = async () => {
@@ -1519,6 +1567,73 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     // The file will be imported once the workbook is initialized
   }, []);
 
+  // Handle Service Package import
+  const handleImportServicePackage = useCallback(async (file: File) => {
+    try {
+      message.loading('Importing service package...', 0);
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const jsonContent = e.target?.result as string;
+          const servicePackage = JSON.parse(jsonContent);
+
+          // Validate package structure
+          if (!servicePackage.version || !servicePackage.service) {
+            throw new Error('Invalid service package format');
+          }
+
+          const { service } = servicePackage;
+
+          // First, set the configuration
+          setApiConfig(prev => ({
+            ...prev,
+            name: service.name || 'Imported Service',
+            description: service.description || '',
+            aiDescription: service.aiDescription || '',
+            requireToken: service.requireToken || false,
+            enableCaching: service.enableCaching !== false,
+            inputs: service.inputs || [],
+            outputs: service.outputs || [],
+            areas: service.areas || []
+          }));
+
+          // Mark config as changed so it can be saved
+          setConfigHasChanges(true);
+
+          // Then, load the workbook
+          if (service.workbook) {
+            setShowEmptyState(false);
+            setSpreadsheetData({
+              type: 'json',
+              data: service.workbook
+            });
+          } else {
+            // If no workbook data, create empty spreadsheet
+            setShowEmptyState(false);
+            setDefaultSpreadsheetData();
+          }
+
+          message.destroy();
+          message.success('Service package imported successfully! Remember to save your changes.');
+        } catch (error: any) {
+          message.destroy();
+          message.error('Failed to parse service package: ' + (error.message || 'Invalid JSON'));
+        }
+      };
+
+      reader.onerror = () => {
+        message.destroy();
+        message.error('Failed to read file');
+      };
+
+      reader.readAsText(file);
+    } catch (error: any) {
+      message.destroy();
+      message.error('Failed to import service package: ' + (error.message || 'Unknown error'));
+    }
+  }, []);
+
   // Import the stored file once the workbook is ready
   useEffect(() => {
     if (importFileForEmptyState && spreadInstance && workbookRef.current) {
@@ -1806,6 +1921,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   label: 'Export to Excel',
                   icon: <FileExcelOutlined />,
                   onClick: () => handleExportToExcel()
+                },
+                {
+                  type: 'divider'
+                },
+                {
+                  key: 'export-package',
+                  label: 'Export Service Package',
+                  icon: <DownloadOutlined />,
+                  onClick: () => handleExportServicePackage(),
+                  disabled: !spreadInstance
                 }
               ]
             }}
@@ -1883,6 +2008,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           onEditableAreaRemove={handleEditableAreaRemove}
                           onImportExcel={handleImportExcel}
                           onWorkbookChange={handleWorkbookChange}
+                          onImportServicePackage={handleImportServicePackage}
                         />
                       )}
                     </div>
@@ -2019,6 +2145,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       onEditableAreaRemove={handleEditableAreaRemove}
                       onImportExcel={handleImportExcel}
                       onWorkbookChange={handleWorkbookChange}
+                      onImportServicePackage={handleImportServicePackage}
                     />
                   )}
                 </div>

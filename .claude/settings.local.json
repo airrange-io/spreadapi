@@ -39,7 +39,8 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm run typecheck:*)",
       "WebFetch(domain:ant.design)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Read(//Users/stephanmethner/Desktop/**)"
     ],
     "deny": []
   }

@@ -9,13 +9,15 @@ const { Title, Text } = Typography;
 interface EmptyWorkbookStateProps {
   onStartFromScratch: () => void;
   onImportFile: (file: File) => void;
+  onImportServicePackage?: (file: File) => void;
   isLoading?: boolean;
 }
 
-const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({ 
-  onStartFromScratch, 
+const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
+  onStartFromScratch,
   onImportFile,
-  isLoading = false 
+  onImportServicePackage,
+  isLoading = false
 }) => {
   const handleUpload = (file: File) => {
     // Validate file type
@@ -141,14 +143,35 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
           </Upload.Dragger>
         </Space>
 
-        <Text style={{
-          fontSize: 12,
-          color: '#bfbfbf',
-          marginTop: 40,
-          display: 'block'
-        }}>
-          Supported formats: .xlsx, .xls
-        </Text>
+        {onImportServicePackage && (
+          <div style={{ marginTop: 40, textAlign: 'center' }}>
+            <Button
+              type="link"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (file) {
+                    onImportServicePackage(file);
+                  }
+                };
+                input.click();
+              }}
+              style={{ padding: 0, height: 'auto', fontSize: 12 }}
+            >
+              Import an existing Service Package
+            </Button>
+            <Text style={{
+              fontSize: 12,
+              color: '#bfbfbf',
+              marginLeft: 8
+            }}>
+              (.json)
+            </Text>
+          </div>
+        )}
       </div>
     </div>
   );

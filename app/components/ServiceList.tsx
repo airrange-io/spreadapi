@@ -397,7 +397,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       cancelText="No"
                       okButtonProps={{ danger: true }}
                     >
-                      <span style={{ color: '#ff4d4f' }}>Delete</span>
+                      Delete
                     </Popconfirm>
                   ),
                   danger: true,
