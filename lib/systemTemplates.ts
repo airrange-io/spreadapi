@@ -14,6 +14,11 @@ export interface SystemTemplate {
     supportsInteractive: boolean;
     inputLayout: 'vertical' | 'horizontal' | 'grid';
     outputLayout: 'list' | 'grid' | 'table';
+    // View mode support for interactive templates:
+    // 'all' - shows both inputs and results (default)
+    // 'results' - shows only results with Edit button to switch to inputs
+    // 'inputs' - shows only inputs
+    // Controlled via URL parameter: &viewMode=results|inputs|all
   };
 }
 

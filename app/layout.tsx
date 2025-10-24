@@ -83,8 +83,12 @@ export default function RootLayout({
                 <AuthProvider>
                   {children}
                 </AuthProvider>
-                <SpeedInsights />
-                <Analytics />
+                {process.env.NODE_ENV === 'production' && (
+                  <>
+                    <SpeedInsights />
+                    <Analytics />
+                  </>
+                )}
               </App>
             </ConfigProvider>
           </AntdRegistry>

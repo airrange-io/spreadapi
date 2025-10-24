@@ -57,6 +57,7 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [fullScreenOpen, setFullScreenOpen] = useState(false);
   const [fullScreenContent, setFullScreenContent] = useState<{ url: string; title: string } | null>(null);
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('all');
 
   // Track fade-in effect separately
   useLayoutEffect(() => {
@@ -246,8 +247,9 @@ const AppsView: React.FC<AppsViewProps> = ({
     const queryString = getDefaultQueryString();
     const separator = queryString ? '&' : '?';
     const themeParam = buildThemeParam(true); // Always has params (token + interactive)
+    const viewModeParam = viewMode !== 'all' ? `&viewMode=${viewMode}` : '';
 
-    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}`;
+    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}${viewModeParam}`;
   };
 
   // Get iframe code for snippet
@@ -889,15 +891,30 @@ const AppsView: React.FC<AppsViewProps> = ({
 
                     {/* Preview */}
                     <div style={{ marginTop: 'auto' }}>
-                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span>Live Preview</span>
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<FullscreenOutlined />}
-                          onClick={() => handleOpenFullScreen(interactiveUrl, `${template.name} - Interactive Mode`)}
-                          style={{ fontSize: 14 }}
-                        />
+                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <span>Live Preview</span>
+                            <Select
+                              value={viewMode}
+                              onChange={setViewMode}
+                              size="small"
+                              style={{ width: 120, fontSize: 11 }}
+                              options={[
+                                { label: 'Show All', value: 'all' },
+                                { label: 'Results Only', value: 'results' },
+                                { label: 'Inputs Only', value: 'inputs' }
+                              ]}
+                            />
+                          </div>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<FullscreenOutlined />}
+                            onClick={() => handleOpenFullScreen(interactiveUrl, `${template.name} - Interactive Mode`)}
+                            style={{ fontSize: 14 }}
+                          />
+                        </div>
                       </div>
                       <div style={{
                         width: '100%',
@@ -909,6 +926,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                         backgroundColor: '#fff'
                       }}>
                         <iframe
+                          key={`interactive-${viewMode}`}
                           src={interactiveUrl}
                           style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
                           title={`${template.name} Interactive Preview`}

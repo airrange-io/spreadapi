@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { ConfigProvider, Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import type { ViewTheme } from '@/lib/viewThemes';
@@ -65,8 +65,27 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
   const abortControllerRef = useRef<AbortController | null>(null);
   const [lastCalculatedValues, setLastCalculatedValues] = useState<Record<string, any> | null>(null);
 
+  // View mode state: 'results' | 'inputs' | 'all'
+  const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>(() => {
+    if (typeof window === 'undefined') return 'all';
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('viewMode');
+    return (mode === 'results' || mode === 'inputs' || mode === 'all') ? mode : 'all';
+  });
+
   // Watch all form values for rule evaluation
   const formValues = Form.useWatch([], form);
+
+  // Auto-execute when in results-only mode on mount
+  useEffect(() => {
+    if (viewMode === 'results') {
+      // Small delay to ensure form is initialized
+      const timer = setTimeout(() => {
+        handleSubmit(form.getFieldsValue());
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Only run once on mount
 
   // Check if current form values differ from last calculated values
   // Only compare visible fields since hidden fields can't be changed by the user
@@ -96,7 +115,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       staleWarning: "Input values have changed. Click 'Calculate Results' to update.",
       error: 'Error',
       executionFailed: 'Failed to execute calculation',
-      spreadapi: 'SpreadAPI'
+      spreadapi: 'SpreadAPI',
+      edit: 'Edit',
+      showResults: 'Show Results',
+      showInputs: 'Show Inputs',
+      showAll: 'Show All'
     },
     de: {
       optional: 'Optional',
@@ -110,7 +133,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       staleWarning: 'Eingabewerte wurden geändert. Klicken Sie auf „Ergebnisse berechnen", um zu aktualisieren.',
       error: 'Fehler',
       executionFailed: 'Berechnung fehlgeschlagen',
-      spreadapi: 'SpreadAPI'
+      spreadapi: 'SpreadAPI',
+      edit: 'Bearbeiten',
+      showResults: 'Ergebnisse anzeigen',
+      showInputs: 'Eingaben anzeigen',
+      showAll: 'Alles anzeigen'
     }
   };
 
@@ -900,9 +927,26 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             borderRadius: themeStyles.contentBorderRadius
           }}
         >
-          <Title level={2} className="spreadapi-title" style={{ marginBottom: 24, color: themeStyles.headingColor || themeStyles.textColor }}>
-            {serviceData.name}
-          </Title>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <Title level={2} className="spreadapi-title" style={{ margin: 0, color: themeStyles.headingColor || themeStyles.textColor }}>
+              {serviceData.name}
+            </Title>
+
+            {/* View mode switcher - only show if results exist */}
+            {results && viewMode !== 'all' && (
+              <Button
+                size="small"
+                onClick={() => setViewMode(viewMode === 'results' ? 'inputs' : 'results')}
+                style={{
+                  fontSize: 12,
+                  padding: '4px 12px',
+                  height: 'auto'
+                }}
+              >
+                {viewMode === 'results' ? t('edit') : t('showResults')}
+              </Button>
+            )}
+          </div>
 
           {error && (
             <Alert
@@ -915,6 +959,8 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             />
           )}
 
+          {/* Input Form - hidden in results-only mode */}
+          {viewMode !== 'results' && (
           <Form
             className="spreadapi-form"
             form={form}
@@ -970,8 +1016,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
               </Button>
             </Form.Item>
           </Form>
+          )}
+          {/* End of input form */}
 
-          {results && (
+          {/* Results section - hidden in inputs-only mode */}
+          {results && viewMode !== 'inputs' && (
             <>
               {resultsAreStale && (
                 <Alert
