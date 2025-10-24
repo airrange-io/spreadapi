@@ -301,15 +301,11 @@ h1, h2, h3, h4, h5, h6,
       const handleSubmit = (e: Event) => {
         e.preventDefault();
 
-        // Transform percentage values BEFORE reading form data: display (0-100) -> storage (0-1)
+        // Get list of percentage input names for transformation
         const percentageInputs = form.querySelectorAll('input.percentage-input[data-is-percentage="true"]');
-        percentageInputs.forEach((input: any) => {
-          const displayValue = parseFloat(input.value);
-          if (!isNaN(displayValue)) {
-            // Transform: 42 -> 0.42
-            input.value = (displayValue / 100).toString();
-          }
-        });
+        const percentageInputNames = new Set(
+          Array.from(percentageInputs).map((input: any) => input.name)
+        );
 
         // Get current URL params (to preserve theme, etc.)
         const currentUrl = new URL(window.location.href);
@@ -327,9 +323,19 @@ h1, h2, h3, h4, h5, h6,
           }
         });
 
-        // Add form data
+        // Add form data with percentage transformation: display (0-100) -> storage (0-1)
         formData.forEach((value, key) => {
-          newParams.append(key, value.toString());
+          let finalValue = value.toString();
+
+          // Transform percentage values: 42 -> 0.42
+          if (percentageInputNames.has(key)) {
+            const numValue = parseFloat(finalValue);
+            if (!isNaN(numValue)) {
+              finalValue = (numValue / 100).toString();
+            }
+          }
+
+          newParams.append(key, finalValue);
         });
 
         // Add/update special params
