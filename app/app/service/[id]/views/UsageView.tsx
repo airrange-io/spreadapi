@@ -382,6 +382,105 @@ const UsageView: React.FC<UsageViewProps> = ({
         totalCalls={analytics.summary.totalCalls}
       />
 
+      {/* Cache Efficiency Card */}
+      {(analytics.cache.hits > 0 || analytics.cache.misses > 0) && (
+        <Card
+          title={
+            <span>
+              <DatabaseOutlined style={{ marginRight: 8 }} />
+              Cache Efficiency
+            </span>
+          }
+          size="small"
+          style={{ marginBottom: 16 }}
+          extra={
+            <Tag color={analytics.cache.hitRate >= 70 ? 'success' : analytics.cache.hitRate >= 40 ? 'warning' : 'default'}>
+              {analytics.cache.hitRate.toFixed(1)}% Hit Rate
+            </Tag>
+          }
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Total Requests"
+                value={analytics.cache.hits + analytics.cache.misses}
+                prefix={<ApiOutlined />}
+                valueStyle={{ fontSize: '18px' }}
+              />
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                All API calls (cached + calculated)
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Cache Hits"
+                value={analytics.cache.hits}
+                prefix={<ThunderboltOutlined />}
+                valueStyle={{ color: '#52c41a', fontSize: '18px' }}
+              />
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                Instant responses (~5ms)
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Statistic
+                title="Calculations"
+                value={analytics.cache.misses}
+                prefix={<CloudOutlined />}
+                valueStyle={{ color: COLORS.primary, fontSize: '18px' }}
+              />
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                Full spreadsheet computations
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ marginBottom: 8 }}>
+                <Text strong>Computation Saved</Text>
+              </div>
+              <Progress
+                percent={analytics.cache.hitRate}
+                status={analytics.cache.hitRate >= 70 ? 'success' : analytics.cache.hitRate >= 40 ? 'normal' : 'exception'}
+                format={(percent) => `${percent?.toFixed(1)}%`}
+                strokeColor={analytics.cache.hitRate >= 70 ? '#52c41a' : analytics.cache.hitRate >= 40 ? '#faad14' : undefined}
+              />
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
+                {analytics.cache.hits} requests served from cache
+              </div>
+            </Col>
+          </Row>
+
+          {analytics.cache.breakdown && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
+              <Text type="secondary" style={{ fontSize: 13 }}>
+                <strong>Cache Breakdown:</strong>
+                {' '}Process Cache: {analytics.cache.breakdown.process || 0}
+                {' '} • Redis Cache: {analytics.cache.breakdown.redis || 0}
+                {' '} • Blob Cache: {analytics.cache.breakdown.blob || 0}
+              </Text>
+            </div>
+          )}
+
+          <Alert
+            message="Understanding Cache Metrics"
+            description={
+              <div style={{ fontSize: 13 }}>
+                <p style={{ marginBottom: 8 }}>
+                  <strong>Total Requests:</strong> Every API call, whether cached or not, counts toward usage tracking.
+                </p>
+                <p style={{ marginBottom: 8 }}>
+                  <strong>Cache Hits:</strong> Identical calculations served instantly from cache without re-computation.
+                </p>
+                <p style={{ marginBottom: 0 }}>
+                  <strong>Actual Calculations:</strong> New or unique parameter combinations requiring full spreadsheet execution.
+                </p>
+              </div>
+            }
+            type="info"
+            style={{ marginTop: 16, padding: 10, paddingLeft: 15 }}
+          />
+        </Card>
+      )}
+
       {/* Last Updated and Refresh */}
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <Text type="secondary" style={{ fontSize: 12, color: '#888' }}>
