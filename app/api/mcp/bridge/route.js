@@ -242,21 +242,31 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
   }
   
   // Build tool description - prefer regular description, fallback to AI description
-  let description = publishedData.description || 
-                   publishedData.aiDescription || 
+  let description = publishedData.description ||
+                   publishedData.aiDescription ||
                    apiDefinition.description ||
-                   apiDefinition.aiDescription || 
+                   apiDefinition.aiDescription ||
                    `Service ${serviceId}`;
-  
+
   // If we have a title/name in published data, prepend it
   const serviceName = publishedData.title || publishedData.name;
   if (serviceName && !description.startsWith(serviceName)) {
     description = `${serviceName}: ${description}`;
   }
+
+  // Add helpful context about what this calculation does
+  const inputCount = apiDefinition.inputs?.length || 0;
+  const outputCount = apiDefinition.outputs?.length || 0;
+  description += `\n\n📊 This is a stateless spreadsheet calculation with ${inputCount} input parameter${inputCount !== 1 ? 's' : ''} and ${outputCount} output${outputCount !== 1 ? 's' : ''}. Provide all required inputs to get instant results (typically <100ms).`;
+
+  // Add usage example if available
+  if (apiDefinition.aiUsageExamples && apiDefinition.aiUsageExamples.length > 0) {
+    description += `\n\n💡 Example: ${apiDefinition.aiUsageExamples[0]}`;
+  }
   
   const tool = {
     name: `spreadapi_calc_${serviceId}`,
-    description: description.substring(0, 500), // Limit description length
+    description: description.substring(0, 800), // Limit description length (increased for teaching context)
     inputSchema: {
       type: 'object',
       properties,
@@ -363,28 +373,41 @@ async function executeService(serviceId, inputs) {
     
     // Format response for MCP
     let resultText = '';
-    
-    // Format outputs
+
+    // Format outputs with helpful context
     if (data.outputs || data.result) {
       const outputs = data.outputs || data.result;
-      resultText = 'Calculation Results:\n';
-      
+      const serviceName = apiDefinition.title || serviceId;
+
+      resultText = `✅ ${serviceName} - Calculation Complete\n\n`;
+      resultText += '📊 Results:\n';
+
       // Handle array format (from V1 API response)
       if (Array.isArray(outputs)) {
         outputs.forEach(output => {
-          resultText += `${output.name}: ${output.value}\n`;
+          // Use friendly title or fallback to name
+          const outputLabel = output.title || output.name;
+          // Format value if formatString is available
+          let displayValue = output.value;
+          if (output.formatString) {
+            displayValue = `${output.value} (${output.formatString})`;
+          }
+          resultText += `  • ${outputLabel}: ${displayValue}\n`;
         });
       } else {
         // Handle object format (legacy)
         for (const [key, value] of Object.entries(outputs)) {
-          resultText += `${key}: ${value}\n`;
+          resultText += `  • ${key}: ${value}\n`;
         }
       }
+
+      resultText += '\n💡 These are the final calculated outputs from the spreadsheet.';
+      resultText += ' To recalculate with different inputs, call this tool again (stateless, very fast).';
     }
-    
+
     // Add metadata if available
     if (data.metadata && data.metadata.executionTime) {
-      resultText += `\nCalculation time: ${data.metadata.executionTime}ms`;
+      resultText += `\n\n⚡ Completed in ${data.metadata.executionTime}ms`;
     }
     
     return {
@@ -485,9 +508,42 @@ async function handleJsonRpc(request, auth) {
           }
         } catch (error) {
           console.error('Error loading service list:', error);
-          // Fallback to simple description
-          response.serverInfo.description = `This MCP connection provides access to SpreadAPI calculation services.`;
-          response.serverInfo.instructions = `Call spreadapi_list_services() to see available services, then use spreadapi_get_service_details(serviceId) to learn about specific capabilities.`;
+          // Fallback to comprehensive description
+          response.serverInfo.description = `SpreadAPI: Spreadsheet Calculations as API Services
+
+This server provides access to Excel/Google Sheets spreadsheets that have been published as calculation APIs. Think of them as powerful, stateless calculators where you provide inputs and get calculated outputs instantly.
+
+🎯 Use Cases:
+• Financial calculations (taxes, insurance, loans, pricing)
+• Scientific formulas and engineering calculations
+• Business logic and data transformations
+• Complex multi-step computations
+
+📊 How It Works:
+1. Each service is a spreadsheet with defined input and output parameters
+2. You provide values for the inputs (required + optional)
+3. The spreadsheet calculates and returns the outputs in milliseconds
+4. All validation (types, ranges, enums) is handled automatically
+
+⚡ Key Characteristics:
+• STATELESS: Each calculation is independent - always provide all parameters
+• FAST: Optimized calculations typically complete in <100ms
+• BATCH-CAPABLE: You can request multiple parameter combinations at once
+• NO MEMORY: Services don't remember previous calculations`;
+
+          response.serverInfo.instructions = `🚀 Getting Started:
+1. Call spreadapi_list_services() to discover available calculators
+2. Use spreadapi_get_service_details(serviceId) to understand parameters
+3. Execute the service tool (spreadapi_calc_[serviceId]) with input values
+
+💡 Tips for Best Results:
+• Always provide ALL required parameters in each call (stateless)
+• Optional parameters have smart defaults applied automatically
+• Enum parameters accept numbered choices (1, 2, 3) or values
+• Percentages can be entered as decimals (0.42) or percentages (42%)
+• Boolean values accept multiple formats (true/false, yes/no, ja/nein)
+• For what-if scenarios, make multiple calls with different inputs (very fast!)
+• Check parameter constraints (min/max, allowed values) in the schema`;
         }
 
         return {
