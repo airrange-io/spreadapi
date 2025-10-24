@@ -71,10 +71,66 @@ select.boolean-select option[value="false"] {
   color: #f43f5e;
   text-align: center;
 }
+
+/* Percentage input - inline suffix */
+.percentage-input-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.percentage-input-wrapper input.percentage-input {
+  padding-right: 28px !important;
+  box-sizing: border-box;
+}
+
+.percentage-input-wrapper .percentage-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color, #595959);
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+/* Compact view - constrain percentage wrapper to input width */
+.compact-input .percentage-input-wrapper {
+  display: inline-block;
+  width: auto;
+}
+
+.compact-input .percentage-input-wrapper input.percentage-input {
+  width: 10ch;
+}
 `.trim();
 
-// Common JavaScript for template enhancements (currently unused)
-export const COMMON_INPUT_JS = ``;
+// Common JavaScript for template enhancements
+export const COMMON_INPUT_JS = `
+<script>
+// Transform percentage values on form submit: display (0-100) -> storage (0-1)
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('calc-form');
+  if (!form) return;
+
+  form.addEventListener('submit', function(e) {
+    // Find all percentage inputs and transform their values
+    const percentageInputs = form.querySelectorAll('input.percentage-input[data-is-percentage="true"]');
+    percentageInputs.forEach(function(input) {
+      const displayValue = parseFloat(input.value);
+      if (!isNaN(displayValue)) {
+        // Transform: 42 -> 0.42
+        input.value = (displayValue / 100).toString();
+      }
+    });
+  });
+});
+</script>
+`.trim();
 
 export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
   // ============================================

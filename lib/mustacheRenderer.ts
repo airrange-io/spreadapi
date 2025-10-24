@@ -110,7 +110,28 @@ export function generateOptimizedInput(input: any): string {
     </select>`;
   }
 
-  // 3. Regular input (fallback)
+  // 3. Percentage input - with % suffix and value transformation
+  const isPercentage = input.format === 'percentage' || input.formatString?.includes('%');
+  if (isPercentage) {
+    const inputType = getInputType(input.type);
+
+    // Transform value: storage (0-1) -> display (0-100)
+    const displayValue = value !== '' && value !== undefined && value !== null
+      ? (typeof value === 'number' ? value * 100 : parseFloat(value) * 100)
+      : '';
+
+    // Transform min/max for percentage display
+    const displayMin = input.min !== undefined ? input.min * 100 : undefined;
+    const displayMax = input.max !== undefined ? input.max * 100 : undefined;
+
+    const min = displayMin !== undefined ? ` min="${displayMin}"` : '';
+    const max = displayMax !== undefined ? ` max="${displayMax}"` : '';
+    const placeholder = input.placeholder ? ` placeholder="${input.placeholder}"` : '';
+
+    return `<div class="percentage-input-wrapper"><input id="${name}" type="${inputType}" name="${name}" value="${displayValue}"${min}${max}${placeholder} class="percentage-input" data-is-percentage="true"><span class="percentage-suffix">%</span></div>`;
+  }
+
+  // 4. Regular input (fallback)
   const inputType = getInputType(input.type);
   const min = input.min !== undefined ? ` min="${input.min}"` : '';
   const max = input.max !== undefined ? ` max="${input.max}"` : '';
