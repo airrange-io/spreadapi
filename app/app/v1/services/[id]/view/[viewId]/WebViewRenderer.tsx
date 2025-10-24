@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { SYSTEM_TEMPLATES, COMMON_INPUT_CSS, COMMON_INPUT_JS } from '@/lib/systemTemplates';
 import { renderTemplate, getInputType, formatValue, generateOptimizedInput } from '@/lib/mustacheRenderer';
 import { parseThemeFromQuery, applyThemeOverrides, generateThemeCSS, getAllSupportedParameters } from '@/lib/viewThemes';
@@ -23,6 +24,7 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
   token,
   inputsMetadata = []
 }) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [html, setHtml] = useState<string>('');
@@ -350,7 +352,7 @@ h1, h2, h3, h4, h5, h6,
         }
 
         const newUrl = window.location.pathname + '?' + newParams.toString();
-        window.location.href = newUrl;
+        router.push(newUrl);
       };
 
       form.addEventListener('submit', handleSubmit);
@@ -362,7 +364,7 @@ h1, h2, h3, h4, h5, h6,
           e.preventDefault();
           const url = new URL(window.location.href);
           url.searchParams.set('viewMode', 'inputs');
-          window.location.href = url.toString();
+          router.push(url.pathname + url.search);
         };
         editBtn.addEventListener('click', handleEdit);
 
@@ -378,7 +380,7 @@ h1, h2, h3, h4, h5, h6,
         form.removeEventListener('submit', handleSubmit);
       };
     }
-  }, [html, isInteractive, viewMode, token]);
+  }, [html, isInteractive, viewMode, token, router]);
 
   if (loading) {
     return (
