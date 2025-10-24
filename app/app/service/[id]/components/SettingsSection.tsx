@@ -1,9 +1,128 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Space, Input, Checkbox, Tooltip, Select } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+
+// Debounced Input component to prevent parent re-renders on every keystroke
+interface DebouncedInputProps {
+  defaultValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  delay?: number;
+}
+
+const DebouncedInput: React.FC<DebouncedInputProps> = ({
+  defaultValue = '',
+  onChange,
+  placeholder,
+  disabled,
+  delay = 500
+}) => {
+  const [value, setValue] = useState(defaultValue);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Update local state when defaultValue changes from parent
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    // Clear existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // Set new timer to call parent onChange after delay
+    timerRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, delay);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <Input
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+      disabled={disabled}
+    />
+  );
+};
+
+// Debounced TextArea component to prevent parent re-renders on every keystroke
+interface DebouncedTextAreaProps {
+  defaultValue?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+  disabled?: boolean;
+  delay?: number;
+}
+
+const DebouncedTextArea: React.FC<DebouncedTextAreaProps> = ({
+  defaultValue = '',
+  onChange,
+  placeholder,
+  rows,
+  disabled,
+  delay = 500
+}) => {
+  const [value, setValue] = useState(defaultValue);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Update local state when defaultValue changes from parent
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+
+    // Clear existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    // Set new timer to call parent onChange after delay
+    timerRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, delay);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <Input.TextArea
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+      rows={rows}
+      disabled={disabled}
+    />
+  );
+};
 
 interface SettingsSectionProps {
   apiName: string;
@@ -86,22 +205,24 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
           <Space direction="vertical" style={{ width: '100%' }} size={12}>
           <div>
             <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
-            <Input
+            <DebouncedInput
               placeholder="Enter service name"
-              value={apiName}
-              onChange={(e) => onApiNameChange(e.target.value)}
+              defaultValue={apiName}
+              onChange={onApiNameChange}
               disabled={isLoading}
+              delay={500}
             />
           </div>
 
           <div>
             <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
-            <Input.TextArea
+            <DebouncedTextArea
               placeholder="Describe what this API does"
-              value={apiDescription}
-              onChange={(e) => onApiDescriptionChange(e.target.value)}
+              defaultValue={apiDescription}
+              onChange={onApiDescriptionChange}
               rows={2}
               disabled={isLoading}
+              delay={500}
             />
           </div>
 
@@ -160,23 +281,25 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
             <div>
               <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
-              <Input.TextArea
+              <DebouncedTextArea
                 placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
-                value={aiDescription}
-                onChange={(e) => onAiDescriptionChange(e.target.value)}
+                defaultValue={aiDescription}
+                onChange={onAiDescriptionChange}
                 rows={3}
                 disabled={isLoading}
+                delay={500}
               />
             </div>
 
             <div>
               <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Guidance</div>
-              <Input.TextArea
+              <DebouncedTextArea
                 placeholder="When should AI use this service? E.g., 'Use when user wants to calculate mortgage payments or compare loan terms'"
-                value={aiUsageGuidance || ''}
-                onChange={(e) => onAiUsageGuidanceChange(e.target.value)}
+                defaultValue={aiUsageGuidance || ''}
+                onChange={onAiUsageGuidanceChange}
                 rows={2}
                 disabled={isLoading}
+                delay={500}
               />
             </div>
 
