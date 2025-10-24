@@ -757,7 +757,7 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
           },
           {
             name: 'spreadapi_save_state',
-            description: 'Save calculation results for later reference. WHEN TO USE: When the user says "remember this", "save this scenario", "let\'s compare this later", or when you want to preserve calculation results for multi-turn workflows. Examples: "Calculate my mortgage and save it", "Remember this as my baseline scenario".',
+            description: 'Save calculation results to enable scenario comparison and decision-making. PURPOSE: Since calculations are stateless (no memory), this tool bridges that gap - save multiple scenarios to compare later. WORKFLOW: Calculate → Save with descriptive label → Calculate alternative → Save → Compare → Make decision. WHEN TO USE: When user says "remember this", "save this scenario", "let\'s compare options", or when doing what-if analysis. Examples: "Calculate my 30-year mortgage and save it as baseline", "Save this as aggressive investment option".',
             inputSchema: {
               type: 'object',
               properties: {
@@ -775,7 +775,7 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
                 },
                 label: {
                   type: 'string',
-                  description: 'Human-readable label for this saved state (e.g., "30-year mortgage option", "aggressive investment scenario")'
+                  description: 'Descriptive label that helps user recall this scenario later (e.g., "30-year fixed mortgage", "conservative portfolio", "current salary scenario"). IMPORTANT: Use clear, distinctive labels since users compare multiple scenarios - avoid vague names like "option 1"'
                 },
                 ttl: {
                   type: 'number',
@@ -789,7 +789,7 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
           },
           {
             name: 'spreadapi_load_state',
-            description: 'Retrieve previously saved calculation results. WHEN TO USE: When the user refers to a previous calculation like "the mortgage we calculated earlier", "compare with the scenario I saved", or "show me that calculation again". This retrieves both inputs and outputs.',
+            description: 'Retrieve saved calculation to compare or reuse. PURPOSE: Load previous scenarios for side-by-side comparison or to build upon. Returns both original inputs AND calculated outputs. WHEN TO USE: When user says "compare with the baseline", "show me the 30-year option", "what were the numbers for scenario X?", or when preparing a comparison table. TIP: Load multiple saved states to create comparison summaries.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -804,7 +804,7 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
           },
           {
             name: 'spreadapi_list_saved_states',
-            description: 'List all saved calculation states for the current user. WHEN TO USE: When the user asks "what scenarios have I saved?", "show me my saved calculations", or when you need to help the user recall previous work. Returns a list with state IDs, labels, and metadata.',
+            description: 'Discover what scenarios the user has already calculated and saved. PURPOSE: Help user recall their previous work and see all saved options at a glance. WHEN TO USE: User asks "what scenarios did we calculate?", "show my saved options", "what were we comparing?", or proactively before suggesting new calculations to avoid duplicates. Returns state IDs (for loading), descriptive labels (user-friendly), service names, and timestamps.',
             inputSchema: {
               type: 'object',
               properties: {
