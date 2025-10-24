@@ -910,7 +910,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               // Map "array" type to "string" for backend compatibility (ranges are handled as JSON strings)
               const mappedType = dataType === 'array' ? 'string' : dataType;
               const newParam = {
-                ...selectedCellInfo,
+                // When editing, preserve all existing properties; when creating new, use selectedCellInfo
+                ...(editingParameter || selectedCellInfo),
                 ...otherValues,
                 type: mappedType, // Map dataType to type
                 id: editingParameter?.id || generateParameterId(),

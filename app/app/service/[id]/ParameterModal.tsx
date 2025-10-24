@@ -492,32 +492,45 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
               />
             )}
 
-            {/* {selectedCellInfo?.format?.isPercentage && parameterType === 'input' && (
-              <Alert
-                description="This cell is formatted as a percentage in Excel. The format will be applied to the web app input field."
-                type="info"
-                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
-                showIcon
-              />
-            )} */}
-
-            {/* Format String - For both Input and Output Parameters */}
-            <Form.Item
-              label={
-                <Space>
-                  {parameterType === 'input' ? "Display Format (Optional)" : "Format String (Optional)"}
-                  <Tooltip title={parameterType === 'input'
-                    ? "How this input appears in web apps. Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%"
-                    : "Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date"
-                  }>
-                    <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
-                  </Tooltip>
-                </Space>
-              }
-              name="formatString"
-            >
-              <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
-            </Form.Item>
+            {/* Format String - For Input Parameters: only show for numbers; For Output Parameters: show for all */}
+            {parameterType === 'input' ? (
+              <Form.Item
+                noStyle
+                shouldUpdate={(prevValues, currentValues) => prevValues.dataType !== currentValues.dataType}
+              >
+                {({ getFieldValue }) =>
+                  getFieldValue('dataType') === 'number' ? (
+                    <Form.Item
+                      label={
+                        <Space>
+                          Display Format (Optional)
+                          <Tooltip title="How this input appears in web apps. Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%">
+                            <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+                          </Tooltip>
+                        </Space>
+                      }
+                      name="formatString"
+                    >
+                      <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
+                    </Form.Item>
+                  ) : null
+                }
+              </Form.Item>
+            ) : (
+              <Form.Item
+                label={
+                  <Space>
+                    Format String (Optional)
+                    <Tooltip title="Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date">
+                      <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+                    </Tooltip>
+                  </Space>
+                }
+                name="formatString"
+              >
+                <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
+              </Form.Item>
+            )}
 
             {parameterType === 'input' && (
               <>

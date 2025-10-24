@@ -126,11 +126,6 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
                     {input.max !== undefined && `Max: ${input.max}`}
                   </div>
                 )}
-                {parameter.description && (
-                  <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                    {parameter.description}
-                  </div>
-                )}
               </Space>
             </Space>
           </div>

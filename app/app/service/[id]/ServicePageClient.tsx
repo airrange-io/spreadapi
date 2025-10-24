@@ -1720,7 +1720,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }, [hasAnyChanges]);
 
   const parametersPanel = (
-    <div ref={parametersPanelRef}>
+    <div ref={parametersPanelRef} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <ParametersPanel
         spreadInstance={spreadInstance}
         serviceId={serviceId}

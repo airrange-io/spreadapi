@@ -603,16 +603,9 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     const fieldName = input.name;
 
     const label = (
-      <div>
-        <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
-          {input.title || input.name}
-          {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
-        </div>
-        {input.description && (
-          <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginBottom: 4 }}>
-            {input.description}
-          </div>
-        )}
+      <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
+        {input.title || input.name}
+        {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
       </div>
     );
 
@@ -836,16 +829,9 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       const SwitchWithLabel = ({ checked, onChange }: { checked?: boolean; onChange?: (val: boolean) => void }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Switch checked={checked} onChange={onChange} />
-          <div>
-            <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
-              {input.title || input.name}
-              {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
-            </div>
-            {input.description && (
-              <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
-                {input.description}
-              </div>
-            )}
+          <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
+            {input.title || input.name}
+            {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
           </div>
         </div>
       );
