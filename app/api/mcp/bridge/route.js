@@ -176,25 +176,65 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
   if (apiDefinition.inputs && Array.isArray(apiDefinition.inputs)) {
     apiDefinition.inputs.forEach(input => {
       const paramName = input.name;
-      
-      // Build description with format hint
-      let description = input.description || `Parameter: ${input.name}`;
-      if (input.format === 'percentage') {
-        description += ' (Enter as decimal, e.g., 0.05 for 5%)';
+
+      // Use human-friendly title instead of technical parameter name
+      const friendlyName = input.title || input.name;
+
+      // Build user-friendly description starting with the friendly name
+      let description = friendlyName;
+      if (input.description) {
+        description += ': ' + input.description;
       }
-      
+
+      // Handle enum values (allowedValues) - provide numbered options
+      if (input.allowedValues && Array.isArray(input.allowedValues) && input.allowedValues.length > 0) {
+        const options = input.allowedValues
+          .map((val, idx) => `${idx + 1}. ${val}`)
+          .join(', ');
+        description += `. Options: ${options} (you can use the number or value)`;
+      }
+
+      // Handle boolean type - suggest localized values
+      else if (input.type === 'boolean') {
+        description += ' (true/false, yes/no, ja/nein, 1/0 accepted)';
+      }
+
+      // Handle percentage format
+      else if (input.format === 'percentage' || input.formatString?.includes('%')) {
+        description += ' (Enter as decimal: 0.42 for 42%, or as percentage: 42%)';
+      }
+
+      // Handle numeric ranges - always mention constraints
+      else if (input.type === 'number' && (input.min !== undefined || input.max !== undefined)) {
+        if (input.min !== undefined && input.max !== undefined) {
+          description += `. Must be between ${input.min} and ${input.max}`;
+        } else if (input.min !== undefined) {
+          description += `. Minimum: ${input.min}`;
+        } else if (input.max !== undefined) {
+          description += `. Maximum: ${input.max}`;
+        }
+      }
+
       const schema = {
-        type: input.type === 'number' ? 'number' : 'string',
+        type: input.type === 'number' ? 'number' :
+              input.type === 'boolean' ? 'boolean' : 'string',
         description: description
       };
-      
-      // Add constraints
-      if (input.min !== undefined) schema.minimum = input.min;
-      if (input.max !== undefined) schema.maximum = input.max;
-      
+
+      // Add enum constraint for allowed values (JSON Schema validation)
+      if (input.allowedValues && Array.isArray(input.allowedValues) && input.allowedValues.length > 0) {
+        schema.enum = input.allowedValues;
+      }
+
+      // Add numeric constraints (JSON Schema validation)
+      if (input.type === 'number') {
+        if (input.min !== undefined) schema.minimum = input.min;
+        if (input.max !== undefined) schema.maximum = input.max;
+      }
+
       properties[paramName] = schema;
-      
-      // Add to required if mandatory
+
+      // Only add to required if mandatory (defaults will be applied silently)
       if (input.mandatory !== false) {
         required.push(paramName);
       }
@@ -258,12 +298,63 @@ function serviceToMcpTool(serviceId, publishedData, apiDefinition) {
 
 
 /**
+ * Preprocess inputs to handle numbered options and localized values
+ */
+function preprocessInputs(inputs, apiDefinition) {
+  const processed = {};
+
+  for (const [key, value] of Object.entries(inputs)) {
+    const inputDef = apiDefinition.inputs?.find(i => i.name === key);
+
+    if (!inputDef) {
+      // Unknown parameter, pass through
+      processed[key] = value;
+      continue;
+    }
+
+    // Handle numbered option selection (e.g., "1" -> "Angestellt")
+    if (inputDef.allowedValues && Array.isArray(inputDef.allowedValues) && inputDef.allowedValues.length > 0) {
+      const numValue = parseInt(value);
+      if (!isNaN(numValue) && numValue >= 1 && numValue <= inputDef.allowedValues.length) {
+        processed[key] = inputDef.allowedValues[numValue - 1];
+        continue;
+      }
+    }
+
+    // Handle localized boolean values (ja/nein, wahr/falsch)
+    if (inputDef.type === 'boolean' && typeof value === 'string') {
+      const lower = value.toLowerCase().trim();
+      if (lower === 'ja' || lower === 'j' || lower === 'wahr') {
+        processed[key] = true;
+        continue;
+      }
+      if (lower === 'nein' || lower === 'falsch') {
+        processed[key] = false;
+        continue;
+      }
+    }
+
+    // Pass through as-is (validation happens in calculateDirect)
+    processed[key] = value;
+  }
+
+  return processed;
+}
+
+/**
  * Execute a service calculation using V1 API
  */
 async function executeService(serviceId, inputs) {
   try {
+    // Get API definition for input preprocessing
+    const apiData = await getApiDefinition(serviceId, null);
+    const apiDefinition = apiData.apiJson || apiData;
+
+    // Preprocess inputs (handle numbered options, localized values)
+    const processedInputs = preprocessInputs(inputs, apiDefinition);
+
     // Use V1 API direct calculation (no HTTP overhead)
-    const data = await calculateDirect(serviceId, inputs, null, {});
+    const data = await calculateDirect(serviceId, processedInputs, null, {});
 
     // Check for errors from calculateDirect
     if (data.error) {
@@ -1367,38 +1458,40 @@ async function handleJsonRpc(request, auth) {
             
             // Format output
             let responseText = `Found ${services.length} published services:\n\n`;
-            
+
             for (const service of services) {
-              responseText += `▶ ${service.title} (ID: ${service.id})\n`;
+              responseText += `▶ ${service.title}\n`;
               if (service.description) {
                 responseText += `   ${service.description}\n`;
               }
-              responseText += `   Type: `;
-              const types = [];
-              if (service.hasCalculation) types.push('Calculation');
-              if (service.hasAreas) types.push('Interactive Areas');
-              responseText += types.length > 0 ? types.join(' + ') : 'Unknown';
-              responseText += `\n`;
-              
+
+              // Add action-oriented prompts
+              if (service.hasCalculation) {
+                responseText += `   💡 To run this calculation, use: spreadapi_calc_${service.id}\n`;
+              }
+
               if (includeMetadata) {
                 if (service.hasCalculation) {
-                  responseText += `   Inputs: ${service.inputCount}, Outputs: ${service.outputCount}\n`;
+                  responseText += `   Parameters: ${service.inputCount} inputs, ${service.outputCount} outputs\n`;
                 }
                 if (service.needsToken !== undefined) {
-                  responseText += `   Token Required: ${service.needsToken ? 'Yes' : 'No'}\n`;
+                  responseText += `   Authentication: ${service.needsToken ? 'Required' : 'Optional'}\n`;
                 }
               }
-              
+
               if (includeAreas && service.areas) {
-                responseText += `   Areas:\n`;
+                responseText += `   Interactive areas available:\n`;
                 for (const area of service.areas) {
-                  responseText += `   - ${area.name}`;
-                    responseText += `: ${area.mode}`;
-                  responseText += ` [${area.address}]\n`;
+                  responseText += `     • ${area.name} (${area.mode}) [${area.address}]\n`;
                 }
               }
-              
-              responseText += `   Calls: ${service.calls}\n\n`;
+
+              responseText += `   Usage: ${service.calls} calls\n\n`;
+            }
+
+            // Add helpful closing message
+            if (services.length > 0) {
+              responseText += `\n💡 Tip: To run a service calculation, call the tool shown above (e.g., spreadapi_calc_${services[0].id}). I'll guide you through the required parameters.`;
             }
             
             return {
