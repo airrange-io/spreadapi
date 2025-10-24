@@ -301,6 +301,16 @@ h1, h2, h3, h4, h5, h6,
       const handleSubmit = (e: Event) => {
         e.preventDefault();
 
+        // Transform percentage values BEFORE reading form data: display (0-100) -> storage (0-1)
+        const percentageInputs = form.querySelectorAll('input.percentage-input[data-is-percentage="true"]');
+        percentageInputs.forEach((input: any) => {
+          const displayValue = parseFloat(input.value);
+          if (!isNaN(displayValue)) {
+            // Transform: 42 -> 0.42
+            input.value = (displayValue / 100).toString();
+          }
+        });
+
         // Get current URL params (to preserve theme, etc.)
         const currentUrl = new URL(window.location.href);
         const existingParams = new URLSearchParams(currentUrl.search);
