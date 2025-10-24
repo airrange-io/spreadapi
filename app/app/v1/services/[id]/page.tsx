@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import redis from '@/lib/redis';
 import WebAppClient from './WebAppClient';
-import { VIEW_THEMES, applyThemeOverrides, type ViewTheme } from '@/lib/viewThemes';
+import { VIEW_THEMES, applyThemeOverrides, type ViewTheme, generateWebAppThemeCSS, DEFAULT_WEBAPP_CSS } from '@/lib/viewThemes';
 import { isDemoService } from '@/lib/constants';
 
 interface PageProps {
@@ -186,8 +186,27 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       webAppConfig: serviceData.webAppConfig || ''
     };
 
+    // Get custom CSS if any (will be added in next step)
+    const customCss = serviceData.webAppCustomCss || '';
+
     // Pass pre-fetched data, language, and theme to client component
-    return <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} themeStyles={themeStyles} />;
+    return (
+      <>
+        {/* Inject CSS in correct cascade order:
+            1. CSS Variables (theme values)
+            2. Default CSS (base styles using variables)
+            3. Custom CSS (user overrides)
+        */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            ${generateWebAppThemeCSS(themeStyles)}
+            ${DEFAULT_WEBAPP_CSS}
+            ${customCss}
+          `
+        }} />
+        <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} themeStyles={themeStyles} />
+      </>
+    );
   } catch (error) {
     console.error('Error loading web app:', error);
     notFound();

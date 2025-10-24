@@ -603,9 +603,9 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     const fieldName = input.name;
 
     const label = (
-      <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
+      <div className="spreadapi-label" style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
         {input.title || input.name}
-        {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
+        {!input.mandatory && <Text type="secondary" className="spreadapi-label-optional" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
       </div>
     );
 
@@ -616,10 +616,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           key={fieldName}
           name={fieldName}
           label={label}
+          className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
           rules={[{ required: input.mandatory !== false, message: `${t('pleaseSelect')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
         >
           <Select
+            className={`spreadapi-select spreadapi-select-${fieldName}`}
             placeholder={`${t('select')} ${input.title || input.name}`}
             size="middle"
             showSearch
@@ -680,9 +682,10 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           const displayStep = isPercentage ? getSmartStep(input.value ? input.value * 100 : undefined, displayMin, displayMax) : getSmartStep(input.value, minValue, maxValue);
 
           return (
-            <Row gutter={16} align="middle">
+            <Row gutter={16} align="middle" className={`spreadapi-slider-container spreadapi-slider-container-${fieldName}`}>
               <Col flex="auto">
                 <Slider
+                  className={`spreadapi-slider spreadapi-slider-${fieldName}`}
                   value={displayValue}
                   onChange={(val) => onChange?.(isPercentage ? val / 100 : val)}
                   min={displayMin}
@@ -710,6 +713,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
               </Col>
               <Col flex="120px">
                 <InputNumber
+                  className={`spreadapi-input spreadapi-input-number spreadapi-input-${fieldName}`}
                   value={displayValue}
                   onChange={(val) => onChange?.(isPercentage && val !== null && val !== undefined ? val / 100 : val)}
                   style={{ width: '100%' }}
@@ -758,6 +762,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             key={fieldName}
             name={fieldName}
             label={label}
+            className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
             rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
             style={{ marginBottom: 12 }}
           >
@@ -777,12 +782,14 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           key={fieldName}
           name={fieldName}
           label={label}
+          className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
           rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
           normalize={isPercentage ? (value) => (value !== null && value !== undefined ? value / 100 : value) : undefined}
           getValueProps={isPercentage ? (value) => ({ value: value !== null && value !== undefined ? value * 100 : value }) : undefined}
         >
           <InputNumber
+            className={`spreadapi-input spreadapi-input-number spreadapi-input-${fieldName}`}
             style={{ width: '100%' }}
             min={displayMin}
             max={displayMax}
@@ -827,11 +834,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     if (input.type === 'boolean') {
       // Custom component to properly receive checked prop from Form.Item
       const SwitchWithLabel = ({ checked, onChange }: { checked?: boolean; onChange?: (val: boolean) => void }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Switch checked={checked} onChange={onChange} />
-          <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
+        <div className={`spreadapi-switch-container spreadapi-switch-container-${fieldName}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Switch className={`spreadapi-switch spreadapi-switch-${fieldName}`} checked={checked} onChange={onChange} />
+          <div className={`spreadapi-switch-label spreadapi-switch-label-${fieldName}`} style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
             {input.title || input.name}
-            {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
+            {!input.mandatory && <Text type="secondary" className="spreadapi-label-optional" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
           </div>
         </div>
       );
@@ -840,6 +847,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         <Form.Item
           key={fieldName}
           name={fieldName}
+          className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
           valuePropName="checked"
           style={{ marginBottom: 12 }}
         >
@@ -854,10 +862,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         key={fieldName}
         name={fieldName}
         label={label}
+        className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
         rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
         style={{ marginBottom: 12 }}
       >
         <Input
+          className={`spreadapi-input spreadapi-input-text spreadapi-input-${fieldName}`}
           placeholder={`${t('enter')} ${input.title || input.name}`}
           size="middle"
         />
@@ -874,13 +884,14 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         },
       }}
     >
-      <div style={{
+      <div className="spreadapi-page" style={{
         minHeight: '100vh',
         backgroundColor: themeStyles.containerBg || '#f5f5f5',
         padding: themeStyles.containerPadding || '16px'
       }}>
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <div className="spreadapi-container" style={{ maxWidth: '700px', margin: '0 auto' }}>
         <Card
+          className="spreadapi-card"
           style={{
             marginTop: '20px',
             boxShadow: themeStyles.contentShadow || '0 2px 8px rgba(0,0,0,0.1)',
@@ -889,12 +900,13 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             borderRadius: themeStyles.contentBorderRadius
           }}
         >
-          <Title level={2} style={{ marginBottom: 24, color: themeStyles.headingColor || themeStyles.textColor }}>
+          <Title level={2} className="spreadapi-title" style={{ marginBottom: 24, color: themeStyles.headingColor || themeStyles.textColor }}>
             {serviceData.name}
           </Title>
 
           {error && (
             <Alert
+              className="spreadapi-error"
               message={t('error')}
               description={error}
               type="error"
@@ -904,6 +916,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           )}
 
           <Form
+            className="spreadapi-form"
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
@@ -911,7 +924,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             size="middle"
           >
             {/* Non-boolean inputs (text, number, select, slider) */}
-            <div style={{
+            <div className="spreadapi-inputs-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '0 16px'
@@ -923,7 +936,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             </div>
 
             {/* Boolean inputs (switches) - separate grid to ensure they start on new row */}
-            <div style={{
+            <div className="spreadapi-inputs-grid spreadapi-inputs-grid-boolean" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
               gap: '0 16px'
@@ -937,6 +950,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
               <Button
                 type="primary"
+                className="spreadapi-button spreadapi-button-submit"
                 htmlType="submit"
                 loading={executing}
                 icon={<PlayCircleOutlined />}
@@ -961,17 +975,18 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             <>
               {resultsAreStale && (
                 <Alert
+                  className="spreadapi-warning"
                   message={t('staleWarning')}
                   type="warning"
                   showIcon={false}
                   style={{ marginTop: 24 }}
                 />
               )}
-              <div style={{ marginTop: resultsAreStale ? 16 : 32 }}>
-                <Title level={4} style={{ marginBottom: 16, color: themeStyles.headingColor || themeStyles.textColor }}>
+              <div className="spreadapi-results" style={{ marginTop: resultsAreStale ? 16 : 32 }}>
+                <Title level={4} className="spreadapi-results-title" style={{ marginBottom: 16, color: themeStyles.headingColor || themeStyles.textColor }}>
                   {t('results')}
                 </Title>
-                <div style={{
+                <div className="spreadapi-results-container" style={{
                   backgroundColor: themeStyles.inputSectionBg || themeStyles.containerBg || '#f8f8f8',
                   borderRadius: themeStyles.contentBorderRadius || '6px',
                   overflow: 'hidden',
@@ -992,6 +1007,8 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
                       return (
                         <div
                           key={output.name}
+                          className={`spreadapi-result-item spreadapi-result-${output.name}`}
+                          data-param={output.name}
                           style={{
                             display: isArrayValue ? 'block' : 'flex',
                             justifyContent: isArrayValue ? 'flex-start' : 'space-between',
@@ -1000,7 +1017,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
                             borderBottom: index < filteredArray.length - 1 ? `1px solid ${themeStyles.resultDividerColor || '#e8e8e8'}` : 'none'
                           }}
                         >
-                          <Text style={{
+                          <Text className="spreadapi-result-label" style={{
                             fontSize: themeStyles.resultLabelFontSize || 14,
                             color: themeStyles.resultLabelColor || themeStyles.labelColor,
                             fontWeight: themeStyles.resultLabelFontWeight,
@@ -1010,11 +1027,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
                             {output.title || output.name}:
                           </Text>
                           {isArrayValue ? (
-                            <div style={{ width: '100%' }}>
+                            <div className="spreadapi-result-array" style={{ width: '100%' }}>
                               {formattedValue}
                             </div>
                           ) : (
-                            <Text strong style={{
+                            <Text strong className="spreadapi-result-value" style={{
                               fontSize: themeStyles.resultValueFontSize || 16,
                               color: themeStyles.resultValueColor || themeStyles.primaryColor,
                               fontWeight: themeStyles.resultValueFontWeight

@@ -26,6 +26,7 @@ interface AppsViewProps {
     webAppConfig?: string;
     webAppTheme?: string;
     customThemeParams?: string;
+    webAppCustomCss?: string;
   };
   serviceStatus?: {
     published?: boolean;
@@ -519,6 +520,38 @@ const AppsView: React.FC<AppsViewProps> = ({
               <div style={{ marginTop: 8, fontSize: 10, color: '#999' }}>
                 Total: 65 customizable properties
               </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 24, padding: '16px', background: '#f9f9f9', borderRadius: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#666' }}>
+              Custom CSS
+            </div>
+            <div style={{ fontSize: 11, color: '#999', marginBottom: 12, lineHeight: '1.6' }}>
+              Add custom CSS to further style your web app. Use the CSS classes added to all elements:
+            </div>
+            <div style={{ fontSize: 10, color: '#666', marginBottom: 12, fontFamily: 'monospace', lineHeight: '1.8' }}>
+              <div><strong>Main Structure:</strong> .spreadapi-page, .spreadapi-container, .spreadapi-card</div>
+              <div><strong>Typography:</strong> .spreadapi-title, .spreadapi-label</div>
+              <div><strong>Inputs:</strong> .spreadapi-input, .spreadapi-select, .spreadapi-slider, .spreadapi-switch</div>
+              <div><strong>Results:</strong> .spreadapi-result-item, .spreadapi-result-label, .spreadapi-result-value</div>
+              <div><strong>Per-field targeting:</strong> .spreadapi-input-{'{'}fieldName{'}'} (e.g., .spreadapi-input-discount)</div>
+              <div><strong>Per-result targeting:</strong> .spreadapi-result-{'{'}paramName{'}'} (e.g., .spreadapi-result-total)</div>
+              <div style={{ marginTop: 8 }}><strong>CSS Variables:</strong> var(--spreadapi-primary-color), var(--spreadapi-button-bg), etc.</div>
+            </div>
+            <TextArea
+              value={apiConfig.webAppCustomCss || ''}
+              onChange={(e) => onConfigChange?.({ webAppCustomCss: e.target.value })}
+              placeholder={`/* Example: Change button color */\n.spreadapi-button {\n  background-color: #FF5722 !important;\n}\n\n/* Example: Target specific input */\n.spreadapi-input-discount {\n  border: 2px solid #4CAF50 !important;\n}\n\n/* Example: Customize specific result */\n.spreadapi-result-total .spreadapi-result-value {\n  font-size: 24px !important;\n  color: #4CAF50 !important;\n}`}
+              rows={8}
+              style={{
+                fontFamily: 'monospace',
+                fontSize: 11,
+              }}
+              disabled={isLoading || isDemoMode}
+            />
+            <div style={{ fontSize: 10, color: '#999', marginTop: 8, fontStyle: 'italic' }}>
+              Tip: Use <code>!important</code> to override default styles. Changes are saved automatically.
             </div>
           </div>
         </div>

@@ -869,3 +869,282 @@ export function generateThemeCSS(styles: ViewTheme['styles']): string {
     }
   `.trim();
 }
+
+/**
+ * Default CSS for Web Apps that uses CSS variables
+ * This provides the base styling for all spreadapi- classes
+ */
+export const DEFAULT_WEBAPP_CSS = `
+/* ============================================
+   SpreadAPI Web App Default Styles
+   Using CSS Variables for easy customization
+   ============================================ */
+
+/* Page & Container */
+.spreadapi-page {
+  min-height: 100vh;
+  background-color: var(--spreadapi-container-bg);
+  padding: var(--spreadapi-container-padding);
+  font-family: var(--spreadapi-font-family);
+}
+
+.spreadapi-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.spreadapi-card {
+  margin-top: 20px;
+  box-shadow: var(--spreadapi-content-shadow);
+  background: var(--spreadapi-content-bg);
+  border: var(--spreadapi-content-border);
+  border-radius: var(--spreadapi-content-border-radius);
+  padding: var(--spreadapi-content-padding);
+}
+
+/* Typography */
+.spreadapi-title {
+  margin-bottom: 24px;
+  color: var(--spreadapi-heading-color);
+  font-size: var(--spreadapi-heading-font-size);
+  font-weight: var(--spreadapi-heading-font-weight);
+  font-family: var(--spreadapi-heading-font-family);
+}
+
+/* Forms */
+.spreadapi-form {
+  width: 100%;
+}
+
+.spreadapi-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0 16px;
+}
+
+.spreadapi-input-group {
+  margin-bottom: 12px;
+}
+
+/* Labels */
+.spreadapi-label {
+  font-weight: var(--spreadapi-input-label-font-weight);
+  margin-bottom: 2px;
+  font-size: var(--spreadapi-input-label-font-size);
+  color: var(--spreadapi-input-label-color);
+}
+
+.spreadapi-label-optional {
+  font-size: 11px;
+  margin-left: 6px;
+  color: var(--spreadapi-label-color);
+}
+
+/* Buttons */
+.spreadapi-button {
+  background-color: var(--spreadapi-button-bg);
+  border-color: var(--spreadapi-button-bg);
+  color: var(--spreadapi-button-color);
+  font-size: var(--spreadapi-button-font-size);
+  font-weight: var(--spreadapi-button-font-weight);
+  border-radius: var(--spreadapi-button-border-radius);
+  padding: var(--spreadapi-button-padding);
+}
+
+.spreadapi-button:hover {
+  background-color: var(--spreadapi-button-hover-bg);
+  border-color: var(--spreadapi-button-hover-bg);
+}
+
+.spreadapi-button-submit {
+  width: 100%;
+  height: 48px;
+  margin-top: 24px;
+}
+
+/* Results */
+.spreadapi-results {
+  margin-top: 32px;
+}
+
+.spreadapi-results-title {
+  margin-bottom: 16px;
+  color: var(--spreadapi-heading-color);
+  font-size: 18px;
+  font-weight: var(--spreadapi-heading-font-weight);
+}
+
+.spreadapi-results-container {
+  background-color: var(--spreadapi-input-section-bg);
+  border-radius: var(--spreadapi-content-border-radius);
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+.spreadapi-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spreadapi-result-row-padding);
+}
+
+.spreadapi-result-label {
+  font-size: var(--spreadapi-result-label-font-size);
+  color: var(--spreadapi-result-label-color);
+  font-weight: var(--spreadapi-result-label-font-weight);
+}
+
+.spreadapi-result-value {
+  font-size: var(--spreadapi-result-value-font-size);
+  color: var(--spreadapi-result-value-color);
+  font-weight: var(--spreadapi-result-value-font-weight);
+}
+
+/* Switch containers */
+.spreadapi-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spreadapi-switch-label {
+  font-weight: 400;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Slider containers */
+.spreadapi-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ============================================
+   Customization Examples (commented out)
+   Users can uncomment and modify these
+   ============================================
+
+/* Example: Change all input backgrounds
+.spreadapi-input,
+.spreadapi-select {
+  background-color: #f9f9f9 !important;
+}
+*/
+
+/* Example: Target specific field by name
+.spreadapi-input-discount {
+  border: 2px solid #4CAF50 !important;
+}
+*/
+
+/* Example: Customize result values
+.spreadapi-result-value {
+  font-size: 20px !important;
+  color: #2196F3 !important;
+}
+*/
+
+/* Example: Target specific result by parameter name
+.spreadapi-result-totalPrice .spreadapi-result-value {
+  font-size: 24px !important;
+  font-weight: bold !important;
+  color: #4CAF50 !important;
+}
+*/
+
+/* ============================================ */
+`.trim();
+
+/**
+ * Generate CSS variables for Web Apps with spreadapi- prefix
+ * This ensures CSS variables don't conflict with user's existing styles
+ */
+export function generateWebAppThemeCSS(styles: ViewTheme['styles']): string {
+  return `
+    :root {
+      /* Container */
+      --spreadapi-container-bg: ${sanitizeCSSValue(styles.containerBg, 'color')};
+      --spreadapi-container-padding: ${sanitizeCSSValue(styles.containerPadding, 'size')};
+
+      /* Content area */
+      --spreadapi-content-bg: ${sanitizeCSSValue(styles.contentBg, 'color')};
+      --spreadapi-content-border: ${sanitizeCSSValue(styles.contentBorder, 'border')};
+      --spreadapi-content-border-radius: ${sanitizeCSSValue(styles.contentBorderRadius, 'size')};
+      --spreadapi-content-shadow: ${sanitizeCSSValue(styles.contentShadow, 'shadow')};
+      --spreadapi-content-padding: ${sanitizeCSSValue(styles.contentPadding, 'size')};
+
+      /* Typography */
+      --spreadapi-font-family: ${sanitizeCSSValue(styles.fontFamily, 'font')};
+      --spreadapi-heading-font-family: ${sanitizeCSSValue(styles.headingFontFamily, 'font')};
+
+      /* Colors */
+      --spreadapi-primary-color: ${sanitizeCSSValue(styles.primaryColor, 'color')};
+      --spreadapi-accent-color: ${sanitizeCSSValue(styles.accentColor, 'color')};
+      --spreadapi-text-color: ${sanitizeCSSValue(styles.textColor, 'color')};
+      --spreadapi-label-color: ${sanitizeCSSValue(styles.labelColor, 'color')};
+
+      /* Headings */
+      --spreadapi-heading-color: ${sanitizeCSSValue(styles.headingColor, 'color')};
+      --spreadapi-heading-font-size: ${sanitizeCSSValue(styles.headingFontSize, 'size')};
+      --spreadapi-heading-font-weight: ${sanitizeCSSValue(styles.headingFontWeight, 'generic')};
+
+      /* Result Labels */
+      --spreadapi-result-label-color: ${sanitizeCSSValue(styles.resultLabelColor, 'color')};
+      --spreadapi-result-label-font-size: ${sanitizeCSSValue(styles.resultLabelFontSize, 'size')};
+      --spreadapi-result-label-font-weight: ${sanitizeCSSValue(styles.resultLabelFontWeight, 'generic')};
+
+      /* Result Values */
+      --spreadapi-result-value-color: ${sanitizeCSSValue(styles.resultValueColor, 'color')};
+      --spreadapi-result-value-font-size: ${sanitizeCSSValue(styles.resultValueFontSize, 'size')};
+      --spreadapi-result-value-font-weight: ${sanitizeCSSValue(styles.resultValueFontWeight, 'generic')};
+
+      /* Result Dividers */
+      --spreadapi-result-divider-color: ${sanitizeCSSValue(styles.resultDividerColor, 'color')};
+      --spreadapi-result-row-padding: ${sanitizeCSSValue(styles.resultRowPadding, 'generic')};
+
+      /* Inputs */
+      --spreadapi-input-bg: ${sanitizeCSSValue(styles.inputBg, 'color')};
+      --spreadapi-input-border: ${sanitizeCSSValue(styles.inputBorder, 'border')};
+      --spreadapi-input-border-radius: ${sanitizeCSSValue(styles.inputBorderRadius, 'size')};
+      --spreadapi-input-focus-border: ${sanitizeCSSValue(styles.inputFocusBorder, 'border')};
+      --spreadapi-input-font-size: ${sanitizeCSSValue(styles.inputFontSize, 'size')};
+
+      /* Input Labels */
+      --spreadapi-input-label-color: ${sanitizeCSSValue(styles.inputLabelColor, 'color')};
+      --spreadapi-input-label-font-size: ${sanitizeCSSValue(styles.inputLabelFontSize, 'size')};
+      --spreadapi-input-label-font-weight: ${sanitizeCSSValue(styles.inputLabelFontWeight, 'generic')};
+
+      /* Buttons */
+      --spreadapi-button-bg: ${sanitizeCSSValue(styles.buttonBg, 'color')};
+      --spreadapi-button-color: ${sanitizeCSSValue(styles.buttonColor, 'color')};
+      --spreadapi-button-border-radius: ${sanitizeCSSValue(styles.buttonBorderRadius, 'size')};
+      --spreadapi-button-hover-bg: ${sanitizeCSSValue(styles.buttonHoverBg, 'color')};
+      --spreadapi-button-font-size: ${sanitizeCSSValue(styles.buttonFontSize, 'size')};
+      --spreadapi-button-font-weight: ${sanitizeCSSValue(styles.buttonFontWeight, 'generic')};
+      --spreadapi-button-padding: ${sanitizeCSSValue(styles.buttonPadding, 'size')};
+
+      /* Card Header */
+      --spreadapi-card-header-bg: ${sanitizeCSSValue(styles.cardHeaderBg, 'generic')};
+      --spreadapi-card-header-color: ${sanitizeCSSValue(styles.cardHeaderColor, 'color')};
+      --spreadapi-card-header-gradient-start: ${sanitizeCSSValue(styles.cardHeaderGradientStart, 'color')};
+      --spreadapi-card-header-gradient-end: ${sanitizeCSSValue(styles.cardHeaderGradientEnd, 'color')};
+
+      /* Table Styling */
+      --spreadapi-table-header-bg: ${sanitizeCSSValue(styles.tableHeaderBg, 'color')};
+      --spreadapi-table-header-color: ${sanitizeCSSValue(styles.tableHeaderColor, 'color')};
+      --spreadapi-table-border-color: ${sanitizeCSSValue(styles.tableBorderColor, 'color')};
+      --spreadapi-table-row-hover-bg: ${sanitizeCSSValue(styles.tableRowHoverBg, 'color')};
+
+      /* Section Backgrounds */
+      --spreadapi-input-section-bg: ${sanitizeCSSValue(styles.inputSectionBg, 'color')};
+      --spreadapi-results-section-bg: ${sanitizeCSSValue(styles.resultsSectionBg, 'color')};
+
+      /* Spacing */
+      --spreadapi-section-spacing: ${sanitizeCSSValue(styles.sectionSpacing, 'size')};
+      --spreadapi-input-group-spacing: ${sanitizeCSSValue(styles.inputGroupSpacing, 'size')};
+      --spreadapi-result-item-spacing: ${sanitizeCSSValue(styles.resultItemSpacing, 'size')};
+      --spreadapi-header-padding: ${sanitizeCSSValue(styles.headerPadding, 'size')};
+    }
+  `.trim();
+}

@@ -20,6 +20,7 @@ interface ApiConfig {
   category?: string;
   webAppEnabled?: boolean;
   webAppToken?: string;
+  webAppCustomCss?: string;
   inputs?: any[];
   outputs?: any[];
 }
