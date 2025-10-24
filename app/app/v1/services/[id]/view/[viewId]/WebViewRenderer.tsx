@@ -88,7 +88,10 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
           const inputWithValue = {
             ...metadata, // Include metadata (allowedValues, min, max, format, etc.)
             ...input,    // Override with execution data
-            value: queryParams[input.name] || input.value || '',
+            // Use API response value first (already validated/coerced), fallback to URL param
+            value: input.value !== undefined && input.value !== null && input.value !== ''
+              ? input.value
+              : (queryParams[input.name] || ''),
             inputType: getInputType(input.type || metadata.type),
             placeholder: input.placeholder || metadata.placeholder || ''
           };

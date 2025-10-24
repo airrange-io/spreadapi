@@ -113,22 +113,31 @@ select.boolean-select option[value="false"] {
 export const COMMON_INPUT_JS = `
 <script>
 // Transform percentage values on form submit: display (0-100) -> storage (0-1)
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('calc-form');
-  if (!form) return;
+(function() {
+  function attachPercentageHandler() {
+    const form = document.getElementById('calc-form');
+    if (!form) {
+      // Form not ready yet, try again in 50ms
+      setTimeout(attachPercentageHandler, 50);
+      return;
+    }
 
-  form.addEventListener('submit', function(e) {
-    // Find all percentage inputs and transform their values
-    const percentageInputs = form.querySelectorAll('input.percentage-input[data-is-percentage="true"]');
-    percentageInputs.forEach(function(input) {
-      const displayValue = parseFloat(input.value);
-      if (!isNaN(displayValue)) {
-        // Transform: 42 -> 0.42
-        input.value = (displayValue / 100).toString();
-      }
-    });
-  });
-});
+    form.addEventListener('submit', function(e) {
+      // Find all percentage inputs and transform their values BEFORE form data is processed
+      const percentageInputs = form.querySelectorAll('input.percentage-input[data-is-percentage="true"]');
+      percentageInputs.forEach(function(input) {
+        const displayValue = parseFloat(input.value);
+        if (!isNaN(displayValue)) {
+          // Transform: 42 -> 0.42
+          input.value = (displayValue / 100).toString();
+        }
+      });
+    }, true); // Use capture phase to run before other handlers
+  }
+
+  // Run immediately (script executes when injected)
+  attachPercentageHandler();
+})();
 </script>
 `.trim();
 
