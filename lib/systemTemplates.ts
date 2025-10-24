@@ -22,6 +22,60 @@ export interface SystemTemplate {
   };
 }
 
+// Common CSS for optimized inputs - ensures consistent styling across all templates
+export const COMMON_INPUT_CSS = `
+/* Dropdown styling with custom arrow icon */
+select.optimized-select,
+.input-group select,
+.widget-input select,
+.compact-input select,
+.tool-input select,
+.config-row select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 36px !important;
+}
+
+/* Boolean dropdown - centered icons with color coding */
+select.boolean-select {
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  cursor: pointer;
+  min-width: 60px;
+  padding: 6px 12px !important;
+  letter-spacing: 0;
+  line-height: 1.2;
+  height: 36px !important;
+  box-sizing: border-box;
+}
+
+select.boolean-select option {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  padding: 8px;
+  line-height: 1.5;
+}
+
+select.boolean-select option[value="true"] {
+  color: #10b981;
+  text-align: center;
+}
+
+select.boolean-select option[value="false"] {
+  color: #f43f5e;
+  text-align: center;
+}
+`.trim();
+
+// Common JavaScript for template enhancements (currently unused)
+export const COMMON_INPUT_JS = ``;
+
 export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
   // ============================================
   // DISPLAY-ONLY / RESULTS TEMPLATES
@@ -50,13 +104,7 @@ export const SYSTEM_TEMPLATES: Record<string, SystemTemplate> = {
       {{#inputs}}
       <div class="input-group">
         <label for="{{name}}">{{title}}</label>
-        <input
-          id="{{name}}"
-          type="{{inputType}}"
-          name="{{name}}"
-          value="{{value}}"
-          placeholder="{{placeholder}}"
-        />
+        {{{optimizedHtml}}}
       </div>
       {{/inputs}}
       <button type="submit" class="btn-calculate">Calculate</button>
@@ -134,7 +182,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -146,7 +195,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -224,13 +274,7 @@ body {
       {{#inputs}}
       <div class="input-group">
         <label for="{{name}}">{{title}}</label>
-        <input
-          id="{{name}}"
-          type="{{inputType}}"
-          name="{{name}}"
-          value="{{value}}"
-          placeholder="{{placeholder}}"
-        />
+        {{{optimizedHtml}}}
       </div>
       {{/inputs}}
       <button type="submit" class="btn-calculate">Calculate</button>
@@ -306,7 +350,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px;
   background: var(--input-bg);
@@ -318,7 +363,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -396,14 +442,7 @@ body {
   </div>
   <form id="calc-form" class="widget-controls">
     {{#inputs}}
-    <input
-      id="{{name}}"
-      type="{{inputType}}"
-      name="{{name}}"
-      value="{{value}}"
-      placeholder="{{title}}"
-      class="widget-input"
-    />
+    <div class="widget-input">{{{optimizedHtml}}}</div>
     {{/inputs}}
     <button type="submit" class="btn-update">Update</button>
   </form>
@@ -455,7 +494,13 @@ body {
 }
 
 .widget-input {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+.widget-input input,
+.widget-input select {
+  width: 100%;
   padding: 8px 12px;
   background: var(--input-bg);
   border: var(--input-border);
@@ -465,7 +510,8 @@ body {
   box-sizing: border-box;
 }
 
-.widget-input:focus {
+.widget-input input:focus,
+.widget-input select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -534,13 +580,7 @@ body {
     {{#inputs}}
     <div class="compact-input">
       <label for="{{name}}">{{title}}</label>
-      <input
-        id="{{name}}"
-        type="{{inputType}}"
-        name="{{name}}"
-        value="{{value}}"
-        placeholder="{{placeholder}}"
-      />
+      {{{optimizedHtml}}}
     </div>
     {{/inputs}}
     <button type="submit" class="btn-calculate">Go</button>
@@ -614,6 +654,18 @@ body {
   color: var(--text-color);
 }
 
+.compact-input select {
+  width: auto;
+  min-width: 12ch;
+  padding: 8px 10px;
+  background: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
+  font-size: var(--input-font-size);
+  box-sizing: border-box;
+  color: var(--text-color);
+}
+
 /* Size inputs based on their value length */
 .compact-input input[value=""] {
   width: 12ch;
@@ -623,7 +675,8 @@ body {
   width: 10ch;
 }
 
-.compact-input input:focus {
+.compact-input input:focus,
+.compact-input select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -693,13 +746,7 @@ body {
         {{#inputs}}
         <div class="input-group">
           <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
+          {{{optimizedHtml}}}
         </div>
         {{/inputs}}
         <button type="submit" class="btn-calculate">Calculate</button>
@@ -790,7 +837,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -802,7 +850,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -1161,13 +1210,7 @@ body {
         {{#inputs}}
         <div class="input-group">
           <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
+          {{{optimizedHtml}}}
         </div>
         {{/inputs}}
         <button type="submit" class="btn-calculate">Calculate</button>
@@ -1255,7 +1298,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -1267,7 +1311,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -1350,13 +1395,7 @@ body {
         {{#inputs}}
         <div class="input-group">
           <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
+          {{{optimizedHtml}}}
         </div>
         {{/inputs}}
         <button type="submit" class="btn-calculate">Calculate</button>
@@ -1444,7 +1483,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -1456,7 +1496,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -1536,13 +1577,7 @@ body {
       {{#inputs}}
       <div class="input-group">
         <label for="{{name}}">{{title}}</label>
-        <input
-          id="{{name}}"
-          type="{{inputType}}"
-          name="{{name}}"
-          value="{{value}}"
-          placeholder="{{placeholder}}"
-        />
+        {{{optimizedHtml}}}
       </div>
       {{/inputs}}
       <button type="submit" class="btn-calculate">Calculate Results</button>
@@ -1611,7 +1646,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 12px;
   background: var(--input-bg);
@@ -1623,7 +1659,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -1693,13 +1730,7 @@ body {
   <form id="calc-form" class="tool-form">
     {{#inputs}}
     <div class="tool-input">
-      <input
-        id="{{name}}"
-        type="{{inputType}}"
-        name="{{name}}"
-        value="{{value}}"
-        placeholder="{{title}}"
-      />
+      {{{optimizedHtml}}}
     </div>
     {{/inputs}}
     <button type="submit" class="btn-convert">→</button>
@@ -1754,7 +1785,8 @@ body {
   flex: 1;
 }
 
-.tool-input input {
+.tool-input input,
+.tool-input select {
   width: 100%;
   padding: 12px;
   background: var(--input-bg);
@@ -1766,7 +1798,8 @@ body {
   transition: border 0.2s;
 }
 
-.tool-input input:focus {
+.tool-input input:focus,
+.tool-input select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -1836,13 +1869,7 @@ body {
         {{#inputs}}
         <div class="input-group">
           <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
+          {{{optimizedHtml}}}
         </div>
         {{/inputs}}
         <button type="submit" class="btn-calculate">Calculate Price</button>
@@ -1915,7 +1942,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -1927,7 +1955,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -2009,14 +2038,8 @@ body {
         <form id="calc-form">
           {{#inputs}}
           <div class="input-group">
-            <label for="{{name}}">{{title}}</label>
-            <input
-              id="{{name}}"
-              type="{{inputType}}"
-              name="{{name}}"
-              value="{{value}}"
-              placeholder="{{placeholder}}"
-            />
+            {{^isCheckbox}}<label for="{{name}}">{{title}}</label>{{/isCheckbox}}
+            {{{optimizedHtml}}}
           </div>
           {{/inputs}}
           <button type="submit" class="btn-calculate">Calculate Estimate</button>
@@ -2093,7 +2116,8 @@ body {
   font-size: var(--input-label-font-size);
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 10px 12px;
   background: var(--input-bg);
@@ -2105,7 +2129,8 @@ body {
   transition: border 0.2s;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border: var(--input-focus-border);
 }
@@ -2196,13 +2221,7 @@ body {
         {{#inputs}}
         <div class="config-row">
           <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
+          {{{optimizedHtml}}}
         </div>
         {{/inputs}}
         <button type="submit" class="btn-calculate">Build</button>
@@ -2286,7 +2305,8 @@ body {
   text-align: right;
 }
 
-.config-row input {
+.config-row input,
+.config-row select {
   padding: 8px 12px;
   background: var(--input-bg);
   border: var(--input-border);
@@ -2296,7 +2316,8 @@ body {
   transition: border 0.2s;
 }
 
-.config-row input:focus {
+.config-row input:focus,
+.config-row select:focus {
   outline: none;
   border: var(--input-focus-border);
 }

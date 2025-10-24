@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
-import { renderTemplate, getInputType, formatValue } from '@/lib/mustacheRenderer';
+import { SYSTEM_TEMPLATES, COMMON_INPUT_CSS, COMMON_INPUT_JS } from '@/lib/systemTemplates';
+import { renderTemplate, getInputType, formatValue, generateOptimizedInput } from '@/lib/mustacheRenderer';
 import { parseThemeFromQuery, applyThemeOverrides, generateThemeCSS, getAllSupportedParameters } from '@/lib/viewThemes';
 
 interface WebViewRendererProps {
@@ -11,6 +11,7 @@ interface WebViewRendererProps {
   queryParams: { [key: string]: string | string[] | undefined };
   isInteractive?: boolean;
   token?: string;
+  inputsMetadata?: any[]; // Full input metadata from Redis (includes allowedValues, min, max, etc.)
 }
 
 
@@ -19,7 +20,8 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
   viewId,
   queryParams,
   isInteractive = false,
-  token
+  token,
+  inputsMetadata = []
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +41,8 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         }
 
         // Build API URL with query params from URL
-        // Note: For embedded views, all parameters should come from the URL
         const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
+        // Note: For embedded views, all parameters should come from the URL
         const apiUrl = new URL(`${origin}/api/v1/services/${serviceId}/execute`);
 
         // Parse theme from query params
@@ -78,6 +80,25 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
 
         const data = await response.json();
 
+        // Use inputsMetadata from props (server-side fetched from Redis)
+        const enrichedInputs = (data.inputs || []).map((input: any) => {
+          // Find matching metadata for this input
+          const metadata = inputsMetadata.find((m: any) => m.name === input.name) || {};
+
+          const inputWithValue = {
+            ...metadata, // Include metadata (allowedValues, min, max, format, etc.)
+            ...input,    // Override with execution data
+            value: queryParams[input.name] || input.value || '',
+            inputType: getInputType(input.type || metadata.type),
+            placeholder: input.placeholder || metadata.placeholder || ''
+          };
+
+          return {
+            ...inputWithValue,
+            optimizedHtml: generateOptimizedInput(inputWithValue)
+          };
+        });
+
         // Prepare template data
         const templateData = {
           serviceId,
@@ -85,12 +106,7 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
           serviceDescription: data.serviceDescription || '',
           interactive: isInteractive,
           token: token || '',
-          inputs: (data.inputs || []).map((input: any) => ({
-            ...input,
-            value: queryParams[input.name] || input.value || '',
-            inputType: getInputType(input.type),
-            placeholder: input.placeholder || ''
-          })),
+          inputs: enrichedInputs,
           outputs: (data.outputs || []).map((output: any) => ({
             name: output.name,
             title: output.title || output.name,  // Ensure title is always set
@@ -258,7 +274,7 @@ h1, h2, h3, h4, h5, h6,
 }
 `;
 
-        renderedHtml = `<style>${themeCss}\n\n${noCaptionCss}\n\n${viewModeCss}\n\n${template.css}</style>\n<div class="view-mode-wrapper view-mode-${currentViewMode}">\n${renderedHtml}\n</div>`;
+        renderedHtml = `<style>${themeCss}\n\n${COMMON_INPUT_CSS}\n\n${noCaptionCss}\n\n${viewModeCss}\n\n${template.css}</style>\n<div class="view-mode-wrapper view-mode-${currentViewMode}">\n${renderedHtml}\n</div>\n${COMMON_INPUT_JS}`;
 
         setHtml(renderedHtml);
       } catch (err: any) {

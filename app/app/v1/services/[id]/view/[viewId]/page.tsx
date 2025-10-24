@@ -23,15 +23,15 @@ export default async function WebViewPage({ params, searchParams }: PageProps) {
   const isInteractive = queryParams.interactive === 'true';
   const token = queryParams.token as string;
 
+  // Always fetch service data to get input metadata (for enhanced editors)
+  const serviceData = await redis.hGetAll(`service:${serviceId}`) as unknown as Record<string, string>;
+
+  if (!serviceData || Object.keys(serviceData).length === 0) {
+    notFound();
+  }
+
   // Validate interactive mode requires token
   if (isInteractive) {
-    // Get service data to validate token
-    const serviceData = await redis.hGetAll(`service:${serviceId}`) as unknown as Record<string, string>;
-
-    if (!serviceData || Object.keys(serviceData).length === 0) {
-      notFound();
-    }
-
     // Check if token is valid
     if (!serviceData.webAppToken || serviceData.webAppToken !== token) {
       return (
@@ -66,6 +66,9 @@ export default async function WebViewPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
+  // Parse inputs metadata for enhanced editors (allowedValues, min, max, etc.)
+  const inputsMetadata = JSON.parse(serviceData.inputs || '[]');
+
   return (
     <WebViewRenderer
       serviceId={serviceId}
@@ -73,6 +76,7 @@ export default async function WebViewPage({ params, searchParams }: PageProps) {
       queryParams={queryParams}
       isInteractive={isInteractive}
       token={token}
+      inputsMetadata={inputsMetadata}
     />
   );
 }

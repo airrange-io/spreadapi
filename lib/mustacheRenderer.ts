@@ -38,6 +38,18 @@ export function renderTemplate(template: string, data: any): string {
     return '';
   });
 
+  // Replace unescaped variables {{{variable}}} - do this before escaped variables
+  // This allows HTML to be rendered without escaping
+  result = result.replace(/\{\{\{([\w.]+)\}\}\}/g, (match, key) => {
+    // Support nested properties like {{{input.optimizedHtml}}}
+    const keys = key.split('.');
+    let value: any = data;
+    for (const k of keys) {
+      value = value?.[k];
+    }
+    return value !== undefined && value !== null ? String(value) : '';
+  });
+
   // Replace simple variables {{variable}} - do this LAST
   result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     const value = data[key];
@@ -69,6 +81,42 @@ export function getInputType(paramType: string): string {
     default:
       return 'text';
   }
+}
+
+// Generate optimized HTML input based on input metadata (lightweight version)
+export function generateOptimizedInput(input: any): string {
+  const name = input.name;
+  const value = input.value || '';
+
+  // 1. Dropdown for allowedValues - compact and user-friendly
+  if (input.allowedValues && Array.isArray(input.allowedValues) && input.allowedValues.length > 0) {
+    const options = input.allowedValues.map((val: string) => {
+      const selected = String(val) === String(value) ? ' selected' : '';
+      return `<option value="${val}"${selected}>${val}</option>`;
+    }).join('');
+
+    return `<select id="${name}" name="${name}" class="optimized-select">${options}</select>`;
+  }
+
+  // 2. Boolean as dropdown with visual indicators - universal icons
+  if (input.type === 'boolean') {
+    const currentValue = (value === true || value === 'true' || value === '1') ? 'true' : 'false';
+    const trueSelected = currentValue === 'true' ? ' selected' : '';
+    const falseSelected = currentValue === 'false' ? ' selected' : '';
+
+    return `<select id="${name}" name="${name}" class="optimized-select boolean-select">
+      <option value="true"${trueSelected}>✓</option>
+      <option value="false"${falseSelected}>✗</option>
+    </select>`;
+  }
+
+  // 3. Regular input (fallback)
+  const inputType = getInputType(input.type);
+  const min = input.min !== undefined ? ` min="${input.min}"` : '';
+  const max = input.max !== undefined ? ` max="${input.max}"` : '';
+  const placeholder = input.placeholder ? ` placeholder="${input.placeholder}"` : '';
+
+  return `<input id="${name}" type="${inputType}" name="${name}" value="${value}"${min}${max}${placeholder}>`;
 }
 
 // Format output value based on formatString
