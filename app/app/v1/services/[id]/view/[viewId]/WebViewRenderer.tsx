@@ -57,9 +57,12 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         const currentViewMode = (queryParams.viewMode as string) || 'all'; // 'all' | 'results' | 'inputs'
         setViewMode(currentViewMode);
 
-        // Add all query params from URL to API call (exclude interactive, token, theme, viewMode, and all theme parameters)
+        // Extract nocaption parameter
+        const noCaption = queryParams.nocaption === 'true';
+
+        // Add all query params from URL to API call (exclude interactive, token, theme, viewMode, nocaption, and all theme parameters)
         const themeParams = getAllSupportedParameters();
-        const excludeFromApi = ['viewId', 'interactive', 'token', 'theme', 'viewMode', '_t', ...themeParams];
+        const excludeFromApi = ['viewId', 'interactive', 'token', 'theme', 'viewMode', 'nocaption', '_t', ...themeParams];
 
         Object.entries(queryParams).forEach(([key, value]) => {
           if (value && !excludeFromApi.includes(key)) {
@@ -101,24 +104,16 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
 
         // Add inline edit link after title in results mode (BEFORE wrapping)
         if (currentViewMode === 'results') {
-          console.log('Adding edit link for results mode');
-          console.log('Rendered HTML length:', renderedHtml.length);
-          console.log('First 500 chars:', renderedHtml.substring(0, 500));
-
-          const editLink = `<a href="#" id="edit-inputs-btn" style="margin-left: 12px; font-size: 0.6em; color: #667eea; text-decoration: none; font-weight: normal; transition: color 0.2s;" onmouseover="this.style.color='#5568d3'" onmouseout="this.style.color='#667eea'">✏️ edit</a>`;
+          const editLink = `<a href="#" id="edit-inputs-btn" style="margin-left: 12px; font-size: 0.6em; color: #667eea; text-decoration: none; font-weight: normal; transition: color 0.2s;" onmouseover="this.style.color='#5568d3'" onmouseout="this.style.color='#667eea'">edit</a>`;
 
           // Try to inject after h2 first (most common in templates)
           if (renderedHtml.includes('</h2>')) {
-            console.log('Found </h2>, injecting edit link');
             renderedHtml = renderedHtml.replace('</h2>', `${editLink}</h2>`);
           } else if (renderedHtml.includes('</h1>')) {
-            console.log('Found </h1>, injecting edit link');
             renderedHtml = renderedHtml.replace('</h1>', `${editLink}</h1>`);
           } else {
-            console.log('No h1 or h2 found in rendered HTML');
             // Fallback: add as a floating button
-            renderedHtml = `<a href="#" id="edit-inputs-btn" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; padding: 8px 16px; background: #667eea; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#5568d3'" onmouseout="this.style.background='#667eea'">✏️ Edit</a>${renderedHtml}`;
-            console.log('Added floating edit button instead');
+            renderedHtml = `<a href="#" id="edit-inputs-btn" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; padding: 8px 16px; background: #667eea; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s;" onmouseover="this.style.background='#5568d3'" onmouseout="this.style.background='#667eea'">Edit</a>${renderedHtml}`;
           }
         }
 
@@ -126,6 +121,43 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         const themeCss = generateThemeCSS(themeStyles);
 
         // Add viewMode-specific CSS to hide sections
+        const noCaptionCss = noCaption ? `
+/* No Caption CSS - Hide titles and headings */
+h1, h2, h3, h4, h5, h6,
+.service-name,
+.tool-title,
+.focus-header,
+.row-header,
+.card-header h2,
+.view-table h2,
+.compact-header h3,
+.column-header h2,
+.grid-header h2,
+.badges-header h2,
+.calc-header h2,
+.split-header h2,
+.form-header h2,
+.pricing-header h2,
+.analyzer-header h2,
+.widget-header h3,
+.estimator-container h2,
+.builder-header h2 {
+  display: none !important;
+}
+
+/* Adjust padding/margins for views that had headers */
+.view-card .card-header,
+.calc-header,
+.split-header,
+.form-header,
+.pricing-header,
+.analyzer-header,
+.widget-header,
+.builder-header {
+  display: none !important;
+}
+` : '';
+
         const viewModeCss = `
 /* ViewMode CSS - Hide sections based on viewMode parameter */
 .view-mode-results form,
@@ -163,15 +195,79 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
 .view-mode-inputs .breakdown-list {
   display: none !important;
 }
+
+/* Center content in inputs and results modes */
+.view-mode-results body,
+.view-mode-inputs body {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+}
+
+/* Make containers and inputs use full available width */
+.view-mode-inputs .view-compact,
+.view-mode-results .view-compact {
+  width: 100% !important;
+}
+
+.view-mode-inputs .compact-form {
+  width: 100% !important;
+}
+
+.view-mode-inputs .compact-input {
+  min-width: 100% !important;
+  flex-basis: 100% !important;
+}
+
+/* Form + Results template - make results standalone larger */
+.view-mode-results .view-form-card {
+  max-width: 700px !important;
+}
+
+/* Quick Converter - increase input width */
+.view-mode-inputs .view-quick-tool,
+.view-mode-results .view-quick-tool {
+  max-width: 600px !important;
+}
+
+/* Live Widget - allow inputs to wrap to next line */
+.view-mode-inputs .view-widget,
+.view-mode-results .view-widget,
+.view-mode-all .view-widget {
+  overflow: visible !important;
+}
+
+.view-mode-inputs .widget-controls,
+.view-mode-results .widget-controls,
+.view-mode-all .widget-controls {
+  flex-wrap: wrap !important;
+}
+
+.view-mode-inputs .widget-input,
+.view-mode-results .widget-input,
+.view-mode-all .widget-input {
+  flex: 1 1 140px !important;
+  min-width: 140px !important;
+}
+
+.view-mode-inputs .btn-update,
+.view-mode-results .btn-update,
+.view-mode-all .btn-update {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+}
+
+/* Config Builder - hide preview in inputs mode */
+.view-mode-inputs .builder-preview {
+  display: none !important;
+}
+
+.view-mode-inputs .builder-config {
+  grid-column: 1 / -1 !important;
+}
 `;
 
-        // Add debug badge to show current view mode
-        const debugBadge = `
-<div style="position: fixed; top: 10px; right: 10px; z-index: 9999; font-size: 10px; color: #999; padding: 2px 6px; background: #f0f0f0; border-radius: 3px; font-family: monospace;">
-  Mode: ${currentViewMode}
-</div>`;
-
-        renderedHtml = `<style>${themeCss}\n\n${viewModeCss}\n\n${template.css}</style>\n<div class="view-mode-wrapper view-mode-${currentViewMode}">\n${debugBadge}\n${renderedHtml}\n</div>`;
+        renderedHtml = `<style>${themeCss}\n\n${noCaptionCss}\n\n${viewModeCss}\n\n${template.css}</style>\n<div class="view-mode-wrapper view-mode-${currentViewMode}">\n${renderedHtml}\n</div>`;
 
         setHtml(renderedHtml);
       } catch (err: any) {
@@ -189,16 +285,11 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
   useEffect(() => {
     if (!html || !isInteractive) return;
 
-    console.log('Attaching event handlers, viewMode:', viewMode);
-
     // Attach form submit handler
     const form = document.getElementById('calc-form');
     if (form) {
-      console.log('Form found, attaching submit handler');
-
       const handleSubmit = (e: Event) => {
         e.preventDefault();
-        console.log('Form submitted');
 
         // Get current URL params (to preserve theme, etc.)
         const currentUrl = new URL(window.location.href);
@@ -233,7 +324,6 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
         }
 
         const newUrl = window.location.pathname + '?' + newParams.toString();
-        console.log('Redirecting to:', newUrl);
         window.location.href = newUrl;
       };
 
@@ -242,7 +332,6 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
       // Attach edit button/link handler
       const editBtn = document.getElementById('edit-inputs-btn');
       if (editBtn) {
-        console.log('Edit link found, attaching handler');
         const handleEdit = (e: Event) => {
           e.preventDefault();
           const url = new URL(window.location.href);
@@ -262,8 +351,6 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
       return () => {
         form.removeEventListener('submit', handleSubmit);
       };
-    } else {
-      console.log('Form not found');
     }
   }, [html, isInteractive, viewMode, token]);
 
@@ -281,32 +368,25 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
           gap: '4px',
           alignItems: 'center'
         }}>
-          <div style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: '#667eea',
-            animation: 'bounce 1.4s infinite ease-in-out both',
+          <div className="loading-dot" style={{
             animationDelay: '0s'
           }} />
-          <div style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: '#667eea',
-            animation: 'bounce 1.4s infinite ease-in-out both',
+          <div className="loading-dot" style={{
             animationDelay: '0.2s'
           }} />
-          <div style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: '#667eea',
-            animation: 'bounce 1.4s infinite ease-in-out both',
+          <div className="loading-dot" style={{
             animationDelay: '0.4s'
           }} />
         </div>
         <style>{`
+          .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--primary-color, #667eea);
+            animation: bounce 1.4s infinite ease-in-out both;
+          }
+
           @keyframes bounce {
             0%, 80%, 100% {
               transform: scale(0.8);

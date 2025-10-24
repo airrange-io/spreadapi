@@ -379,6 +379,141 @@ body {
     `.trim()
   },
 
+  liveWidget: {
+    id: 'liveWidget',
+    name: 'Live Widget',
+    description: 'Dashboard widget - compact and interactive',
+    isSystem: true,
+    settings: {
+      supportsInteractive: true,
+      inputLayout: 'horizontal',
+      outputLayout: 'grid'
+    },
+    html: `
+<div class="view-widget">
+  <div class="widget-header">
+    <h3>{{serviceName}}</h3>
+  </div>
+  <form id="calc-form" class="widget-controls">
+    {{#inputs}}
+    <input
+      id="{{name}}"
+      type="{{inputType}}"
+      name="{{name}}"
+      value="{{value}}"
+      placeholder="{{title}}"
+      class="widget-input"
+    />
+    {{/inputs}}
+    <button type="submit" class="btn-update">Update</button>
+  </form>
+  <div class="widget-metrics">
+    {{#outputs}}
+    <div class="widget-metric">
+      <div class="metric-value">{{value}}</div>
+      <div class="metric-name">{{title}}</div>
+    </div>
+    {{/outputs}}
+  </div>
+</div>
+    `.trim(),
+    css: `
+body {
+  margin: 0;
+  padding: var(--container-padding);
+  background: var(--container-bg);
+}
+
+.view-widget {
+  font-family: var(--font-family);
+  max-width: 400px;
+  margin: 0 auto;
+  background: var(--content-bg);
+  border-radius: var(--content-border-radius);
+  border: var(--content-border);
+  box-shadow: var(--content-shadow);
+  overflow: hidden;
+}
+
+.widget-header {
+  background: var(--primary-color);
+  color: var(--button-color);
+  padding: 16px 20px;
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--heading-font-weight);
+}
+
+.widget-controls {
+  padding: 16px 20px;
+  background: var(--input-section-bg);
+  display: flex;
+  gap: 8px;
+}
+
+.widget-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
+  font-size: var(--input-font-size);
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.widget-input:focus {
+  outline: none;
+  border: var(--input-focus-border);
+}
+
+.btn-update {
+  padding: 8px 16px;
+  background: var(--button-bg);
+  color: var(--button-color);
+  border: none;
+  border-radius: var(--button-border-radius);
+  font-size: 13px;
+  font-weight: var(--button-font-weight);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-update:hover {
+  background: var(--button-hover-bg);
+}
+
+.widget-metrics {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 16px;
+}
+
+.widget-metric {
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--result-value-color);
+  margin-bottom: 4px;
+}
+
+.metric-name {
+  font-size: 11px;
+  color: var(--result-label-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+    `.trim()
+  },
+
   compact: {
     id: 'compact',
     name: 'Compact',
@@ -725,178 +860,6 @@ body {
   .two-columns {
     grid-template-columns: 1fr;
   }
-}
-    `.trim()
-  },
-
-  bigNumber: {
-    id: 'bigNumber',
-    name: 'Big Number',
-    description: 'Hero-style single metric display - perfect for KPIs',
-    isSystem: true,
-    settings: {
-      supportsInteractive: false,
-      inputLayout: 'vertical',
-      outputLayout: 'list'
-    },
-    html: `
-<div class="view-big-number">
-  <div class="service-name">{{serviceName}}</div>
-  {{#outputs}}
-  <div class="big-number-item">
-    <div class="big-value">{{value}}</div>
-    <div class="big-label">{{title}}</div>
-  </div>
-  {{/outputs}}
-</div>
-    `.trim(),
-    css: `
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-big-number {
-  font-family: var(--font-family);
-  text-align: center;
-  padding: var(--content-padding);
-  background: var(--content-bg);
-  border: var(--content-border);
-  border-radius: var(--content-border-radius);
-  box-shadow: var(--content-shadow);
-  min-width: 300px;
-}
-
-.service-name {
-  font-size: 14px;
-  color: var(--label-color);
-  margin-bottom: 32px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.big-number-item {
-  margin: 32px 0;
-}
-
-.big-number-item:first-child {
-  margin-top: 0;
-}
-
-.big-number-item:last-child {
-  margin-bottom: 0;
-}
-
-.big-value {
-  font-size: 56px;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1.2;
-  margin-bottom: 8px;
-}
-
-.big-label {
-  font-size: 16px;
-  color: var(--result-label-color);
-  font-weight: var(--result-label-font-weight);
-}
-    `.trim()
-  },
-
-  metricGrid: {
-    id: 'metricGrid',
-    name: 'Metric Grid',
-    description: '2x2 grid of metrics - dashboard-style display',
-    isSystem: true,
-    settings: {
-      supportsInteractive: false,
-      inputLayout: 'vertical',
-      outputLayout: 'grid'
-    },
-    html: `
-<div class="view-metric-grid">
-  <div class="grid-header">
-    <h2>{{serviceName}}</h2>
-  </div>
-  <div class="metric-grid">
-    {{#outputs}}
-    <div class="metric-box">
-      <div class="metric-value">{{value}}</div>
-      <div class="metric-label">{{title}}</div>
-    </div>
-    {{/outputs}}
-  </div>
-</div>
-    `.trim(),
-    css: `
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-metric-grid {
-  font-family: var(--font-family);
-  max-width: 600px;
-  width: 100%;
-}
-
-.grid-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.grid-header h2 {
-  margin: 0;
-  color: var(--heading-color);
-  font-size: var(--heading-font-size);
-  font-weight: var(--heading-font-weight);
-  font-family: var(--heading-font-family);
-}
-
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.metric-box {
-  background: var(--content-bg);
-  padding: 32px 24px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-  text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.metric-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.metric-value {
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--result-value-color);
-  margin-bottom: 8px;
-  line-height: 1.2;
-}
-
-.metric-label {
-  font-size: var(--result-label-font-size);
-  color: var(--result-label-color);
-  font-weight: var(--result-label-font-weight);
 }
     `.trim()
   },
@@ -1843,194 +1806,6 @@ body {
     `.trim()
   },
 
-  wizard: {
-    id: 'wizard',
-    name: 'Step Calculator',
-    description: 'Wizard-style with prominent result - guided experience',
-    isSystem: true,
-    settings: {
-      supportsInteractive: true,
-      inputLayout: 'vertical',
-      outputLayout: 'list'
-    },
-    html: `
-<div class="view-wizard">
-  <div class="wizard-step">
-    <div class="step-number">1</div>
-    <div class="step-content">
-      <h2>{{serviceName}}</h2>
-      <form id="calc-form">
-        {{#inputs}}
-        <div class="input-group">
-          <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
-        </div>
-        {{/inputs}}
-        <button type="submit" class="btn-calculate">Get Results</button>
-      </form>
-    </div>
-  </div>
-  <div class="wizard-result">
-    <div class="result-header">Your Results</div>
-    {{#outputs}}
-    <div class="result-box">
-      <div class="result-label">{{title}}</div>
-      <div class="result-value">{{value}}</div>
-    </div>
-    {{/outputs}}
-  </div>
-</div>
-    `.trim(),
-    css: `
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-wizard {
-  font-family: var(--font-family);
-  max-width: 600px;
-  width: 100%;
-}
-
-.wizard-step {
-  display: flex;
-  gap: 24px;
-  background: var(--content-bg);
-  padding: 32px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-  margin-bottom: 24px;
-}
-
-.step-number {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  background: var(--primary-color);
-  color: var(--button-color);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.step-content {
-  flex: 1;
-}
-
-.step-content h2 {
-  margin: 0 0 20px 0;
-  color: var(--heading-color);
-  font-size: var(--heading-font-size);
-  font-weight: var(--heading-font-weight);
-  font-family: var(--heading-font-family);
-}
-
-.input-group {
-  margin-bottom: 16px;
-}
-
-.input-group label {
-  display: block;
-  font-weight: var(--input-label-font-weight);
-  margin-bottom: 6px;
-  color: var(--input-label-color);
-  font-size: var(--input-label-font-size);
-}
-
-.input-group input {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--input-bg);
-  border: var(--input-border);
-  border-radius: var(--input-border-radius);
-  font-size: var(--input-font-size);
-  color: var(--text-color);
-  box-sizing: border-box;
-  transition: border 0.2s;
-}
-
-.input-group input:focus {
-  outline: none;
-  border: var(--input-focus-border);
-}
-
-.btn-calculate {
-  width: 100%;
-  padding: var(--button-padding);
-  background: var(--button-bg);
-  color: var(--button-color);
-  border: none;
-  border-radius: var(--button-border-radius);
-  font-size: var(--button-font-size);
-  font-weight: var(--button-font-weight);
-  cursor: pointer;
-  margin-top: 8px;
-  transition: background 0.2s;
-}
-
-.btn-calculate:hover {
-  background: var(--button-hover-bg);
-}
-
-.wizard-result {
-  background: var(--content-bg);
-  padding: 32px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-}
-
-.result-header {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--heading-color);
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.result-box {
-  background: var(--input-section-bg);
-  padding: 20px;
-  border-radius: var(--content-border-radius);
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.result-box:last-child {
-  margin-bottom: 0;
-}
-
-.result-label {
-  font-size: var(--result-label-font-size);
-  color: var(--result-label-color);
-  font-weight: var(--result-label-font-weight);
-  margin-bottom: 8px;
-}
-
-.result-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--result-value-color);
-}
-    `.trim()
-  },
-
   pricing: {
     id: 'pricing',
     name: 'Pricing Calculator',
@@ -2201,325 +1976,6 @@ body {
   color: var(--primary-color);
   font-size: 24px;
   font-weight: 700;
-}
-    `.trim()
-  },
-
-  analyzer: {
-    id: 'analyzer',
-    name: 'Data Analyzer',
-    description: 'Analysis tool layout - input area with detailed results',
-    isSystem: true,
-    settings: {
-      supportsInteractive: true,
-      inputLayout: 'vertical',
-      outputLayout: 'list'
-    },
-    html: `
-<div class="view-analyzer">
-  <div class="analyzer-header">
-    <h2>{{serviceName}}</h2>
-  </div>
-  <div class="analyzer-body">
-    <div class="input-panel">
-      <div class="panel-title">Input Data</div>
-      <form id="calc-form">
-        {{#inputs}}
-        <div class="input-group">
-          <label for="{{name}}">{{title}}</label>
-          <input
-            id="{{name}}"
-            type="{{inputType}}"
-            name="{{name}}"
-            value="{{value}}"
-            placeholder="{{placeholder}}"
-          />
-        </div>
-        {{/inputs}}
-        <button type="submit" class="btn-calculate">Analyze</button>
-      </form>
-    </div>
-    <div class="results-panel">
-      <div class="panel-title">Analysis Results</div>
-      <div class="results-grid">
-        {{#outputs}}
-        <div class="analysis-item">
-          <div class="analysis-label">{{title}}</div>
-          <div class="analysis-value">{{value}}</div>
-        </div>
-        {{/outputs}}
-      </div>
-    </div>
-  </div>
-</div>
-    `.trim(),
-    css: `
-body {
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-analyzer {
-  font-family: var(--font-family);
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.analyzer-header {
-  background: var(--content-bg);
-  padding: 24px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.analyzer-header h2 {
-  margin: 0;
-  color: var(--heading-color);
-  font-size: var(--heading-font-size);
-  font-weight: var(--heading-font-weight);
-  font-family: var(--heading-font-family);
-}
-
-.analyzer-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.input-panel,
-.results-panel {
-  background: var(--content-bg);
-  padding: 24px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--heading-color);
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--primary-color);
-}
-
-.input-group {
-  margin-bottom: 16px;
-}
-
-.input-group label {
-  display: block;
-  font-weight: var(--input-label-font-weight);
-  margin-bottom: 6px;
-  color: var(--input-label-color);
-  font-size: var(--input-label-font-size);
-}
-
-.input-group input {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--input-bg);
-  border: var(--input-border);
-  border-radius: var(--input-border-radius);
-  font-size: var(--input-font-size);
-  color: var(--text-color);
-  box-sizing: border-box;
-  transition: border 0.2s;
-}
-
-.input-group input:focus {
-  outline: none;
-  border: var(--input-focus-border);
-}
-
-.btn-calculate {
-  width: 100%;
-  padding: var(--button-padding);
-  background: var(--button-bg);
-  color: var(--button-color);
-  border: none;
-  border-radius: var(--button-border-radius);
-  font-size: var(--button-font-size);
-  font-weight: var(--button-font-weight);
-  cursor: pointer;
-  margin-top: 8px;
-  transition: background 0.2s;
-}
-
-.btn-calculate:hover {
-  background: var(--button-hover-bg);
-}
-
-.results-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.analysis-item {
-  padding: 16px;
-  background: var(--input-section-bg);
-  border-radius: var(--content-border-radius);
-  border-left: 3px solid var(--primary-color);
-}
-
-.analysis-label {
-  font-size: var(--result-label-font-size);
-  color: var(--result-label-color);
-  font-weight: var(--result-label-font-weight);
-  margin-bottom: 6px;
-}
-
-.analysis-value {
-  font-size: var(--result-value-font-size);
-  font-weight: var(--result-value-font-weight);
-  color: var(--result-value-color);
-}
-
-@media (max-width: 700px) {
-  .analyzer-body {
-    grid-template-columns: 1fr;
-  }
-}
-    `.trim()
-  },
-
-  liveWidget: {
-    id: 'liveWidget',
-    name: 'Live Widget',
-    description: 'Dashboard widget - compact and interactive',
-    isSystem: true,
-    settings: {
-      supportsInteractive: true,
-      inputLayout: 'horizontal',
-      outputLayout: 'grid'
-    },
-    html: `
-<div class="view-widget">
-  <div class="widget-header">
-    <h3>{{serviceName}}</h3>
-  </div>
-  <form id="calc-form" class="widget-controls">
-    {{#inputs}}
-    <input
-      id="{{name}}"
-      type="{{inputType}}"
-      name="{{name}}"
-      value="{{value}}"
-      placeholder="{{title}}"
-      class="widget-input"
-    />
-    {{/inputs}}
-    <button type="submit" class="btn-update">Update</button>
-  </form>
-  <div class="widget-metrics">
-    {{#outputs}}
-    <div class="widget-metric">
-      <div class="metric-value">{{value}}</div>
-      <div class="metric-name">{{title}}</div>
-    </div>
-    {{/outputs}}
-  </div>
-</div>
-    `.trim(),
-    css: `
-body {
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-widget {
-  font-family: var(--font-family);
-  max-width: 400px;
-  margin: 0 auto;
-  background: var(--content-bg);
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-  overflow: hidden;
-}
-
-.widget-header {
-  background: var(--primary-color);
-  color: var(--button-color);
-  padding: 16px 20px;
-}
-
-.widget-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: var(--heading-font-weight);
-}
-
-.widget-controls {
-  padding: 16px 20px;
-  background: var(--input-section-bg);
-  display: flex;
-  gap: 8px;
-}
-
-.widget-input {
-  flex: 1;
-  padding: 8px 12px;
-  background: var(--input-bg);
-  border: var(--input-border);
-  border-radius: var(--input-border-radius);
-  font-size: var(--input-font-size);
-  color: var(--text-color);
-  box-sizing: border-box;
-}
-
-.widget-input:focus {
-  outline: none;
-  border: var(--input-focus-border);
-}
-
-.btn-update {
-  padding: 8px 16px;
-  background: var(--button-bg);
-  color: var(--button-color);
-  border: none;
-  border-radius: var(--button-border-radius);
-  font-size: 13px;
-  font-weight: var(--button-font-weight);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-
-.btn-update:hover {
-  background: var(--button-hover-bg);
-}
-
-.widget-metrics {
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 16px;
-}
-
-.widget-metric {
-  text-align: center;
-}
-
-.metric-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--result-value-color);
-  margin-bottom: 4px;
-}
-
-.metric-name {
-  font-size: 11px;
-  color: var(--result-label-color);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
     `.trim()
   },
@@ -2705,98 +2161,6 @@ body {
   .estimator-content {
     grid-template-columns: 1fr;
   }
-}
-    `.trim()
-  },
-
-  valueFocus: {
-    id: 'valueFocus',
-    name: 'Value Focus',
-    description: 'Minimal labels, maximum values - typography emphasis',
-    isSystem: true,
-    settings: {
-      supportsInteractive: false,
-      inputLayout: 'vertical',
-      outputLayout: 'grid'
-    },
-    html: `
-<div class="view-value-focus">
-  <div class="focus-header">{{serviceName}}</div>
-  <div class="values-grid">
-    {{#outputs}}
-    <div class="value-card">
-      <div class="card-value">{{value}}</div>
-      <div class="card-label">{{title}}</div>
-    </div>
-    {{/outputs}}
-  </div>
-</div>
-    `.trim(),
-    css: `
-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  margin: 0;
-  padding: var(--container-padding);
-  background: var(--container-bg);
-}
-
-.view-value-focus {
-  font-family: var(--font-family);
-  max-width: 900px;
-  width: 100%;
-}
-
-.focus-header {
-  text-align: center;
-  font-size: 11px;
-  color: var(--label-color);
-  margin-bottom: 40px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  opacity: 0.6;
-}
-
-.values-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
-}
-
-.value-card {
-  background: var(--content-bg);
-  padding: 40px 24px;
-  border-radius: var(--content-border-radius);
-  border: var(--content-border);
-  box-shadow: var(--content-shadow);
-  text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.value-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
-.card-value {
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--result-value-color);
-  line-height: 1.1;
-  margin-bottom: 12px;
-  letter-spacing: -1px;
-}
-
-.card-label {
-  font-size: 10px;
-  color: var(--result-label-color);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 600;
-  opacity: 0.7;
 }
     `.trim()
   },

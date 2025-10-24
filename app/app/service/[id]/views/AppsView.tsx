@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useLayoutEffect, Suspense, useEffect, useCallback } from 'react';
-import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, Tabs, QRCode, Select, Card, Row, Col } from 'antd';
+import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, QRCode, Select, Segmented, Card, Row, Col } from 'antd';
 import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
@@ -58,6 +58,7 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [fullScreenContent, setFullScreenContent] = useState<{ url: string; title: string } | null>(null);
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('all');
+  const [showCaption, setShowCaption] = useState<boolean>(true);
 
   // Track fade-in effect separately
   useLayoutEffect(() => {
@@ -229,16 +230,6 @@ const AppsView: React.FC<AppsViewProps> = ({
     return queryString ? `?${queryString}` : '';
   };
 
-  // Get snippet embed URL
-  const getSnippetEmbedUrl = (viewId: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
-    const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
-    const queryString = getDefaultQueryString();
-    const themeParam = buildThemeParam(!!queryString);
-
-    return baseUrl + queryString + themeParam;
-  };
-
   // Get interactive embed URL
   const getInteractiveEmbedUrl = (viewId: string) => {
     if (!webAppToken) return '';
@@ -248,14 +239,9 @@ const AppsView: React.FC<AppsViewProps> = ({
     const separator = queryString ? '&' : '?';
     const themeParam = buildThemeParam(true); // Always has params (token + interactive)
     const viewModeParam = viewMode !== 'all' ? `&viewMode=${viewMode}` : '';
+    const captionParam = !showCaption ? '&nocaption=true' : '';
 
-    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}${viewModeParam}`;
-  };
-
-  // Get iframe code for snippet
-  const getSnippetIframeCode = (viewId: string) => {
-    const url = getSnippetEmbedUrl(viewId);
-    return `<iframe src="${url}" width="100%" height="300" frameborder="0"></iframe>`;
+    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}${viewModeParam}${captionParam}`;
   };
 
   // Get iframe code for interactive mode
@@ -721,8 +707,19 @@ const AppsView: React.FC<AppsViewProps> = ({
     // System Templates (Snippets/Views)
     const template = SYSTEM_TEMPLATES[selectedKey];
     if (template) {
-      const snippetUrl = getSnippetEmbedUrl(template.id);
-      const snippetIframe = getSnippetIframeCode(template.id);
+      if (!webAppToken) {
+        return (
+          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <Alert
+              message="Token Required"
+              description="Web Snippets require a token to be configured. Please set up a token in the Web App section first."
+              type="warning"
+              showIcon
+            />
+          </div>
+        );
+      }
+
       const interactiveUrl = getInteractiveEmbedUrl(template.id);
       const interactiveIframe = getInteractiveIframeCode(template.id);
 
@@ -736,208 +733,105 @@ const AppsView: React.FC<AppsViewProps> = ({
             </p>
           </div>
 
-          {/* Tabs for Snippet vs Interactive Mode */}
-          <Tabs
-            defaultActiveKey="snippet"
-            items={[
-              {
-                key: 'snippet',
-                label: 'Snippet Mode',
-                children: (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {apiConfig.requireToken && (
-                      <Alert
-                        message="Authentication Required"
-                        description={
-                          <>
-                            This service requires a token. Replace <Text code>YOUR_TOKEN_HERE</Text> in the URL with your actual API token.
-                          </>
-                        }
-                        type="warning"
-                        showIcon
-                      />
-                    )}
+          {/* Embed URL */}
+          <div>
+            <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
+              Embed URL:
+            </div>
+            <div style={{
+              background: '#f5f5f5',
+              padding: '8px 12px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontFamily: 'monospace',
+              wordBreak: 'break-all'
+            }}>
+              <Text copyable={{ text: interactiveUrl }} style={{ fontSize: 11 }}>
+                {interactiveUrl}
+              </Text>
+            </div>
+            <Button
+              type="link"
+              size="small"
+              icon={<QrcodeOutlined />}
+              onClick={() => handleShowQrCode(interactiveUrl)}
+              style={{ padding: '4px 0', height: 'auto', fontSize: 11, color: '#502D80' }}
+            >
+              Show Barcode
+            </Button>
+          </div>
 
-                    {/* Embed URL */}
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-                        Embed URL:
-                      </div>
-                      <div style={{
-                        background: '#f5f5f5',
-                        padding: '8px 12px',
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        <Text copyable={{ text: snippetUrl }} style={{ fontSize: 11 }}>
-                          {snippetUrl}
-                        </Text>
-                      </div>
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<QrcodeOutlined />}
-                        onClick={() => handleShowQrCode(snippetUrl)}
-                        style={{ padding: '4px 0', height: 'auto', fontSize: 11, color: '#502D80' }}
-                      >
-                        Show Barcode
-                      </Button>
-                    </div>
+          {/* iFrame Code */}
+          <div>
+            <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
+              iFrame Code:
+            </div>
+            <div style={{
+              background: '#f5f5f5',
+              padding: '8px 12px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontFamily: 'monospace',
+              wordBreak: 'break-all'
+            }}>
+              <Text copyable={{ text: interactiveIframe }} code style={{ fontSize: 11 }}>
+                {interactiveIframe}
+              </Text>
+            </div>
+          </div>
 
-                    {/* iFrame Code */}
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-                        iFrame Code:
-                      </div>
-                      <div style={{
-                        background: '#f5f5f5',
-                        padding: '8px 12px',
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        <Text copyable={{ text: snippetIframe }} code style={{ fontSize: 11 }}>
-                          {snippetIframe}
-                        </Text>
-                      </div>
-                    </div>
-
-                    {/* Preview */}
-                    <div style={{ marginTop: 'auto' }}>
-                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span>Live Preview</span>
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<FullscreenOutlined />}
-                          onClick={() => handleOpenFullScreen(snippetUrl, `${template.name} - Snippet Mode`)}
-                          style={{ fontSize: 14 }}
-                        />
-                      </div>
-                      <div style={{
-                        width: '100%',
-                        height: 'calc(100vh - 520px)',
-                        minHeight: 300,
-                        border: '1px solid #d9d9d9',
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                        backgroundColor: '#fff'
-                      }}>
-                        <iframe
-                          src={snippetUrl}
-                          style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
-                          title={`${template.name} Snippet Preview`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )
-              },
-              {
-                key: 'interactive',
-                label: 'Interactive Mode',
-                disabled: !webAppToken,
-                children: webAppToken ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {/* Embed URL */}
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-                        Embed URL:
-                      </div>
-                      <div style={{
-                        background: '#f5f5f5',
-                        padding: '8px 12px',
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        <Text copyable={{ text: interactiveUrl }} style={{ fontSize: 11 }}>
-                          {interactiveUrl}
-                        </Text>
-                      </div>
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<QrcodeOutlined />}
-                        onClick={() => handleShowQrCode(interactiveUrl)}
-                        style={{ padding: '4px 0', height: 'auto', fontSize: 11, color: '#502D80' }}
-                      >
-                        Show Barcode
-                      </Button>
-                    </div>
-
-                    {/* iFrame Code */}
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-                        iFrame Code:
-                      </div>
-                      <div style={{
-                        background: '#f5f5f5',
-                        padding: '8px 12px',
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontFamily: 'monospace',
-                        wordBreak: 'break-all'
-                      }}>
-                        <Text copyable={{ text: interactiveIframe }} code style={{ fontSize: 11 }}>
-                          {interactiveIframe}
-                        </Text>
-                      </div>
-                    </div>
-
-                    {/* Preview */}
-                    <div style={{ marginTop: 'auto' }}>
-                      <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span>Live Preview</span>
-                            <Select
-                              value={viewMode}
-                              onChange={setViewMode}
-                              size="small"
-                              style={{ width: 120, fontSize: 11 }}
-                              options={[
-                                { label: 'Show All', value: 'all' },
-                                { label: 'Results Only', value: 'results' },
-                                { label: 'Inputs Only', value: 'inputs' }
-                              ]}
-                            />
-                          </div>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<FullscreenOutlined />}
-                            onClick={() => handleOpenFullScreen(interactiveUrl, `${template.name} - Interactive Mode`)}
-                            style={{ fontSize: 14 }}
-                          />
-                        </div>
-                      </div>
-                      <div style={{
-                        width: '100%',
-                        height: 'calc(100vh - 460px)',
-                        minHeight: 400,
-                        border: '1px solid #d9d9d9',
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                        backgroundColor: '#fff'
-                      }}>
-                        <iframe
-                          key={`interactive-${viewMode}`}
-                          src={interactiveUrl}
-                          style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#fff' }}
-                          title={`${template.name} Interactive Preview`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : null
-              }
-            ]}
-          />
+          {/* Preview */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span>Live Preview</span>
+                <Segmented
+                  value={viewMode}
+                  onChange={(value) => setViewMode(value as 'all' | 'results' | 'inputs')}
+                  size="small"
+                  options={[
+                    { label: 'All', value: 'all' },
+                    { label: 'Results', value: 'results' },
+                    { label: 'Inputs', value: 'inputs' }
+                  ]}
+                />
+                <Segmented
+                  value={showCaption ? 'caption' : 'nocaption'}
+                  onChange={(value) => setShowCaption(value === 'caption')}
+                  size="small"
+                  options={[
+                    { label: 'Caption', value: 'caption' },
+                    { label: 'No Caption', value: 'nocaption' }
+                  ]}
+                />
+              </div>
+              <Button
+                type="text"
+                size="small"
+                icon={<FullscreenOutlined />}
+                onClick={() => handleOpenFullScreen(interactiveUrl, template.name)}
+                style={{ fontSize: 14 }}
+              />
+            </div>
+            <div style={{
+              flex: 1,
+              minHeight: viewMode === 'all' ? 400 : 250,
+              border: '1px solid #d9d9d9',
+              borderRadius: 4,
+              overflow: 'hidden',
+              backgroundColor: '#fff',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'flex-start'
+            }}>
+              <iframe
+                key={`interactive-${viewMode}-${showCaption ? 'caption' : 'nocaption'}`}
+                src={interactiveUrl}
+                style={{ width: '100%', maxWidth: '800px', height: '100%', border: 'none', backgroundColor: '#fff' }}
+                title={`${template.name} Preview`}
+              />
+            </div>
+          </div>
         </div>
       );
     }
