@@ -917,7 +917,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                 id: editingParameter?.id || generateParameterId(),
                 direction: parameterType
               };
-              
+
               if (parameterType === 'input') {
                 if (editingParameter) {
                   setInputs(prev => prev.map(p => p.id === newParam.id ? {
