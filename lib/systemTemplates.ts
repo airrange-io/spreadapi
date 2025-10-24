@@ -591,8 +591,7 @@ body {
 }
 
 .compact-input {
-  flex: 1;
-  min-width: 120px;
+  display: inline-block;
 }
 
 .compact-input label {
@@ -601,10 +600,11 @@ body {
   color: var(--input-label-color);
   margin-bottom: 4px;
   font-weight: var(--input-label-font-weight);
+  white-space: nowrap;
 }
 
 .compact-input input {
-  width: 100%;
+  width: 15ch;
   padding: 8px 10px;
   background: var(--input-bg);
   border: var(--input-border);
@@ -612,6 +612,15 @@ body {
   font-size: var(--input-font-size);
   box-sizing: border-box;
   color: var(--text-color);
+}
+
+/* Size inputs based on their value length */
+.compact-input input[value=""] {
+  width: 12ch;
+}
+
+.compact-input input[type="number"] {
+  width: 10ch;
 }
 
 .compact-input input:focus {

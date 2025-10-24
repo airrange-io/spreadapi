@@ -204,19 +204,10 @@ h1, h2, h3, h4, h5, h6,
   align-items: flex-start !important;
 }
 
-/* Make containers and inputs use full available width */
+/* Make compact view container use full width */
 .view-mode-inputs .view-compact,
 .view-mode-results .view-compact {
   width: 100% !important;
-}
-
-.view-mode-inputs .compact-form {
-  width: 100% !important;
-}
-
-.view-mode-inputs .compact-input {
-  min-width: 100% !important;
-  flex-basis: 100% !important;
 }
 
 /* Form + Results template - make results standalone larger */
