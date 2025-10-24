@@ -1631,15 +1631,27 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
             responseText += `Service: ${state.serviceId}\n`;
             responseText += `Created: ${new Date(state.created).toISOString()}\n\n`;
 
-            responseText += `INPUTS:\n`;
+            responseText += `📥 INPUTS:\n`;
             for (const [key, value] of Object.entries(state.inputs)) {
-              responseText += `  ${key}: ${value}\n`;
+              responseText += `  • ${key}: ${value}\n`;
             }
 
-            responseText += `\nOUTPUTS:\n`;
-            for (const [key, value] of Object.entries(state.outputs)) {
-              responseText += `  ${key}: ${value}\n`;
+            responseText += `\n📊 OUTPUTS:\n`;
+            // Handle both array and object formats
+            if (Array.isArray(state.outputs)) {
+              state.outputs.forEach(output => {
+                const label = output.title || output.name || 'value';
+                responseText += `  • ${label}: ${output.value}\n`;
+              });
+            } else {
+              for (const [key, value] of Object.entries(state.outputs)) {
+                responseText += `  • ${key}: ${value}\n`;
+              }
             }
+
+            responseText += `\n💡 To recalculate with different inputs, use spreadapi_calc_${state.serviceId}`;
+            responseText += `\n💾 To save a new variation, run the calculation and use spreadapi_save_state`;
+
 
             return {
               jsonrpc: '2.0',
