@@ -22,7 +22,7 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
   delay = 500
 }) => {
   const [value, setValue] = useState(defaultValue);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Update local state when defaultValue changes from parent
   useEffect(() => {
@@ -82,7 +82,7 @@ const DebouncedTextArea: React.FC<DebouncedTextAreaProps> = ({
   delay = 500
 }) => {
   const [value, setValue] = useState(defaultValue);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Update local state when defaultValue changes from parent
   useEffect(() => {
