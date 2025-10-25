@@ -57,21 +57,20 @@ async function buildServiceListDescription(auth) {
 
     // Get allowed service IDs from auth
     const allowedServiceIds = auth.serviceIds || [];
-    const hasServiceRestrictions = allowedServiceIds.length > 0;
 
-    // For OAuth tokens with service restrictions, ONLY query allowed services
-    // This prevents errors from malformed/non-existent services in user index
-    if (hasServiceRestrictions) {
-      const originalCount = userServiceIds.length;
-      userServiceIds = userServiceIds.filter(id => allowedServiceIds.includes(id));
-      console.log('[MCP] Service filtering:', {
-        totalUserServices: originalCount,
-        allowedServices: allowedServiceIds.length,
-        filteredServices: userServiceIds.length,
-        allowedServiceIds,
-        userServiceIds,
-      });
-    }
+    // SECURITY: MCP tokens should ALWAYS be restricted to their bound services
+    // NEVER allow access to all services - filter to allowed services only
+    // If allowedServiceIds is empty, the token has no access (not all access!)
+    const originalCount = userServiceIds.length;
+    userServiceIds = userServiceIds.filter(id => allowedServiceIds.includes(id));
+
+    console.log('[MCP] Service filtering:', {
+      totalUserServices: originalCount,
+      allowedServices: allowedServiceIds.length,
+      filteredServices: userServiceIds.length,
+      allowedServiceIds,
+      userServiceIds,
+    });
     
     const serviceDescriptions = [];
     const servicesWithAreas = [];
