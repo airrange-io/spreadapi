@@ -111,7 +111,7 @@ async function buildServiceListDescription(auth) {
     // Note: node-redis returns [[error, result], [error, result], ...]
     const results = await multi.exec();
 
-    console.log('[MCP] Multi exec results:', {
+    console.error('[MCP] Multi exec results:', {
       serviceCount: userServiceIds.length,
       expectedResults: userServiceIds.length * 2,
       actualResults: results?.length,
@@ -142,12 +142,24 @@ async function buildServiceListDescription(auth) {
       const isPublished = results[baseIndex][1] === 1;
       const publishedData = results[baseIndex + 1][1];
 
-      if (!isPublished) continue;
+      console.error(`[MCP] Processing service ${serviceId}:`, {
+        isPublished,
+        hasData: !!publishedData,
+        hasUrlData: !!(publishedData?.urlData)
+      });
+
+      if (!isPublished) {
+        console.error(`[MCP] Skipping ${serviceId} - not published`);
+        continue;
+      }
 
       // Note: Service restriction filtering already done above when building userServiceIds
       // This ensures we only query allowed services
 
-      if (!publishedData || !publishedData.urlData) continue;
+      if (!publishedData || !publishedData.urlData) {
+        console.error(`[MCP] Skipping ${serviceId} - no urlData`);
+        continue;
+      }
       
       const title = publishedData.title || serviceId;
       const description = publishedData.description || publishedData.aiDescription || '';
@@ -192,13 +204,19 @@ async function buildServiceListDescription(auth) {
       structuredServices: structuredServices,  // Add structured data
       totalCount: serviceDescriptions.length + servicesWithAreas.length
     };
-    
+
+    console.error('[MCP] Tool generation complete:', {
+      calcServicesCount: serviceDescriptions.length,
+      areaServicesCount: servicesWithAreas.length,
+      totalTools: result.totalCount
+    });
+
     // Cache the result
     toolDescriptionCache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
-    
+
     return result;
   } catch (error) {
     console.error('Error building service descriptions:', error);
