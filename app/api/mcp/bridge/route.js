@@ -378,6 +378,49 @@ function preprocessInputs(inputs, apiDefinition) {
 }
 
 /**
+ * Format a value using Excel-style format string
+ * Supports common formats like €#,##0.00, $#,##0.00, 0.00%, etc.
+ */
+function formatValueWithExcelFormat(value, formatString) {
+  if (value === null || value === undefined || formatString === null || formatString === undefined) {
+    return value;
+  }
+
+  try {
+    // Handle percentage format (0.00%, 0%, etc.)
+    if (formatString.includes('%')) {
+      const percentValue = (value * 100).toFixed(2);
+      return `${percentValue}%`;
+    }
+
+    // Extract currency symbol (€, $, etc.)
+    const currencyMatch = formatString.match(/^([€$£¥₹₽])/);
+    const currencySymbol = currencyMatch ? currencyMatch[1] : '';
+
+    // Extract decimal places from format string
+    const decimalMatch = formatString.match(/\.([0#]+)/);
+    const decimalPlaces = decimalMatch ? decimalMatch[1].length : 0;
+
+    // Format number with thousands separators and decimal places
+    const formattedNumber = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: decimalPlaces,
+      maximumFractionDigits: decimalPlaces
+    }).format(value);
+
+    // Combine currency symbol with formatted number
+    if (currencySymbol) {
+      return `${currencySymbol}${formattedNumber}`;
+    }
+
+    return formattedNumber;
+  } catch (error) {
+    // If formatting fails, return raw value
+    console.warn(`Failed to format value ${value} with format ${formatString}:`, error);
+    return value;
+  }
+}
+
+/**
  * Execute a service calculation using V1 API
  */
 async function executeService(serviceId, inputs) {
@@ -413,11 +456,17 @@ async function executeService(serviceId, inputs) {
         outputs.forEach(output => {
           // Use friendly title or fallback to name
           const outputLabel = output.title || output.name;
-          // Format value if formatString is available
-          let displayValue = output.value;
+
+          // Format value using formatString if available
+          let displayValue;
           if (output.formatString) {
-            displayValue = `${output.value} (${output.formatString})`;
+            // Apply Excel-style formatting for presentation
+            displayValue = formatValueWithExcelFormat(output.value, output.formatString);
+          } else {
+            // No format string - show raw value
+            displayValue = output.value;
           }
+
           resultText += `  • ${outputLabel}: ${displayValue}\n`;
         });
       } else {
@@ -557,8 +606,28 @@ OPTION B - Need parameter info (DISCOVERY PATH):
 
 🎯 PREFER OPTION A whenever possible (faster, better UX)
 
-❌ DON'T ask for parameters you can infer from context
-✅ DO start calculating immediately when you have values`;
+⚠️  CRITICAL - PERCENTAGE VALUES:
+ALWAYS convert percentages to decimals (divide by 100):
+• "5%" → 0.05 (NOT 5)
+• "42%" → 0.42 (NOT 42)
+• "0.5%" → 0.005 (NOT 0.5)
+Entering "5" instead of "0.05" causes wildly incorrect results!
+
+📊 PRESENTING RESULTS:
+Outputs include formatString - ALWAYS use it!
+Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Alt"}
+→ Present as: "Alt: €265.53" (not "265.53")
+
+🚀 BE PROACTIVE:
+❌ DON'T ask "Would you like me to retrieve details?"
+✅ DO: Just retrieve and use them
+❌ DON'T ask "Would you like me to calculate?"
+✅ DO: Calculate immediately
+Only ask permission for saving data or irreversible actions.
+
+🔄 AUTO-RECOVERY:
+If calculation fails → Auto-call get_service_details and retry
+If result seems absurd (>$1M for typical inputs, scientific notation) → Check percentage format, retry with correction`;
           } else {
             // Multiple services: list them all with AI hints
             let description = `SpreadAPI: Instant Spreadsheet Calculations\n\nYou have access to ${serviceCount} calculation services:\n\n`;
@@ -578,7 +647,14 @@ OPTION B - Need parameter info (DISCOVERY PATH):
             });
 
             response.serverInfo.description = description;
-            response.serverInfo.instructions = `🚀 WORKFLOW (follow this order):
+            response.serverInfo.instructions = `🎯 YOUR ROLE: Helpful calculation assistant, NOT a technical tool lister
+
+When user asks "what can you do?":
+❌ DON'T list technical tools or paths
+✅ DO say: "I can help you calculate! What would you like to calculate?"
+Focus on USER PROBLEMS, not technical capabilities.
+
+🚀 WORKFLOW (follow this order):
 
 OPTION A - User provides all values (FAST PATH - preferred):
 → Directly call: spreadapi_calc(serviceId, inputs)
@@ -592,15 +668,41 @@ OPTION B - Need parameter info (DISCOVERY PATH):
 
 🎯 PREFER OPTION A whenever possible (faster, better UX)
 
+⚠️  CRITICAL - PERCENTAGE VALUES:
+ALWAYS convert percentages to decimals (divide by 100):
+• "5%" → 0.05 (NOT 5)
+• "42%" → 0.42 (NOT 42)
+• "0.5%" → 0.005 (NOT 0.5)
+Entering "5" instead of "0.05" causes wildly incorrect results!
+
+📊 PRESENTING RESULTS:
+Outputs include formatString - ALWAYS use it when available!
+• formatString "€#,##0.00" → €265.53
+• formatString "$#,##0.00" → $31,998.32
+• Use title field for labels, not name
+Present as: "Title: Formatted Value" (e.g., "Total: $31,998.32")
+
+🚀 BE PROACTIVE - Stop Asking Permission!
+❌ DON'T ask: "Would you like me to retrieve details?"
+✅ DO: Just retrieve and use them
+❌ DON'T ask: "Would you like me to calculate?"
+✅ DO: Calculate immediately
+Only ask permission for saving data or irreversible actions.
+
+🔄 AUTO-RECOVERY:
+• Calculation fails → Auto-call get_service_details and retry
+• Result seems absurd (>$1M for typical inputs, scientific notation) → Check percentage format, auto-retry with correction
+
 ❌ DON'T:
 - Call spreadapi_list_services (services already listed above)
-- Ask for parameters you can infer (percentages, booleans, etc.)
-- Call get_service_details if user already provided values
+- Ask for parameters you can infer
+- Just say "that's unrealistic" - FIX IT!
 
 ✅ DO:
-- Start calculating immediately when you have values
+- Calculate immediately when you have values
 - Pay attention to service warnings (⚠️) above
-- Follow service guidance (💡) for conditional parameters`;
+- Follow service guidance (💡) for conditional parameters
+- Auto-correct errors and explain what you fixed`;
           }
         } catch (error) {
           console.error('Error loading service list:', error);
@@ -666,7 +768,36 @@ HOW TO USE:
    Example: User: "Calculate 5% interest on $1000 for 12 months"
    → You have: serviceId + inputs → Just call spreadapi_calc right now!
 
-2. DISCOVERY PATH: If unsure about parameters → Call spreadapi_get_service_details first`;
+2. DISCOVERY PATH: If unsure about parameters → Call spreadapi_get_service_details first
+
+⚠️  CRITICAL - PERCENTAGE VALUES:
+ALWAYS convert percentages to decimals (divide by 100):
+• "5%" → 0.05 (NOT 5)
+• "42%" → 0.42 (NOT 42)
+• "0.5%" → 0.005 (NOT 0.5)
+Entering "5" instead of "0.05" causes wildly incorrect results!
+
+📊 PRESENTING RESULTS:
+Outputs include formatString - ALWAYS use it when available!
+• Example output: {"value": 265.53, "formatString": "€#,##0.00", "title": "Alt"}
+• Present as: "Alt: €265.53" (NOT "265.53" or "Alt: 265.53")
+• Use title field for labels, not name
+• If formatString missing, present raw value
+
+🔄 AUTO-ERROR RECOVERY:
+If calculation fails:
+1. Auto-call spreadapi_get_service_details(serviceId)
+2. Identify the issue (missing param, wrong type, etc.)
+3. Retry with corrections
+4. Explain what you fixed
+
+If result seems absurd (>$1M for typical inputs, scientific notation):
+1. Check if percentage values were converted (5% → 0.05)
+2. Auto-retry with corrected values
+3. Explain: "I noticed the result was unrealistic. The issue was..."
+
+❌ DON'T just say "that's unrealistic" and stop
+✅ DO: Fix it automatically and explain the correction`;
 
         // Add service-specific AI hints dynamically
         if (serviceInfo.structuredServices && serviceInfo.structuredServices.length > 0) {
@@ -713,10 +844,12 @@ WHEN NOT TO USE:
 - Simple calculation with obvious parameters → Infer and calculate
 
 RETURNS:
-- inputs: Array with types, constraints, defaults, examples
-- outputs: What the calculation returns
+- inputs: Array with types, constraints, defaults, examples, percentage format hints
+- outputs: What the calculation returns (with formatString for presentation)
 - aiDescription: Special instructions for this service (READ THIS!)
-- aiUsageExamples: Example requests and how to handle them`;
+- aiUsageExamples: Example requests and how to handle them
+
+📊 IMPORTANT: Check outputs for formatString - use it to present results correctly!`;
 
         const listServicesDescription = `📑 OPTIONAL - List all services with metadata
 
@@ -727,7 +860,9 @@ ONLY use if:
 - You need detailed metadata (creation dates, call counts, categories)
 - You need to discover services with editable areas
 
-OTHERWISE: Just use the service list in spreadapi_calc description above.`;
+🚀 BE PROACTIVE:
+❌ DON'T ask "Would you like me to list services?"
+✅ DO: Just use the services shown in spreadapi_calc description`;
 
         let areaDescription = '🔍 ADVANCED - Read editable spreadsheet areas (tables/lists)\n\nCOMPLEX FEATURE - Only use if service has editable areas.';
         if (serviceInfo.areaServices.length > 0) {
@@ -898,7 +1033,13 @@ Skip this for simple calculations with just input parameters.`,
           },
           {
             name: 'spreadapi_batch',
-            description: 'Execute multiple calculations at once for comparison. Perfect for scenarios like comparing different loan terms, investment strategies, or budget variations.',
+            description: `Execute multiple calculations at once for comparison. Perfect for scenarios like comparing different loan terms, investment strategies, or budget variations.
+
+🚀 BE PROACTIVE: When user says "compare X and Y", just run the batch immediately - don't ask permission.
+
+⚠️  PERCENTAGE WARNING: Apply same percentage conversion (5% → 0.05) to ALL scenarios in batch.
+
+📊 PRESENTATION: Use formatString from outputs to present comparison table with proper formatting.`,
             inputSchema: {
               type: 'object',
               properties: {
@@ -937,7 +1078,13 @@ Skip this for simple calculations with just input parameters.`,
           },
           {
             name: 'spreadapi_save_state',
-            description: 'Save calculation results to enable scenario comparison and decision-making. PURPOSE: Since calculations are stateless (no memory), this tool bridges that gap - save multiple scenarios to compare later. WORKFLOW: Calculate → Save with descriptive label → Calculate alternative → Save → Compare → Make decision. WHEN TO USE: When user says "remember this", "save this scenario", "let\'s compare options", or when doing what-if analysis. Examples: "Calculate my 30-year mortgage and save it as baseline", "Save this as aggressive investment option".',
+            description: `Save calculation results to enable scenario comparison and decision-making. PURPOSE: Since calculations are stateless (no memory), this tool bridges that gap - save multiple scenarios to compare later. WORKFLOW: Calculate → Save with descriptive label → Calculate alternative → Save → Compare → Make decision. WHEN TO USE: When user says "remember this", "save this scenario", "let's compare options", or when doing what-if analysis. Examples: "Calculate my 30-year mortgage and save it as baseline", "Save this as aggressive investment option".
+
+🚀 BE PROACTIVE:
+❌ DON'T ask "Would you like me to save this?"
+✅ DO: Just save it with a descriptive label when user says "remember" or is comparing options
+
+📊 SAVE WITH FORMATSTRING: Outputs include formatString - they're preserved in saved state.`,
             inputSchema: {
               type: 'object',
               properties: {
@@ -969,7 +1116,13 @@ Skip this for simple calculations with just input parameters.`,
           },
           {
             name: 'spreadapi_load_state',
-            description: 'Retrieve saved calculation to compare or reuse. PURPOSE: Load previous scenarios for side-by-side comparison or to build upon. Returns both original inputs AND calculated outputs. WHEN TO USE: When user says "compare with the baseline", "show me the 30-year option", "what were the numbers for scenario X?", or when preparing a comparison table. TIP: Load multiple saved states to create comparison summaries.',
+            description: `Retrieve saved calculation to compare or reuse. PURPOSE: Load previous scenarios for side-by-side comparison or to build upon. Returns both original inputs AND calculated outputs. WHEN TO USE: When user says "compare with the baseline", "show me the 30-year option", "what were the numbers for scenario X?", or when preparing a comparison table. TIP: Load multiple saved states to create comparison summaries.
+
+🚀 BE PROACTIVE:
+❌ DON'T ask "Would you like me to load the baseline scenario?"
+✅ DO: Just load it and show the comparison
+
+📊 USE FORMATSTRING: When presenting loaded results, use formatString from outputs for proper formatting.`,
             inputSchema: {
               type: 'object',
               properties: {
@@ -1371,24 +1524,29 @@ Skip this for simple calculations with just input parameters.`,
               }
               
               try {
-                const result = await executeService(serviceId, inputs);
-                const outputText = result.content[0].text;
-                
-                // Parse outputs from the text response
-                const outputs = {};
-                const lines = outputText.split('\n');
-                lines.forEach(line => {
-                  const match = line.match(/^(.+?):\s*(.+)$/);
-                  if (match) {
-                    outputs[match[1]] = match[2];
-                  }
-                });
-                
+                // Get API definition for input preprocessing
+                const apiData = await getApiDefinition(serviceId, null);
+                const apiDefinition = apiData.apiJson || apiData;
+
+                // Preprocess inputs (handle numbered options, localized values)
+                const processedInputs = preprocessInputs(inputs, apiDefinition);
+
+                // Use V1 API direct calculation
+                const data = await calculateDirect(serviceId, processedInputs, null, {});
+
+                // Check for errors
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+
+                // Store raw outputs array (with formatString preserved!)
+                const outputs = data.outputs || data.result || [];
+
                 results.push({
                   label: label || `Calculation ${results.length + 1}`,
                   serviceId,
                   inputs,
-                  outputs,
+                  outputs: Array.isArray(outputs) ? outputs : Object.entries(outputs).map(([k, v]) => ({ name: k, value: v })),
                   success: true
                 });
               } catch (error) {
@@ -1408,9 +1566,21 @@ Skip this for simple calculations with just input parameters.`,
               if (result.error) {
                 responseText += `❌ Error: ${result.error}\n\n`;
               } else {
-                Object.entries(result.outputs).forEach(([key, value]) => {
-                  responseText += `${key}: ${value}\n`;
-                });
+                // Use formatString for proper presentation
+                if (Array.isArray(result.outputs)) {
+                  result.outputs.forEach(output => {
+                    const label = output.title || output.name;
+                    const displayValue = output.formatString
+                      ? formatValueWithExcelFormat(output.value, output.formatString)
+                      : output.value;
+                    responseText += `${label}: ${displayValue}\n`;
+                  });
+                } else {
+                  // Legacy object format
+                  Object.entries(result.outputs).forEach(([key, value]) => {
+                    responseText += `${key}: ${value}\n`;
+                  });
+                }
                 responseText += '\n';
               }
             });
@@ -1419,29 +1589,52 @@ Skip this for simple calculations with just input parameters.`,
             const successfulResults = results.filter(r => r.success);
             if (successfulResults.length > 1) {
               responseText += '### Comparison Table\n\n';
-              
-              // Get all unique output keys
-              const allOutputKeys = new Set();
+
+              // Build output map: outputName -> { title, formatString }
+              const outputMap = new Map();
               successfulResults.forEach(r => {
-                Object.keys(r.outputs).forEach(key => allOutputKeys.add(key));
+                if (Array.isArray(r.outputs)) {
+                  r.outputs.forEach(output => {
+                    if (!outputMap.has(output.name)) {
+                      outputMap.set(output.name, {
+                        title: output.title || output.name,
+                        formatString: output.formatString
+                      });
+                    }
+                  });
+                }
               });
-              
-              // Filter by compareOutputs if specified
+
+              // Get output keys to compare
               const outputsToCompare = compareOutputs && compareOutputs.length > 0
-                ? Array.from(allOutputKeys).filter(key => compareOutputs.includes(key))
-                : Array.from(allOutputKeys);
-              
-              // Build comparison table
+                ? Array.from(outputMap.keys()).filter(key => compareOutputs.includes(key))
+                : Array.from(outputMap.keys());
+
+              // Build comparison table header
               responseText += '| Scenario |';
               outputsToCompare.forEach(key => {
-                responseText += ` ${key} |`;
+                const meta = outputMap.get(key);
+                responseText += ` ${meta.title} |`;
               });
               responseText += '\n|' + '-|'.repeat(outputsToCompare.length + 1) + '\n';
-              
+
+              // Build comparison table rows
               successfulResults.forEach(result => {
                 responseText += `| ${result.label} |`;
                 outputsToCompare.forEach(key => {
-                  responseText += ` ${result.outputs[key] || 'N/A'} |`;
+                  // Find the output by name
+                  const output = Array.isArray(result.outputs)
+                    ? result.outputs.find(o => o.name === key)
+                    : null;
+
+                  if (output) {
+                    const displayValue = output.formatString
+                      ? formatValueWithExcelFormat(output.value, output.formatString)
+                      : output.value;
+                    responseText += ` ${displayValue} |`;
+                  } else {
+                    responseText += ` N/A |`;
+                  }
                 });
                 responseText += '\n';
               });
@@ -1595,8 +1788,11 @@ Skip this for simple calculations with just input parameters.`,
                   }
                 }
 
-                // Add raw formatter string if available
-                if (output.formatter && output.format !== 'percentage') {
+                // Add formatString information (CRITICAL for presentation)
+                if (output.formatString) {
+                  responseText += `\n  📊 formatString: "${output.formatString}" - ALWAYS use this for presentation!`;
+                  responseText += `\n      Example: value=265.53 → display as formatted with this pattern`;
+                } else if (output.formatter && output.format !== 'percentage') {
                   responseText += `\n  Formatter: ${output.formatter}`;
                 }
 
@@ -1607,6 +1803,11 @@ Skip this for simple calculations with just input parameters.`,
 
                 responseText += '\n';
               });
+
+              // Add general formatString guidance at the end
+              responseText += '\n⚠️  IMPORTANT: When presenting results, check each output for formatString field!';
+              responseText += '\n    If present, use it to format the value (e.g., "€#,##0.00" → €265.53)';
+              responseText += '\n    Use the title field (not name) as the label for user-friendly display.';
             }
             
             if (areas.length > 0) {
@@ -1873,7 +2074,16 @@ Skip this for simple calculations with just input parameters.`,
             if (Array.isArray(state.outputs)) {
               state.outputs.forEach(output => {
                 const label = output.title || output.name || 'value';
-                responseText += `  • ${label}: ${output.value}\n`;
+
+                // Use formatString for proper presentation
+                let displayValue;
+                if (output.formatString) {
+                  displayValue = formatValueWithExcelFormat(output.value, output.formatString);
+                } else {
+                  displayValue = output.value;
+                }
+
+                responseText += `  • ${label}: ${displayValue}\n`;
               });
             } else {
               for (const [key, value] of Object.entries(state.outputs)) {
