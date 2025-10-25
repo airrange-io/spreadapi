@@ -175,6 +175,7 @@ export async function POST(request) {
     let body;
     try {
       body = await request.json();
+      console.error('[MCP] JSON-RPC Request:', JSON.stringify(body, null, 2));
     } catch (error) {
       return NextResponse.json(
         {
@@ -204,6 +205,8 @@ export async function POST(request) {
     // Call bridge handler (now using static import)
     const bridgeResponse = await bridgePOST(mockRequest, {});
     const jsonRpcResponse = await bridgeResponse.json();
+
+    console.error('[MCP] JSON-RPC Response:', JSON.stringify(jsonRpcResponse, null, 2));
 
     // Return with Streamable HTTP headers including session ID
     return NextResponse.json(jsonRpcResponse, {
