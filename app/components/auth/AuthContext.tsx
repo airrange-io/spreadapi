@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       checkAuth();
     });
 
-    const unsubscribeExpired = hanko.onSessionExpired(() => {
+    const unsubscribeExpired = hanko.onSessionExpired(async () => {
       setUser(null);
       setLoading(false);
     });
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      if (hanko) {
+      if (hanko && user) {
         await (hanko as any).user.logout();
         setUser(null);
         router.push('/');

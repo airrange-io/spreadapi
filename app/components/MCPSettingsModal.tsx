@@ -480,7 +480,7 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       />
       )}
 
-      {/* ChatGPT Instructions */}
+      {/* ChatGPT Instructions - OAuth Flow */}
       <Collapse
         style={{ marginBottom: 24 }}
         items={[
@@ -489,20 +489,16 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
             label: 'How to Connect ChatGPT',
             children: (
               <Space direction="vertical" style={{ width: '100%' }} size="large">
+                <Alert
+                  message="Secure OAuth Connection"
+                  description="ChatGPT connects to your services using OAuth 2.1 with Hanko passwordless authentication. You'll be able to select which services ChatGPT can access."
+                  type="success"
+                  showIcon
+                />
+
                 {/* Step 1 */}
                 <div>
-                  <Title level={5}>Step 1: Generate an API Token</Title>
-                  <Text>
-                    {isAuthenticated ?
-                      'Create a token above with access to your published services.' :
-                      'Sign in to generate an API token for your published services.'
-                    }
-                  </Text>
-                </div>
-
-                {/* Step 2 */}
-                <div>
-                  <Title level={5}>Step 2: Open ChatGPT Developer Mode</Title>
+                  <Title level={5}>Step 1: Open ChatGPT Developer Mode</Title>
                   <div style={{
                     background: '#f5f5f5',
                     padding: 16,
@@ -510,164 +506,125 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                     marginTop: 12
                   }}>
                     <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
-                      <li>Go to <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a></li>
-                      <li>Click <strong>Settings</strong> (bottom left)</li>
-                      <li>Navigate to <strong>Apps & Connectors → Advanced → Developer Mode</strong></li>
-                      <li>Click <strong>Create</strong> to add a new connector</li>
+                      <li>Go to <strong>ChatGPT</strong> (chatgpt.com)</li>
+                      <li>Navigate to <strong>Settings → Developer</strong></li>
+                      <li>Click <strong>Add MCP Server</strong></li>
                     </ol>
                   </div>
                 </div>
 
-                {/* Step 3 */}
+                {/* Step 2 */}
                 <div>
-                  <Title level={5}>Step 3: Configure the Connector</Title>
-                  <Space direction="vertical" style={{ width: '100%' }} size="small">
-                    <div>
-                      <Text strong>Name:</Text>
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 4,
-                        position: 'relative'
-                      }}>
-                        <Button
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => copyToClipboard('SpreadAPI')}
-                          style={{ position: 'absolute', top: 4, right: 4 }}
-                        >
-                          Copy
-                        </Button>
-                        SpreadAPI
-                      </pre>
-                    </div>
+                  <Title level={5}>Step 2: Enter SpreadAPI Configuration</Title>
+                  <Text>Add the following MCP server URL:</Text>
 
-                    <div>
-                      <Text strong>Description:</Text>
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 4,
-                        position: 'relative'
-                      }}>
-                        <Button
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => copyToClipboard('Access to spreadsheet calculation services')}
-                          style={{ position: 'absolute', top: 4, right: 4 }}
-                        >
-                          Copy
-                        </Button>
-                        Access to spreadsheet calculation services
-                      </pre>
-                    </div>
-
-                    <div>
-                      <Text strong>URL des MCP-Servers:</Text>
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 4,
-                        position: 'relative'
-                      }}>
-                        <Button
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => copyToClipboard('https://spreadapi.io/api/mcp')}
-                          style={{ position: 'absolute', top: 4, right: 4 }}
-                        >
-                          Copy
-                        </Button>
-                        https://spreadapi.io/api/mcp
-                      </pre>
-                    </div>
-                  </Space>
-                </div>
-
-                {/* Step 4 */}
-                <div>
-                  <Title level={5}>Step 4: Configure OAuth Authentication</Title>
-                  <Text>In the Authentication section, select <strong>OAuth</strong> and enter:</Text>
-
-                  <Space direction="vertical" style={{ width: '100%', marginTop: 12 }} size="small">
-                    <div>
-                      <Text strong>Client-ID:</Text>
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 4,
-                        position: 'relative'
-                      }}>
-                        <Button
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => copyToClipboard('chatgpt')}
-                          style={{ position: 'absolute', top: 4, right: 4 }}
-                        >
-                          Copy
-                        </Button>
-                        chatgpt
-                      </pre>
-                    </div>
-
-                    <div>
-                      <Text strong>Client-Secret:</Text>
-                      <pre style={{
-                        background: '#f5f5f5',
-                        padding: 8,
-                        borderRadius: 4,
-                        marginTop: 4,
-                        position: 'relative'
-                      }}>
-                        <Button
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={() => copyToClipboard(generatedToken || 'YOUR_TOKEN_HERE')}
-                          style={{ position: 'absolute', top: 4, right: 4 }}
-                          disabled={!generatedToken}
-                        >
-                          Copy
-                        </Button>
-                        {generatedToken || 'YOUR_TOKEN_HERE'}
-                      </pre>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
-                        {generatedToken ? '✓ Use the token you just generated' : '⚠️ Generate a token first (Step 1)'}
-                      </Text>
-                    </div>
-                  </Space>
+                  <Input.Search
+                    value={mcpUrl}
+                    readOnly
+                    enterButton={<CopyOutlined />}
+                    onSearch={() => copyToClipboard(mcpUrl)}
+                    style={{ marginTop: 12 }}
+                  />
 
                   <Alert
                     style={{ marginTop: 12 }}
-                    message="How OAuth Works"
-                    description="ChatGPT will automatically exchange your token for an OAuth access token when you create the connector. Your existing token permissions are preserved."
+                    message="OAuth Authentication"
+                    description="ChatGPT will automatically detect OAuth support and redirect you to authorize access."
                     type="info"
                     showIcon
                   />
                 </div>
 
-                {/* Step 5 */}
+                {/* Step 3 */}
                 <div>
-                  <Title level={5}>Step 5: Save and Test</Title>
-                  <Text>Click <strong>Erstellen/Create</strong> to save the connector, then start a new chat and try:</Text>
+                  <Title level={5}>Step 3: Sign In and Authorize</Title>
+                  <Text>When redirected to the authorization page:</Text>
+                  <div style={{
+                    background: '#f5f5f5',
+                    padding: 16,
+                    borderRadius: 8,
+                    marginTop: 12
+                  }}>
+                    <ol style={{ marginBottom: 0, paddingLeft: 20 }}>
+                      <li>
+                        <strong>Sign in with Hanko</strong> - Use passkeys, email codes, or social login
+                      </li>
+                      <li>
+                        <strong>Review permissions</strong> - See what ChatGPT will access
+                      </li>
+                      <li>
+                        <strong>Select services</strong> - Choose which Excel APIs to authorize
+                      </li>
+                      <li>
+                        <strong>Click "Authorize"</strong> - Grant access to ChatGPT
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div>
+                  <Title level={5}>Step 4: Start Using Your Excel APIs!</Title>
+                  <Text>Once authorized, try these prompts in ChatGPT:</Text>
                   <ul style={{ marginTop: 8, marginLeft: 20 }}>
-                    <li>"What Excel calculations can you help me with?"</li>
+                    <li>"What spreadsheet calculations can you help me with?"</li>
                     <li>"Calculate the monthly payment for a $300,000 loan"</li>
                     <li>"Help me analyze different pricing scenarios"</li>
                   </ul>
                 </div>
 
+                {/* Security Notice */}
+                <Alert
+                  message="Security & Privacy"
+                  description={
+                    <div style={{ fontSize: 12 }}>
+                      <p style={{ marginBottom: 8 }}>
+                        • ChatGPT only accesses the services you explicitly authorize
+                      </p>
+                      <p style={{ marginBottom: 8 }}>
+                        • Your credentials are never shared with ChatGPT
+                      </p>
+                      <p style={{ marginBottom: 8 }}>
+                        • Each authorization gets a unique secure token
+                      </p>
+                      <p style={{ marginBottom: 8 }}>
+                        • Tokens expire automatically with your session (up to 12 hours)
+                      </p>
+                      <p style={{ marginBottom: 8 }}>
+                        • Rate limiting protects against abuse (10 requests/minute)
+                      </p>
+                      <p style={{ marginBottom: 0 }}>
+                        • You can revoke access anytime by disconnecting in ChatGPT settings
+                      </p>
+                    </div>
+                  }
+                  type="info"
+                  showIcon
+                />
+
                 {/* Troubleshooting */}
                 <Divider />
                 <div>
-                  <Title level={5}>Need Help?</Title>
+                  <Title level={5}>Troubleshooting</Title>
                   <ul style={{ marginTop: 8, marginLeft: 20 }}>
-                    <li><strong>Connection failed?</strong> Double-check the URL is exactly: https://spreadapi.io/api/mcp</li>
-                    <li><strong>Authentication error?</strong> Make sure Client-ID is "chatgpt" and Client-Secret is your token</li>
-                    <li><strong>No tools found?</strong> Ensure your services are published and included in the token</li>
+                    <li>
+                      <strong>ChatGPT not finding services?</strong> Make sure you authorized at least one published service
+                    </li>
+                    <li>
+                      <strong>Authorization failed?</strong> Ensure you're signed in to SpreadAPI with a valid Hanko account
+                    </li>
+                    <li>
+                      <strong>"Too many requests" error?</strong> Rate limiting is active (10 requests/minute). Wait 60 seconds and try again
+                    </li>
+                    <li>
+                      <strong>Token expired?</strong> Your session ended - disconnect and reconnect in ChatGPT to reauthorize
+                    </li>
+                    <li>
+                      <strong>Need to change permissions?</strong> Disconnect from ChatGPT and reconnect to reauthorize with different services
+                    </li>
+                    <li>
+                      <strong>OAuth errors?</strong> Try disconnecting and reconnecting the MCP server in ChatGPT settings
+                    </li>
                   </ul>
                 </div>
               </Space>

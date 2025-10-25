@@ -40,7 +40,14 @@
       "Bash(pnpm run typecheck:*)",
       "WebFetch(domain:ant.design)",
       "Bash(curl:*)",
-      "Read(//Users/stephanmethner/Desktop/**)"
+      "Read(//Users/stephanmethner/Desktop/**)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:loginov-rocks.medium.com)",
+      "WebFetch(domain:stytch.com)",
+      "WebFetch(domain:workos.com)",
+      "WebFetch(domain:mcp-auth.dev)",
+      "WebFetch(domain:docs.hanko.io)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
