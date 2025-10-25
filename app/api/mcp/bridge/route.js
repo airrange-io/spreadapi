@@ -23,7 +23,8 @@ import { saveState, loadState, listStates } from '../../../../lib/mcpState.js';
  */
 
 // MCP Protocol constants
-const MCP_VERSION = '1.0.0';
+// Use date-based versioning per MCP spec: 2024-11-05, 2025-03-26, 2025-06-18
+const MCP_VERSION = '2024-11-05';  // Latest stable MCP spec version
 const SERVER_NAME = 'spreadapi-mcp';
 const SERVER_VERSION = '1.0.0';
 
