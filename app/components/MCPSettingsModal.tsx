@@ -8,7 +8,7 @@ import {
 import {
   CopyOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined,
   LockOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined,
-  InfoCircleOutlined, UserOutlined
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -35,7 +35,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
   const [generateActiveKey, setGenerateActiveKey] = useState<string[]>(['generate']);
   const [tokensActiveKey, setTokensActiveKey] = useState<string[]>([]);
   const [instructionsActiveKey, setInstructionsActiveKey] = useState<string[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const { message: messageApi } = App.useApp();
   const router = useRouter();
@@ -54,7 +53,6 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
       if (res.ok) {
         const data = await res.json();
         setExistingTokens(data.tokens || []);
-        setCurrentUserId(data.userId || null);
       }
     } catch (error) {
       messageApi.error('Failed to load tokens');
@@ -423,18 +421,27 @@ const MCPSettingsModal: React.FC<MCPSettingsModalProps> = observer(({ visible, o
                             </Space>
                           }
                           description={
-                            <Space direction="vertical" size="small">
+                            <Space direction="vertical" size="small" style={{ width: '100%' }}>
                               {token.description && <Text>{token.description}</Text>}
+
+                              {/* Token Value with Copy */}
+                              <div>
+                                <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                                  Token:
+                                </Text>
+                                <Input.Search
+                                  value={token.id}
+                                  readOnly
+                                  size="small"
+                                  enterButton={<CopyOutlined />}
+                                  onSearch={() => copyToClipboard(token.id)}
+                                  style={{ maxWidth: 500 }}
+                                />
+                              </div>
+
                               <Space size="small" style={{ fontSize: 12 }}>
                                 <CalendarOutlined />
                                 <Text type="secondary">Created {token.created ? new Date(token.created).toLocaleDateString() : 'Unknown'}</Text>
-                                {currentUserId && (
-                                  <>
-                                    <Divider type="vertical" />
-                                    <UserOutlined />
-                                    <Text type="secondary">User: {currentUserId}</Text>
-                                  </>
-                                )}
                                 {token.lastUsed && (
                                   <>
                                     <Divider type="vertical" />

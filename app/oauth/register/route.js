@@ -107,7 +107,7 @@ export async function POST(request) {
 
         // OAuth endpoints
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
-        token_endpoint: `${baseUrl}/oauth/token`,
+        token_endpoint: `${baseUrl}/api/oauth/token`,
       },
       {
         status: 201, // Created
