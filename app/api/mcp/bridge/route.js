@@ -525,12 +525,28 @@ async function handleJsonRpc(request, auth) {
   try {
     switch (method) {
       case 'initialize': {
+        // CRITICAL: Echo back the client's requested protocol version
+        // Per MCP spec, if we don't support it we can offer older, but client may reject
+        // ChatGPT won't call tools/list if version doesn't match!
+        const clientVersion = params?.protocolVersion || MCP_VERSION;
+        const supportedVersions = ['2024-11-05', '2025-03-26', '2025-06-18'];
+        const agreedVersion = supportedVersions.includes(clientVersion) ? clientVersion : MCP_VERSION;
+
+        console.error('[MCP] Protocol negotiation:', {
+          clientRequested: clientVersion,
+          serverSupports: supportedVersions,
+          agreedVersion
+        });
+
         const response = {
-          protocolVersion: MCP_VERSION,
+          protocolVersion: agreedVersion,  // Echo client's version if supported
           capabilities: {
-            tools: {},
+            tools: {
+              listChanged: true  // Signal that tools list is available and can change
+            },
             resources: {
-              subscribe: false
+              subscribe: false,
+              listChanged: false
             }
           },
           serverInfo: {
