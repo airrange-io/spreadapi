@@ -118,6 +118,9 @@ async function buildServiceListDescription(auth) {
       serviceIds: userServiceIds,
     });
 
+    // DEBUG: Log raw results to see what Redis is actually returning
+    console.error('[REDIS DEBUG] Raw multi.exec() results:', JSON.stringify(results, null, 2));
+
     // Process results (2 results per service: exists + hGetAll)
     for (let i = 0; i < userServiceIds.length; i++) {
       const serviceId = userServiceIds[i];
@@ -139,12 +142,18 @@ async function buildServiceListDescription(auth) {
       }
 
       // Access [1] to get actual result from [error, result] tuple
-      const isPublished = results[baseIndex][1] === 1;
+      const existsResult = results[baseIndex][1];
       const publishedData = results[baseIndex + 1][1];
+      const isPublished = existsResult === 1;
 
       console.error(`[MCP] Processing service ${serviceId}:`, {
+        // DEBUG: Show raw values
+        rawExistsResult: existsResult,
+        rawExistsType: typeof existsResult,
         isPublished,
         hasData: !!publishedData,
+        publishedDataType: typeof publishedData,
+        publishedDataKeys: publishedData ? Object.keys(publishedData) : [],
         hasUrlData: !!(publishedData?.urlData)
       });
 
