@@ -109,10 +109,13 @@ export async function POST(request) {
         'https://chatgpt.com/oauth/callback',
         'https://chat.openai.com/oauth/callback',
         'https://chatgpt.com/connector_platform_oauth_redirect',
+        'https://chatgpt.com/aip/g-oauth-callback',  // New GPT OAuth callback
+        'https://chatgpt.com/g/oauth/callback',  // Alternative GPT callback
       ];
 
       if (!allowedRedirectUris.includes(redirect_uri)) {
         console.warn('[OAuth] Invalid redirect_uri:', redirect_uri);
+        console.warn('[OAuth] Allowed URIs:', allowedRedirectUris);
         return NextResponse.json(
           { error: 'invalid_request', error_description: 'Invalid redirect_uri' },
           { status: 400 }

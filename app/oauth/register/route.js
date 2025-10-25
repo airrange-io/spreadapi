@@ -131,6 +131,66 @@ export async function POST(request) {
 }
 
 /**
+ * GET handler for retrieving client configuration (RFC 7591)
+ * ChatGPT may call this to verify registration
+ */
+export async function GET(request) {
+  // Extract client_id from query params
+  const { searchParams } = new URL(request.url);
+  const clientId = searchParams.get('client_id');
+
+  if (!clientId) {
+    return NextResponse.json(
+      {
+        error: 'invalid_request',
+        error_description: 'client_id is required',
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Retrieve client data from Redis
+    const clientData = await redis.hGetAll(`oauth:client:${clientId}`);
+
+    if (!clientData || Object.keys(clientData).length === 0) {
+      return NextResponse.json(
+        {
+          error: 'invalid_client',
+          error_description: 'Client not found',
+        },
+        { status: 404 }
+      );
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://spreadapi.io';
+
+    // Return client configuration
+    return NextResponse.json({
+      client_id: clientData.client_id,
+      client_name: clientData.client_name,
+      redirect_uris: JSON.parse(clientData.redirect_uris),
+      grant_types: JSON.parse(clientData.grant_types),
+      response_types: JSON.parse(clientData.response_types),
+      token_endpoint_auth_method: clientData.token_endpoint_auth_method,
+      scope: clientData.scope,
+      client_id_issued_at: parseInt(clientData.registered_at) / 1000,
+      authorization_endpoint: `${baseUrl}/oauth/authorize`,
+      token_endpoint: `${baseUrl}/api/oauth/token`,
+    });
+  } catch (error) {
+    console.error('[OAuth Registration] Error retrieving client:', error);
+    return NextResponse.json(
+      {
+        error: 'server_error',
+        error_description: 'Failed to retrieve client configuration',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * OPTIONS handler for CORS preflight
  */
 export async function OPTIONS() {
@@ -138,7 +198,7 @@ export async function OPTIONS() {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '86400',
     },
