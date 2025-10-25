@@ -43,13 +43,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  */
 async function buildServiceListDescription(auth) {
   try {
+    // TEMPORARILY DISABLED: Cache is causing stale results during debugging
     // Check cache first
-    const cacheKey = `${auth.userId}:${JSON.stringify(auth.serviceIds || [])}`;
-    const cached = toolDescriptionCache.get(cacheKey);
-    
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-      return cached.data;
-    }
+    // const cacheKey = `${auth.userId}:${JSON.stringify(auth.serviceIds || [])}`;
+    // const cached = toolDescriptionCache.get(cacheKey);
+    //
+    // if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    //   return cached.data;
+    // }
     
     // TEMPORARY: Hardcode services for OAuth connections until filtering is fixed
     // TODO: Remove this override once OAuth service filtering is fully tested
@@ -220,11 +221,11 @@ async function buildServiceListDescription(auth) {
       totalTools: result.totalCount
     });
 
-    // Cache the result
-    toolDescriptionCache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now()
-    });
+    // TEMPORARILY DISABLED: Cache the result
+    // toolDescriptionCache.set(cacheKey, {
+    //   data: result,
+    //   timestamp: Date.now()
+    // });
 
     return result;
   } catch (error) {
