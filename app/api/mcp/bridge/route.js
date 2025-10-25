@@ -63,8 +63,14 @@ async function buildServiceListDescription(auth) {
 
     // TEMPORARY OVERRIDE: Give OAuth connections access to known working services
     // This works in both development and production
+    console.error('[MCP Bridge] OAuth check:', {
+      isOAuth: auth.isOAuth,
+      allowedServiceIdsLength: allowedServiceIds.length,
+      willOverride: auth.isOAuth && allowedServiceIds.length === 0
+    });
+
     if (auth.isOAuth && allowedServiceIds.length === 0) {
-      console.log('[MCP] TEMPORARY OVERRIDE: Using hardcoded services for OAuth (production)');
+      console.error('[MCP] TEMPORARY OVERRIDE: Using hardcoded services for OAuth (production)');
       // Use the serviceIds from your token that we know exist
       allowedServiceIds = [
         'abd48d0e-c3f2-4f6b-a032-1449fb35b5ab_mgz9ldvz3knf6',
@@ -80,7 +86,7 @@ async function buildServiceListDescription(auth) {
     const originalCount = userServiceIds.length;
     userServiceIds = userServiceIds.filter(id => allowedServiceIds.includes(id));
 
-    console.log('[MCP] Service filtering:', {
+    console.error('[MCP] Service filtering:', {
       totalUserServices: originalCount,
       allowedServices: allowedServiceIds.length,
       filteredServices: userServiceIds.length,
