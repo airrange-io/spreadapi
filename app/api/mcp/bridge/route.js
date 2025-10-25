@@ -7,6 +7,13 @@ import { executeAreaRead } from './areaExecutors.js';
 import { executeEnhancedCalc } from './executeEnhancedCalc.js';
 import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
 import { saveState, loadState, listStates } from '../../../../lib/mcpState.js';
+import { formatValueWithExcelFormat } from '../../../../utils/formatting.js';
+import {
+  getSingleServiceInstructions,
+  getMultiServiceInstructions,
+  getFallbackInstructions,
+  getFallbackDescription
+} from '../../../../lib/mcp-ai-instructions.js';
 
 /**
  * MCP (Model Context Protocol) Server - Bridge Endpoint
@@ -378,49 +385,6 @@ function preprocessInputs(inputs, apiDefinition) {
 }
 
 /**
- * Format a value using Excel-style format string
- * Supports common formats like €#,##0.00, $#,##0.00, 0.00%, etc.
- */
-function formatValueWithExcelFormat(value, formatString) {
-  if (value === null || value === undefined || formatString === null || formatString === undefined) {
-    return value;
-  }
-
-  try {
-    // Handle percentage format (0.00%, 0%, etc.)
-    if (formatString.includes('%')) {
-      const percentValue = (value * 100).toFixed(2);
-      return `${percentValue}%`;
-    }
-
-    // Extract currency symbol (€, $, etc.)
-    const currencyMatch = formatString.match(/^([€$£¥₹₽])/);
-    const currencySymbol = currencyMatch ? currencyMatch[1] : '';
-
-    // Extract decimal places from format string
-    const decimalMatch = formatString.match(/\.([0#]+)/);
-    const decimalPlaces = decimalMatch ? decimalMatch[1].length : 0;
-
-    // Format number with thousands separators and decimal places
-    const formattedNumber = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces
-    }).format(value);
-
-    // Combine currency symbol with formatted number
-    if (currencySymbol) {
-      return `${currencySymbol}${formattedNumber}`;
-    }
-
-    return formattedNumber;
-  } catch (error) {
-    // If formatting fails, return raw value
-    console.warn(`Failed to format value ${value} with format ${formatString}:`, error);
-    return value;
-  }
-}
-
-/**
  * Execute a service calculation using V1 API
  */
 async function executeService(serviceId, inputs) {
@@ -592,42 +556,7 @@ async function handleJsonRpc(request, auth) {
             desc += `To use: Call spreadapi_get_service_details to see parameters, then spreadapi_calc to execute.`;
 
             response.serverInfo.description = desc;
-            response.serverInfo.instructions = `🚀 WORKFLOW:
-
-OPTION A - User provides all values (FAST PATH - preferred):
-→ Call spreadapi_calc("${service.id}", inputs) immediately
-   Example: User says "Calculate X with Y and Z"
-   → You have all values, just call it now!
-
-OPTION B - Need parameter info (DISCOVERY PATH):
-1. Call spreadapi_get_service_details("${service.id}")
-2. Show user what parameters are needed
-3. Call spreadapi_calc("${service.id}", inputs)
-
-🎯 PREFER OPTION A whenever possible (faster, better UX)
-
-⚠️  CRITICAL - PERCENTAGE VALUES:
-ALWAYS convert percentages to decimals (divide by 100):
-• "5%" → 0.05 (NOT 5)
-• "42%" → 0.42 (NOT 42)
-• "0.5%" → 0.005 (NOT 0.5)
-Entering "5" instead of "0.05" causes wildly incorrect results!
-
-📊 PRESENTING RESULTS:
-Outputs include formatString - ALWAYS use it!
-Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Alt"}
-→ Present as: "Alt: €265.53" (not "265.53")
-
-🚀 BE PROACTIVE:
-❌ DON'T ask "Would you like me to retrieve details?"
-✅ DO: Just retrieve and use them
-❌ DON'T ask "Would you like me to calculate?"
-✅ DO: Calculate immediately
-Only ask permission for saving data or irreversible actions.
-
-🔄 AUTO-RECOVERY:
-If calculation fails → Auto-call get_service_details and retry
-If result seems absurd (>$1M for typical inputs, scientific notation) → Check percentage format, retry with correction`;
+            response.serverInfo.instructions = getSingleServiceInstructions(service.id);
           } else {
             // Multiple services: list them all with AI hints
             let description = `SpreadAPI: Instant Spreadsheet Calculations\n\nYou have access to ${serviceCount} calculation services:\n\n`;
@@ -647,101 +576,13 @@ If result seems absurd (>$1M for typical inputs, scientific notation) → Check 
             });
 
             response.serverInfo.description = description;
-            response.serverInfo.instructions = `🎯 YOUR ROLE: Helpful calculation assistant, NOT a technical tool lister
-
-When user asks "what can you do?":
-❌ DON'T list technical tools or paths
-✅ DO say: "I can help you calculate! What would you like to calculate?"
-Focus on USER PROBLEMS, not technical capabilities.
-
-🚀 WORKFLOW (follow this order):
-
-OPTION A - User provides all values (FAST PATH - preferred):
-→ Directly call: spreadapi_calc(serviceId, inputs)
-   Example: "Calculate compound interest for $10k at 5% for 10 years"
-   → You have enough info, call spreadapi_calc immediately!
-
-OPTION B - Need parameter info (DISCOVERY PATH):
-1. Call: spreadapi_get_service_details(serviceId)
-2. Show user what parameters are needed
-3. Call: spreadapi_calc(serviceId, inputs)
-
-🎯 PREFER OPTION A whenever possible (faster, better UX)
-
-⚠️  CRITICAL - PERCENTAGE VALUES:
-ALWAYS convert percentages to decimals (divide by 100):
-• "5%" → 0.05 (NOT 5)
-• "42%" → 0.42 (NOT 42)
-• "0.5%" → 0.005 (NOT 0.5)
-Entering "5" instead of "0.05" causes wildly incorrect results!
-
-📊 PRESENTING RESULTS:
-Outputs include formatString - ALWAYS use it when available!
-• formatString "€#,##0.00" → €265.53
-• formatString "$#,##0.00" → $31,998.32
-• Use title field for labels, not name
-Present as: "Title: Formatted Value" (e.g., "Total: $31,998.32")
-
-🚀 BE PROACTIVE - Stop Asking Permission!
-❌ DON'T ask: "Would you like me to retrieve details?"
-✅ DO: Just retrieve and use them
-❌ DON'T ask: "Would you like me to calculate?"
-✅ DO: Calculate immediately
-Only ask permission for saving data or irreversible actions.
-
-🔄 AUTO-RECOVERY:
-• Calculation fails → Auto-call get_service_details and retry
-• Result seems absurd (>$1M for typical inputs, scientific notation) → Check percentage format, auto-retry with correction
-
-❌ DON'T:
-- Call spreadapi_list_services (services already listed above)
-- Ask for parameters you can infer
-- Just say "that's unrealistic" - FIX IT!
-
-✅ DO:
-- Calculate immediately when you have values
-- Pay attention to service warnings (⚠️) above
-- Follow service guidance (💡) for conditional parameters
-- Auto-correct errors and explain what you fixed`;
+            response.serverInfo.instructions = getMultiServiceInstructions();
           }
         } catch (error) {
           console.error('Error loading service list:', error);
           // Fallback to comprehensive description
-          response.serverInfo.description = `SpreadAPI: Spreadsheet Calculations as API Services
-
-This server provides access to Excel/Google Sheets spreadsheets that have been published as calculation APIs. Think of them as powerful, stateless calculators where you provide inputs and get calculated outputs instantly.
-
-🎯 Use Cases:
-• Financial calculations (taxes, insurance, loans, pricing)
-• Scientific formulas and engineering calculations
-• Business logic and data transformations
-• Complex multi-step computations
-
-📊 How It Works:
-1. Each service is a spreadsheet with defined input and output parameters
-2. You provide values for the inputs (required + optional)
-3. The spreadsheet calculates and returns the outputs in milliseconds
-4. All validation (types, ranges, enums) is handled automatically
-
-⚡ Key Characteristics:
-• STATELESS: Each calculation is independent - always provide all parameters
-• FAST: Optimized calculations typically complete in <100ms
-• BATCH-CAPABLE: You can request multiple parameter combinations at once
-• NO MEMORY: Services don't remember previous calculations`;
-
-          response.serverInfo.instructions = `🚀 Getting Started:
-1. Call spreadapi_list_services() to discover available calculators
-2. Use spreadapi_get_service_details(serviceId) to understand parameters
-3. Execute the service tool (spreadapi_calc_[serviceId]) with input values
-
-💡 Tips for Best Results:
-• Always provide ALL required parameters in each call (stateless)
-• Optional parameters have smart defaults applied automatically
-• Enum parameters accept numbered choices (1, 2, 3) or values
-• Percentages can be entered as decimals (0.42) or percentages (42%)
-• Boolean values accept multiple formats (true/false, yes/no, ja/nein)
-• For what-if scenarios, make multiple calls with different inputs (very fast!)
-• Check parameter constraints (min/max, allowed values) in the schema`;
+          response.serverInfo.description = getFallbackDescription();
+          response.serverInfo.instructions = getFallbackInstructions();
         }
 
         return {
