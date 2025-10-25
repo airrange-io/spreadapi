@@ -53,11 +53,25 @@ async function buildServiceListDescription(auth) {
     
     // Get user's services (with null safety)
     const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`) || {};
-    const userServiceIds = Object.keys(userServiceIndex);
-    
+    let userServiceIds = Object.keys(userServiceIndex);
+
     // Get allowed service IDs from auth
     const allowedServiceIds = auth.serviceIds || [];
     const hasServiceRestrictions = allowedServiceIds.length > 0;
+
+    // For OAuth tokens with service restrictions, ONLY query allowed services
+    // This prevents errors from malformed/non-existent services in user index
+    if (hasServiceRestrictions) {
+      const originalCount = userServiceIds.length;
+      userServiceIds = userServiceIds.filter(id => allowedServiceIds.includes(id));
+      console.log('[MCP] Service filtering:', {
+        totalUserServices: originalCount,
+        allowedServices: allowedServiceIds.length,
+        filteredServices: userServiceIds.length,
+        allowedServiceIds,
+        userServiceIds,
+      });
+    }
     
     const serviceDescriptions = [];
     const servicesWithAreas = [];
@@ -109,10 +123,8 @@ async function buildServiceListDescription(auth) {
 
       if (!isPublished) continue;
 
-      // Check if this service is allowed for this token
-      if (hasServiceRestrictions && !allowedServiceIds.includes(serviceId)) {
-        continue;
-      }
+      // Note: Service restriction filtering already done above when building userServiceIds
+      // This ensures we only query allowed services
 
       if (!publishedData || !publishedData.urlData) continue;
       
