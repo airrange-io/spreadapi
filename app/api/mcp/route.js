@@ -100,9 +100,20 @@ async function touchSession(sessionId) {
  * Handles MCP protocol messages with Redis-based session management
  */
 export async function POST(request) {
+  console.log('========================================');
+  console.log('[MCP] POST REQUEST RECEIVED - OAUTH TEST');
+  console.log('========================================');
+
   try {
     // Validate authentication
     const auth = await mcpAuthMiddleware(request);
+
+    console.log('[MCP] Auth result:', {
+      valid: auth.valid,
+      isOAuth: auth.isOAuth,
+      userId: auth.userId,
+      serviceIdsCount: auth.serviceIds?.length || 0
+    });
 
     if (!auth.valid) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://spreadapi.io';
