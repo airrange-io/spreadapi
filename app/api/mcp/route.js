@@ -100,20 +100,9 @@ async function touchSession(sessionId) {
  * Handles MCP protocol messages with Redis-based session management
  */
 export async function POST(request) {
-  console.error('========================================');
-  console.error('[MCP] POST REQUEST RECEIVED - OAUTH TEST');
-  console.error('========================================');
-
   try {
     // Validate authentication
     const auth = await mcpAuthMiddleware(request);
-
-    console.error('[MCP] Auth result:', {
-      valid: auth.valid,
-      isOAuth: auth.isOAuth,
-      userId: auth.userId,
-      serviceIdsCount: auth.serviceIds?.length || 0
-    });
 
     if (!auth.valid) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://spreadapi.io';
@@ -175,7 +164,6 @@ export async function POST(request) {
     let body;
     try {
       body = await request.json();
-      console.error('[MCP] JSON-RPC Request:', JSON.stringify(body, null, 2));
     } catch (error) {
       return NextResponse.json(
         {
@@ -206,8 +194,6 @@ export async function POST(request) {
     const bridgeResponse = await bridgePOST(mockRequest, {});
     const jsonRpcResponse = await bridgeResponse.json();
 
-    console.error('[MCP] JSON-RPC Response:', JSON.stringify(jsonRpcResponse, null, 2));
-
     // Return with Streamable HTTP headers including session ID
     return NextResponse.json(jsonRpcResponse, {
       headers: {
@@ -215,10 +201,6 @@ export async function POST(request) {
         'Mcp-Session-Id': sessionId,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        // DEBUG HEADERS (visible in Network tab)
-        'X-Debug-IsOAuth': String(auth.isOAuth || false),
-        'X-Debug-ServiceCount': String(auth.serviceIds?.length || 0),
-        'X-Debug-Method': body?.method || 'unknown',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id'
       }
     });

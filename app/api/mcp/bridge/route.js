@@ -44,57 +44,25 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  */
 async function buildServiceListDescription(auth) {
   try {
-    // TEMPORARILY DISABLED: Cache is causing stale results during debugging
     // Check cache first
-    // const cacheKey = `${auth.userId}:${JSON.stringify(auth.serviceIds || [])}`;
-    // const cached = toolDescriptionCache.get(cacheKey);
-    //
-    // if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-    //   return cached.data;
-    // }
-    
-    // TEMPORARY: Hardcode services for OAuth connections until filtering is fixed
-    // TODO: Remove this override once OAuth service filtering is fully tested
+    const cacheKey = `${auth.userId}:${JSON.stringify(auth.serviceIds || [])}`;
+    const cached = toolDescriptionCache.get(cacheKey);
 
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return cached.data;
+    }
+    
     // Get user's services (with null safety)
     const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`) || {};
     let userServiceIds = Object.keys(userServiceIndex);
 
     // Get allowed service IDs from auth
-    let allowedServiceIds = auth.serviceIds || [];
-
-    // TEMPORARY OVERRIDE: Give OAuth connections access to known working services
-    // This works in both development and production
-    console.error('[MCP Bridge] OAuth check:', {
-      isOAuth: auth.isOAuth,
-      allowedServiceIdsLength: allowedServiceIds.length,
-      willOverride: auth.isOAuth && allowedServiceIds.length === 0
-    });
-
-    if (auth.isOAuth && allowedServiceIds.length === 0) {
-      console.error('[MCP] TEMPORARY OVERRIDE: Using hardcoded services for OAuth (production)');
-      // Use the serviceIds from your token that we know exist
-      allowedServiceIds = [
-        'abd48d0e-c3f2-4f6b-a032-1449fb35b5ab_mgz9ldvz3knf6',
-        'abd48d0e-c3f2-4f6b-a032-1449fb35b5ab_mer3vlicgt416'
-      ];
-      // Also ensure userServiceIds includes these
-      userServiceIds = [...new Set([...userServiceIds, ...allowedServiceIds])];
-    }
+    const allowedServiceIds = auth.serviceIds || [];
 
     // SECURITY: MCP tokens should ALWAYS be restricted to their bound services
     // NEVER allow access to all services - filter to allowed services only
     // If allowedServiceIds is empty, the token has no access (not all access!)
-    const originalCount = userServiceIds.length;
     userServiceIds = userServiceIds.filter(id => allowedServiceIds.includes(id));
-
-    console.error('[MCP] Service filtering:', {
-      totalUserServices: originalCount,
-      allowedServices: allowedServiceIds.length,
-      filteredServices: userServiceIds.length,
-      allowedServiceIds,
-      userServiceIds,
-    });
     
     const serviceDescriptions = [];
     const servicesWithAreas = [];
@@ -113,16 +81,6 @@ async function buildServiceListDescription(auth) {
     // Note: Redis multi.exec() returns flat array of results (not error tuples)
     const results = await multi.exec();
 
-    console.error('[MCP] Multi exec results:', {
-      serviceCount: userServiceIds.length,
-      expectedResults: userServiceIds.length * 2,
-      actualResults: results?.length,
-      serviceIds: userServiceIds,
-    });
-
-    // DEBUG: Log raw results to see what Redis is actually returning
-    console.error('[REDIS DEBUG] Raw multi.exec() results:', JSON.stringify(results, null, 2));
-
     // Process results (2 results per service: exists + hGetAll)
     for (let i = 0; i < userServiceIds.length; i++) {
       const serviceId = userServiceIds[i];
@@ -134,19 +92,7 @@ async function buildServiceListDescription(auth) {
       const publishedData = results[baseIndex + 1];
       const isPublished = existsResult === 1;
 
-      console.error(`[MCP] Processing service ${serviceId}:`, {
-        // DEBUG: Show raw values
-        rawExistsResult: existsResult,
-        rawExistsType: typeof existsResult,
-        isPublished,
-        hasData: !!publishedData,
-        publishedDataType: typeof publishedData,
-        publishedDataKeys: publishedData ? Object.keys(publishedData) : [],
-        hasUrlData: !!(publishedData?.urlData)
-      });
-
       if (!isPublished) {
-        console.error(`[MCP] Skipping ${serviceId} - not published`);
         continue;
       }
 
@@ -154,7 +100,6 @@ async function buildServiceListDescription(auth) {
       // This ensures we only query allowed services
 
       if (!publishedData || !publishedData.urlData) {
-        console.error(`[MCP] Skipping ${serviceId} - no urlData`);
         continue;
       }
       
@@ -202,17 +147,11 @@ async function buildServiceListDescription(auth) {
       totalCount: serviceDescriptions.length + servicesWithAreas.length
     };
 
-    console.error('[MCP] Tool generation complete:', {
-      calcServicesCount: serviceDescriptions.length,
-      areaServicesCount: servicesWithAreas.length,
-      totalTools: result.totalCount
+    // Cache the result
+    toolDescriptionCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
     });
-
-    // TEMPORARILY DISABLED: Cache the result
-    // toolDescriptionCache.set(cacheKey, {
-    //   data: result,
-    //   timestamp: Date.now()
-    // });
 
     return result;
   } catch (error) {
@@ -531,12 +470,6 @@ async function handleJsonRpc(request, auth) {
         const clientVersion = params?.protocolVersion || MCP_VERSION;
         const supportedVersions = ['2024-11-05', '2025-03-26', '2025-06-18'];
         const agreedVersion = supportedVersions.includes(clientVersion) ? clientVersion : MCP_VERSION;
-
-        console.error('[MCP] Protocol negotiation:', {
-          clientRequested: clientVersion,
-          serverSupports: supportedVersions,
-          agreedVersion
-        });
 
         const response = {
           protocolVersion: agreedVersion,  // Echo client's version if supported
