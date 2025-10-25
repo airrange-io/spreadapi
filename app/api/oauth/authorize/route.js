@@ -81,19 +81,43 @@ export async function POST(request) {
       );
     }
 
-    // Validate redirect_uri is from ChatGPT
-    const allowedRedirectUris = [
-      'https://chatgpt.com/oauth/callback',
-      'https://chat.openai.com/oauth/callback',
-      'https://chatgpt.com/connector_platform_oauth_redirect',
-    ];
+    // Check if client is dynamically registered
+    let clientData = null;
+    if (client_id.startsWith('dcr_')) {
+      // Dynamically registered client
+      clientData = await redis.hGetAll(`oauth:client:${client_id}`);
 
-    if (!allowedRedirectUris.includes(redirect_uri)) {
-      console.warn('[OAuth] Invalid redirect_uri:', redirect_uri);
-      return NextResponse.json(
-        { error: 'invalid_request', error_description: 'Invalid redirect_uri' },
-        { status: 400 }
-      );
+      if (!clientData || Object.keys(clientData).length === 0) {
+        return NextResponse.json(
+          { error: 'invalid_request', error_description: 'Unknown client_id' },
+          { status: 400 }
+        );
+      }
+
+      // Validate redirect_uri matches registered URIs
+      const registeredUris = JSON.parse(clientData.redirect_uris);
+      if (!registeredUris.includes(redirect_uri)) {
+        console.warn('[OAuth] redirect_uri not registered:', redirect_uri);
+        return NextResponse.json(
+          { error: 'invalid_request', error_description: 'redirect_uri not registered for this client' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Legacy: hardcoded ChatGPT client_id
+      const allowedRedirectUris = [
+        'https://chatgpt.com/oauth/callback',
+        'https://chat.openai.com/oauth/callback',
+        'https://chatgpt.com/connector_platform_oauth_redirect',
+      ];
+
+      if (!allowedRedirectUris.includes(redirect_uri)) {
+        console.warn('[OAuth] Invalid redirect_uri:', redirect_uri);
+        return NextResponse.json(
+          { error: 'invalid_request', error_description: 'Invalid redirect_uri' },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate all MCP tokens and collect service IDs

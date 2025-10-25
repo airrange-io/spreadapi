@@ -105,6 +105,8 @@ export async function POST(request) {
     const auth = await mcpAuthMiddleware(request);
 
     if (!auth.valid) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://spreadapi.io';
+
       return NextResponse.json(
         {
           jsonrpc: '2.0',
@@ -118,6 +120,8 @@ export async function POST(request) {
           status: auth.status || 401,
           headers: {
             'Content-Type': 'application/json',
+            // WWW-Authenticate header tells ChatGPT to initiate OAuth flow
+            'WWW-Authenticate': `Bearer realm="${baseUrl}/api/mcp", scope="mcp:read mcp:write"`,
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'POST, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id'
