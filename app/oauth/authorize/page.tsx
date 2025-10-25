@@ -80,7 +80,7 @@ function OAuthAuthorizeContent() {
 
     try {
       // Call backend to generate authorization code
-      const response = await fetch('/api/oauth/authorize', {
+      const response = await fetch('/oauth/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -106,6 +106,13 @@ function OAuthAuthorizeContent() {
       if (state) {
         redirectUrl.searchParams.set('state', state);
       }
+
+      console.log('[OAuth] Redirecting back to ChatGPT:', {
+        redirectUri,
+        code: code.substring(0, 20) + '...',
+        state,
+        fullUrl: redirectUrl.toString()
+      });
 
       window.location.href = redirectUrl.toString();
     } catch (err: any) {

@@ -201,6 +201,7 @@ export async function POST(request) {
     console.log('[OAuth] Authorization code issued:', {
       code: authorizationCode.substring(0, 16) + '...',
       client_id,
+      redirect_uri, // Log the redirect_uri
       service_count: serviceIds.length,
       mcp_token_count: mcp_tokens.length,
     });
