@@ -212,6 +212,10 @@ export async function POST(request) {
         'Mcp-Session-Id': sessionId,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        // DEBUG HEADERS (visible in Network tab)
+        'X-Debug-IsOAuth': String(auth.isOAuth || false),
+        'X-Debug-ServiceCount': String(auth.serviceIds?.length || 0),
+        'X-Debug-Method': body?.method || 'unknown',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id'
       }
     });
