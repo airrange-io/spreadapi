@@ -985,7 +985,12 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
             jsonrpc: '2.0',
             error: {
               code: INVALID_PARAMS,
-              message: 'Invalid params: tool name is required'
+              message: 'Invalid params: tool name is required',
+              data: {
+                hint: 'The "name" parameter must be a string. Use tools/list to see available tools.',
+                receivedType: typeof name,
+                documentation: 'https://spreadapi.io/docs/mcp/tools'
+              }
             },
             id
           };
@@ -1000,7 +1005,13 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'serviceId is required'
+                message: 'Missing required parameter: serviceId',
+                data: {
+                  hint: 'The "serviceId" parameter is required for spreadapi_calc tool. Use tools/list to see available services.',
+                  requiredParams: ['serviceId'],
+                  optionalParams: ['inputs', 'areaUpdates', 'returnOptions'],
+                  documentation: 'https://spreadapi.io/docs/mcp/tools'
+                }
               },
               id
             };
@@ -1016,24 +1027,36 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token has no service access configured'
+                message: 'Access denied: This token has no service access configured',
+                data: {
+                  hint: 'Create a new token with specific services selected at https://spreadapi.io/app/profile',
+                  requestedService: serviceId,
+                  allowedServices: [],
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Check if this specific service is allowed
           if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token does not have access to this service'
+                message: `Access denied: Service "${serviceId}" is not accessible with this token`,
+                data: {
+                  requestedService: serviceId,
+                  allowedServices: allowedServiceIds,
+                  hint: `This token has access to: ${allowedServiceIds.join(', ')}. Use tools/list to see available services.`,
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Verify the service exists and is published
           const serviceExists = await redis.exists(`service:${serviceId}:published`);
           if (!serviceExists) {
@@ -1041,7 +1064,12 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found or not published'
+                message: `Service "${serviceId}" not found or not published`,
+                data: {
+                  requestedService: serviceId,
+                  hint: 'The service may have been deleted, unpublished, or the ID is incorrect. Use tools/list to see available services.',
+                  allowedServices: allowedServiceIds
+                }
               },
               id
             };
@@ -1070,7 +1098,14 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'serviceId and areaName are required'
+                message: 'Missing required parameters: serviceId and areaName',
+                data: {
+                  hint: 'Both "serviceId" and "areaName" are required for spreadapi_read_area tool.',
+                  requiredParams: ['serviceId', 'areaName'],
+                  optionalParams: ['includeFormulas', 'includeFormatting'],
+                  providedParams: { serviceId: !!serviceId, areaName: !!areaName },
+                  documentation: 'https://spreadapi.io/docs/mcp/tools'
+                }
               },
               id
             };
@@ -1085,24 +1120,36 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token has no service access configured'
+                message: 'Access denied: This token has no service access configured',
+                data: {
+                  hint: 'Create a new token with specific services selected at https://spreadapi.io/app/profile',
+                  requestedService: serviceId,
+                  allowedServices: [],
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Check if this specific service is allowed
           if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token does not have access to this service'
+                message: `Access denied: Service "${serviceId}" is not accessible with this token`,
+                data: {
+                  requestedService: serviceId,
+                  allowedServices: allowedServiceIds,
+                  hint: `This token has access to: ${allowedServiceIds.join(', ')}. Use tools/list to see available services.`,
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Verify service exists
           const serviceExists = await redis.exists(`service:${serviceId}:published`);
           if (!serviceExists) {
@@ -1110,7 +1157,12 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found or not published'
+                message: `Service "${serviceId}" not found or not published`,
+                data: {
+                  requestedService: serviceId,
+                  hint: 'The service may have been deleted, unpublished, or the ID is incorrect. Use tools/list to see available services.',
+                  allowedServices: allowedServiceIds
+                }
               },
               id
             };
@@ -1773,24 +1825,36 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token has no service access configured'
+                message: 'Access denied: This token has no service access configured',
+                data: {
+                  hint: 'Create a new token with specific services selected at https://spreadapi.io/app/profile',
+                  requestedService: serviceId,
+                  allowedServices: [],
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Check if this specific service is allowed
           if (!allowedServiceIds.includes(serviceId)) {
             return {
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'This token does not have access to this service'
+                message: `Access denied: Service "${serviceId}" is not accessible with this token`,
+                data: {
+                  requestedService: serviceId,
+                  allowedServices: allowedServiceIds,
+                  hint: `This token has access to: ${allowedServiceIds.join(', ')}. Use tools/list to see available services.`,
+                  documentation: 'https://spreadapi.io/docs/mcp/tokens'
+                }
               },
               id
             };
           }
-          
+
           // Verify service exists
           const serviceExists = await redis.exists(`service:${serviceId}:published`);
           if (!serviceExists) {
@@ -1798,7 +1862,12 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               jsonrpc: '2.0',
               error: {
                 code: INVALID_PARAMS,
-                message: 'Service not found or not published'
+                message: `Service "${serviceId}" not found or not published`,
+                data: {
+                  requestedService: serviceId,
+                  hint: 'The service may have been deleted, unpublished, or the ID is incorrect. Use tools/list to see available services.',
+                  allowedServices: allowedServiceIds
+                }
               },
               id
             };
@@ -1863,7 +1932,13 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
           jsonrpc: '2.0',
           error: {
             code: INVALID_PARAMS,
-            message: 'Invalid params: unknown tool name'
+            message: `Unknown tool: "${name}"`,
+            data: {
+              requestedTool: name,
+              hint: 'Use tools/list to see all available tools. Common tools: spreadapi_calc, spreadapi_read_area, or service-specific tools.',
+              availableGenericTools: ['spreadapi_calc', 'spreadapi_read_area'],
+              documentation: 'https://spreadapi.io/docs/mcp/tools'
+            }
           },
           id
         };
