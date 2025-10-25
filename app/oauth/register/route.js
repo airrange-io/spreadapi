@@ -103,7 +103,7 @@ export async function POST(request) {
         // Informational fields
         client_id_issued_at: Math.floor(Date.now() / 1000),
         registration_access_token: null, // Not implementing update/delete for now
-        registration_client_uri: null,
+        registration_client_uri: `${baseUrl}/oauth/register?client_id=${clientId}`,
 
         // OAuth endpoints
         authorization_endpoint: `${baseUrl}/oauth/authorize`,
@@ -175,6 +175,7 @@ export async function GET(request) {
       token_endpoint_auth_method: clientData.token_endpoint_auth_method,
       scope: clientData.scope,
       client_id_issued_at: parseInt(clientData.registered_at) / 1000,
+      registration_client_uri: `${baseUrl}/oauth/register?client_id=${clientData.client_id}`,
       authorization_endpoint: `${baseUrl}/oauth/authorize`,
       token_endpoint: `${baseUrl}/api/oauth/token`,
     });
