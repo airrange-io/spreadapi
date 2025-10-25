@@ -106,10 +106,32 @@ async function buildServiceListDescription(auth) {
       const title = publishedData.title || serviceId;
       const description = publishedData.description || publishedData.aiDescription || '';
       const shortDesc = description.substring(0, 120) + (description.length > 120 ? '...' : '');
-      
+
+      // Parse AI-specific guidance from Redis
+      const aiDescription = publishedData.aiDescription || null;
+      const aiUsageGuidance = publishedData.aiUsageGuidance || null;
+      let aiUsageExamples = [];
+      let aiTags = [];
+
+      try {
+        if (publishedData.aiUsageExamples) {
+          aiUsageExamples = JSON.parse(publishedData.aiUsageExamples);
+        }
+      } catch (e) {
+        // Silent fail - AI examples are optional
+      }
+
+      try {
+        if (publishedData.aiTags) {
+          aiTags = JSON.parse(publishedData.aiTags);
+        }
+      } catch (e) {
+        // Silent fail - AI tags are optional
+      }
+
       // Check if has calculation capability
       const hasCalc = publishedData.inputs && publishedData.outputs;
-      
+
       // Check if has areas
       let areas = [];
       if (publishedData.areas) {
@@ -123,12 +145,17 @@ async function buildServiceListDescription(auth) {
       if (hasCalc) {
         serviceDescriptions.push(`• ${title} (${serviceId}) - ${shortDesc}`);
 
-        // Store structured data for safe access (avoid string parsing)
+        // Store structured data with AI hints for tool descriptions
         structuredServices.push({
           id: serviceId,
           name: title,
           description: shortDesc,
           fullDescription: description,
+          aiDescription: aiDescription,
+          aiUsageGuidance: aiUsageGuidance,
+          aiUsageExamples: aiUsageExamples,
+          aiTags: aiTags,
+          category: publishedData.category || 'general',
           hasAreas: areas.length > 0,
           areaCount: areas.length
         });
@@ -500,20 +527,80 @@ async function handleJsonRpc(request, auth) {
           } else if (serviceCount === 1) {
             // Single service: customize name and description using structured data
             const service = serviceInfo.structuredServices[0];
-            const serviceLine = serviceInfo.calcServices[0];
 
             response.serverInfo.name = service.name;
-            response.serverInfo.description = `This MCP connection provides access to:\n\n${serviceLine}\n\nUse spreadapi_get_service_details to learn about inputs and outputs.`;
-            response.serverInfo.instructions = `Call spreadapi_get_service_details with the service ID to understand what parameters are needed before executing calculations.`;
+
+            let desc = `${service.name}: ${service.fullDescription || 'Spreadsheet calculation service'}\n\n`;
+
+            // Add AI-specific guidance prominently
+            if (service.aiDescription) {
+              desc += `⚠️  IMPORTANT: ${service.aiDescription}\n\n`;
+            }
+            if (service.aiUsageGuidance) {
+              desc += `💡 GUIDANCE: ${service.aiUsageGuidance}\n\n`;
+            }
+
+            desc += `To use: Call spreadapi_get_service_details to see parameters, then spreadapi_calc to execute.`;
+
+            response.serverInfo.description = desc;
+            response.serverInfo.instructions = `🚀 WORKFLOW:
+
+OPTION A - User provides all values (FAST PATH - preferred):
+→ Call spreadapi_calc("${service.id}", inputs) immediately
+   Example: User says "Calculate X with Y and Z"
+   → You have all values, just call it now!
+
+OPTION B - Need parameter info (DISCOVERY PATH):
+1. Call spreadapi_get_service_details("${service.id}")
+2. Show user what parameters are needed
+3. Call spreadapi_calc("${service.id}", inputs)
+
+🎯 PREFER OPTION A whenever possible (faster, better UX)
+
+❌ DON'T ask for parameters you can infer from context
+✅ DO start calculating immediately when you have values`;
           } else {
-            // Multiple services: list them all
-            let description = `This MCP connection provides access to ${serviceCount} SpreadAPI calculation services:\n\n`;
-            serviceInfo.calcServices.forEach((svc, index) => {
-              description += `${index + 1}. ${svc}\n`;
+            // Multiple services: list them all with AI hints
+            let description = `SpreadAPI: Instant Spreadsheet Calculations\n\nYou have access to ${serviceCount} calculation services:\n\n`;
+
+            serviceInfo.structuredServices.forEach((svc, index) => {
+              description += `${index + 1}. **${svc.name}** (${svc.id})`;
+
+              // Show AI-specific guidance RIGHT HERE - this is critical!
+              if (svc.aiDescription) {
+                description += `\n   ⚠️  ${svc.aiDescription}`;
+              }
+              if (svc.aiUsageGuidance) {
+                description += `\n   💡 ${svc.aiUsageGuidance}`;
+              }
+
+              description += `\n\n`;
             });
 
             response.serverInfo.description = description;
-            response.serverInfo.instructions = `Use spreadapi_get_service_details(serviceId) to learn about specific service capabilities before executing calculations.`;
+            response.serverInfo.instructions = `🚀 WORKFLOW (follow this order):
+
+OPTION A - User provides all values (FAST PATH - preferred):
+→ Directly call: spreadapi_calc(serviceId, inputs)
+   Example: "Calculate compound interest for $10k at 5% for 10 years"
+   → You have enough info, call spreadapi_calc immediately!
+
+OPTION B - Need parameter info (DISCOVERY PATH):
+1. Call: spreadapi_get_service_details(serviceId)
+2. Show user what parameters are needed
+3. Call: spreadapi_calc(serviceId, inputs)
+
+🎯 PREFER OPTION A whenever possible (faster, better UX)
+
+❌ DON'T:
+- Call spreadapi_list_services (services already listed above)
+- Ask for parameters you can infer (percentages, booleans, etc.)
+- Call get_service_details if user already provided values
+
+✅ DO:
+- Start calculating immediately when you have values
+- Pay attention to service warnings (⚠️) above
+- Follow service guidance (💡) for conditional parameters`;
           }
         } catch (error) {
           console.error('Error loading service list:', error);
@@ -566,19 +653,86 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
         // Build service descriptions for this user/token
         const serviceInfo = await buildServiceListDescription(auth);
 
-        // Build dynamic tool descriptions with service list
-        let calcDescription = 'Execute calculations with optional area updates.';
-        if (serviceInfo.calcServices.length > 0) {
-          calcDescription += '\n\nYour available calculation services:\n' + serviceInfo.calcServices.join('\n');
+        // Build dynamic tool descriptions with perfect AI guidance
+        let calcDescription = `🎯 PRIMARY TOOL - Use this for ALL calculations
+
+WHEN TO USE:
+- User asks for a calculation (e.g., "calculate...", "compute...", "what if...")
+- User provides numeric values or scenarios
+- User wants to compare options (use spreadapi_batch for 3+ comparisons)
+
+HOW TO USE:
+1. FAST PATH (preferred): If you know the parameters → Call immediately
+   Example: User: "Calculate 5% interest on $1000 for 12 months"
+   → You have: serviceId + inputs → Just call spreadapi_calc right now!
+
+2. DISCOVERY PATH: If unsure about parameters → Call spreadapi_get_service_details first`;
+
+        // Add service-specific AI hints dynamically
+        if (serviceInfo.structuredServices && serviceInfo.structuredServices.length > 0) {
+          calcDescription += `\n\nIMPORTANT NOTES:`;
+
+          serviceInfo.structuredServices.forEach((svc) => {
+            calcDescription += `\n\n**${svc.name}** (${svc.id}):`;
+
+            if (svc.aiDescription) {
+              calcDescription += `\n⚠️  ${svc.aiDescription}`;
+            }
+
+            if (svc.aiUsageGuidance) {
+              calcDescription += `\n💡 ${svc.aiUsageGuidance}`;
+            }
+
+            if (svc.aiUsageExamples && svc.aiUsageExamples.length > 0) {
+              calcDescription += `\n📝 Examples:`;
+              svc.aiUsageExamples.slice(0, 2).forEach(ex => {
+                calcDescription += `\n   • ${ex}`;
+              });
+            }
+          });
+        } else if (serviceInfo.calcServices.length > 0) {
+          calcDescription += '\n\nAvailable services:\n' + serviceInfo.calcServices.join('\n');
         }
 
-        let areaDescription = 'Read data from an editable area in any SpreadAPI service.';
+        calcDescription += `\n\nRETURN FORMAT:
+- outputs: Array of results with names and values
+- serviceName: Human-readable name
+- inputs: Echo of what you sent
+- metadata: Execution time, caching info`;
+
+        const getDetailsDescription = `📋 DISCOVERY TOOL - Learn about service parameters
+
+WHEN TO USE:
+- You're about to call spreadapi_calc but don't know required parameters
+- User asks "what parameters do you need?" or "what can you calculate?"
+- You need to show available enum/choice options
+
+WHEN NOT TO USE:
+- User already provided all values → Skip this, call spreadapi_calc directly
+- You just want to list services → They're shown in spreadapi_calc description
+- Simple calculation with obvious parameters → Infer and calculate
+
+RETURNS:
+- inputs: Array with types, constraints, defaults, examples
+- outputs: What the calculation returns
+- aiDescription: Special instructions for this service (READ THIS!)
+- aiUsageExamples: Example requests and how to handle them`;
+
+        const listServicesDescription = `📑 OPTIONAL - List all services with metadata
+
+⚠️  USUALLY SKIP THIS! Services are already listed in spreadapi_calc tool description.
+
+ONLY use if:
+- User explicitly asks "what services do you have?" or "list all calculators"
+- You need detailed metadata (creation dates, call counts, categories)
+- You need to discover services with editable areas
+
+OTHERWISE: Just use the service list in spreadapi_calc description above.`;
+
+        let areaDescription = '🔍 ADVANCED - Read editable spreadsheet areas (tables/lists)\n\nCOMPLEX FEATURE - Only use if service has editable areas.';
         if (serviceInfo.areaServices.length > 0) {
           areaDescription += '\n\nYour services with editable areas:\n' + serviceInfo.areaServices.join('\n');
         }
-
-        const getDetailsDescription = 'Get detailed information about a specific SpreadAPI service including its inputs, outputs, areas, and usage examples';
-        const listServicesDescription = 'List all published SpreadAPI services with their descriptions, metadata, and available areas';
 
         // Always include generic tools
         const tools = [
@@ -625,19 +779,36 @@ This server provides access to Excel/Google Sheets spreadsheets that have been p
               properties: {
                 serviceId: {
                   type: 'string',
-                  description: 'The ID of the service to execute',
-                  enum: serviceInfo.calcServices.length > 0 
+                  description: 'Which service to execute. REQUIRED. Use IDs from the service list above.',
+                  enum: serviceInfo.calcServices.length > 0
                     ? serviceInfo.calcServices.map(s => s.match(/\(([^)]+)\)/)?.[1]).filter(Boolean)
                     : undefined
                 },
                 inputs: {
                   type: 'object',
-                  description: 'Input parameters for the service (key-value pairs)',
+                  description: `Input parameters as key-value pairs.
+
+⚠️  CRITICAL: Call spreadapi_get_service_details(serviceId) first if you don't know parameters!
+
+Parameter formats:
+• Percentages: Use decimals (0.05 for 5%, 0.42 for 42%)
+• Booleans: true/false, yes/no, ja/nein all work
+• Enums: Use exact values or numeric choices (1, 2, 3)
+• Optional params: Omit them (defaults apply automatically)
+
+Example: { "interest_rate": 0.05, "principal": 10000, "years": 30 }`,
                   additionalProperties: true
                 },
                 areaUpdates: {
                   type: 'array',
-                  description: 'Optional area updates to apply before calculation',
+                  description: `ADVANCED: Update editable spreadsheet areas before calculating.
+
+Only use if:
+- Service has areas (check spreadapi_get_service_details)
+- User wants to modify table data
+- Calculation depends on editable dataset
+
+Skip this for simple calculations with just input parameters.`,
                   items: {
                     type: 'object',
                     properties: {
