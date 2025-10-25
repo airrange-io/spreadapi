@@ -160,7 +160,6 @@ function OAuthAuthorizeContent() {
               </div>
             }
             type="info"
-            showIcon
           />
 
           {/* Token Input Section */}
@@ -209,27 +208,6 @@ function OAuthAuthorizeContent() {
               </Button>
             </Space>
 
-            <Alert
-              message="Where to get tokens?"
-              description={
-                <div style={{ fontSize: 12 }}>
-                  <p style={{ marginBottom: 8 }}>
-                    • Purchase access tokens from service creators at{' '}
-                    <a href="https://spreadapi.io/marketplace" target="_blank" rel="noopener noreferrer">
-                      spreadapi.io/marketplace
-                    </a>
-                  </p>
-                  <p style={{ marginBottom: 0 }}>
-                    • Or create your own services and generate tokens at{' '}
-                    <a href="https://spreadapi.io/dashboard" target="_blank" rel="noopener noreferrer">
-                      your dashboard
-                    </a>
-                  </p>
-                </div>
-              }
-              type="info"
-              style={{ marginTop: 16 }}
-            />
           </div>
 
           {error && (
@@ -253,8 +231,23 @@ function OAuthAuthorizeContent() {
             </Button>
           </Space>
 
-          {/* Privacy Notice */}
           <Alert
+            message="Where to get tokens?"
+            description={
+              <div style={{ fontSize: 12 }}>
+                <p style={{ marginBottom: 0 }}>
+                  • Create your own services and generate tokens at{' '}
+                  <a href="https://spreadapi.io/dashboard" target="_blank" rel="noopener noreferrer">
+                    your dashboard
+                  </a>
+                </p>
+              </div>
+            }
+            type="info"
+            style={{ marginTop: 16 }}
+          />
+          {/* Privacy Notice */}
+          {/* <Alert
             message="Privacy & Security"
             description={
               <div style={{ fontSize: 12 }}>
@@ -274,7 +267,7 @@ function OAuthAuthorizeContent() {
             }
             type="info"
             showIcon
-          />
+          /> */}
         </Space>
       </Card>
     </div>
