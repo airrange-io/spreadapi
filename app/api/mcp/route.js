@@ -100,15 +100,15 @@ async function touchSession(sessionId) {
  * Handles MCP protocol messages with Redis-based session management
  */
 export async function POST(request) {
-  console.log('========================================');
-  console.log('[MCP] POST REQUEST RECEIVED - OAUTH TEST');
-  console.log('========================================');
+  console.error('========================================');
+  console.error('[MCP] POST REQUEST RECEIVED - OAUTH TEST');
+  console.error('========================================');
 
   try {
     // Validate authentication
     const auth = await mcpAuthMiddleware(request);
 
-    console.log('[MCP] Auth result:', {
+    console.error('[MCP] Auth result:', {
       valid: auth.valid,
       isOAuth: auth.isOAuth,
       userId: auth.userId,
