@@ -28,7 +28,7 @@ export async function GET() {
       authorization_endpoint: `${baseUrl}/oauth/authorize`,
 
       // Token endpoint (where authorization codes are exchanged for tokens)
-      token_endpoint: `${baseUrl}/oauth/token`,
+      token_endpoint: `${baseUrl}/api/oauth/token`,
 
       // Dynamic Client Registration endpoint (RFC 7591)
       // Allows ChatGPT to auto-register and obtain a client_id
