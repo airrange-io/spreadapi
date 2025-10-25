@@ -76,6 +76,13 @@ async function buildServiceListDescription(auth) {
     // Note: node-redis returns [[error, result], [error, result], ...]
     const results = await multi.exec();
 
+    console.log('[MCP] Multi exec results:', {
+      serviceCount: userServiceIds.length,
+      expectedResults: userServiceIds.length * 2,
+      actualResults: results?.length,
+      serviceIds: userServiceIds,
+    });
+
     // Process results (2 results per service: exists + hGetAll)
     for (let i = 0; i < userServiceIds.length; i++) {
       const serviceId = userServiceIds[i];
@@ -83,7 +90,12 @@ async function buildServiceListDescription(auth) {
 
       // Check for errors in the multi execution
       if (!results[baseIndex] || results[baseIndex][0]) {
-        console.error(`[MCP] Error checking published status for ${serviceId}:`, results[baseIndex]?.[0]);
+        console.error(`[MCP] Error checking published status for ${serviceId}:`, {
+          error: results[baseIndex]?.[0],
+          resultExists: !!results[baseIndex],
+          baseIndex,
+          totalResults: results?.length,
+        });
         continue;
       }
       if (!results[baseIndex + 1] || results[baseIndex + 1][0]) {
