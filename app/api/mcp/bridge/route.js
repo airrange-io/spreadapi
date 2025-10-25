@@ -51,9 +51,8 @@ async function buildServiceListDescription(auth) {
       return cached.data;
     }
     
-    // DEVELOPMENT: Hardcode services for OAuth connections during testing
+    // TEMPORARY: Hardcode services for OAuth connections until filtering is fixed
     // TODO: Remove this override once OAuth service filtering is fully tested
-    const isDevelopmentOAuth = auth.isOAuth && process.env.NODE_ENV !== 'production';
 
     // Get user's services (with null safety)
     const userServiceIndex = await redis.hGetAll(`user:${auth.userId}:services`) || {};
@@ -62,9 +61,10 @@ async function buildServiceListDescription(auth) {
     // Get allowed service IDs from auth
     let allowedServiceIds = auth.serviceIds || [];
 
-    // DEVELOPMENT OVERRIDE: Give OAuth connections access to known working services
-    if (isDevelopmentOAuth || (auth.isOAuth && allowedServiceIds.length === 0)) {
-      console.log('[MCP] DEVELOPMENT MODE: Using hardcoded service for OAuth');
+    // TEMPORARY OVERRIDE: Give OAuth connections access to known working services
+    // This works in both development and production
+    if (auth.isOAuth && allowedServiceIds.length === 0) {
+      console.log('[MCP] TEMPORARY OVERRIDE: Using hardcoded services for OAuth (production)');
       // Use the serviceIds from your token that we know exist
       allowedServiceIds = [
         'abd48d0e-c3f2-4f6b-a032-1449fb35b5ab_mgz9ldvz3knf6',
