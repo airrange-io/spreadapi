@@ -109,7 +109,7 @@ async function buildServiceListDescription(auth) {
     }
 
     // Execute all at once
-    // Note: node-redis returns [[error, result], [error, result], ...]
+    // Note: Redis multi.exec() returns flat array of results (not error tuples)
     const results = await multi.exec();
 
     console.error('[MCP] Multi exec results:', {
@@ -127,24 +127,10 @@ async function buildServiceListDescription(auth) {
       const serviceId = userServiceIds[i];
       const baseIndex = i * 2;
 
-      // Check for errors in the multi execution
-      if (!results[baseIndex] || results[baseIndex][0]) {
-        console.error(`[MCP] Error checking published status for ${serviceId}:`, {
-          error: results[baseIndex]?.[0],
-          resultExists: !!results[baseIndex],
-          baseIndex,
-          totalResults: results?.length,
-        });
-        continue;
-      }
-      if (!results[baseIndex + 1] || results[baseIndex + 1][0]) {
-        console.error(`[MCP] Error fetching data for ${serviceId}:`, results[baseIndex + 1]?.[0]);
-        continue;
-      }
-
-      // Access [1] to get actual result from [error, result] tuple
-      const existsResult = results[baseIndex][1];
-      const publishedData = results[baseIndex + 1][1];
+      // Redis multi.exec() returns flat array: [result1, result2, ...]
+      // NOT [[error, result], ...] - that's the old node-redis v3 format
+      const existsResult = results[baseIndex];
+      const publishedData = results[baseIndex + 1];
       const isPublished = existsResult === 1;
 
       console.error(`[MCP] Processing service ${serviceId}:`, {
