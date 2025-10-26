@@ -264,11 +264,15 @@ async function buildServiceTools(serviceId, apiDefinition) {
   // Tool 1: Calculate (primary tool)
   const calcTool = {
     name: 'spreadapi_calc',
-    description: `🎯 PRIMARY TOOL - Calculate with ${apiDefinition.serviceName || serviceId}
+    description: `🎯 PRIMARY CALCULATION TOOL
+
+SERVICE: ${apiDefinition.serviceName || serviceId}
+PURPOSE: ${apiDefinition.description || 'Perform calculations'}
 
 WHEN TO USE:
 - User asks for a calculation
 - User provides numeric values or scenarios
+- This is your main tool for calculations!
 
 ${apiDefinition.aiDescription ? `⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n\n` : ''}${apiDefinition.aiUsageGuidance ? `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n\n` : ''}⚠️  CRITICAL - PERCENTAGE VALUES:
 ALWAYS convert percentages to decimals (divide by 100):
@@ -297,7 +301,10 @@ Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Paym
   // Tool 2: Batch calculations
   const batchTool = {
     name: 'spreadapi_batch',
-    description: `⚡ BATCH TOOL - Compare multiple scenarios in parallel
+    description: `⚡ BATCH COMPARISON TOOL - Compare multiple scenarios
+
+SERVICE: ${apiDefinition.serviceName || serviceId}
+PURPOSE: Run multiple calculations in parallel for comparison
 
 WHEN TO USE:
 - User wants to compare 3+ scenarios (e.g., "compare these 5 options")
@@ -338,12 +345,16 @@ MUCH FASTER than calling spreadapi_calc 3 times separately!`,
   // Tool 3: Get service details
   const detailsTool = {
     name: 'spreadapi_get_details',
-    description: `📋 DISCOVERY TOOL - Get parameter details for this service
+    description: `📋 DISCOVERY TOOL - Get parameter details for ${apiDefinition.serviceName || serviceId}
+
+SERVICE: ${apiDefinition.serviceName || serviceId}
+PURPOSE: ${apiDefinition.description || 'Discover what this service can calculate'}
 
 WHEN TO USE:
 - You need to know what parameters are required
-- User asks "what can you calculate?" or "what do you need?"
+- User asks "what can you calculate?" or "what inputs do you need?"
 - Calculation failed and you need to understand why
+- First time using this service
 
 WHEN NOT TO USE:
 - User already provided all values → Skip this, calculate directly!
@@ -362,11 +373,101 @@ Complete service information including:
   };
   tools.push(detailsTool);
 
-  // Tool 4-6: State management and areas (if service has areas)
+  // Tool 4: State management - Save state (always available)
+  tools.push({
+    name: 'spreadapi_save_state',
+    description: `💾 SAVE STATE - Store calculation results for later comparison
+
+WHEN TO USE:
+- User says "save this", "remember this", "bookmark this"
+- User wants to compare results with future calculations
+- Building up multiple alternatives over time
+- User asks "can we compare this with what we did earlier?"
+
+WORKFLOW EXAMPLE:
+1. User: "Calculate loan payment at 5% interest"
+2. You: Call spreadapi_calc, get result
+3. You: Save with spreadapi_save_state(stateName="5% interest", inputs={...})
+4. Later user: "Now try 6% and compare with the 5% option"
+5. You: Calculate 6%, then load "5% interest" state to show comparison
+
+States persist across sessions - use descriptive names like "baseline", "optimistic", "Option A"!`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        stateName: { type: 'string', description: 'Descriptive name for this state (e.g., "baseline", "high_rate", "Option A")' },
+        inputs: { type: 'object', description: 'Input values used for this calculation' }
+      },
+      required: ['stateName', 'inputs']
+    }
+  });
+
+  // Tool 5: State management - Load state (always available)
+  tools.push({
+    name: 'spreadapi_load_state',
+    description: `📂 LOAD STATE - Retrieve previously saved calculation state
+
+WHEN TO USE:
+- User asks to "compare with earlier" or "show me the previous calculation"
+- User references a saved scenario by name
+- You need to recall inputs from a prior calculation
+- Building temporal comparisons
+
+TIP: Call spreadapi_list_saved_states first if you don't know what's saved`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        stateName: { type: 'string', description: 'Name of the state to load (exact match required)' }
+      },
+      required: ['stateName']
+    }
+  });
+
+  // Tool 6: State management - List saved states (always available)
+  tools.push({
+    name: 'spreadapi_list_saved_states',
+    description: `📋 LIST SAVED STATES - Show all available saved states
+
+WHEN TO USE:
+- User asks "what did we save?" or "show me my saved scenarios"
+- Before loading a state (to see what's available)
+- User asks to "compare with earlier" but doesn't specify which one
+
+RETURNS:
+List of state names with their saved input values
+
+AUTO-USE: If user references "earlier calculation" but you don't know the name, call this first!`,
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  });
+
+  // Tool 7: Read area (only if service has editable areas)
   if (apiDefinition.editableAreas && apiDefinition.editableAreas.length > 0) {
     tools.push({
       name: 'spreadapi_read_area',
-      description: '📖 Read data from editable spreadsheet areas',
+      description: `📖 READ EDITABLE AREA - Access data tables from spreadsheet
+
+WHAT ARE EDITABLE AREAS:
+Named data ranges (like Excel tables) that contain reference data.
+Examples: Product catalogs, price lists, configuration tables, lookup data.
+
+WHEN TO USE:
+- User asks "what products are available?" or "show me the options"
+- You need to see what data is in the spreadsheet before calculating
+- Building data-driven calculations that reference the table
+- User wants to know "what's in the spreadsheet?"
+
+AVAILABLE AREAS:
+${apiDefinition.editableAreas.map(a => `• ${a.name}: ${a.description || 'Data table'}`).join('\n')}
+
+WORKFLOW:
+1. Read area to see available data
+2. Use data in calculations with spreadapi_calc
+3. Reference specific values from the area
+
+TIP: Call this early if you need to know what data is available!`,
       inputSchema: {
         type: 'object',
         properties: {
@@ -376,31 +477,6 @@ Complete service information including:
           }
         },
         required: ['areaName']
-      }
-    });
-
-    tools.push({
-      name: 'spreadapi_save_state',
-      description: '💾 Save current calculation state for later comparison',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          stateName: { type: 'string', description: 'Name for this saved state' },
-          inputs: { type: 'object', description: 'Current input values' }
-        },
-        required: ['stateName', 'inputs']
-      }
-    });
-
-    tools.push({
-      name: 'spreadapi_load_state',
-      description: '📂 Load a previously saved state',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          stateName: { type: 'string', description: 'Name of state to load' }
-        },
-        required: ['stateName']
       }
     });
   }
@@ -426,7 +502,46 @@ async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
     },
     serverInfo: {
       name: apiDefinition.serviceName || serviceId,
-      version: SERVER_VERSION
+      version: SERVER_VERSION,
+      // Add service description for better context
+      ...(apiDefinition.description && { description: apiDefinition.description }),
+      // Add instructions for AI agent onboarding
+      instructions: `═══════════════════════════════════════════════════════════════
+🎯 SERVICE: ${apiDefinition.serviceName || serviceId}
+═══════════════════════════════════════════════════════════════
+
+${apiDefinition.fullDescription || apiDefinition.description || 'Spreadsheet-based calculation service'}
+
+${apiDefinition.aiDescription ? `\n⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n` : ''}${apiDefinition.aiUsageGuidance ? `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n` : ''}
+───────────────────────────────────────────────────────────────
+📖 HOW TO USE THIS SERVICE:
+───────────────────────────────────────────────────────────────
+
+1️⃣  SINGLE CALCULATION (most common):
+   User: "Calculate my result with X=10, Y=20"
+   → Call spreadapi_calc with inputs
+
+2️⃣  COMPARE SCENARIOS (3+ options):
+   User: "Compare options A, B, and C"
+   → Call spreadapi_batch once with all scenarios
+
+3️⃣  DISCOVER PARAMETERS:
+   First time using OR calculation failed?
+   → Call spreadapi_get_details to see required inputs
+
+4️⃣  SAVE & COMPARE:
+   User: "Save this for later" or "Compare with earlier"
+   → spreadapi_save_state → spreadapi_list_saved_states → spreadapi_load_state
+
+5️⃣  WORK WITH DATA:
+   ${apiDefinition.editableAreas?.length ? `Service has editable areas: ${apiDefinition.editableAreas.map(a => a.name).join(', ')}\n   → Use spreadapi_read_area to access data tables` : 'No editable areas available'}
+
+───────────────────────────────────────────────────────────────
+⚠️  CRITICAL RULES:
+───────────────────────────────────────────────────────────────
+• Percentages MUST be decimals (5% = 0.05, NOT 5)
+• ALWAYS use formatString from outputs for proper display
+• Read tool descriptions for detailed guidance on each tool`
     }
   };
 
@@ -538,6 +653,12 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
       case 'spreadapi_load_state': {
         // Load state
         result = await loadState(userId, serviceId, toolArgs.stateName);
+        break;
+      }
+
+      case 'spreadapi_list_saved_states': {
+        // List all saved states
+        result = await listStates(userId, serviceId);
         break;
       }
 
