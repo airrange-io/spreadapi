@@ -321,18 +321,20 @@ The spreadsheet auto-calculates when you change inputs.`;
       } else {
         systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
 
+CRITICAL PERCENTAGE RULE - READ THIS FIRST:
+When users mention percentages like "6%", "5%", "7.5%":
+- These are PERCENTAGES, not decimal values
+- You MUST convert them: 6% = 0.06, 5% = 0.05, 7.5% = 0.075
+- NEVER pass the whole number (passing 6 for "6%" means 600% which is WRONG!)
+- This conversion is MANDATORY - do it automatically, do NOT ask for confirmation
+
 When a user asks for a calculation:
 1. Extract ALL provided values from their message
-2. If they mention percentages (like "5%"), automatically convert to decimals (0.05)
-3. Use the 'calculate' tool to get the result
+2. Convert ANY percentages to decimals (5% → 0.05, 6% → 0.06)
+3. Use the 'calculate' tool with the converted values
 4. Show the result to the user
 
-IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user.
-
-CRITICAL: When users say percentages like "5%", "7%", etc:
-- Automatically convert them (5% → 0.05)
-- Do NOT ask for confirmation
-- Just use the converted value directly
+IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user
 
 Current context:
 - Date: ${currentDate}
@@ -614,14 +616,17 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
         
         serviceDetails.inputs.forEach(input => {
           const inputType = getItemType(input);
-          
+
           let schema;
           // Build comprehensive description for the schema
           let schemaDescription = input.title || input.name;
           if (input.description) {
             schemaDescription += ` - ${input.description}`;
           }
-          if (input.format) {
+          // CRITICAL: Make percentage format explicit in the schema
+          if (input.format === 'percentage') {
+            schemaDescription += ` [IMPORTANT: This is a percentage - user says "6%" but you MUST pass 0.06 as decimal. NEVER pass the whole number!]`;
+          } else if (input.format) {
             schemaDescription += ` (format: ${input.format})`;
           }
           
