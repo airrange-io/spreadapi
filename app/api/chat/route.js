@@ -23,9 +23,10 @@ function sanitizeInput(input) {
     .slice(0, 5000); // Limit input length
 }
 
-// Create OpenAI instance with API key
+// Create OpenAI instance with API key and organization
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
+  organization: process.env.OPENAI_ORGANIZATION_ID || undefined,
 });
 
 
@@ -1111,7 +1112,7 @@ The button text should clearly show what calculation will be performed with the 
 
     // Use streamText with v5 features for better tool handling
     const result = streamText({
-      model: openai('gpt-4o-mini', {
+      model: openai('gpt-5-mini', {
         // Add streaming optimizations
         streamOptions: {
           // Use HTTP/2 for better performance
