@@ -62,6 +62,11 @@ export async function getApiDefinition(apiId, apiToken) {
         "tokens",
         "webhookUrl",
         "webhookSecret",
+        "serviceName",         // AI needs service name
+        "description",         // AI needs description
+        "fullDescription",     // AI needs full description
+        "aiDescription",       // AI-specific instructions
+        "aiUsageGuidance",     // AI usage guidance
       ]);
     } catch (redisError) {
       console.error(
@@ -90,6 +95,11 @@ export async function getApiDefinition(apiId, apiToken) {
     let tokens = serviceInfo[4] ? serviceInfo[4]?.split(",") : [];
     let webhookUrl = serviceInfo[5] || '';
     let webhookSecret = serviceInfo[6] || '';
+    let serviceName = serviceInfo[7] || '';
+    let description = serviceInfo[8] || '';
+    let fullDescription = serviceInfo[9] || '';
+    let aiDescription = serviceInfo[10] || '';
+    let aiUsageGuidance = serviceInfo[11] || '';
 
     // check the tokens and flags
     if (!apiUrl) {
@@ -120,14 +130,19 @@ export async function getApiDefinition(apiId, apiToken) {
           if (result) {
             console.timeEnd("fetchData");
             // Store in process-level cache before returning
-            // Include needsToken, tokens, and webhook info
+            // Include needsToken, tokens, webhook info, and AI guidance
             const cacheData = {
               ...result,
               needsToken,
               tokens,
               useCaching,
               webhookUrl,
-              webhookSecret
+              webhookSecret,
+              serviceName,
+              description,
+              fullDescription,
+              aiDescription,
+              aiUsageGuidance
             };
             apiDefinitionCache.set(apiId, {
               data: cacheData,
@@ -287,14 +302,19 @@ export async function getApiDefinition(apiId, apiToken) {
 
     // Store in process-level cache
     if (result && !result.error) {
-      // Include needsToken, tokens, and webhook info
+      // Include needsToken, tokens, webhook info, and AI guidance
       const cacheData = {
         ...result,
         needsToken,
         tokens,
         useCaching,
         webhookUrl,
-        webhookSecret
+        webhookSecret,
+        serviceName,
+        description,
+        fullDescription,
+        aiDescription,
+        aiUsageGuidance
       };
       apiDefinitionCache.set(apiId, {
         data: cacheData,
