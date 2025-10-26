@@ -289,7 +289,7 @@ Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Paym
         inputs: {
           type: 'object',
           description: 'Input values for the calculation. ' +
-            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => i.name).join(', ')}` : 'See service details'),
+            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => i.title ? `${i.name} (${i.title})` : i.name).join(', ')}` : 'See service details'),
           additionalProperties: true
         }
       },
