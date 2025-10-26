@@ -920,7 +920,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
               if (parameterType === 'input') {
                 if (editingParameter) {
-                  setInputs(prev => prev.map(p => p.id === newParam.id ? {
+                  setInputs(prev => prev.map(p => {
+                    // Check if this is a boolean parameter
+                    const isBoolean = newParam.type === 'boolean' || newParam.dataType === 'boolean' ||
+                                     p.type === 'boolean';
+
+                    return p.id === newParam.id ? {
                     ...newParam,
                     // Use new format from selectedCellInfo if available, otherwise preserve existing format
                     ...(selectedCellInfo?.format?.isPercentage ? {
@@ -928,16 +933,43 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                       // Add AI examples to help AI understand decimal format
                       aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
                         ? newParam.aiExamples
-                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%'],
+                      // Auto-populate description with percentage conversion guidance if not already set
+                      description: newParam.description && newParam.description.trim().length > 0
+                        ? newParam.description
+                        : `CRITICAL: This is a percentage parameter. User says "6%" but you MUST pass 0.06 as decimal. Convert: 5%→0.05, 6%→0.06, 7.5%→0.075. Never pass the whole number!`
                     } : p.format === 'percentage' ? {
                       // Preserve existing percentage format
                       format: 'percentage' as const,
                       aiExamples: p.aiExamples && p.aiExamples.length > 0
                         ? p.aiExamples
-                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%'],
+                      // Auto-populate description with percentage conversion guidance if not already set
+                      description: newParam.description && newParam.description.trim().length > 0
+                        ? newParam.description
+                        : p.description && p.description.trim().length > 0
+                          ? p.description
+                          : `CRITICAL: This is a percentage parameter. User says "6%" but you MUST pass 0.06 as decimal. Convert: 5%→0.05, 6%→0.06, 7.5%→0.075. Never pass the whole number!`
+                    } : isBoolean ? {
+                      // Add AI examples for boolean values
+                      aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
+                        ? newParam.aiExamples
+                        : p.aiExamples && p.aiExamples.length > 0
+                          ? p.aiExamples
+                          : ['true', 'false', 'yes', 'no', '1', '0'],
+                      // Auto-populate description with boolean conversion guidance if not already set
+                      description: newParam.description && newParam.description.trim().length > 0
+                        ? newParam.description
+                        : p.description && p.description.trim().length > 0
+                          ? p.description
+                          : `Accept multiple formats: yes/no, true/false, 1/0, ja/nein. Pass actual boolean value (true/false), NOT string.`
                     } : {})
-                  } : p));
+                    } : p;
+                  }));
                 } else {
+                  // Check if this is a boolean parameter
+                  const isBoolean = newParam.type === 'boolean' || newParam.dataType === 'boolean';
+
                   setInputs(prev => [...prev, {
                     ...newParam,
                     sheetName: selectedCellInfo.sheetName || 'Sheet1',
@@ -948,7 +980,21 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                       // Add AI examples to help AI understand decimal format
                       aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
                         ? newParam.aiExamples
-                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%']
+                        : ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%'],
+                      // Auto-populate description with percentage conversion guidance if not already set
+                      description: newParam.description && newParam.description.trim().length > 0
+                        ? newParam.description
+                        : `CRITICAL: This is a percentage parameter. User says "6%" but you MUST pass 0.06 as decimal. Convert: 5%→0.05, 6%→0.06, 7.5%→0.075. Never pass the whole number!`
+                    }),
+                    ...(isBoolean && !selectedCellInfo?.format?.isPercentage && {
+                      // Add AI examples for boolean values
+                      aiExamples: newParam.aiExamples && newParam.aiExamples.length > 0
+                        ? newParam.aiExamples
+                        : ['true', 'false', 'yes', 'no', '1', '0'],
+                      // Auto-populate description with boolean conversion guidance if not already set
+                      description: newParam.description && newParam.description.trim().length > 0
+                        ? newParam.description
+                        : `Accept multiple formats: yes/no, true/false, 1/0, ja/nein. Pass actual boolean value (true/false), NOT string.`
                     })
                   }]);
                 }

@@ -6,6 +6,7 @@ import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
 import { executeAreaRead, executeAreaUpdate } from '@/lib/mcp/areaExecutors';
 import { executeEnhancedCalc } from '@/lib/mcp/executeEnhancedCalc';
 import { calculateDirect } from '../v1/services/[id]/execute/calculateDirect';
+import { getChatServiceInstructions, PERCENTAGE_CONVERSION_RULES } from '@/lib/mcp-ai-instructions';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -319,29 +320,8 @@ RULES:
 
 The spreadsheet auto-calculates when you change inputs.`;
       } else {
-        systemPrompt = `You are an assistant for the "${serviceDetails?.name || 'SpreadAPI service'}" calculation service.
-
-CRITICAL PERCENTAGE RULE - READ THIS FIRST:
-When users mention percentages like "6%", "5%", "7.5%":
-- These are PERCENTAGES, not decimal values
-- You MUST convert them: 6% = 0.06, 5% = 0.05, 7.5% = 0.075
-- NEVER pass the whole number (passing 6 for "6%" means 600% which is WRONG!)
-- This conversion is MANDATORY - do it automatically, do NOT ask for confirmation
-
-When a user asks for a calculation:
-1. Extract ALL provided values from their message
-2. Convert ANY percentages to decimals (5% → 0.05, 6% → 0.06)
-3. Use the 'calculate' tool with the converted values
-4. Show the result to the user
-
-IMPORTANT: After calling the tool, you must continue your response and show the calculation results to the user
-
-Current context:
-- Date: ${currentDate}
-- Time: ${currentTime}
-- Service: ${serviceDetails?.name || 'General calculation service'}
-
-IMPORTANT: You are NOT a general AI assistant. Every response should be focused on helping users with this specific calculation service.`;
+        // Use centralized chat instructions
+        systemPrompt = getChatServiceInstructions(serviceDetails, currentDate, currentTime);
       }
     }
 
@@ -615,6 +595,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
         const inputSchemas = {};
         
         serviceDetails.inputs.forEach(input => {
+          // Detect parameter type and add specific guidance
           const inputType = getItemType(input);
 
           let schema;
@@ -623,14 +604,20 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
           if (input.description) {
             schemaDescription += ` - ${input.description}`;
           }
-          // CRITICAL: Make percentage format explicit in the schema
+
           if (input.format === 'percentage') {
-            schemaDescription += ` [IMPORTANT: This is a percentage - user says "6%" but you MUST pass 0.06 as decimal. NEVER pass the whole number!]`;
+            // CRITICAL: Make percentage format explicit in the schema
+            schemaDescription += ` [CRITICAL PERCENTAGE: User says "6%" but you MUST pass 0.06 as decimal. Passing 6 means 600% which is WRONG! Convert: 5%→0.05, 6%→0.06, 7.5%→0.075]`;
+          } else if (inputType === 'boolean') {
+            // Add boolean guidance
+            schemaDescription += ` [BOOLEAN: Accept yes/no/true/false/1/0. Pass actual boolean (true/false), NOT string ("yes"/"no")]`;
           } else if (input.format) {
             schemaDescription += ` (format: ${input.format})`;
           }
-          
-          if (isNumberType(input)) {
+
+          if (inputType === 'boolean') {
+            schema = z.boolean().describe(schemaDescription);
+          } else if (isNumberType(input)) {
             schema = z.number().describe(schemaDescription);
           } else {
             schema = z.string().describe(schemaDescription);
@@ -1014,11 +1001,11 @@ ${(() => {
 ### Key Parameter Rules:
 ${(() => {
   const rules = [];
-  
-  // Check for percentage inputs
+
+  // Check for percentage inputs - use centralized warning
   const hasPercentage = serviceDetails.inputs.some(i => i.format === 'percentage');
   if (hasPercentage) {
-    rules.push('- **Percentages**: ALWAYS convert to decimals (5% → 0.05, 7% → 0.07, 10% → 0.10) - NEVER use whole numbers like 5 for 5%!');
+    rules.push('- **Percentages**: CRITICAL! Convert to decimals (5%→0.05, 6%→0.06, 7.5%→0.075). Passing 6 for "6%" = 600% = WRONG!');
   }
   
   // Check for optional parameters
@@ -1041,7 +1028,7 @@ ${(() => {
 - If missing ANY required values → ASK for them (don't assume)
 - If missing optional values → Use defaults (usually 0)
 - Example: "Show me $1000 at 7% over 20 years" → Missing monthly deposit (required) → ASK: "What monthly deposit amount would you like to use?"
-- CRITICAL: "5% interest" → Use interestrate: 0.05 (NOT 5!)
+- CRITICAL: "6% interest" → Use interest_rate: 0.06 (NOT 6! That's 600%!)
 
 Remember: You exist solely to help users with ${serviceDetails.name} calculations. Every interaction should move toward executing a calculation or clarifying results.
 
