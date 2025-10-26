@@ -282,8 +282,8 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
       </CollapsibleSection>
 
       {/* Editable Areas for AI */}
-      <CollapsibleSection 
-        title="Editable Areas for AI" 
+      <CollapsibleSection
+        title={`Editable Areas for AI${process.env.NODE_ENV !== 'development' ? ' - Coming Soon' : ''}`}
         defaultOpen={false}
         extra={
           <Tooltip title="Areas that AI assistants can read and optionally modify">
@@ -351,6 +351,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     size="small"
                     type="text"
                     icon={<EditOutlined />}
+                    disabled={process.env.NODE_ENV !== 'development'}
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditArea(area, index);
@@ -365,6 +366,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                             label: 'Delete',
                             icon: <DeleteOutlined />,
                             danger: true,
+                            disabled: process.env.NODE_ENV !== 'development',
                             onClick: () => {
                               Modal.confirm({
                                 title: 'Delete this area?',
@@ -385,6 +387,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                         size="small"
                         type="text"
                         icon={<MoreOutlined />}
+                        disabled={process.env.NODE_ENV !== 'development'}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </Dropdown>

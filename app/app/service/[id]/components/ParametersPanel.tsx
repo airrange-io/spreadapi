@@ -964,8 +964,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
                           ? p.description
                           : `Accept multiple formats: yes/no, true/false, 1/0, ja/nein. Pass actual boolean value (true/false), NOT string.`
                     } : {})
-                  } : p;
-                  }));
+                  } : p
+                }));
                 } else {
                   // Check if this is a boolean parameter
                   const isBoolean = newParam.type === 'boolean' || newParam.dataType === 'boolean';

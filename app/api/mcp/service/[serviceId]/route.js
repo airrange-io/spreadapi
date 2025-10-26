@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '../../../../../lib/redis';
 import { getApiDefinition } from '../../../../../utils/helperApi';
+import { calculateDirect } from '../../../../../app/api/v1/services/[id]/execute/calculateDirect.js';
 import { executeEnhancedCalc } from '../../../../../lib/mcp/executeEnhancedCalc.js';
 import { executeAreaRead } from '../../../../../lib/mcp/areaExecutors.js';
 import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js';
@@ -592,30 +593,55 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 
     switch (toolName) {
       case 'spreadapi_calc': {
-        // Single calculation
-        result = await executeEnhancedCalc(
-          serviceId,
-          toolArgs.inputs,
-          toolArgs.areaUpdates,
-          apiDefinition
-        );
+        // Single calculation - use optimized path when no area updates
+        if (!toolArgs.areaUpdates || toolArgs.areaUpdates.length === 0) {
+          // No area updates - use the standard, battle-tested calculateDirect
+          const calcResult = await calculateDirect(
+            serviceId,
+            toolArgs.inputs || {},
+            null, // token handled by MCP auth layer
+            {}   // no special options
+          );
+
+          // Format for MCP protocol
+          if (calcResult.error) {
+            result = {
+              error: calcResult.error,
+              message: calcResult.message || calcResult.error
+            };
+          } else {
+            result = calcResult;
+          }
+        } else {
+          // Area updates present - use enhanced calc
+          result = await executeEnhancedCalc(
+            serviceId,
+            toolArgs.inputs,
+            toolArgs.areaUpdates,
+            {},
+            null
+          );
+        }
         break;
       }
 
       case 'spreadapi_batch': {
-        // Batch calculations
+        // Batch calculations - use optimized calculateDirect for better performance
         const scenarios = toolArgs.scenarios || [];
         const results = await Promise.all(
           scenarios.map(async (scenario) => {
-            const calcResult = await executeEnhancedCalc(
+            // Batch calculations typically don't have area updates
+            // Use calculateDirect for better performance and reliability
+            const calcResult = await calculateDirect(
               serviceId,
-              scenario.inputs,
-              null,
-              apiDefinition
+              scenario.inputs || {},
+              null, // token handled by MCP auth layer
+              {}   // no special options
             );
+
             return {
               label: scenario.label,
-              ...calcResult
+              ...(calcResult.error ? { error: calcResult.error } : calcResult)
             };
           })
         );

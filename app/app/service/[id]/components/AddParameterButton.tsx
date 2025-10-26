@@ -124,9 +124,9 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
             icon={<TableOutlined />}
             style={{ width: '100%', height: 40 }}
             onClick={onAddAsEditableArea}
-            disabled={!spreadInstance || !spreadsheetReady}
+            disabled={!spreadInstance || !spreadsheetReady || process.env.NODE_ENV !== 'development'}
           >
-            Add Selection as Editable Area (for AI)
+            Add Selection as Editable Area (for AI){process.env.NODE_ENV !== 'development' ? ' - Coming Soon' : ''}
           </Button>
         )}
       </div>
