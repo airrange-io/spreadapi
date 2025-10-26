@@ -534,8 +534,8 @@ export function parseThemeFromQuery(searchParams: URLSearchParams): {
   theme: ViewTheme;
   overrides: Partial<ViewTheme['styles']>;
 } {
-  const themeId = searchParams.get('theme') || 'default';
-  const baseTheme = VIEW_THEMES[themeId] || VIEW_THEMES.default;
+  const themeId = searchParams.get('theme') || 'purple';
+  const baseTheme = VIEW_THEMES[themeId] || VIEW_THEMES.purple;
 
   // Parse individual overrides
   const overrides: Partial<ViewTheme['styles']> = {};

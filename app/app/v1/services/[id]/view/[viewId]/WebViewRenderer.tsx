@@ -411,7 +411,7 @@ h1, h2, h3, h4, h5, h6,
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background-color: var(--primary-color, #667eea);
+            background-color: var(--primary-color, #502D81);
             animation: bounce 1.4s infinite ease-in-out both;
           }
 
