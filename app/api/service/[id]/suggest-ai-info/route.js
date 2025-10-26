@@ -2,6 +2,8 @@ import { createServiceAI } from '@/lib/serviceAI';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 
 // API endpoint for AI-powered service configuration suggestions
+export const maxDuration = 30; // 30 seconds timeout for Vercel
+
 export async function POST(req, { params }) {
   try {
     const { id } = await params;

@@ -4,6 +4,9 @@ import { calculateDirect } from '../execute/calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 
+// Vercel timeout configuration - Critical for batch processing!
+export const maxDuration = 30;
+
 /**
  * POST /api/v1/services/{id}/batch
  *

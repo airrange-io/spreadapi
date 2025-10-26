@@ -7,6 +7,9 @@ import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js
 import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
 import { getSingleServiceInstructions } from '../../../../../lib/mcp-ai-instructions.js';
 
+// Vercel timeout configuration
+export const maxDuration = 30;
+
 /**
  * MCP (Model Context Protocol) Server - Service-Specific Endpoint
  *

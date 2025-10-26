@@ -7,6 +7,9 @@ import { executeAreaRead, executeAreaUpdate } from '@/lib/mcp/areaExecutors';
 import { executeEnhancedCalc } from '@/lib/mcp/executeEnhancedCalc';
 import { calculateDirect } from '../v1/services/[id]/execute/calculateDirect';
 
+// Vercel timeout configuration
+export const maxDuration = 30;
+
 // Basic input sanitization to prevent injection attacks
 function sanitizeInput(input) {
   if (typeof input !== 'string') return '';

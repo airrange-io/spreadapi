@@ -4,6 +4,9 @@ import { calculateDirect } from './calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 
+// Vercel timeout configuration
+export const maxDuration = 30;
+
 /**
  * Execute a SpreadAPI service calculation
  *

@@ -1,40 +1,19 @@
 {
-  "buildCommand": "pnpm build",
   "functions": {
-    "app/api/warm/route.js": {
-      "maxDuration": 30,
-      "memory": 1024
+    "app/api/service/[id]/suggest-ai-info/route.js": {
+      "maxDuration": 30
     },
-    "app/api/*/route.js": {
-      "maxDuration": 10
+    "app/api/chat/route.js": {
+      "maxDuration": 30
+    },
+    "app/api/mcp/service/[serviceId]/route.js": {
+      "maxDuration": 30
+    },
+    "app/api/v1/services/[id]/execute/route.js": {
+      "maxDuration": 30
+    },
+    "app/api/v1/services/[id]/batch/route.ts": {
+      "maxDuration": 30
     }
-  },
-  "regions": ["fra1", "iad1"],
-  "crons": [{
-    "path": "/api/warm",
-    "schedule": "*/4 * * * *"
-  }],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET,DELETE,PATCH,POST,PUT"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-        }
-      ]
-    }
-  ]
+  }
 }
