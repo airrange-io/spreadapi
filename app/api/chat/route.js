@@ -1123,6 +1123,7 @@ The button text should clearly show what calculation will be performed with the 
       system: systemPrompt,
       temperature: 0.3,
       maxTokens: initialGreeting ? 500 : 2000, // Shorter response for greeting
+      reasoningEffort: 'low', // Optimize for speed while maintaining quality
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
       maxSteps: 5,
