@@ -81,10 +81,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
-  const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage'>(() => {
+  const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage'>(() => {
     const savedView = getSavedView(serviceId);
-    if (savedView && ['Settings', 'Workbook', 'API', 'Apps', 'Agents', 'Usage'].includes(savedView)) {
-      return savedView as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage';
+    if (savedView && ['Settings', 'Workbook', 'API', 'Agents', 'Apps', 'Usage'].includes(savedView)) {
+      return savedView as 'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage';
     }
     // Default to Workbook (not Settings, even though Settings is first in navigation)
     return 'Workbook';
@@ -1850,7 +1850,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             value={activeView}
             // shape="round"
             onChange={(value) => {
-              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage';
+              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage';
               setActiveView(newView);
               // Save view preference using helper
               saveViewPreference(serviceId, newView);
@@ -1869,18 +1869,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               icon: <Tooltip title="API"><CaretRightOutlined /></Tooltip>
             },
             {
-              value: 'Apps',
-              icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
-            },
-            {
               value: 'Agents',
               icon: <Tooltip title="Agents"><RobotOutlined /></Tooltip>
+            },
+            {
+              value: 'Apps',
+              icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
             },
             {
               value: 'Usage',
               icon: <Tooltip title="Usage"><BarChartOutlined /></Tooltip>
             }
-          ] : ['Settings', 'Workbook', 'API', 'Apps', 'Agents', 'Usage']}
+          ] : ['Settings', 'Workbook', 'API', 'Agents', 'Apps', 'Usage']}
           style={{ marginLeft: 'auto', marginRight: 'auto' }}
         />
         </div>

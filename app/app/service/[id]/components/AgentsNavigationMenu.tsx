@@ -32,7 +32,7 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
     {
       key: 'chat-test',
       icon: <MessageOutlined />,
-      label: 'Chat Testing'
+      label: 'AI Chat Testing'
     },
     {
       key: 'mcp',
@@ -56,7 +56,7 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
         selectedKeys={[selectedKey]}
         className="agents-navigation-menu"
         style={{
-          width: 220,
+          width: 200,
           height: '100%',
           borderRight: '1px solid #f0f0f0',
           marginTop: 10,

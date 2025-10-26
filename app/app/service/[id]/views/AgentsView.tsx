@@ -19,7 +19,7 @@ const ServiceChatSection = dynamic(() => import('../components/ServiceChatSectio
       justifyContent: 'center',
       gap: '12px'
     }}>
-      <Spin size="large" />
+      <Spin size="default" />
       <div style={{ color: '#999', fontSize: '14px' }}>Loading chat...</div>
     </div>
   ),
@@ -112,7 +112,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({
       opacity: mounted ? 1 : 0,
       transition: 'opacity 0.3s ease-in-out'
     }}>
-      <Sider width={220} style={{ backgroundColor: '#ffffff' }}>
+      <Sider width={200} style={{ backgroundColor: '#ffffff' }}>
         <AgentsNavigationMenu
           selectedKey={selectedSection}
           onSelect={setSelectedSection}

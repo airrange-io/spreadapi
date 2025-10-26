@@ -60,13 +60,7 @@ export default function ServiceMCPSettings({
   };
 
   return (
-    <div className="mcp-settings" style={{
-      backgroundColor: '#fff',
-      border: '1px solid #e8e8e8',
-      borderRadius: '8px',
-      padding: '24px',
-      marginTop: '24px'
-    }}>
+    <div className="mcp-settings">
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h3 style={{

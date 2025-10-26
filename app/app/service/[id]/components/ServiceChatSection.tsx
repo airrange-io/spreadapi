@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Button, Typography, Space, Spin, Avatar, Empty } from 'antd';
-import { SendOutlined, RobotOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Typography, Space, Spin, Avatar, Empty, Tooltip } from 'antd';
+import { SendOutlined, RobotOutlined, UserOutlined, ReloadOutlined, MessageOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import markdownit from 'markdown-it';
@@ -79,14 +79,16 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Send automatic greeting when chat loads
-  useEffect(() => {
-    if (!hasGreetedRef.current && !isLoading && messages.length === 0 && sendMessage) {
-      hasGreetedRef.current = true;
-      // Send greeting message
-      sendMessage({ text: 'Hello! Tell me about this service and what you can help me calculate.' });
-    }
-  }, [isLoading, messages.length, sendMessage]);
+  // OPTIMIZATION: Auto-greeting disabled for faster initial load
+  // Users can start conversation by typing or clicking examples in empty state
+  //
+  // Original auto-greeting (caused 10+ second delay):
+  // useEffect(() => {
+  //   if (!hasGreetedRef.current && !isLoading && messages.length === 0 && sendMessage) {
+  //     hasGreetedRef.current = true;
+  //     sendMessage({ text: 'Hello! Tell me about this service and what you can help me calculate.' });
+  //   }
+  // }, [isLoading, messages.length, sendMessage]);
 
   // Handle clicks on example buttons (matching existing chat)
   useEffect(() => {
@@ -127,7 +129,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
         justifyContent: 'center',
         padding: '40px'
       }}>
-        <Spin size="large" />
+        <Spin size="default" />
       </div>
     );
   }
@@ -155,13 +157,13 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
             Test your AI descriptions and see how the assistant responds
           </Text>
         </Space>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={handleReset}
-          disabled={messages.length === 0}
-        >
-          Reset Chat
-        </Button>
+        <Tooltip title="Reset Chat">
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={handleReset}
+            disabled={messages.length === 0}
+          />
+        </Tooltip>
       </div>
 
       {/* Messages Area */}
@@ -169,17 +171,35 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
         flex: 1,
         overflowY: 'auto',
         padding: '24px',
-        backgroundColor: '#fafafa'
+        backgroundColor: '#fafafa',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: messages.length === 0 ? 'center' : 'flex-start'
       }}>
         {messages.length === 0 && !isLoading ? (
           <Empty
-            image={<RobotOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+            image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
             description={
-              <Space direction="vertical" size={4}>
-                <Text>No messages yet</Text>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Start a conversation to test your service's AI configuration
+              <Space direction="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
+                <Text strong style={{ fontSize: '16px' }}>
+                  Test Your AI Configuration
                 </Text>
+                <Text type="secondary" style={{ fontSize: '13px', textAlign: 'center' }}>
+                  Ask questions about your service to see how the AI responds based on your descriptions and usage guidance
+                </Text>
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={() => {
+                    if (sendMessage && !hasGreetedRef.current) {
+                      hasGreetedRef.current = true;
+                      sendMessage({ text: 'Hello! Tell me about this service and what you can help me calculate.' });
+                    }
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  Get AI Examples
+                </Button>
               </Space>
             }
           />
@@ -303,9 +323,6 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
             }
           }}
         />
-        <Text type="secondary" style={{ fontSize: '11px', marginTop: '8px', display: 'block' }}>
-          This chat uses the AI Description and Usage Guidance you configured above
-        </Text>
       </div>
     </div>
   );

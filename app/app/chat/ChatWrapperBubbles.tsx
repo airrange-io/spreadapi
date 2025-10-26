@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
-import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown } from 'antd';
-import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown, Empty } from 'antd';
+import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, MessageOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
@@ -116,20 +116,22 @@ export default function ChatWrapperBubbles() {
   const isLoading = status === 'submitted' || status === 'streaming';
   
 
-  // Send greeting when service is auto-selected (single service scenario)
-  useEffect(() => {
-    if (selectedService && selectedService !== 'general' && !hasGreetedRef.current && !loadingServices && messages.length === 0 && userServices.length === 1) {
-      hasGreetedRef.current = true;
-      // Send greeting message for auto-selected single service
-      setTimeout(async () => {
-        await sendMessage({
-          text: '[GREETING]'
-        }, {
-          body: { serviceId: selectedService, initialGreeting: true }
-        });
-      }, 300);
-    }
-  }, [selectedService, loadingServices, userServices.length]);
+  // OPTIMIZATION: Auto-greeting disabled for faster initial load
+  // Users can start conversation by typing or clicking "Get AI Examples" button
+  //
+  // Original auto-greeting (caused 10+ second delay):
+  // useEffect(() => {
+  //   if (selectedService && selectedService !== 'general' && !hasGreetedRef.current && !loadingServices && messages.length === 0 && userServices.length === 1) {
+  //     hasGreetedRef.current = true;
+  //     setTimeout(async () => {
+  //       await sendMessage({
+  //         text: '[GREETING]'
+  //       }, {
+  //         body: { serviceId: selectedService, initialGreeting: true }
+  //       });
+  //     }, 300);
+  //   }
+  // }, [selectedService, loadingServices, userServices.length]);
 
   // Load services
   useEffect(() => {
@@ -369,27 +371,19 @@ export default function ChatWrapperBubbles() {
                 console.log('[Chat] Service selected:', value);
                 console.log('[Chat] Available services:', availableServices.map(s => ({ id: s.id, name: s.name })));
                 setSelectedService(value);
-                
+
                 // Clear messages when switching services
                 setMessages([]);
-                
+
                 // Reset greeting flag to allow new greeting
                 hasGreetedRef.current = false;
-                
+
                 // Fetch service details when selected
                 if (value !== 'general') {
                   console.log('[Chat] Fetching details for service:', value);
                   fetchServiceDetails(value);
 
-                  // Always trigger AI greeting for non-general services
-                  setTimeout(async () => {
-                    hasGreetedRef.current = true;
-                    await sendMessage({
-                      text: '[GREETING]'
-                    }, {
-                      body: { serviceId: value, initialGreeting: true }
-                    });
-                  }, 300);
+                  // OPTIMIZATION: Auto-greeting disabled - users can click "Get AI Examples" button
                 } else {
                   setServiceDetails(null);
                 }
@@ -428,15 +422,65 @@ export default function ChatWrapperBubbles() {
             border: '1px solid #f0f0f0'
           }}>
             {/* Messages with Bubble component */}
-            <div style={{ 
+            <div style={{
               flex: 1,
               overflow: 'auto',
               padding: '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 16
+              gap: 16,
+              justifyContent: messages.length === 0 && !isLoading ? 'center' : 'flex-start'
             }}>
-              
+
+              {/* Empty state when no messages */}
+              {messages.length === 0 && !isLoading && selectedService !== 'general' && (
+                <Empty
+                  image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+                  description={
+                    <Space direction="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
+                      <Typography.Text strong style={{ fontSize: '16px' }}>
+                        Start a Conversation
+                      </Typography.Text>
+                      <Typography.Text type="secondary" style={{ fontSize: '13px', textAlign: 'center' }}>
+                        Ask questions to see how the AI assistant helps you
+                      </Typography.Text>
+                      <Button
+                        type="primary"
+                        icon={<SendOutlined />}
+                        onClick={() => {
+                          if (sendMessage && !hasGreetedRef.current) {
+                            hasGreetedRef.current = true;
+                            sendMessage({
+                              text: '[GREETING]'
+                            }, {
+                              body: { serviceId: selectedService, initialGreeting: true }
+                            });
+                          }
+                        }}
+                        style={{ marginTop: 8 }}
+                      >
+                        Get AI Examples
+                      </Button>
+                    </Space>
+                  }
+                />
+              )}
+
+              {/* Select service prompt */}
+              {messages.length === 0 && !isLoading && selectedService === 'general' && (
+                <Empty
+                  image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+                  description={
+                    <Space direction="vertical" size={4}>
+                      <Typography.Text>Select a service to start chatting</Typography.Text>
+                      <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                        Choose a calculation service from the dropdown above
+                      </Typography.Text>
+                    </Space>
+                  }
+                />
+              )}
+
               {/* Deduplicate messages based on ID */}
               {messages
                 .filter((m, index, self) =>
