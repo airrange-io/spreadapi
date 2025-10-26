@@ -168,12 +168,19 @@ export async function POST(request) {
     const userId = serviceData.tenantId;
     const serviceIds = [service_id];
 
-    // Generate service-specific scope
-    const actualScope = `spapi:service:${service_id}:execute`;
+    // Combine requested scopes with service-specific scope
+    // ChatGPT requests scopes like "mcp:read mcp:write", we add our service scope
+    const requestedScopes = scope ? scope.split(' ') : [];
+    const serviceScope = `spapi:service:${service_id}:execute`;
+
+    // Include all requested scopes plus our service-specific scope
+    const allScopes = [...new Set([...requestedScopes, serviceScope])].join(' ');
 
     console.log('[OAuth] Validated service token:', {
       service_id,
       user_id: userId,
+      requested_scopes: scope,
+      granted_scopes: allScopes,
     });
 
     // Generate authorization code
@@ -181,7 +188,7 @@ export async function POST(request) {
       userId: userId,
       clientId: client_id,
       redirectUri: redirect_uri,
-      scope: actualScope,
+      scope: allScopes,  // Include ALL scopes (requested + service-specific)
       codeChallenge: code_challenge,
       codeChallengeMethod: code_challenge_method,
       serviceIds: serviceIds,
