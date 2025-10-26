@@ -332,11 +332,51 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           title: editingParameter ? editingParameter.title : (selectedCellInfo?.suggestedTitle || ''),
           address: getInitialAddress(),
           dataType: getDefaultDataType(),
-          description: editingParameter?.description || '',
+          // Auto-populate description for percentage and boolean fields
+          description: (() => {
+            if (editingParameter?.description) return editingParameter.description;
+            // Check if this is a new percentage parameter
+            if (!editingParameter && selectedCellInfo?.format?.isPercentage && parameterType === 'input') {
+              return 'CRITICAL: This is a percentage parameter. User says "6%" but you MUST pass 0.06 as decimal. Convert: 5%→0.05, 6%→0.06, 7.5%→0.075. Never pass the whole number!';
+            }
+            // Check if this is a new boolean parameter
+            if (!editingParameter && getDefaultDataType() === 'boolean' && parameterType === 'input') {
+              return 'Accept multiple formats: yes/no, true/false, 1/0, ja/nein. Pass actual boolean value (true/false), NOT string.';
+            }
+            return '';
+          })(),
           mandatory: editingParameter ? (editingParameter as InputDefinition).mandatory !== false : true,
-          min: editingParameter && 'min' in editingParameter ? editingParameter.min : undefined,
-          max: editingParameter && 'max' in editingParameter ? editingParameter.max : undefined,
-          aiExamples: editingParameter && 'aiExamples' in editingParameter ? editingParameter.aiExamples : undefined,
+          // Auto-populate min=0 for percentage parameters
+          min: (() => {
+            if (editingParameter && 'min' in editingParameter) return editingParameter.min;
+            // Auto-set min=0 for new percentage parameters
+            if (!editingParameter && selectedCellInfo?.format?.isPercentage && parameterType === 'input') {
+              return 0;
+            }
+            return undefined;
+          })(),
+          // Auto-populate max=1 for percentage parameters
+          max: (() => {
+            if (editingParameter && 'max' in editingParameter) return editingParameter.max;
+            // Auto-set max=1 for new percentage parameters
+            if (!editingParameter && selectedCellInfo?.format?.isPercentage && parameterType === 'input') {
+              return 1;
+            }
+            return undefined;
+          })(),
+          // Auto-populate aiExamples for percentage and boolean fields
+          aiExamples: (() => {
+            if (editingParameter && 'aiExamples' in editingParameter) return editingParameter.aiExamples;
+            // Check if this is a new percentage parameter
+            if (!editingParameter && selectedCellInfo?.format?.isPercentage && parameterType === 'input') {
+              return ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%'];
+            }
+            // Check if this is a new boolean parameter
+            if (!editingParameter && getDefaultDataType() === 'boolean' && parameterType === 'input') {
+              return ['true', 'false', 'yes', 'no', '1', '0'];
+            }
+            return undefined;
+          })(),
           aiPresentationHint: editingParameter && 'aiPresentationHint' in editingParameter ? editingParameter.aiPresentationHint : undefined,
           allowedValues: editingParameter && 'allowedValues' in editingParameter
             ? editingParameter.allowedValues
