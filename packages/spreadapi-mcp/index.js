@@ -77,7 +77,7 @@ async function callSpreadAPI(method, params = {}) {
 const server = new Server(
   {
     name: 'spreadapi-mcp',
-    version: '1.1.0',
+    version: '1.1.1',
   },
   {
     capabilities: {
