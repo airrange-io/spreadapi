@@ -194,12 +194,13 @@ export async function POST(request) {
 
     // Store OAuth token metadata with service token
     // This creates the mapping: OAuth token → service token
+    // Redis requires all values to be strings
     const tokenMetadata = {
       client_id: client_id,
       user_id: codeData.userId,
       scope: codeData.scope,
       service_ids: JSON.stringify(codeData.serviceIds),
-      service_token: serviceToken,
+      service_token: serviceToken || '', // Empty string if null (public service)
       service_id: serviceId,
       authorized_at: Date.now().toString(),
     };
