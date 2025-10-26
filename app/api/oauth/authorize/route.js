@@ -43,14 +43,7 @@ export async function POST(request) {
       );
     }
 
-    // Validate required parameters - service token and service_id are required
-    if (!service_token) {
-      return NextResponse.json(
-        { error: 'invalid_request', error_description: 'service_token is required' },
-        { status: 400 }
-      );
-    }
-
+    // Validate required OAuth parameters
     if (!service_id) {
       return NextResponse.json(
         { error: 'invalid_request', error_description: 'service_id is required' },
@@ -131,7 +124,7 @@ export async function POST(request) {
       }
     }
 
-    // Validate service token
+    // Validate service exists
     const serviceData = await redis.hGetAll(`service:${service_id}:published`);
 
     if (!serviceData || Object.keys(serviceData).length === 0) {
@@ -144,17 +137,31 @@ export async function POST(request) {
       );
     }
 
+    // Check if service requires authentication
     const needsToken = serviceData.needsToken === 'true';
     const tokens = serviceData.tokens ? serviceData.tokens.split(',') : [];
 
-    if (needsToken && !tokens.includes(service_token)) {
-      return NextResponse.json(
-        {
-          error: 'invalid_request',
-          error_description: 'Invalid service token'
-        },
-        { status: 400 }
-      );
+    // Validate service token only if service requires it
+    if (needsToken) {
+      if (!service_token) {
+        return NextResponse.json(
+          {
+            error: 'invalid_request',
+            error_description: 'This service requires a service token for authorization'
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!tokens.includes(service_token)) {
+        return NextResponse.json(
+          {
+            error: 'invalid_request',
+            error_description: 'Invalid service token'
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Service token is valid

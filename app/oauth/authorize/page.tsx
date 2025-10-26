@@ -148,7 +148,7 @@ function OAuthAuthorizeContent() {
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           {/* Header */}
           <div style={{ textAlign: 'center' }}>
-            <ApiOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
+            <ApiOutlined style={{ fontSize: 48, color: '#667eea', marginBottom: 16 }} />
             <Title level={3}>Connect to SpreadAPI Service</Title>
             <Paragraph>
               Authorize access to this specific calculation service
