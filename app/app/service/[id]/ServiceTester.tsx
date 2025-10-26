@@ -321,13 +321,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                       <Col key={input.id} span={colSpan}>
                         <Form.Item
                           name={input.name}
-                          label={
-                            <Space>
-                              <span>{input.title || input.name}</span>
-                              {input.mandatory && <Typography.Text type="danger">*</Typography.Text>}
-                            </Space>
-                          }
-                          help={input.description}
+                          label={(input.title || input.name).replace(/\*+\s*$/g, '').trim()}
                           rules={[
                             {
                               required: input.mandatory,

@@ -629,12 +629,9 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
   const renderInputControl = useCallback((input: Input) => {
     const fieldName = input.name;
 
-    // Clean label by removing any trailing asterisks (Ant Design adds required indicator automatically)
-    const cleanLabel = (input.title || input.name).replace(/\*+\s*$/g, '').trim();
-
     const label = (
       <div className="spreadapi-label" style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
-        {cleanLabel}
+        {input.title || input.name}
         {!input.mandatory && <Text type="secondary" className="spreadapi-label-optional" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
       </div>
     );
@@ -647,12 +644,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           name={fieldName}
           label={label}
           className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
-          rules={[{ required: input.mandatory !== false, message: `${t('pleaseSelect')} ${cleanLabel}` }]}
+          rules={[{ required: input.mandatory !== false, message: `${t('pleaseSelect')} ${input.title || input.name}` }]}
           style={{ marginBottom: 12 }}
         >
           <Select
             className={`spreadapi-select spreadapi-select-${fieldName}`}
-            placeholder={`${t('select')} ${cleanLabel}`}
+            placeholder={`${t('select')} ${input.title || input.name}`}
             size="middle"
             showSearch
             optionFilterProp="children"
@@ -793,7 +790,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             name={fieldName}
             label={label}
             className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
-            rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${cleanLabel}` }]}
+            rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
             style={{ marginBottom: 12 }}
           >
             <SliderWithInput />
@@ -824,7 +821,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
             min={displayMin}
             max={displayMax}
             step={displayStep}
-            placeholder={`${t('enter')} ${cleanLabel}`}
+            placeholder={`${t('enter')} ${input.title || input.name}`}
             size="middle"
             keyboard={true}
             formatter={(value) => {
@@ -867,7 +864,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         <div className={`spreadapi-switch-container spreadapi-switch-container-${fieldName}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Switch className={`spreadapi-switch spreadapi-switch-${fieldName}`} checked={checked} onChange={onChange} />
           <div className={`spreadapi-switch-label spreadapi-switch-label-${fieldName}`} style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
-            {cleanLabel}
+            {input.title || input.name}
             {!input.mandatory && <Text type="secondary" className="spreadapi-label-optional" style={{ fontSize: 11, marginLeft: 6 }}>({t('optional')})</Text>}
           </div>
         </div>
@@ -893,12 +890,12 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         name={fieldName}
         label={label}
         className={`spreadapi-input-group spreadapi-input-group-${fieldName}`}
-        rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${cleanLabel}` }]}
+        rules={[{ required: input.mandatory !== false, message: `${t('pleaseEnter')} ${input.title || input.name}` }]}
         style={{ marginBottom: 12 }}
       >
         <Input
           className={`spreadapi-input spreadapi-input-text spreadapi-input-${fieldName}`}
-          placeholder={`${t('enter')} ${cleanLabel}`}
+          placeholder={`${t('enter')} ${input.title || input.name}`}
           size="middle"
         />
       </Form.Item>
