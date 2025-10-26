@@ -22,7 +22,18 @@ function OAuthAuthorizeContent() {
   const codeChallenge = searchParams.get('code_challenge');
   const codeChallengeMethod = searchParams.get('code_challenge_method');
   const responseType = searchParams.get('response_type');
-  const serviceId = searchParams.get('service_id'); // Required for service-specific MCP
+  const resource = searchParams.get('resource'); // RFC 8707: Resource indicator
+
+  // Extract service_id from resource parameter (RFC 8707)
+  // ChatGPT sends: resource=https://spreadapi.io/api/mcp/service/{serviceId}
+  let serviceId = searchParams.get('service_id'); // Legacy support
+  if (!serviceId && resource) {
+    // Parse service ID from resource URL
+    const match = resource.match(/\/api\/mcp\/service\/([^/?#]+)/);
+    if (match) {
+      serviceId = match[1];
+    }
+  }
 
   // UI state
   const [serviceToken, setServiceToken] = useState(''); // Single service token
@@ -48,7 +59,21 @@ function OAuthAuthorizeContent() {
       <div style={{ maxWidth: 600, margin: '80px auto', padding: 20 }}>
         <Alert
           message="Missing Service ID"
-          description="This authorization request is missing the required service_id parameter"
+          description={
+            <div>
+              <p>Could not determine which service to authorize.</p>
+              {resource ? (
+                <p style={{ marginTop: 8, fontSize: 12 }}>
+                  Received resource: <code>{resource}</code><br />
+                  Expected format: <code>https://spreadapi.io/api/mcp/service/{'<serviceId>'}</code>
+                </p>
+              ) : (
+                <p style={{ marginTop: 8, fontSize: 12 }}>
+                  The authorization request is missing the 'resource' parameter (RFC 8707).
+                </p>
+              )}
+            </div>
+          }
           type="error"
           showIcon
         />

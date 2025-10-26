@@ -48,7 +48,8 @@
       "WebFetch(domain:mcp-auth.dev)",
       "WebFetch(domain:docs.hanko.io)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:spec.modelcontextprotocol.io)"
+      "WebFetch(domain:spec.modelcontextprotocol.io)",
+      "WebFetch(domain:www.scalekit.com)"
     ],
     "deny": []
   }

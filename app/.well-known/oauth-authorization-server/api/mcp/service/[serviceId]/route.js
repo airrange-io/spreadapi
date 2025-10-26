@@ -1,22 +1,17 @@
 import { NextResponse } from 'next/server';
 
 /**
- * OAuth Authorization Server Metadata Endpoint (RFC 8414)
+ * Service-Specific OAuth Authorization Server Metadata Endpoint
  *
- * This endpoint publishes metadata about SpreadAPI's OAuth authorization server,
- * allowing OAuth clients (like ChatGPT) to discover:
- * - Authorization and token endpoint URLs
- * - Supported grant types and authentication methods
- * - Available scopes
- * - PKCE support
- * - Dynamic Client Registration endpoint
+ * This endpoint publishes OAuth metadata for a specific SpreadAPI service,
+ * allowing OAuth clients (like ChatGPT) to discover the authorization endpoint
+ * with the service_id parameter already included.
  *
- * ChatGPT uses this to automatically configure the OAuth flow.
- *
- * CRITICAL: Must be at domain root /.well-known/oauth-authorization-server
- * (not /api/.well-known/...) for ChatGPT discovery to work!
+ * This is critical for the service-specific MCP flow where ChatGPT needs to
+ * authorize access to a specific service.
  */
-export async function GET() {
+export async function GET(request, { params }) {
+  const { serviceId } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://spreadapi.io';
 
   return NextResponse.json(
@@ -24,18 +19,17 @@ export async function GET() {
       // OAuth 2.0 Authorization Server Metadata
       issuer: baseUrl,
 
-      // Authorization endpoint (where users paste tokens and consent)
-      authorization_endpoint: `${baseUrl}/oauth/authorize`,
+      // Authorization endpoint with service_id parameter
+      authorization_endpoint: `${baseUrl}/oauth/authorize?service_id=${serviceId}`,
 
       // Token endpoint (where authorization codes are exchanged for tokens)
       token_endpoint: `${baseUrl}/api/oauth/token`,
 
       // Dynamic Client Registration endpoint (RFC 7591)
-      // Allows ChatGPT to auto-register and obtain a client_id
       registration_endpoint: `${baseUrl}/oauth/register`,
 
       // Supported OAuth grant types
-      grant_types_supported: ['authorization_code', 'refresh_token'],
+      grant_types_supported: ['authorization_code'],
 
       // Response types supported (authorization code flow)
       response_types_supported: ['code'],
@@ -43,8 +37,12 @@ export async function GET() {
       // PKCE methods supported (S256 = SHA-256 hash)
       code_challenge_methods_supported: ['S256'],
 
-      // Available OAuth scopes
-      scopes_supported: ['mcp:read', 'mcp:write'],
+      // Available OAuth scopes for this service
+      scopes_supported: [
+        'mcp:read',
+        'mcp:write',
+        `spapi:service:${serviceId}:execute`
+      ],
 
       // Token endpoint authentication methods
       // "none" = public clients (ChatGPT doesn't need a secret)
@@ -52,6 +50,9 @@ export async function GET() {
 
       // Indicate that we support PKCE (required for public clients)
       require_pushed_authorization_requests: false,
+
+      // Service-specific resource
+      resource: `${baseUrl}/api/mcp/service/${serviceId}`,
 
       // Service documentation
       service_documentation: `${baseUrl}/docs/oauth`,

@@ -411,13 +411,14 @@ Complete service information including:
 /**
  * Handle initialize request
  */
-async function handleInitialize(serviceId, apiDefinition, rpcId) {
-  const clientVersion = '2024-11-05';
+async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
+  // Echo the client's protocol version if we support it
+  const clientVersion = rpcParams?.protocolVersion || '2024-11-05';
   const supportedVersions = ['2024-11-05', '2025-03-26', '2025-06-18'];
   const agreedVersion = supportedVersions.includes(clientVersion) ? clientVersion : MCP_VERSION;
 
   const response = {
-    protocolVersion: agreedVersion,
+    protocolVersion: agreedVersion,  // Echo client's version
     capabilities: {
       tools: {
         listChanged: false  // Service-specific endpoint has fixed tools
@@ -604,8 +605,8 @@ export async function POST(request, { params }) {
           status: auth.status || 401,
           headers: {
             'Content-Type': 'application/json',
-            // Hint the required scope to ChatGPT
-            'WWW-Authenticate': `Bearer realm="${baseUrl}/api/mcp/service/${serviceId}", scope="${requiredScope}"`,
+            // Standard WWW-Authenticate header with required scope
+            'WWW-Authenticate': `Bearer, scope="${requiredScope}"`,
             'Access-Control-Allow-Origin': '*'
           }
         }
@@ -688,7 +689,7 @@ export async function POST(request, { params }) {
     let response;
     switch (method) {
       case 'initialize':
-        response = await handleInitialize(serviceId, apiDefinition, rpcId);
+        response = await handleInitialize(serviceId, apiDefinition, rpcParams, rpcId);
         break;
       case 'tools/list':
         response = await handleToolsList(serviceId, apiDefinition, rpcId);
