@@ -52,7 +52,8 @@
       "WebFetch(domain:www.scalekit.com)",
       "WebFetch(domain:sdk.vercel.ai)",
       "WebFetch(domain:medium.com)",
-      "WebFetch(domain:www.datacamp.com)"
+      "WebFetch(domain:www.datacamp.com)",
+      "Bash(kill:*)"
     ],
     "deny": []
   }

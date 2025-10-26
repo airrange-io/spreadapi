@@ -82,6 +82,7 @@ export async function getServiceDetails(serviceId, userId = null) {
       areas: parseJsonField(serviceData.areas, []),
       // AI metadata
       aiDescription: serviceData.aiDescription || '',
+      aiUsageGuidance: serviceData.aiUsageGuidance || '',
       aiUsageExamples: parseJsonField(serviceData.aiUsageExamples, []),
       aiTags: parseJsonField(serviceData.aiTags, []),
       category: serviceData.category || '',

@@ -66,6 +66,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({
       case 'ai-info':
         return (
           <AIAssistantSection
+            serviceId={serviceId}
             aiDescription={apiConfig?.aiDescription || ''}
             aiUsageGuidance={apiConfig?.aiUsageGuidance || ''}
             aiUsageExamples={apiConfig?.aiUsageExamples || []}
