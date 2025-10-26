@@ -22,9 +22,19 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
 const { Content } = Layout;
 const { Text } = Typography;
 
+// Available AI models
+const AI_MODELS = [
+  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', description: 'Ultra-fast & economical (recommended)' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', description: 'Best quality & reasoning' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', description: 'Fast & intelligent' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Very fast & cost-effective' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', description: 'Cheapest & lowest latency' },
+  { id: 'gpt-4o', name: 'GPT-4o', description: 'Previous generation flagship' },
+] as const;
+
 // Initialize markdown renderer
-const md = markdownit({ 
-  html: true, 
+const md = markdownit({
+  html: true,
   breaks: true,
   linkify: true,
   typographer: true
@@ -98,6 +108,21 @@ export default function ChatWrapperBubbles() {
   const [serviceDetails, setServiceDetails] = useState<any>(null);
   const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Model selection with localStorage persistence
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('spreadapi-chat-model') || 'gpt-4.1-nano';
+    }
+    return 'gpt-4.1-nano';
+  });
+
+  // Save model selection to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spreadapi-chat-model', selectedModel);
+    }
+  }, [selectedModel]);
 
   // Simple useChat hook usage following Vercel's example
   const { messages, sendMessage, status, stop, error, setMessages } = useChat({
@@ -232,14 +257,14 @@ export default function ChatWrapperBubbles() {
 
   const handleSend = async (nextMessage: string) => {
     if (!nextMessage.trim() || isLoading) return;
-    
+
     // Clear the input immediately
     setInputValue('');
-    
+
     await sendMessage({
       text: nextMessage
     }, {
-      body: selectedService === 'general' ? {} : { serviceId: selectedService }
+      body: selectedService === 'general' ? { model: selectedModel } : { serviceId: selectedService, model: selectedModel }
     });
   };
 
@@ -411,6 +436,29 @@ export default function ChatWrapperBubbles() {
             />
           </div>
 
+          {/* AI Model Selector */}
+          <div style={{ marginBottom: 16 }}>
+            <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+              AI Model
+            </Text>
+            <Select
+              value={selectedModel}
+              onChange={(value) => {
+                setSelectedModel(value);
+                // Clear messages when switching models to start fresh
+                setMessages([]);
+                hasGreetedRef.current = false;
+              }}
+              style={{ width: '100%' }}
+              disabled={isLoading}
+              options={AI_MODELS.map(model => ({
+                label: model.name,
+                value: model.id,
+                title: model.description
+              }))}
+            />
+          </div>
+
           {/* Chat Container */}
           <div style={{
             flex: 1,
@@ -453,7 +501,7 @@ export default function ChatWrapperBubbles() {
                             sendMessage({
                               text: '[GREETING]'
                             }, {
-                              body: { serviceId: selectedService, initialGreeting: true }
+                              body: { serviceId: selectedService, initialGreeting: true, model: selectedModel }
                             });
                           }
                         }}

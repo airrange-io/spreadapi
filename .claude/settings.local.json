@@ -50,7 +50,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:spec.modelcontextprotocol.io)",
       "WebFetch(domain:www.scalekit.com)",
-      "WebFetch(domain:sdk.vercel.ai)"
+      "WebFetch(domain:sdk.vercel.ai)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.datacamp.com)"
     ],
     "deny": []
   }

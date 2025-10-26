@@ -100,7 +100,7 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
           width: 220,
           height: '100%',
           borderRight: '1px solid #f0f0f0',
-          marginTop: 10,
+          paddingTop: 10,
           paddingRight: 10
         }}
         items={menuItems}

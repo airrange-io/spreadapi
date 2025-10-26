@@ -902,7 +902,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           width: 200,
           height: '100%',
           borderRight: '1px solid #f0f0f0',
-          marginTop: 10,
+          paddingTop: 10,
           paddingRight: 10
         }}
         items={menuItems}

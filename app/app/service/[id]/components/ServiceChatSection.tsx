@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Button, Typography, Space, Spin, Avatar, Empty, Tooltip } from 'antd';
+import { Button, Typography, Space, Spin, Avatar, Empty, Tooltip, Select } from 'antd';
 import { SendOutlined, RobotOutlined, UserOutlined, ReloadOutlined, MessageOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
@@ -11,6 +11,16 @@ import markdownit from 'markdown-it';
 import '@/app/chat/chat.css';
 
 const { Text, Title } = Typography;
+
+// Available AI models
+const AI_MODELS = [
+  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', description: 'Ultra-fast & economical (recommended)' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', description: 'Best quality & reasoning' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', description: 'Fast & intelligent' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Very fast & cost-effective' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', description: 'Cheapest & lowest latency' },
+  { id: 'gpt-4o', name: 'GPT-4o', description: 'Previous generation flagship' },
+] as const;
 
 // Initialize markdown renderer
 const md = markdownit({
@@ -51,6 +61,21 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
 
+  // AI Model selection with localStorage persistence
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('spreadapi-chat-model') || 'gpt-4.1-nano';
+    }
+    return 'gpt-4.1-nano';
+  });
+
+  // Save model selection to localStorage when changed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spreadapi-chat-model', selectedModel);
+    }
+  }, [selectedModel]);
+
   const {
     messages,
     status,
@@ -59,11 +84,8 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
   } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { serviceId }
+      body: { serviceId, model: selectedModel }
     }),
-    onResponse: () => {
-      console.log('[ServiceChat] Response received');
-    },
     onFinish: () => {
       console.log('[ServiceChat] Message finished');
     },
@@ -151,19 +173,38 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
       }}>
         <Space direction="vertical" size={0}>
           <Title level={5} style={{ margin: 0 }}>
-            Chat Test - {serviceName}
+            Chat Test
           </Title>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
+          {/* <Text type="secondary" style={{ fontSize: '12px' }}>
             Test your AI descriptions and see how the assistant responds
-          </Text>
+          </Text> */}
         </Space>
-        <Tooltip title="Reset Chat">
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleReset}
-            disabled={messages.length === 0}
+        <Space size={12}>
+          <Select
+            value={selectedModel}
+            onChange={(value) => {
+              setSelectedModel(value);
+              // Clear messages when switching models to start fresh
+              setMessages([]);
+              hasGreetedRef.current = false;
+              setInputValue('');
+            }}
+            style={{ width: 140 }}
+            disabled={isLoading}
+            options={AI_MODELS.map(model => ({
+              label: model.name,
+              value: model.id,
+              title: model.description
+            }))}
           />
-        </Tooltip>
+          <Tooltip title="Reset Chat">
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={handleReset}
+              disabled={messages.length === 0}
+            />
+          </Tooltip>
+        </Space>
       </div>
 
       {/* Messages Area */}
@@ -313,10 +354,9 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
               setInputValue('');
             }
           }}
-          placeholder="Ask about your service..."
+          placeholder="Test your AI descriptions and see how the assistant responds"
           loading={isLoading}
           disabled={isLoading}
-          submitIcon={<SendOutlined />}
           styles={{
             input: {
               fontSize: '14px'

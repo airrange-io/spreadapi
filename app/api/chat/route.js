@@ -33,7 +33,7 @@ const openai = createOpenAI({
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { messages, serviceId, initialGreeting } = body;
+    const { messages, serviceId, initialGreeting, model = 'gpt-4.1-nano' } = body;
     
 
 
@@ -1112,7 +1112,7 @@ The button text should clearly show what calculation will be performed with the 
 
     // Use streamText with v5 features for better tool handling
     const result = streamText({
-      model: openai('gpt-5-mini', {
+      model: openai(model, {
         // Add streaming optimizations
         streamOptions: {
           // Use HTTP/2 for better performance
