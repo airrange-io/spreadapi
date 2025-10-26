@@ -6,6 +6,7 @@ import type { MenuProps } from 'antd';
 import {
   ApiOutlined,
   KeyOutlined,
+  RobotOutlined,
   CloudUploadOutlined,
   FileTextOutlined,
   CodeOutlined
@@ -14,6 +15,7 @@ import {
 export type ApiMenuSection =
   | 'test'
   | 'tokens'
+  | 'mcp'
   | 'webhooks'
   | 'docs-interactive'
   | 'docs-quickstart'
@@ -47,6 +49,11 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
       key: 'tokens',
       icon: <KeyOutlined />,
       label: 'API Tokens'
+    },
+    {
+      key: 'mcp',
+      icon: <RobotOutlined />,
+      label: 'MCP Integration'
     },
     {
       key: 'webhooks',

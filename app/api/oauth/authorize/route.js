@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createAuthorizationCode } from '@/lib/oauth-codes';
-import { validateToken } from '@/lib/mcp-auth';
+import { validateServiceToken } from '@/utils/tokenAuth';
 import redis from '@/lib/redis';
 import { rateLimitByIP, createRateLimitResponse } from '@/lib/rate-limiter';
 
 /**
  * OAuth Authorization Endpoint - Backend API
  *
- * Simplified token-based authorization (no user login required).
+ * Single-service authorization for ChatGPT MCP integration.
  *
- * The user provides one or more MCP tokens, we validate them,
- * and generate an authorization code that maps to those tokens.
+ * The user provides a service_id and optional service_token (for private services).
+ * We validate the token if provided, and generate an authorization code.
  *
- * This makes OAuth a thin wrapper around MCP tokens to satisfy
+ * This makes OAuth a thin wrapper around service tokens to satisfy
  * ChatGPT's OAuth requirement while keeping the same permission model.
  */
 export async function POST(request) {
@@ -24,7 +24,8 @@ export async function POST(request) {
       scope,
       code_challenge,
       code_challenge_method,
-      mcp_tokens = [], // Array of MCP tokens from user
+      service_id,      // Single service ID
+      service_token,   // Optional service token (null for public services)
     } = body;
 
     // Rate limiting: 10 req/min per IP
@@ -43,9 +44,9 @@ export async function POST(request) {
     }
 
     // Validate required parameters
-    if (!mcp_tokens || mcp_tokens.length === 0) {
+    if (!service_id) {
       return NextResponse.json(
-        { error: 'invalid_request', error_description: 'At least one MCP token is required' },
+        { error: 'invalid_request', error_description: 'service_id is required' },
         { status: 400 }
       );
     }
@@ -123,90 +124,82 @@ export async function POST(request) {
       }
     }
 
-    // Validate all MCP tokens and collect service IDs
-    const validatedTokens = [];
-    const allServiceIds = new Set(); // Use Set to avoid duplicates
-    let userId = null;
+    // Verify service exists
+    const serviceExists = await redis.exists(`service:${service_id}:published`);
+    if (!serviceExists) {
+      return NextResponse.json(
+        { error: 'invalid_request', error_description: `Service ${service_id} not found or not published` },
+        { status: 400 }
+      );
+    }
 
-    for (const token of mcp_tokens) {
-      // Validate token format
-      if (!token.startsWith('spapi_live_')) {
-        return NextResponse.json(
-          {
-            error: 'invalid_request',
-            error_description: `Invalid token format: ${token.substring(0, 20)}...`
-          },
-          { status: 400 }
-        );
-      }
+    // Load service to check if it requires a token
+    const serviceData = await redis.hGetAll(`service:${service_id}:published`);
+    const isPublic = serviceData.public === 'true';
 
-      // Validate token exists and is active
-      const validation = await validateToken(token);
+    // Validate service token if provided (for private services)
+    if (service_token) {
+      // Create a mock request object with the token
+      const mockRequest = {
+        headers: {
+          get: (name) => name === 'authorization' ? `Bearer ${service_token}` : null
+        }
+      };
+
+      const validation = await validateServiceToken(mockRequest, service_id);
 
       if (!validation.valid) {
         return NextResponse.json(
           {
             error: 'invalid_request',
-            error_description: `Invalid or inactive token: ${token.substring(0, 20)}...`
+            error_description: validation.error || 'Invalid service token'
           },
           { status: 400 }
         );
       }
-
-      // Store validated token info
-      validatedTokens.push({
-        token: token,
-        userId: validation.userId,
-        serviceIds: validation.serviceIds || []
-      });
-
-      // Collect service IDs (empty array = all services)
-      if (validation.serviceIds && validation.serviceIds.length > 0) {
-        validation.serviceIds.forEach(id => allServiceIds.add(id));
-      }
-
-      // Use userId from first token (all tokens should belong to same user ideally,
-      // but we allow mixing for flexibility)
-      if (!userId) {
-        userId = validation.userId;
-      }
+    } else if (!isPublic) {
+      // Private service but no token provided
+      return NextResponse.json(
+        { error: 'invalid_request', error_description: 'This service requires a service token' },
+        { status: 400 }
+      );
     }
 
-    // Convert Set to Array
-    const serviceIds = Array.from(allServiceIds);
-
-    console.log('[OAuth] Validated tokens:', {
-      token_count: validatedTokens.length,
-      service_count: serviceIds.length,
-      user_id: userId,
+    console.log('[OAuth] Service authorized:', {
+      service_id,
+      is_public: isPublic,
+      has_token: !!service_token
     });
 
     // Generate authorization code
     const authorizationCode = await createAuthorizationCode({
-      userId: userId || 'anonymous', // Fallback if no userId
+      userId: 'anonymous', // No user required for service-based auth
       clientId: client_id,
       redirectUri: redirect_uri,
       scope: scope || 'mcp:read mcp:write',
       codeChallenge: code_challenge,
       codeChallengeMethod: code_challenge_method,
-      serviceIds: serviceIds,
+      serviceIds: [service_id], // Single service
     });
 
-    // Store MCP tokens temporarily (will be used during token exchange)
-    // Store as JSON array so we can map OAuth token → MCP tokens later
+    // Store service_id and service_token temporarily (will be used during token exchange)
     // TTL matches authorization code expiry (10 minutes)
-    await redis.set(
-      `oauth:mcp_tokens:${authorizationCode}`,
-      JSON.stringify(mcp_tokens),
-      { EX: 600 }
-    );
+    await redis.hSet(`oauth:auth:${authorizationCode}`, {
+      service_id,
+      service_token: service_token || '',
+      client_id,
+      redirect_uri,
+      scope: scope || 'mcp:read mcp:write',
+      created: new Date().toISOString()
+    });
+    await redis.expire(`oauth:auth:${authorizationCode}`, 600);
 
     console.log('[OAuth] Authorization code issued:', {
       code: authorizationCode.substring(0, 16) + '...',
       client_id,
-      redirect_uri, // Log the redirect_uri
-      service_count: serviceIds.length,
-      mcp_token_count: mcp_tokens.length,
+      redirect_uri,
+      service_id,
+      has_token: !!service_token
     });
 
     return NextResponse.json({

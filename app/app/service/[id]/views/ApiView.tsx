@@ -29,6 +29,11 @@ const WebhookManagement = dynamic(() => import('../WebhookManagement'), {
   ssr: false
 });
 
+const MCPIntegration = dynamic(() => import('../MCPIntegration'), {
+  loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
+  ssr: false
+});
+
 // Documentation components (lazy loaded per menu selection)
 const SwaggerUIWrapper = dynamic(() => import('../components/documentation/SwaggerUIWrapper'), {
   loading: () => <Skeleton active paragraph={{ rows: 8 }} />,
@@ -226,6 +231,15 @@ const ApiView: React.FC<ApiViewProps> = ({
           onRequireTokenChange={onRequireTokenChange}
           onTokenCountChange={onTokenCountChange}
           onTokensChange={onTokensChange}
+        />
+      ),
+      'mcp': (
+        <MCPIntegration
+          serviceId={serviceId}
+          serviceName={apiConfig.name}
+          isPublished={serviceStatus?.published}
+          requireToken={apiConfig.requireToken}
+          availableTokens={availableTokens}
         />
       ),
       'webhooks': (

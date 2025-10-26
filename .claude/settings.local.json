@@ -47,7 +47,8 @@
       "WebFetch(domain:workos.com)",
       "WebFetch(domain:mcp-auth.dev)",
       "WebFetch(domain:docs.hanko.io)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:help.openai.com)"
     ],
     "deny": []
   }

@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, Button, Input, Alert, Space, Typography, Spin } from 'antd';
-import { LockOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { LockOutlined, CheckCircleOutlined, ApiOutlined } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -23,8 +23,21 @@ function OAuthAuthorizeContent() {
   const codeChallengeMethod = searchParams.get('code_challenge_method');
   const responseType = searchParams.get('response_type');
 
+  // Extract service_id from state (ChatGPT passes it)
+  let serviceId = null;
+  let serviceName = null;
+  let requiresToken = false;
+  try {
+    const stateData = state ? JSON.parse(decodeURIComponent(state)) : {};
+    serviceId = stateData.service_id;
+    serviceName = stateData.service_name || 'Service';
+    requiresToken = stateData.requires_token || false;
+  } catch (e) {
+    // State might not be JSON, that's ok
+  }
+
   // UI state
-  const [tokens, setTokens] = useState(['']); // Array of token inputs
+  const [serviceToken, setServiceToken] = useState('');
   const [authorizing, setAuthorizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,36 +55,10 @@ function OAuthAuthorizeContent() {
     );
   }
 
-  function addTokenField() {
-    setTokens([...tokens, '']);
-  }
-
-  function removeTokenField(index: number) {
-    if (tokens.length > 1) {
-      const newTokens = tokens.filter((_, i) => i !== index);
-      setTokens(newTokens);
-    }
-  }
-
-  function updateToken(index: number, value: string) {
-    const newTokens = [...tokens];
-    newTokens[index] = value.trim();
-    setTokens(newTokens);
-  }
-
   async function handleAuthorize() {
-    // Filter out empty tokens
-    const validTokens = tokens.filter(t => t.length > 0);
-
-    if (validTokens.length === 0) {
-      setError('Please enter at least one access token');
-      return;
-    }
-
-    // Validate token format
-    const invalidTokens = validTokens.filter(t => !t.startsWith('spapi_live_'));
-    if (invalidTokens.length > 0) {
-      setError('Invalid token format. Tokens must start with "spapi_live_"');
+    // Validate service token if required
+    if (requiresToken && !serviceToken) {
+      setError('This service requires a service token');
       return;
     }
 
@@ -89,7 +76,8 @@ function OAuthAuthorizeContent() {
           scope,
           code_challenge: codeChallenge,
           code_challenge_method: codeChallengeMethod,
-          mcp_tokens: validTokens, // Send MCP tokens instead of user_id/service_ids
+          service_id: serviceId,
+          service_token: serviceToken || null, // Optional for public services
         }),
       });
 
@@ -141,9 +129,9 @@ function OAuthAuthorizeContent() {
           {/* Header */}
           <div style={{ textAlign: 'center' }}>
             <ApiOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-            <Title level={3}>Connect to SpreadAPI</Title>
+            <Title level={3}>Connect to SpreadAPI Service</Title>
             <Paragraph>
-              ChatGPT wants to access your spreadsheet calculation services
+              ChatGPT wants to access: <Text strong>{serviceName}</Text>
             </Paragraph>
           </div>
 
@@ -155,6 +143,9 @@ function OAuthAuthorizeContent() {
                 <Text strong>Client: </Text>
                 <Text>ChatGPT (OpenAI)</Text>
                 <br />
+                <Text strong>Service: </Text>
+                <Text>{serviceName}</Text>
+                <br />
                 <Text strong>Permissions: </Text>
                 <Text>{scope}</Text>
               </div>
@@ -163,52 +154,33 @@ function OAuthAuthorizeContent() {
           />
 
           {/* Token Input Section */}
-          <div>
-            <Title level={5}>
-              <LockOutlined style={{ marginRight: 8 }} />
-              Enter Your Access Token(s)
-            </Title>
-            <Paragraph type="secondary">
-              Enter the MCP access token(s) you received from service creators.
-              You can add multiple tokens to access services from different creators.
-            </Paragraph>
+          {requiresToken ? (
+            <div>
+              <Title level={5}>
+                <LockOutlined style={{ marginRight: 8 }} />
+                Enter Service Token
+              </Title>
+              <Paragraph type="secondary">
+                This is a private service. Enter the service token provided by the service owner.
+              </Paragraph>
 
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-              {tokens.map((token, index) => (
-                <Space.Compact key={index} style={{ width: '100%' }}>
-                  <Input
-                    size="large"
-                    placeholder="spapi_live_..."
-                    value={token}
-                    onChange={(e) => updateToken(index, e.target.value)}
-                    prefix={<LockOutlined />}
-                    disabled={authorizing}
-                    status={token && !token.startsWith('spapi_live_') ? 'error' : undefined}
-                  />
-                  {tokens.length > 1 && (
-                    <Button
-                      size="large"
-                      icon={<DeleteOutlined />}
-                      onClick={() => removeTokenField(index)}
-                      disabled={authorizing}
-                      danger
-                    />
-                  )}
-                </Space.Compact>
-              ))}
-
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={addTokenField}
+              <Input
+                size="large"
+                placeholder="Service token..."
+                value={serviceToken}
+                onChange={(e) => setServiceToken(e.target.value.trim())}
+                prefix={<LockOutlined />}
                 disabled={authorizing}
-                block
-              >
-                Add another token
-              </Button>
-            </Space>
-
-          </div>
+              />
+            </div>
+          ) : (
+            <Alert
+              message="Public Service"
+              description="This is a public service. No token required."
+              type="success"
+              showIcon
+            />
+          )}
 
           {error && (
             <Alert message="Authorization Error" description={error} type="error" showIcon />
@@ -223,7 +195,7 @@ function OAuthAuthorizeContent() {
               type="primary"
               onClick={handleAuthorize}
               loading={authorizing}
-              disabled={tokens.filter(t => t.length > 0).length === 0}
+              disabled={requiresToken && !serviceToken}
               icon={<CheckCircleOutlined />}
               size="large"
             >
@@ -231,43 +203,35 @@ function OAuthAuthorizeContent() {
             </Button>
           </Space>
 
+          {requiresToken && (
+            <Alert
+              message="Where to get the service token?"
+              description="The service owner provides the service token. If you created this service, generate a token in the service's API settings."
+              type="info"
+            />
+          )}
+
           <Alert
-            message="Where to get tokens?"
-            description={
-              <div style={{ fontSize: 12 }}>
-                <p style={{ marginBottom: 0 }}>
-                  • Create your own services and generate tokens at{' '}
-                  <a href="https://spreadapi.io/dashboard" target="_blank" rel="noopener noreferrer">
-                    your dashboard
-                  </a>
-                </p>
-              </div>
-            }
-            type="info"
-            style={{ marginTop: 16 }}
-          />
-          {/* Privacy Notice */}
-          {/* <Alert
             message="Privacy & Security"
             description={
               <div style={{ fontSize: 12 }}>
                 <p style={{ marginBottom: 8 }}>
-                  • ChatGPT will only access services included in your token(s)
+                  • ChatGPT will only access this specific service
                 </p>
                 <p style={{ marginBottom: 8 }}>
-                  • Your tokens are never shared with ChatGPT
+                  • Your service token is securely stored and never shared with ChatGPT
                 </p>
                 <p style={{ marginBottom: 8 }}>
-                  • Tokens expire automatically with your session (up to 12 hours)
+                  • Connection expires automatically after 12 hours
                 </p>
                 <p style={{ marginBottom: 0 }}>
-                  • You can revoke access at any time by disconnecting in ChatGPT settings
+                  • You can revoke access anytime by disconnecting in ChatGPT settings
                 </p>
               </div>
             }
             type="info"
             showIcon
-          /> */}
+          />
         </Space>
       </Card>
     </div>

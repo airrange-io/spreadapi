@@ -13,17 +13,46 @@ import {
  * SpreadAPI MCP Bridge
  * Translates between Claude Desktop (stdio) and SpreadAPI HTTP server
  *
- * Updated to use /api/mcp/bridge endpoint (JSON-RPC stdio bridge)
+ * Supports two modes:
+ * 1. Single-Service Mode: Set SPREADAPI_SERVICE_ID to connect to one service
+ * 2. Multi-Service Mode: Use SPREADAPI_URL for multiple services (legacy)
  */
 
 // Configuration from environment
-const SPREADAPI_URL = process.env.SPREADAPI_URL || 'https://spreadapi.io/api/mcp/bridge';
+const SPREADAPI_SERVICE_ID = process.env.SPREADAPI_SERVICE_ID;
+const SPREADAPI_BASE_URL = process.env.SPREADAPI_URL || 'https://spreadapi.io';
 const SPREADAPI_TOKEN = process.env.SPREADAPI_TOKEN;
 
-if (!SPREADAPI_TOKEN) {
-  console.error('Error: SPREADAPI_TOKEN environment variable is required');
-  console.error('Please set it in your Claude Desktop configuration');
-  process.exit(1);
+// Build endpoint URL based on mode
+let SPREADAPI_URL;
+let isSingleService = false;
+
+if (SPREADAPI_SERVICE_ID) {
+  // Single-service mode (new approach)
+  isSingleService = true;
+  // Remove /api/mcp/bridge suffix if present in base URL
+  const baseUrl = SPREADAPI_BASE_URL.replace(/\/api\/mcp\/bridge$/, '');
+  SPREADAPI_URL = `${baseUrl}/api/mcp/services/${SPREADAPI_SERVICE_ID}`;
+  console.error('Mode: Single-Service');
+  console.error(`Service ID: ${SPREADAPI_SERVICE_ID}`);
+} else {
+  // Multi-service mode (legacy - backward compatibility)
+  isSingleService = false;
+  SPREADAPI_URL = SPREADAPI_BASE_URL.includes('/api/mcp')
+    ? SPREADAPI_BASE_URL
+    : `${SPREADAPI_BASE_URL}/api/mcp/bridge`;
+  console.error('Mode: Multi-Service (legacy)');
+
+  if (!SPREADAPI_TOKEN) {
+    console.error('Error: SPREADAPI_TOKEN is required for multi-service mode');
+    console.error('Please set it in your Claude Desktop configuration');
+    process.exit(1);
+  }
+}
+
+// Token is optional for public services in single-service mode
+if (!SPREADAPI_TOKEN && isSingleService) {
+  console.error('Token: Not set (public service mode)');
 }
 
 /**
@@ -31,12 +60,18 @@ if (!SPREADAPI_TOKEN) {
  */
 async function callSpreadAPI(method, params = {}) {
   try {
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    // Add authorization header if token is present
+    if (SPREADAPI_TOKEN) {
+      headers['Authorization'] = `Bearer ${SPREADAPI_TOKEN}`;
+    }
+
     const response = await fetch(SPREADAPI_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SPREADAPI_TOKEN}`
-      },
+      headers,
       body: JSON.stringify({
         jsonrpc: '2.0',
         method,
@@ -50,7 +85,7 @@ async function callSpreadAPI(method, params = {}) {
     }
 
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error.message || 'Unknown error');
     }
@@ -143,11 +178,14 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 async function main() {
   console.error('SpreadAPI MCP Bridge starting...');
   console.error(`Server URL: ${SPREADAPI_URL}`);
-  console.error(`Token: ${SPREADAPI_TOKEN.substring(0, 20)}...`);
-  
+
+  if (SPREADAPI_TOKEN) {
+    console.error(`Token: ${SPREADAPI_TOKEN.substring(0, 20)}...`);
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
+
   console.error('Bridge is running, waiting for requests...');
 }
 

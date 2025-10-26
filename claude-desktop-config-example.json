@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "spreadapi-german-tax": {
+      "command": "npx",
+      "args": ["spreadapi-mcp"],
+      "env": {
+        "SPREADAPI_SERVICE_ID": "abd48d0e-c3f2-4f6b-a032-1449fb35b5ab_mgz9ldvz3knf6",
+        "SPREADAPI_URL": "http://localhost:3000"
+      }
+    }
+  }
+}
