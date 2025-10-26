@@ -100,7 +100,7 @@ export default function ServiceMCPSettings({
               flex: 1,
               padding: '8px 12px',
               border: '1px solid #d9d9d9',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '13px',
               fontFamily: 'monospace',
               backgroundColor: '#f5f5f5',
@@ -114,7 +114,7 @@ export default function ServiceMCPSettings({
               backgroundColor: copiedItem === 'url' ? '#52c41a' : '#1890ff',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 500,
@@ -147,7 +147,7 @@ export default function ServiceMCPSettings({
         <div style={{
           backgroundColor: '#f9f9f9',
           border: '1px solid #e8e8e8',
-          borderRadius: '4px',
+          borderRadius: '6px',
           padding: '16px'
         }}>
           <ol style={{
@@ -173,7 +173,7 @@ export default function ServiceMCPSettings({
                 padding: '8px',
                 backgroundColor: '#fff',
                 border: '1px solid #e8e8e8',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 fontFamily: 'monospace',
                 fontSize: '12px',
                 wordBreak: 'break-all'
@@ -203,7 +203,7 @@ export default function ServiceMCPSettings({
               padding: '8px 12px',
               backgroundColor: '#e6f7ff',
               border: '1px solid #91d5ff',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '12px',
               color: '#0050b3'
             }}>
@@ -227,7 +227,7 @@ export default function ServiceMCPSettings({
         <div style={{
           backgroundColor: '#f9f9f9',
           border: '1px solid #e8e8e8',
-          borderRadius: '4px',
+          borderRadius: '6px',
           padding: '16px'
         }}>
           <ol style={{
@@ -246,13 +246,13 @@ export default function ServiceMCPSettings({
                 <li>macOS: <code style={{
                   backgroundColor: '#fff',
                   padding: '2px 4px',
-                  borderRadius: '2px',
+                  borderRadius: '6px',
                   fontFamily: 'monospace'
                 }}>~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
                 <li>Windows: <code style={{
                   backgroundColor: '#fff',
                   padding: '2px 4px',
-                  borderRadius: '2px',
+                  borderRadius: '6px',
                   fontFamily: 'monospace'
                 }}>%APPDATA%\Claude\claude_desktop_config.json</code></li>
               </ul>
@@ -268,7 +268,7 @@ export default function ServiceMCPSettings({
               padding: '12px',
               backgroundColor: '#fff',
               border: '1px solid #e8e8e8',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '12px',
               fontFamily: 'monospace',
               overflow: 'auto',
@@ -284,7 +284,7 @@ export default function ServiceMCPSettings({
                 backgroundColor: copiedItem === 'claude-config' ? '#52c41a' : '#1890ff',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 500,
@@ -301,14 +301,14 @@ export default function ServiceMCPSettings({
               padding: '8px 12px',
               backgroundColor: '#fffbe6',
               border: '1px solid #ffe58f',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '12px',
               color: '#ad6800'
             }}>
               ⚠️ Replace <code style={{
                 backgroundColor: '#fff',
                 padding: '2px 4px',
-                borderRadius: '2px',
+                borderRadius: '6px',
                 fontFamily: 'monospace'
               }}>your_service_token_here</code> with your actual service token from the "API Tokens" section above
             </div>
@@ -337,7 +337,7 @@ export default function ServiceMCPSettings({
         padding: '16px',
         backgroundColor: '#f0f5ff',
         border: '1px solid #adc6ff',
-        borderRadius: '4px'
+        borderRadius: '6px'
       }}>
         <h5 style={{
           margin: '0 0 8px 0',

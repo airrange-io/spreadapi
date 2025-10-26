@@ -384,21 +384,21 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>AI Description</Typography.Title>
-              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiDescription}
               </Typography.Paragraph>
             </div>
 
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>Usage Guidance</Typography.Title>
-              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiUsageGuidance}
               </Typography.Paragraph>
             </div>
 
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>Usage Examples</Typography.Title>
-              <ul style={{ background: '#f5f5f5', padding: '12px 12px 12px 32px', borderRadius: 4, margin: 0 }}>
+              <ul style={{ background: '#f5f5f5', padding: '12px 12px 12px 32px', borderRadius: 6, margin: 0 }}>
                 {suggestions.aiUsageExamples.map((example: string, index: number) => (
                   <li key={index} style={{ marginBottom: 4 }}>{example}</li>
                 ))}
@@ -407,13 +407,13 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>Tags</Typography.Title>
-              <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+              <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiTags.map((tag: string, index: number) => (
                   <span key={index} style={{
                     display: 'inline-block',
                     background: '#fff',
                     padding: '4px 12px',
-                    borderRadius: 4,
+                    borderRadius: 6,
                     marginRight: 8,
                     marginBottom: 8,
                     border: '1px solid #d9d9d9'
@@ -426,13 +426,13 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>Category</Typography.Title>
-              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 4 }}>
+              <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.category}
               </Typography.Paragraph>
             </div>
 
             {suggestions.reasoning && (
-              <div style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 4, border: '1px solid #adc6ff' }}>
+              <div style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 6, border: '1px solid #adc6ff' }}>
                 <Typography.Text style={{ fontSize: 12, color: '#002766' }}>
                   <strong>AI Reasoning:</strong> {suggestions.reasoning}
                 </Typography.Text>
