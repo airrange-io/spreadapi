@@ -3,8 +3,8 @@ import { streamText, tool } from 'ai';
 import { z } from 'zod';
 import { getServiceDetails } from '@/utils/serviceHelpers';
 import { getItemType, isNumberType } from '@/utils/normalizeServiceData';
-import { executeAreaRead, executeAreaUpdate } from '../mcp/bridge/areaExecutors';
-import { executeEnhancedCalc } from '../mcp/bridge/executeEnhancedCalc';
+import { executeAreaRead, executeAreaUpdate } from '@/lib/mcp/areaExecutors';
+import { executeEnhancedCalc } from '@/lib/mcp/executeEnhancedCalc';
 import { calculateDirect } from '../v1/services/[id]/execute/calculateDirect';
 
 // Basic input sanitization to prevent injection attacks

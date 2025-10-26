@@ -107,22 +107,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           tableSheetCacheTTL={apiConfig.tableSheetCacheTTL || 300}
           hasTableSheets={hasTableSheets}
           workbookLoaded={workbookLoaded}
-          aiDescription={apiConfig.aiDescription || ''}
-          aiUsageGuidance={apiConfig.aiUsageGuidance || ''}
-          aiUsageExamples={apiConfig.aiUsageExamples || []}
-          aiTags={apiConfig.aiTags || []}
-          category={apiConfig.category || ''}
           isLoading={isLoading}
           onApiNameChange={(name) => onConfigChange({ name })}
           onApiDescriptionChange={(description) => onConfigChange({ description })}
           onEnableCachingChange={(enableCaching) => onConfigChange({ enableCaching })}
           onCacheTableSheetDataChange={(cacheTableSheetData) => onConfigChange({ cacheTableSheetData })}
           onTableSheetCacheTTLChange={(tableSheetCacheTTL) => onConfigChange({ tableSheetCacheTTL })}
-          onAiDescriptionChange={(aiDescription) => onConfigChange({ aiDescription })}
-          onAiUsageGuidanceChange={(aiUsageGuidance) => onConfigChange({ aiUsageGuidance })}
-          onAiUsageExamplesChange={(aiUsageExamples) => onConfigChange({ aiUsageExamples })} // Keep instant for tags
-          onAiTagsChange={(aiTags) => onConfigChange({ aiTags })} // Keep instant for tags
-          onCategoryChange={(category) => onConfigChange({ category })} // Instant for select
         />
       </Suspense>
     </div>

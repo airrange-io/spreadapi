@@ -132,22 +132,12 @@ interface SettingsSectionProps {
   tableSheetCacheTTL: number;
   hasTableSheets: boolean;
   workbookLoaded: boolean;
-  aiDescription: string;
-  aiUsageExamples: string[];
-  aiTags: string[];
-  category: string;
-  aiUsageGuidance?: string;
   isLoading?: boolean;
   onApiNameChange: (value: string) => void;
   onApiDescriptionChange: (value: string) => void;
   onEnableCachingChange: (checked: boolean) => void;
   onCacheTableSheetDataChange: (checked: boolean) => void;
   onTableSheetCacheTTLChange: (value: number) => void;
-  onAiDescriptionChange: (value: string) => void;
-  onAiUsageExamplesChange: (values: string[]) => void;
-  onAiTagsChange: (values: string[]) => void;
-  onCategoryChange: (value: string) => void;
-  onAiUsageGuidanceChange: (value: string) => void;
 }
 
 const SettingsSection: React.FC<SettingsSectionProps> = ({
@@ -158,22 +148,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   tableSheetCacheTTL,
   hasTableSheets,
   workbookLoaded,
-  aiDescription,
-  aiUsageExamples,
-  aiTags,
-  category,
-  aiUsageGuidance,
   isLoading = false,
   onApiNameChange,
   onApiDescriptionChange,
   onEnableCachingChange,
   onCacheTableSheetDataChange,
   onTableSheetCacheTTLChange,
-  onAiDescriptionChange,
-  onAiUsageExamplesChange,
-  onAiTagsChange,
-  onCategoryChange,
-  onAiUsageGuidanceChange,
 }) => {
   // Determine if cache options should be disabled and why
   const cacheOptionsDisabled = !workbookLoaded || !hasTableSheets;
@@ -274,79 +254,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
               )}
             </Space>
           </div>
-        </Space>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="AI Assistant Information" defaultOpen={false}>
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
-            <div>
-              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>AI Description</div>
-              <DebouncedTextArea
-                placeholder="Detailed explanation for AI assistants about what this service does and when to use it..."
-                defaultValue={aiDescription}
-                onChange={onAiDescriptionChange}
-                rows={3}
-                disabled={isLoading}
-                delay={500}
-              />
-            </div>
-
-            <div>
-              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Guidance</div>
-              <DebouncedTextArea
-                placeholder="When should AI use this service? E.g., 'Use when user wants to calculate mortgage payments or compare loan terms'"
-                defaultValue={aiUsageGuidance || ''}
-                onChange={onAiUsageGuidanceChange}
-                rows={2}
-                disabled={isLoading}
-                delay={500}
-              />
-            </div>
-
-            <div>
-              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Usage Examples</div>
-              <Select
-                mode="tags"
-                style={{ width: '100%' }}
-                placeholder="Add example questions or use cases (press Enter to add)"
-                value={aiUsageExamples}
-                onChange={onAiUsageExamplesChange}
-                tokenSeparators={[',']}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div>
-              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Tags</div>
-              <Select
-                mode="tags"
-                style={{ width: '100%' }}
-                placeholder="Add searchable tags (e.g., finance, mortgage, loan)"
-                value={aiTags}
-                onChange={onAiTagsChange}
-                tokenSeparators={[',']}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div>
-              <div style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>Category</div>
-              <Select
-                style={{ width: '100%' }}
-                placeholder="Select a category"
-                value={category}
-                onChange={onCategoryChange}
-                disabled={isLoading}
-              >
-                <Select.Option value="finance">Finance</Select.Option>
-                <Select.Option value="math">Mathematics</Select.Option>
-                <Select.Option value="statistics">Statistics</Select.Option>
-                <Select.Option value="business">Business</Select.Option>
-                <Select.Option value="science">Science</Select.Option>
-                <Select.Option value="engineering">Engineering</Select.Option>
-                <Select.Option value="other">Other</Select.Option>
-              </Select>
-            </div>
         </Space>
       </CollapsibleSection>
 

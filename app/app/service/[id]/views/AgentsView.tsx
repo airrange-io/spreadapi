@@ -1,0 +1,105 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Layout, Skeleton } from 'antd';
+import dynamic from 'next/dynamic';
+import AgentsNavigationMenu, { AgentsMenuSection } from '../components/AgentsNavigationMenu';
+import AIAssistantSection from '../components/AIAssistantSection';
+
+const { Sider, Content } = Layout;
+
+const ServiceMCPSettings = dynamic(() => import('@/components/ServiceMCPSettings'), {
+  loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
+  ssr: false
+});
+
+interface AgentsViewProps {
+  serviceId: string;
+  apiConfig?: any;
+  serviceStatus?: {
+    published?: boolean;
+  };
+  isDemoMode?: boolean;
+  configLoaded?: boolean;
+  isLoading?: boolean;
+  hasUnsavedChanges?: boolean;
+  onConfigChange?: (updates: any) => void;
+}
+
+const AgentsView: React.FC<AgentsViewProps> = ({
+  serviceId,
+  apiConfig,
+  serviceStatus,
+  isDemoMode = false,
+  configLoaded = false,
+  isLoading = false,
+  hasUnsavedChanges = false,
+  onConfigChange
+}) => {
+  const [mounted, setMounted] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<AgentsMenuSection>('ai-info');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const renderContent = () => {
+    switch (selectedSection) {
+      case 'ai-info':
+        return (
+          <AIAssistantSection
+            aiDescription={apiConfig?.aiDescription || ''}
+            aiUsageGuidance={apiConfig?.aiUsageGuidance || ''}
+            aiUsageExamples={apiConfig?.aiUsageExamples || []}
+            aiTags={apiConfig?.aiTags || []}
+            category={apiConfig?.category || ''}
+            isLoading={isLoading}
+            onAiDescriptionChange={(value) => onConfigChange?.({ aiDescription: value })}
+            onAiUsageGuidanceChange={(value) => onConfigChange?.({ aiUsageGuidance: value })}
+            onAiUsageExamplesChange={(values) => onConfigChange?.({ aiUsageExamples: values })}
+            onAiTagsChange={(values) => onConfigChange?.({ aiTags: values })}
+            onCategoryChange={(value) => onConfigChange?.({ category: value })}
+          />
+        );
+
+      case 'mcp':
+        return (
+          <div style={{ padding: '16px' }}>
+            <ServiceMCPSettings
+              serviceId={serviceId}
+              serviceName={apiConfig?.name || 'Service'}
+              needsToken={apiConfig?.requireToken || false}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Layout style={{
+      height: '100%',
+      backgroundColor: '#ffffff',
+      opacity: mounted ? 1 : 0,
+      transition: 'opacity 0.3s ease-in-out'
+    }}>
+      <Sider width={220} style={{ backgroundColor: '#ffffff' }}>
+        <AgentsNavigationMenu
+          selectedKey={selectedSection}
+          onSelect={setSelectedSection}
+        />
+      </Sider>
+      <Content style={{
+        height: '100%',
+        overflow: 'auto',
+        backgroundColor: '#ffffff'
+      }}>
+        {renderContent()}
+      </Content>
+    </Layout>
+  );
+};
+
+export default AgentsView;

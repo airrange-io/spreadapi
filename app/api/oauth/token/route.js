@@ -19,14 +19,14 @@ function generateOAuthAccessToken() {
 /**
  * OAuth Token Endpoint (RFC 6749)
  *
- * Simplified token-based flow:
+ * Service-specific token exchange flow:
  * 1. Validates the authorization code
  * 2. Verifies PKCE code_verifier matches code_challenge
  * 3. Verifies client_id and redirect_uri match
- * 4. Returns an OAuth access token that maps to the user's MCP tokens
+ * 4. Returns an OAuth access token that maps to the service token
  *
- * The OAuth token is a wrapper - when ChatGPT makes requests with it,
- * we proxy to the underlying MCP tokens for permission checks.
+ * The OAuth token is a wrapper - when ChatGPT/Claude makes requests,
+ * we validate against the underlying service token for permission checks.
  */
 export async function POST(request) {
   try {
@@ -167,11 +167,11 @@ export async function POST(request) {
       );
     }
 
-    // Retrieve the MCP tokens stored during authorization
-    const mcpTokensJson = await redis.get(`oauth:mcp_tokens:${code}`);
+    // Retrieve the service token stored during authorization
+    const tokenDataJson = await redis.get(`oauth:tokens:${code}`);
 
-    if (!mcpTokensJson) {
-      console.error('[OAuth Token] No MCP tokens found for code:', code.substring(0, 16));
+    if (!tokenDataJson) {
+      console.error('[OAuth Token] No tokens found for code:', code.substring(0, 16));
       await deleteAuthorizationCode(code);
       return NextResponse.json(
         {
@@ -182,38 +182,42 @@ export async function POST(request) {
       );
     }
 
-    const mcpTokens = JSON.parse(mcpTokensJson);
+    const tokenData = JSON.parse(tokenDataJson);
+    const serviceToken = tokenData.service_token;
+    const serviceId = tokenData.service_id;
 
     // Default expiry: 12 hours (43200 seconds)
-    // In a more advanced setup, you could check MCP token expiry
     const expiresIn = 43200;
 
     // Generate unique OAuth access token
     const oauthAccessToken = generateOAuthAccessToken();
 
-    // Store OAuth token metadata with MCP tokens
-    // This creates the mapping: OAuth token → MCP tokens
-    await redis.hSet(`oauth:token:${oauthAccessToken}`, {
-      mcp_tokens: JSON.stringify(mcpTokens), // Store MCP tokens
+    // Store OAuth token metadata with service token
+    // This creates the mapping: OAuth token → service token
+    const tokenMetadata = {
       client_id: client_id,
       user_id: codeData.userId,
       scope: codeData.scope,
       service_ids: JSON.stringify(codeData.serviceIds),
+      service_token: serviceToken,
+      service_id: serviceId,
       authorized_at: Date.now().toString(),
-    });
+    };
+
+    await redis.hSet(`oauth:token:${oauthAccessToken}`, tokenMetadata);
 
     // Set expiry
     await redis.expire(`oauth:token:${oauthAccessToken}`, expiresIn);
 
-    // Delete authorization code (one-time use) and cleanup temp MCP token storage
+    // Delete authorization code (one-time use) and cleanup temp token storage
     await deleteAuthorizationCode(code);
-    await redis.del(`oauth:mcp_tokens:${code}`);
+    await redis.del(`oauth:tokens:${code}`);
 
     console.log('[OAuth Token] Access token issued:', {
       user_id: codeData.userId,
       client_id,
-      service_count: codeData.serviceIds.length,
-      mcp_token_count: mcpTokens.length,
+      scope: codeData.scope,
+      service_id: serviceId,
       expires_in: expiresIn,
       token_prefix: oauthAccessToken.substring(0, 16) + '...',
     });

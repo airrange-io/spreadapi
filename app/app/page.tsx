@@ -31,11 +31,7 @@ const IntercomScript = dynamic(() => import('../components/IntercomScript').then
   ssr: false
 });
 
-// Lazy load the MCP Settings Modal
-const MCPSettingsModal = dynamic(() => import('@/components/MCPSettingsModal'), {
-  ssr: false,
-  loading: () => null
-});
+// MCP Settings Modal removed - now using service-specific MCP Integration
 
 
 import type { MenuProps } from 'antd';
@@ -55,7 +51,6 @@ const ListsPage: React.FC = observer(() => {
   const [isContentScrollable, setIsContentScrollable] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
-  const [showMCPModal, setShowMCPModal] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
@@ -63,7 +58,6 @@ const ListsPage: React.FC = observer(() => {
   // Tour refs
   const demoServicesRef = useRef<HTMLDivElement>(null);
   const newServiceButtonRef = useRef<HTMLButtonElement>(null);
-  const mcpButtonRef = useRef<HTMLButtonElement>(null);
   const chatButtonRef = useRef<HTMLButtonElement>(null);
 
   // Lazy load tour only when needed
@@ -99,10 +93,6 @@ const ListsPage: React.FC = observer(() => {
           {
             ...appTour.steps[1],
             target: () => newServiceButtonRef.current,
-          },
-          {
-            ...appTour.steps[2],
-            target: () => mcpButtonRef.current,
           }
         ];
 
@@ -470,17 +460,7 @@ const ListsPage: React.FC = observer(() => {
                   <span className="desktop-text">Chat</span>
                 </Button>
 
-                {/* MCP Settings Button */}
-                <Button
-                  ref={mcpButtonRef}
-                  variant='filled'
-                  color="default"
-                  icon={<AppstoreOutlined />}
-                  onClick={() => setShowMCPModal(true)}
-                  title="MCP Integration"
-                >
-                  <span className="desktop-text">MCP</span>
-                </Button>
+                {/* MCP Settings Button removed - now per-service in API tab */}
 
                 {/* New Service Button */}
                 <Button
@@ -759,15 +739,6 @@ const ListsPage: React.FC = observer(() => {
             </div>
           </Content>
         </Layout>
-
-        {/* MCP Settings Modal */}
-        {showMCPModal && (
-          <MCPSettingsModal
-            visible={showMCPModal}
-            onClose={() => setShowMCPModal(false)}
-            isAuthenticated={isAuthenticated}
-          />
-        )}
       </Layout>
       {isClient && (
         <>

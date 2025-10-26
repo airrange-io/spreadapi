@@ -44,7 +44,13 @@ export async function GET() {
       code_challenge_methods_supported: ['S256'],
 
       // Available OAuth scopes
-      scopes_supported: ['mcp:read', 'mcp:write'],
+      // Service-specific scopes follow the pattern: spapi:service:{serviceId}:execute
+      // The 401 WWW-Authenticate header will hint the required scope for each service
+      scopes_supported: [
+        'mcp:read',
+        'mcp:write',
+        'spapi:service:*:execute'  // Pattern for service-specific access
+      ],
 
       // Token endpoint authentication methods
       // "none" = public clients (ChatGPT doesn't need a secret)

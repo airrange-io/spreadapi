@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
@@ -17,6 +17,11 @@ const ApiView = dynamic(() => import('./views/ApiView'), {
 });
 
 const AppsView = dynamic(() => import('./views/AppsView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
+const AgentsView = dynamic(() => import('./views/AgentsView'), {
   loading: () => <div style={{ padding: 20 }}></div>,
   ssr: false
 });
@@ -76,10 +81,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
-  const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage'>(() => {
+  const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage'>(() => {
     const savedView = getSavedView(serviceId);
-    if (savedView && ['Settings', 'Workbook', 'API', 'Apps', 'Usage'].includes(savedView)) {
-      return savedView as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
+    if (savedView && ['Settings', 'Workbook', 'API', 'Apps', 'Agents', 'Usage'].includes(savedView)) {
+      return savedView as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage';
     }
     // Default to Workbook (not Settings, even though Settings is first in navigation)
     return 'Workbook';
@@ -1845,18 +1850,37 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             value={activeView}
             // shape="round"
             onChange={(value) => {
-              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Usage';
+              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Apps' | 'Agents' | 'Usage';
               setActiveView(newView);
               // Save view preference using helper
               saveViewPreference(serviceId, newView);
             }}
             options={isMobile ? [
-            { value: 'Settings', icon: <SettingOutlined /> },
-            { value: 'Workbook', icon: <TableOutlined /> },
-            { value: 'API', icon: <CaretRightOutlined /> },
-            { value: 'Apps', label: 'Apps' },
-            { value: 'Usage', icon: <BarChartOutlined /> }
-          ] : ['Settings', 'Workbook', 'API', 'Apps', 'Usage']}
+            {
+              value: 'Settings',
+              icon: <Tooltip title="Settings"><SettingOutlined /></Tooltip>
+            },
+            {
+              value: 'Workbook',
+              icon: <Tooltip title="Workbook"><TableOutlined /></Tooltip>
+            },
+            {
+              value: 'API',
+              icon: <Tooltip title="API"><CaretRightOutlined /></Tooltip>
+            },
+            {
+              value: 'Apps',
+              icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
+            },
+            {
+              value: 'Agents',
+              icon: <Tooltip title="Agents"><RobotOutlined /></Tooltip>
+            },
+            {
+              value: 'Usage',
+              icon: <Tooltip title="Usage"><BarChartOutlined /></Tooltip>
+            }
+          ] : ['Settings', 'Workbook', 'API', 'Apps', 'Agents', 'Usage']}
           style={{ marginLeft: 'auto', marginRight: 'auto' }}
         />
         </div>
@@ -2115,6 +2139,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       />
                     </div>
 
+                    {/* Agents View */}
+                    <div style={{
+                      display: activeView === 'Agents' ? 'block' : 'none',
+                      height: '100%'
+                    }}>
+                      <AgentsView
+                        serviceId={serviceId}
+                        apiConfig={apiConfig}
+                        serviceStatus={serviceStatus}
+                        isDemoMode={isDemoMode}
+                        configLoaded={configLoaded}
+                        isLoading={!configLoaded}
+                        hasUnsavedChanges={configHasChanges}
+                        onConfigChange={handleConfigChange}
+                      />
+                    </div>
+
                     {/* Settings View */}
                     <div style={{
                       display: activeView === 'Settings' ? 'block' : 'none',
@@ -2241,6 +2282,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   height: '100%'
                 }}>
                   <AppsView
+                    serviceId={serviceId}
+                    apiConfig={apiConfig}
+                    serviceStatus={serviceStatus}
+                    isDemoMode={isDemoMode}
+                    configLoaded={configLoaded}
+                    isLoading={!configLoaded}
+                    hasUnsavedChanges={configHasChanges}
+                    onConfigChange={handleConfigChange}
+                  />
+                </div>
+
+                {/* Agents View */}
+                <div style={{
+                  display: activeView === 'Agents' ? 'block' : 'none',
+                  height: '100%'
+                }}>
+                  <AgentsView
                     serviceId={serviceId}
                     apiConfig={apiConfig}
                     serviceStatus={serviceStatus}

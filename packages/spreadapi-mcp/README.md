@@ -10,61 +10,69 @@ npm install -g spreadapi-mcp
 
 ## Setup
 
-1. **Get a SpreadAPI token**
+1. **Get your service details**
    - Sign in to [SpreadAPI](https://spreadapi.io)
-   - Go to MCP Settings
-   - Generate a new API token
+   - Navigate to your service
+   - Go to the "API" tab → "MCP Integration" section
+   - Copy your service ID and service token
 
 2. **Configure Claude Desktop**
-   
+
    Add this to your Claude Desktop configuration file:
-   
-   **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+
+   **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
    **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
    ```json
    {
      "mcpServers": {
-       "spreadapi": {
+       "my-service": {
          "command": "npx",
          "args": ["spreadapi-mcp"],
          "env": {
-           "SPREADAPI_URL": "https://spreadapi.io/api/mcp/bridge",
-           "SPREADAPI_TOKEN": "your_token_here"
+           "SPREADAPI_URL": "https://spreadapi.io/api/mcp/service/YOUR_SERVICE_ID",
+           "SPREADAPI_TOKEN": "your_service_token_here"
          }
        }
      }
    }
    ```
 
+   **Replace:**
+   - `my-service` - Choose any name for your service
+   - `YOUR_SERVICE_ID` - Your actual service ID from SpreadAPI
+   - `your_service_token_here` - Your service token
+
 3. **Restart Claude Desktop**
 
 ## Usage
 
-Once configured, Claude will have access to all your published SpreadAPI services. You can ask Claude to:
+Once configured, Claude will have direct access to your specific service. You can ask Claude to:
 
-- List available calculations
-- Perform specific calculations
-- Help with financial, mathematical, or business computations
+- Perform calculations with your service
+- Explain what parameters are needed
+- Run multiple scenarios
+- Help with analysis
 
 Example prompts:
-- "What spreadsheet calculations are available?"
-- "Calculate the monthly payment for a $300,000 mortgage at 7% for 30 years"
-- "Help me analyze loan options with different interest rates"
+- "What parameters does this calculation need?"
+- "Calculate with X=10 and Y=5"
+- "Compare 3 scenarios with different interest rates"
 
 ## Environment Variables
 
-- `SPREADAPI_URL` - The SpreadAPI MCP endpoint (default: https://spreadapi.io/api/mcp/bridge)
-- `SPREADAPI_TOKEN` - Your SpreadAPI token (required)
+- `SPREADAPI_URL` - The service-specific MCP endpoint (required)
+  - Format: `https://spreadapi.io/api/mcp/service/{serviceId}`
+- `SPREADAPI_TOKEN` - Your service token (required)
 
-## MCP Endpoints
+## Service-Specific MCP
 
-SpreadAPI provides two MCP endpoints:
+Each SpreadAPI service gets its own dedicated MCP endpoint. This provides:
 
-- **`/api/mcp/bridge`** - JSON-RPC stdio bridge for Claude Desktop (this package)
-- **`/api/mcp`** - Streamable HTTP transport for ChatGPT Developer Mode and OpenAI Agent Builder
-
-> **Note**: The old `/api/mcp/v1` endpoint is deprecated. Please update to `/api/mcp/bridge`.
+- **Faster connection** - No service discovery needed
+- **Clearer context** - AI knows exactly which service it's connected to
+- **Better security** - Each connection is scoped to one service
+- **Simpler setup** - Just copy the configuration from your service page
 
 ## Development
 

@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, Button, Input, Alert, Space, Typography, Spin } from 'antd';
-import { LockOutlined, CheckCircleOutlined, ApiOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { LockOutlined, CheckCircleOutlined, ApiOutlined } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -14,7 +14,7 @@ const { Title, Text, Paragraph } = Typography;
 function OAuthAuthorizeContent() {
   const searchParams = useSearchParams();
 
-  // OAuth parameters from ChatGPT
+  // OAuth parameters from ChatGPT/Claude
   const clientId = searchParams.get('client_id');
   const redirectUri = searchParams.get('redirect_uri');
   const state = searchParams.get('state');
@@ -22,9 +22,10 @@ function OAuthAuthorizeContent() {
   const codeChallenge = searchParams.get('code_challenge');
   const codeChallengeMethod = searchParams.get('code_challenge_method');
   const responseType = searchParams.get('response_type');
+  const serviceId = searchParams.get('service_id'); // Required for service-specific MCP
 
   // UI state
-  const [tokens, setTokens] = useState(['']); // Array of token inputs
+  const [serviceToken, setServiceToken] = useState(''); // Single service token
   const [authorizing, setAuthorizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,39 +43,20 @@ function OAuthAuthorizeContent() {
     );
   }
 
-  function addTokenField() {
-    setTokens([...tokens, '']);
-  }
-
-  function removeTokenField(index: number) {
-    if (tokens.length > 1) {
-      const newTokens = tokens.filter((_, i) => i !== index);
-      setTokens(newTokens);
-    }
-  }
-
-  function updateToken(index: number, value: string) {
-    const newTokens = [...tokens];
-    newTokens[index] = value.trim();
-    setTokens(newTokens);
+  if (!serviceId) {
+    return (
+      <div style={{ maxWidth: 600, margin: '80px auto', padding: 20 }}>
+        <Alert
+          message="Missing Service ID"
+          description="This authorization request is missing the required service_id parameter"
+          type="error"
+          showIcon
+        />
+      </div>
+    );
   }
 
   async function handleAuthorize() {
-    // Filter out empty tokens
-    const validTokens = tokens.filter(t => t.length > 0);
-
-    if (validTokens.length === 0) {
-      setError('Please enter at least one access token');
-      return;
-    }
-
-    // Validate token format
-    const invalidTokens = validTokens.filter(t => !t.startsWith('spapi_live_'));
-    if (invalidTokens.length > 0) {
-      setError('Invalid token format. Tokens must start with "spapi_live_"');
-      return;
-    }
-
     setAuthorizing(true);
     setError(null);
 
@@ -89,7 +71,8 @@ function OAuthAuthorizeContent() {
           scope,
           code_challenge: codeChallenge,
           code_challenge_method: codeChallengeMethod,
-          mcp_tokens: validTokens, // Send MCP tokens instead of user_id/service_ids
+          service_token: serviceToken || null,
+          service_id: serviceId,
         }),
       });
 
@@ -141,9 +124,9 @@ function OAuthAuthorizeContent() {
           {/* Header */}
           <div style={{ textAlign: 'center' }}>
             <ApiOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-            <Title level={3}>Connect to SpreadAPI</Title>
+            <Title level={3}>Connect to SpreadAPI Service</Title>
             <Paragraph>
-              ChatGPT wants to access your spreadsheet calculation services
+              Authorize access to this specific calculation service
             </Paragraph>
           </div>
 
@@ -153,10 +136,22 @@ function OAuthAuthorizeContent() {
             description={
               <div>
                 <Text strong>Client: </Text>
-                <Text>ChatGPT (OpenAI)</Text>
+                <Text>{clientId}</Text>
                 <br />
                 <Text strong>Permissions: </Text>
                 <Text>{scope}</Text>
+              </div>
+            }
+            type="info"
+          />
+
+          {/* Service Info */}
+          <Alert
+            message="Connecting to Service"
+            description={
+              <div>
+                <Text strong>Service ID: </Text>
+                <Text code>{serviceId}</Text>
               </div>
             }
             type="info"
@@ -166,48 +161,25 @@ function OAuthAuthorizeContent() {
           <div>
             <Title level={5}>
               <LockOutlined style={{ marginRight: 8 }} />
-              Enter Your Access Token(s)
+              Service Token (Optional)
             </Title>
             <Paragraph type="secondary">
-              Enter the MCP access token(s) you received from service creators.
-              You can add multiple tokens to access services from different creators.
+              If this service requires authentication, enter your service token.
+              You can find it in the service's API settings on SpreadAPI.
             </Paragraph>
 
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-              {tokens.map((token, index) => (
-                <Space.Compact key={index} style={{ width: '100%' }}>
-                  <Input
-                    size="large"
-                    placeholder="spapi_live_..."
-                    value={token}
-                    onChange={(e) => updateToken(index, e.target.value)}
-                    prefix={<LockOutlined />}
-                    disabled={authorizing}
-                    status={token && !token.startsWith('spapi_live_') ? 'error' : undefined}
-                  />
-                  {tokens.length > 1 && (
-                    <Button
-                      size="large"
-                      icon={<DeleteOutlined />}
-                      onClick={() => removeTokenField(index)}
-                      disabled={authorizing}
-                      danger
-                    />
-                  )}
-                </Space.Compact>
-              ))}
+            <Input
+              size="large"
+              placeholder="Enter service token (if required)"
+              value={serviceToken}
+              onChange={(e) => setServiceToken(e.target.value.trim())}
+              prefix={<LockOutlined />}
+              disabled={authorizing}
+            />
 
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={addTokenField}
-                disabled={authorizing}
-                block
-              >
-                Add another token
-              </Button>
-            </Space>
-
+            <Paragraph type="secondary" style={{ marginTop: 8, fontSize: 12 }}>
+              For public services, you can leave this empty and click Authorize.
+            </Paragraph>
           </div>
 
           {error && (
@@ -223,7 +195,6 @@ function OAuthAuthorizeContent() {
               type="primary"
               onClick={handleAuthorize}
               loading={authorizing}
-              disabled={tokens.filter(t => t.length > 0).length === 0}
               icon={<CheckCircleOutlined />}
               size="large"
             >
@@ -232,11 +203,11 @@ function OAuthAuthorizeContent() {
           </Space>
 
           <Alert
-            message="Where to get tokens?"
+            message="Where to get service token?"
             description={
               <div style={{ fontSize: 12 }}>
                 <p style={{ marginBottom: 0 }}>
-                  • Create your own services and generate tokens at{' '}
+                  • Create your own services and generate service tokens at{' '}
                   <a href="https://spreadapi.io/dashboard" target="_blank" rel="noopener noreferrer">
                     your dashboard
                   </a>

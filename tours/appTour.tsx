@@ -39,20 +39,6 @@ export const appTour: TourDefinition = {
         </div>
       ),
       placement: 'bottom',
-    },
-    {
-      title: 'Connect to AI Systems',
-      description: (
-        <div>
-          <p style={{ marginBottom: 12 }}>
-            The <strong>MCP</strong> button shows you how to integrate your services with <strong>ChatGPT</strong> and <strong>Claude Desktop</strong>.
-          </p>
-          <p style={{ margin: 0 }}>
-            Create your tokens and enable AI systems to reliably calculate even complex models!
-          </p>
-        </div>
-      ),
-      placement: 'bottom',
     }
   ],
 };

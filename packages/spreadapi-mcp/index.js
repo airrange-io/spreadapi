@@ -13,12 +13,23 @@ import {
  * SpreadAPI MCP Bridge
  * Translates between Claude Desktop (stdio) and SpreadAPI HTTP server
  *
- * Updated to use /api/mcp/bridge endpoint (JSON-RPC stdio bridge)
+ * Updated for service-specific MCP endpoints.
+ * Each service has its own endpoint: /api/mcp/service/{serviceId}
  */
 
 // Configuration from environment
-const SPREADAPI_URL = process.env.SPREADAPI_URL || 'https://spreadapi.io/api/mcp/bridge';
+const SPREADAPI_URL = process.env.SPREADAPI_URL;
 const SPREADAPI_TOKEN = process.env.SPREADAPI_TOKEN;
+
+if (!SPREADAPI_URL) {
+  console.error('Error: SPREADAPI_URL environment variable is required');
+  console.error('');
+  console.error('Please set it in your Claude Desktop configuration:');
+  console.error('  SPREADAPI_URL: https://spreadapi.io/api/mcp/service/YOUR_SERVICE_ID');
+  console.error('');
+  console.error('Replace YOUR_SERVICE_ID with your actual service ID');
+  process.exit(1);
+}
 
 if (!SPREADAPI_TOKEN) {
   console.error('Error: SPREADAPI_TOKEN environment variable is required');
