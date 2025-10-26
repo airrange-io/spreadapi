@@ -439,9 +439,22 @@ export default function ChatWrapperBubbles() {
               
               {/* Deduplicate messages based on ID */}
               {messages
-                .filter((m, index, self) => 
+                .filter((m, index, self) =>
                   index === self.findIndex(msg => msg.id === m.id)
                 )
+                .filter((message, index, filteredMessages) => {
+                  // Only show completed messages (not currently streaming)
+                  // A message is complete if it's not the last assistant message while loading
+                  const isLastMessage = index === filteredMessages.length - 1;
+                  const isAssistantMessage = message.role === 'assistant';
+
+                  // Show user messages immediately
+                  if (message.role === 'user') return true;
+
+                  // Show assistant messages only if we're not currently streaming
+                  // or if it's not the last message
+                  return !isLoading || !isLastMessage || !isAssistantMessage;
+                })
                 .map((m, index) => {
                 const isUser = m.role === 'user';
                 // Extract content from message parts

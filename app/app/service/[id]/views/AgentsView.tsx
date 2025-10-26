@@ -1,12 +1,30 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Skeleton } from 'antd';
+import { Layout, Skeleton, Spin } from 'antd';
 import dynamic from 'next/dynamic';
 import AgentsNavigationMenu, { AgentsMenuSection } from '../components/AgentsNavigationMenu';
 import AIAssistantSection from '../components/AIAssistantSection';
 
 const { Sider, Content } = Layout;
+
+// Lazy load chat component with AI libraries only when needed
+const ServiceChatSection = dynamic(() => import('../components/ServiceChatSection'), {
+  loading: () => (
+    <div style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px'
+    }}>
+      <Spin size="large" />
+      <div style={{ color: '#999', fontSize: '14px' }}>Loading chat...</div>
+    </div>
+  ),
+  ssr: false
+});
 
 const ServiceMCPSettings = dynamic(() => import('@/components/ServiceMCPSettings'), {
   loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
@@ -59,6 +77,15 @@ const AgentsView: React.FC<AgentsViewProps> = ({
             onAiUsageExamplesChange={(values) => onConfigChange?.({ aiUsageExamples: values })}
             onAiTagsChange={(values) => onConfigChange?.({ aiTags: values })}
             onCategoryChange={(value) => onConfigChange?.({ category: value })}
+          />
+        );
+
+      case 'chat-test':
+        return (
+          <ServiceChatSection
+            serviceId={serviceId}
+            serviceName={apiConfig?.name || 'Service'}
+            isLoading={isLoading}
           />
         );
 

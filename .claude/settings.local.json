@@ -49,7 +49,8 @@
       "WebFetch(domain:docs.hanko.io)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:spec.modelcontextprotocol.io)",
-      "WebFetch(domain:www.scalekit.com)"
+      "WebFetch(domain:www.scalekit.com)",
+      "WebFetch(domain:sdk.vercel.ai)"
     ],
     "deny": []
   }
