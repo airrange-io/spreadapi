@@ -283,6 +283,11 @@ ALWAYS convert percentages to decimals (divide by 100):
 • "5%" → 0.05 (NOT 5)
 • "42%" → 0.42 (NOT 42)
 
+🔑 PARAMETER NAMES vs TITLES:
+• Use NAMES (e.g., "interest_rate") when calling the API
+• Use TITLES (e.g., "Interest Rate") when displaying to users
+• The schema shows: name → description (title for context)
+
 📊 PRESENTING RESULTS:
 Outputs include formatString - ALWAYS use it when available!
 Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Payment"}
@@ -292,9 +297,18 @@ Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Paym
       properties: {
         inputs: {
           type: 'object',
-          description: 'Input values for the calculation. ' +
-            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => i.title ? `${i.name} (${i.title})` : i.name).join(', ')}` : 'See service details'),
-          additionalProperties: true
+          description: 'Input values for the calculation. Use parameter names as keys. ' +
+            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
+          additionalProperties: true,
+          ...(apiDefinition.inputs && apiDefinition.inputs.length > 0 && {
+            properties: apiDefinition.inputs.reduce((acc, input) => {
+              acc[input.name] = {
+                description: input.title || input.name,
+                type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string'
+              };
+              return acc;
+            }, {})
+          })
         }
       },
       required: ['inputs']
