@@ -642,23 +642,46 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
       case 'spreadapi_batch': {
         // Batch calculations - use optimized calculateDirect for better performance
         const scenarios = toolArgs.scenarios || [];
-        const results = await Promise.all(
-          scenarios.map(async (scenario) => {
-            // Batch calculations typically don't have area updates
-            // Use calculateDirect for better performance and reliability
-            const calcResult = await calculateDirect(
-              serviceId,
-              scenario.inputs || {},
-              null, // token handled by MCP auth layer
-              {}   // no special options
-            );
+        console.log(`[MCP Batch] Processing ${scenarios.length} scenarios for service ${serviceId}`);
 
-            return {
-              label: scenario.label,
-              ...(calcResult.error ? { error: calcResult.error } : calcResult)
-            };
+        // DEBUG: Log all scenario inputs
+        scenarios.forEach((scenario, index) => {
+          console.log(`[MCP Batch Debug] Scenario ${index + 1} (${scenario.label || 'unlabeled'}):`, {
+            inputs: JSON.stringify(scenario.inputs || {}),
+            inputKeys: Object.keys(scenario.inputs || {}).sort()
+          });
+        });
+
+        const results = await Promise.all(
+          scenarios.map(async (scenario, index) => {
+            try {
+              // Batch calculations typically don't have area updates
+              // Use calculateDirect for better performance and reliability
+              const calcResult = await calculateDirect(
+                serviceId,
+                scenario.inputs || {},
+                null, // token handled by MCP auth layer
+                {}   // no special options
+              );
+
+              // Return compact response (outputs only, not full metadata)
+              return {
+                label: scenario.label || `Scenario ${index + 1}`,
+                inputs: scenario.inputs,
+                outputs: calcResult.outputs || {},
+                ...(calcResult.error && { error: calcResult.error })
+              };
+            } catch (error) {
+              console.error(`[MCP Batch] Error in scenario ${index}:`, error);
+              return {
+                label: scenario.label || `Scenario ${index + 1}`,
+                error: error.message || 'Calculation failed'
+              };
+            }
           })
         );
+
+        console.log(`[MCP Batch] Completed ${results.length} scenarios, ${results.filter(r => !r.error).length} successful`);
         result = { scenarios: results };
         break;
       }

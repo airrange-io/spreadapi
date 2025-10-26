@@ -111,6 +111,13 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId);
 
+      // DEBUG: Log cache key generation
+      console.log(`[Cache Debug] Generated hash for service ${serviceId}:`, {
+        inputHash,
+        rawInputs: JSON.stringify(inputs),
+        inputKeys: Object.keys(inputs).sort()
+      });
+
       try {
         // Get result from hash field
         const cachedResultString = await redis.hGet(cacheKey, inputHash);
@@ -206,6 +213,13 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     // Step 3: Coerce types (convert strings to numbers/booleans)
     const finalInputs = coerceTypes(inputsWithDefaults, apiInputs);
+
+    // DEBUG: Log input transformation
+    console.log(`[Validation Debug] Input transformation for service ${serviceId}:`, {
+      rawInputs: JSON.stringify(inputs),
+      withDefaults: JSON.stringify(inputsWithDefaults),
+      finalInputs: JSON.stringify(finalInputs)
+    });
 
     // ============================================================================
     // End of validation - now safe to proceed with expensive operations
