@@ -87,6 +87,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({
             serviceId={serviceId}
             serviceName={apiConfig?.name || 'Service'}
             isLoading={isLoading}
+            apiConfig={apiConfig}
           />
         );
 

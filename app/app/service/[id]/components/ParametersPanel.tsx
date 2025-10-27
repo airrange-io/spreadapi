@@ -228,6 +228,22 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
   // Handle parameter editing
   const handleEditParameter = useCallback((type: 'input' | 'output', param: any) => {
+    // Read current value from spreadsheet
+    let currentValue = param.value; // Fallback to stored value
+    try {
+      if (spreadInstance) {
+        const addressParts = param.address.split('!');
+        const sheetName = addressParts[0];
+        const sheet = spreadInstance.getSheetFromName(sheetName);
+        if (sheet) {
+          currentValue = sheet.getValue(param.row, param.col);
+          console.log(`[Edit Parameter] Read current value for ${param.name}:`, currentValue);
+        }
+      }
+    } catch (error) {
+      console.warn(`[Edit Parameter] Could not read current value for ${param.name}:`, error);
+    }
+
     // Create cell info from existing parameter
     const cellInfo = {
       address: param.address,
@@ -236,7 +252,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       rowCount: param.rowCount || 1,
       colCount: param.colCount || 1,
       hasFormula: param.direction === 'output',
-      value: param.value,
+      value: currentValue, // Use fresh value from spreadsheet
       isSingleCell: (param.rowCount || 1) === 1 && (param.colCount || 1) === 1,
       detectedDataType: param.dataType || param.type, // Use dataType if available, fallback to type
       suggestedName: param.name,
@@ -259,7 +275,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     setParameterType(param.direction || (param.type === 'input' ? 'input' : 'output'));
     setEditingParameter(param);
     setShowParameterModal(true);
-  }, []);
+  }, [spreadInstance]);
 
   // Handle area editing
   const handleEditArea = useCallback((area: any, index: number) => {

@@ -109,6 +109,21 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     const sheetName = addressParts[0];
     const cellRef = addressParts[1];
 
+    // Read current value from spreadsheet cell (update the existing value field)
+    let currentValue = input.value || ''; // Default to existing value
+    try {
+      const worksheet = spreadInstance.getSheetFromName(sheetName);
+      if (worksheet) {
+        const freshValue = worksheet.getValue(input.row, input.col);
+        if (freshValue !== null && freshValue !== undefined) {
+          currentValue = freshValue;
+          console.log(`[Publish] Updated value for ${input.name}: ${currentValue}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`[Publish] Could not read current value for ${input.name}:`, error);
+    }
+
     // Prepare the base input object
     const transformedInput = {
       id: input.id,
@@ -118,7 +133,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       row: input.row,
       col: input.col,
       type: input.type,
-      value: input.value || '',
+      value: currentValue, // Use fresh value from spreadsheet
       direction: 'input',
       mandatory: input.mandatory !== false,
       ...(input.min !== undefined && { min: input.min }),

@@ -830,7 +830,11 @@ ${apiDefinition.aiDescription ? `\n⚠️  IMPORTANT: ${apiDefinition.aiDescript
   }
 
   response.serverInfo.description = desc;
-  response.serverInfo.instructions = getSingleServiceInstructions(serviceId, apiDefinition.serviceName || serviceId);
+  response.serverInfo.instructions = getSingleServiceInstructions(
+    serviceId,
+    apiDefinition.serviceName || serviceId,
+    apiDefinition  // Pass full service details for current values
+  );
 
   return {
     jsonrpc: '2.0',

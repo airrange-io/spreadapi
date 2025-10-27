@@ -37,7 +37,7 @@ const openai = createOpenAI({
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { messages, serviceId, initialGreeting, model = 'gpt-4.1-nano' } = body;
+    const { messages, serviceId, initialGreeting, model = 'gpt-4.1-nano', currentInputValues } = body;
     
 
 
@@ -116,13 +116,30 @@ export async function POST(req) {
       // Use the centralized helper function
       serviceDetails = await getServiceDetails(serviceId, userId);
       
+      // Merge current values from client (for unpublished services during development)
+      if (currentInputValues && serviceDetails.inputs) {
+        console.log('[Chat API] Merging current values from client:', currentInputValues);
+        serviceDetails.inputs = serviceDetails.inputs.map(input => {
+          const clientValue = currentInputValues[input.name];
+          if (clientValue) {
+            return {
+              ...input,
+              value: clientValue.value,
+              // Update format if not set
+              format: input.format || clientValue.format
+            };
+          }
+          return input;
+        });
+      }
+
       // Debug log the fetched service details
       console.log('[Chat API] Fetched service details:', {
         id: serviceDetails?.id,
         name: serviceDetails?.name,
         description: serviceDetails?.description,
         inputCount: serviceDetails?.inputs?.length || 0,
-        inputs: serviceDetails?.inputs?.map(i => ({ name: i.name, title: i.title })),
+        inputs: serviceDetails?.inputs?.map(i => ({ name: i.name, title: i.title, value: i.value })),
         outputCount: serviceDetails?.outputs?.length || 0,
         outputs: serviceDetails?.outputs?.map(o => ({ name: o.name, title: o.title }))
       });
@@ -336,7 +353,27 @@ The spreadsheet auto-calculates when you change inputs.`;
 ${effectiveDescription}
 
 You have access to a calculation tool for this service. Focus on helping users use it effectively.`;
-      
+
+      // Add current parameter values if available (from published spreadsheet)
+      const inputsWithCurrentValues = serviceDetails.inputs?.filter(i => i.value !== null && i.value !== undefined) || [];
+      if (inputsWithCurrentValues.length > 0) {
+        systemPrompt += `
+
+### Current Spreadsheet Values (Suggested Starting Points):
+When users ask for calculations, you can suggest starting with these current values from the spreadsheet:
+${inputsWithCurrentValues.map(input => {
+  let displayValue = input.value;
+  // Format percentage values for display
+  if (input.format === 'percentage' && typeof displayValue === 'number') {
+    displayValue = `${(displayValue * 100).toFixed(2)}%`;
+  }
+  return `- **${input.title || input.name}**: ${displayValue}`;
+}).join('\n')}
+
+You can mention these values in your greeting or when asking for missing parameters.
+Example: "I see your spreadsheet currently has ${inputsWithCurrentValues[0].title} set to ${inputsWithCurrentValues[0].value}. Would you like to calculate with these values or provide different ones?"`;
+      }
+
       // Add detailed area explanation if areas exist
       if (serviceDetails.areas && serviceDetails.areas.length > 0) {
         let areas = serviceDetails.areas;

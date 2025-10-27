@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { Button, Typography, Space, Spin, Avatar, Empty, Tooltip, Select } from 'antd';
@@ -50,16 +50,36 @@ interface ServiceChatSectionProps {
   serviceId: string;
   serviceName?: string;
   isLoading?: boolean;
+  apiConfig?: any;
 }
 
 const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
   serviceId,
   serviceName = 'Service',
-  isLoading: parentLoading = false
+  isLoading: parentLoading = false,
+  apiConfig
 }) => {
   const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
+
+  // Extract current values from apiConfig (captured when parameters were added)
+  const currentInputValues = useMemo(() => {
+    if (!apiConfig || !apiConfig.inputs) return null;
+
+    const values: any = {};
+    apiConfig.inputs.forEach((input: any) => {
+      if (input.value !== null && input.value !== undefined) {
+        values[input.name] = {
+          value: input.value,
+          title: input.title,
+          format: input.format
+        };
+      }
+    });
+
+    return Object.keys(values).length > 0 ? values : null;
+  }, [apiConfig]);
 
   // AI Model selection with localStorage persistence
   const [selectedModel, setSelectedModel] = useState<string>(() => {
@@ -84,7 +104,12 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
   } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { serviceId, model: selectedModel }
+      body: {
+        serviceId,
+        model: selectedModel,
+        // Include current spreadsheet values for unpublished services
+        currentInputValues
+      }
     }),
     onFinish: () => {
       console.log('[ServiceChat] Message finished');
