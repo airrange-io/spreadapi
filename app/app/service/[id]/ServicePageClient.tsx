@@ -1654,10 +1654,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           // First, hide empty state and load the workbook
           if (service.workbook) {
             setShowEmptyState(false);
-            setSpreadsheetData({
-              type: 'json',
-              data: service.workbook
-            });
+            setSpreadsheetData(service.workbook);  // Set JSON directly, not wrapped
           } else {
             // If no workbook data, create empty spreadsheet
             setShowEmptyState(false);
@@ -1666,6 +1663,24 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           // Small delay to ensure workbook loads first
           await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Normalize numeric fields in inputs (same as API load)
+          const normalizeNumeric = (val: any) => {
+            if (val === '' || val === null || val === undefined) return undefined;
+            if (typeof val === 'string') {
+              const parsed = parseFloat(val);
+              return isNaN(parsed) ? undefined : parsed;
+            }
+            return val;
+          };
+
+          const sanitizedInputs = (service.inputs || []).map((input: any) => ({
+            ...input,
+            min: normalizeNumeric(input.min),
+            max: normalizeNumeric(input.max),
+            defaultValue: normalizeNumeric(input.defaultValue),
+            aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
+          }));
 
           // Then, set the configuration (include ALL properties)
           setApiConfig(prev => {
@@ -1682,7 +1697,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               enableCaching: service.enableCaching !== false,
               cacheTableSheetData: service.cacheTableSheetData !== false,
               tableSheetCacheTTL: service.tableSheetCacheTTL || 300,
-              inputs: service.inputs || [],
+              inputs: sanitizedInputs,
               outputs: service.outputs || [],
               areas: service.areas || [],
               webAppToken: service.webAppToken || '',
