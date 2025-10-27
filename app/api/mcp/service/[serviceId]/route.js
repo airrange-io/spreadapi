@@ -265,52 +265,7 @@ async function authenticateRequest(request, serviceId) {
 async function buildServiceTools(serviceId, apiDefinition) {
   const tools = [];
 
-  // Tool 1: Calculate (primary tool)
-  const calcTool = {
-    name: 'spreadapi_calc',
-    description: `🎯 PRIMARY CALCULATION TOOL
-
-SERVICE: ${apiDefinition.serviceName || serviceId}
-PURPOSE: ${apiDefinition.description || 'Perform calculations'}
-
-WHEN TO USE:
-- User asks for a calculation
-- User provides numeric values or scenarios
-- This is your main tool for calculations!
-
-${apiDefinition.aiDescription ? `⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n\n` : ''}${apiDefinition.aiUsageGuidance ? `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n\n` : ''}⚠️  CRITICAL - PERCENTAGE VALUES:
-The system auto-converts percentage inputs to decimals:
-• You can send: 5, "5%", or 0.05 — all work!
-• System expects decimals internally (0.05 = 5%)
-• Best practice: use decimal format (0.05) for clarity
-• The system will auto-convert if you send 5 instead of 0.05
-
-🔑 PARAMETER NAMES vs TITLES:
-• Use NAMES (e.g., "interest_rate") when calling the API
-• Use TITLES (e.g., "Interest Rate") when displaying to users
-• The schema shows: name → description (title for context)
-
-📊 PRESENTING RESULTS:
-Outputs include formatString - ALWAYS use it when available!
-Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Payment"}
-→ Present as: "Monthly Payment: €265.53"${parameterSchemaString}`,
-    inputSchema: {
-      type: 'object',
-      properties: {
-        inputs: {
-          type: 'object',
-          description: 'Input values for the calculation. Use parameter names as keys. ' +
-            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
-          additionalProperties: true,
-          properties: inputProperties
-        }
-      },
-      required: ['inputs']
-    }
-  };
-  tools.push(calcTool);
-
-  // Build the properties object for schema
+  // Build the properties object for schema (needed by calcTool and batchTool)
   const inputProperties = (apiDefinition.inputs && apiDefinition.inputs.length > 0)
     ? apiDefinition.inputs.reduce((acc, input) => {
         acc[input.name] = {
@@ -340,28 +295,149 @@ Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Paym
       ) + '\n```'
     : '';
 
+  // Tool 1: Calculate (primary tool)
+  const calcTool = {
+    name: 'spreadapi_calc',
+    description: `🎯 PRIMARY CALCULATION TOOL - ${apiDefinition.serviceName || serviceId}
+
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+${apiDefinition.description || 'Performs calculations based on input parameters'}
+
+Execute a single calculation with provided input values and receive calculated outputs.
+
+${apiDefinition.aiDescription ? `\n⚠️  SERVICE-SPECIFIC IMPORTANT NOTE:\n${apiDefinition.aiDescription}\n` : ''}${apiDefinition.aiUsageGuidance ? `\n💡 HOW TO USE THIS SERVICE:\n${apiDefinition.aiUsageGuidance}\n` : ''}
+═══════════════════════════════════════════════════════════════════
+⚠️  CRITICAL BEHAVIORS (Read server instructions above for details)
+═══════════════════════════════════════════════════════════════════
+
+🔢 PERCENTAGE VALUES - AUTOMATIC CONVERSION:
+   The system has smart auto-conversion for percentage values:
+   • User says "5%" → You can send: 5, "5%", or 0.05 (all work!)
+   • System internally uses decimal format (0.05 = 5%)
+   • BEST PRACTICE: Always convert to decimal yourself (5% → 0.05)
+   • Fallback: If you send 5, system will auto-detect and convert
+
+   ⚠️  WHY THIS MATTERS: Sending wrong format causes ABSURD results!
+   Example: 6 instead of 0.06 = 600% interest = wildly wrong numbers
+
+🔑 PARAMETER NAMING - USE CANONICAL NAMES:
+   • API accepts: NAMES (e.g., "interest_rate", "monthly_deposit")
+   • Display to users: TITLES (e.g., "Interest Rate", "Monthly Deposit")
+   • Schema below shows: parameter_name with "Title" as description
+   • ALWAYS use parameter names in your tool calls!
+
+📊 RESULT FORMATTING - USE formatString:
+   Outputs include formatString property - ALWAYS use it!
+   Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Payment"}
+   → Display as: "Monthly Payment: €265.53"
+   → NOT as: "Monthly Payment: 265.53" (missing currency format!)
+
+📖 CROSS-REFERENCE: See server instructions above for:
+   • Complete percentage conversion rules
+   • Boolean value handling
+   • Proactive behavior patterns
+   • Auto-error-recovery strategies
+
+${parameterSchemaString}`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        inputs: {
+          type: 'object',
+          description: 'Input values for the calculation. Use parameter names as keys. ' +
+            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
+          additionalProperties: true,
+          properties: inputProperties
+        }
+      },
+      required: ['inputs']
+    }
+  };
+  tools.push(calcTool);
+
   // Tool 2: Batch calculations
   const batchTool = {
     name: 'spreadapi_batch',
-    description: `⚡ BATCH COMPARISON TOOL - Compare multiple scenarios
+    description: `⚡ BATCH COMPARISON TOOL - ${apiDefinition.serviceName || serviceId}
 
-SERVICE: ${apiDefinition.serviceName || serviceId}
-PURPOSE: Run multiple calculations in parallel for comparison
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+Run multiple calculations sequentially to compare different scenarios.
 
-WHEN TO USE:
-- User wants to compare 3+ scenarios (e.g., "compare these 5 options")
-- What-if analysis ("what if I change X to A, B, or C?")
-- User provides a list of alternatives to evaluate
+Executes 2+ calculations with different input values and returns all results
+for comparison. Perfect for "what-if" analysis and side-by-side comparisons.
 
-WHEN NOT TO USE:
-- Single calculation → Use spreadapi_calc instead
-- Only 2 scenarios → Just call spreadapi_calc twice (faster)
+═══════════════════════════════════════════════════════════════════
+✅ WHEN TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• User wants to compare 3+ scenarios
+  Example: "compare these 5 loan options"
 
-EXAMPLE:
-User: "Compare loan with 5%, 6%, and 7% interest"
-→ Call spreadapi_batch with 3 scenarios, each with different interest_rate
+• What-if analysis with multiple variables
+  Example: "what if I change interest to 5%, 6%, or 7%?"
 
-MUCH FASTER than calling spreadapi_calc 3 times separately!${parameterSchemaString}`,
+• User provides a list of alternatives to evaluate
+  Example: "try with $10k, $15k, and $20k deposits"
+
+═══════════════════════════════════════════════════════════════════
+❌ WHEN NOT TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• Single calculation → Use spreadapi_calc instead
+• Only 2 scenarios → Just call spreadapi_calc twice (clearer)
+• Need intermediate results → Call spreadapi_calc multiple times
+
+═══════════════════════════════════════════════════════════════════
+💡 EXAMPLE USAGE
+═══════════════════════════════════════════════════════════════════
+User: "Compare compound interest with 5%, 6%, and 7% rates"
+
+Your call:
+{
+  "scenarios": [
+    {
+      "label": "5% interest",
+      "inputs": {
+        "starting_amount": 10000,
+        "interest_rate": 0.05,    ← Note: 5% = 0.05 (decimal!)
+        "monthly_deposit": 100,
+        "months_of_payment": 120
+      }
+    },
+    {
+      "label": "6% interest",
+      "inputs": {
+        "starting_amount": 10000,
+        "interest_rate": 0.06,    ← Note: 6% = 0.06 (decimal!)
+        "monthly_deposit": 100,
+        "months_of_payment": 120
+      }
+    },
+    {
+      "label": "7% interest",
+      "inputs": {
+        "starting_amount": 10000,
+        "interest_rate": 0.07,    ← Note: 7% = 0.07 (decimal!)
+        "monthly_deposit": 100,
+        "months_of_payment": 120
+      }
+    }
+  ]
+}
+
+Result: Three calculations returned for easy comparison!
+
+⚠️  REMEMBER: All percentage rules from spreadapi_calc apply here too!
+    Convert percentages to decimals: 5% → 0.05, 6% → 0.06, etc.
+
+📖 CROSS-REFERENCE: See spreadapi_calc description for:
+    • Percentage conversion rules
+    • Parameter naming guidelines
+    • Result formatting instructions
+
+${parameterSchemaString}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -406,27 +482,75 @@ MUCH FASTER than calling spreadapi_calc 3 times separately!${parameterSchemaStri
   // Tool 3: Get service details
   const detailsTool = {
     name: 'spreadapi_get_details',
-    description: `📋 DISCOVERY TOOL - Get parameter details for ${apiDefinition.serviceName || serviceId}
+    description: `📋 DISCOVERY TOOL - ${apiDefinition.serviceName || serviceId}
 
-SERVICE: ${apiDefinition.serviceName || serviceId}
-PURPOSE: ${apiDefinition.description || 'Discover what this service can calculate'}
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+${apiDefinition.description || 'Discover detailed information about this calculation service'}
 
-WHEN TO USE:
-- You need to know what parameters are required
-- User asks "what can you calculate?" or "what inputs do you need?"
-- Calculation failed and you need to understand why
-- First time using this service
+Retrieve complete service metadata including parameter definitions, constraints,
+special instructions, and usage guidance.
 
-WHEN NOT TO USE:
-- User already provided all values → Skip this, calculate directly!
-- You're just exploring → This is a calculation service, not a documentation browser
+═══════════════════════════════════════════════════════════════════
+✅ WHEN TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• You need to know what parameters are required
+  Example: User asks "what inputs do you need?"
 
-RETURNS:
-Complete service information including:
-- inputs: All parameters with types, defaults, constraints
-- outputs: What you'll get back
-- aiDescription: Special instructions (ALWAYS READ THIS!)
-- aiUsageGuidance: How to use this service correctly`,
+• Calculation failed and you need to understand why
+  Example: Error says "missing required parameter"
+
+• User asks exploratory questions
+  Example: "what can you calculate?" or "what are the options?"
+
+• First time encountering this service
+  Example: You've never seen this service's parameters before
+
+• User references parameters you don't recognize
+  Example: User says "adjust the XYZ value" but you don't know what XYZ is
+
+═══════════════════════════════════════════════════════════════════
+❌ WHEN NOT TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• User already provided all values → Skip this, calculate directly!
+  Example: User says "calculate with X=10, Y=5" → Just call spreadapi_calc
+
+• You're just exploring → This is a calculation service, not documentation
+  Example: Don't call this randomly "to see what's there"
+
+⚠️  FOLLOW "FAST PATH" FROM INSTRUCTIONS: If user provides values, calculate immediately!
+
+═══════════════════════════════════════════════════════════════════
+📊 WHAT YOU'LL RECEIVE
+═══════════════════════════════════════════════════════════════════
+Complete service information:
+
+• inputs: Array of parameter definitions
+  - name: canonical parameter name (use this in API calls!)
+  - title: friendly display name (show this to users!)
+  - type: number, string, boolean, enum
+  - min/max: value constraints
+  - mandatory: whether required
+  - defaultValue: default if not provided
+  - format: special formatting (percentage, currency, etc.)
+
+• outputs: Array of output field definitions
+  - name: output field name
+  - title: friendly display name
+  - type: output data type
+  - formatString: Excel-style format (ALWAYS use this!)
+
+• aiDescription: Service-specific important notes
+  ⚠️  ALWAYS READ THIS - contains critical service-specific rules!
+
+• aiUsageGuidance: How to use this service correctly
+  💡 Includes special behaviors, edge cases, and best practices
+
+📖 CROSS-REFERENCE: After calling this tool, refer to:
+    • Server instructions for universal rules (percentages, booleans, etc.)
+    • aiDescription for service-specific rules
+    • aiUsageGuidance for usage best practices`,
     inputSchema: {
       type: 'object',
       properties: {}
@@ -437,22 +561,48 @@ Complete service information including:
   // Tool 4: State management - Save state (always available)
   tools.push({
     name: 'spreadapi_save_state',
-    description: `💾 SAVE STATE - Store calculation results for later comparison
+    description: `💾 SAVE STATE - Store calculation for later comparison
 
-WHEN TO USE:
-- User says "save this", "remember this", "bookmark this"
-- User wants to compare results with future calculations
-- Building up multiple alternatives over time
-- User asks "can we compare this with what we did earlier?"
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+Save calculation input values with a descriptive name for future retrieval.
 
-WORKFLOW EXAMPLE:
+Allows building up a collection of scenarios over time and comparing them later.
+States persist across sessions (hours/days).
+
+═══════════════════════════════════════════════════════════════════
+✅ WHEN TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• User explicitly requests saving
+  Example: "save this", "remember this", "bookmark this calculation"
+
+• User wants to compare with future calculations
+  Example: "save this so we can compare later"
+
+• Building up multiple alternatives incrementally
+  Example: "let's try different rates and save each one"
+
+• User references past calculations
+  Example: "compare this with what we did earlier"
+
+═══════════════════════════════════════════════════════════════════
+💡 WORKFLOW EXAMPLE
+═══════════════════════════════════════════════════════════════════
 1. User: "Calculate loan payment at 5% interest"
 2. You: Call spreadapi_calc, get result
-3. You: Save with spreadapi_save_state(stateName="5% interest", inputs={...})
-4. Later user: "Now try 6% and compare with the 5% option"
-5. You: Calculate 6%, then load "5% interest" state to show comparison
+3. You: Call spreadapi_save_state(stateName="5% option", inputs={...})
+4. Later... User: "Now try 6% and compare"
+5. You: Calculate 6%, load "5% option", show comparison
 
-States persist across sessions - use descriptive names like "baseline", "optimistic", "Option A"!`,
+═══════════════════════════════════════════════════════════════════
+📝 NAMING BEST PRACTICES
+═══════════════════════════════════════════════════════════════════
+Use descriptive, meaningful names:
+✅ GOOD: "5% interest", "baseline", "optimistic scenario", "Option A"
+❌ BAD: "state1", "test", "calc" (not descriptive!)
+
+💡 TIP: States persist across sessions - name them clearly!`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -466,15 +616,42 @@ States persist across sessions - use descriptive names like "baseline", "optimis
   // Tool 5: State management - Load state (always available)
   tools.push({
     name: 'spreadapi_load_state',
-    description: `📂 LOAD STATE - Retrieve previously saved calculation state
+    description: `📂 LOAD STATE - Retrieve previously saved calculation
 
-WHEN TO USE:
-- User asks to "compare with earlier" or "show me the previous calculation"
-- User references a saved scenario by name
-- You need to recall inputs from a prior calculation
-- Building temporal comparisons
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+Retrieve input values from a previously saved calculation state.
 
-TIP: Call spreadapi_list_saved_states first if you don't know what's saved`,
+Returns the exact inputs that were saved, allowing you to:
+• Recall what parameters were used
+• Re-run the calculation
+• Compare with new calculations
+
+═══════════════════════════════════════════════════════════════════
+✅ WHEN TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• User asks for comparison with earlier calculation
+  Example: "compare with earlier" or "show me the previous one"
+
+• User references a saved scenario by name
+  Example: "load the baseline scenario"
+
+• Need to recall inputs from prior calculation
+  Example: "what were the inputs for the 5% option?"
+
+• Building temporal comparisons
+  Example: "how does this compare to last week's calculation?"
+
+═══════════════════════════════════════════════════════════════════
+💡 USAGE TIP
+═══════════════════════════════════════════════════════════════════
+If you don't know what states are saved:
+1. Call spreadapi_list_saved_states first
+2. See available state names
+3. Load the one you need
+
+State names must match exactly (case-sensitive)!`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -487,15 +664,51 @@ TIP: Call spreadapi_list_saved_states first if you don't know what's saved`,
   // Tool 6: State management - List saved states (always available)
   tools.push({
     name: 'spreadapi_list_saved_states',
-    description: `📋 LIST SAVED STATES - Show all available saved states
+    description: `📋 LIST SAVED STATES - Show all available saved calculations
 
-WHEN TO USE:
-- User asks "what did we save?" or "show me my saved scenarios"
-- Before loading a state (to see what's available)
-- User asks to "compare with earlier" but doesn't specify which one
+═══════════════════════════════════════════════════════════════════
+📌 WHAT THIS TOOL DOES
+═══════════════════════════════════════════════════════════════════
+Retrieve a list of all saved calculation states for this service.
 
-RETURNS:
-List of state names with their saved input values
+Returns state names and their saved input values, allowing you to:
+• See what's been saved
+• Choose which state to load
+• Present options to user
+
+═══════════════════════════════════════════════════════════════════
+✅ WHEN TO USE THIS TOOL
+═══════════════════════════════════════════════════════════════════
+• User asks what's been saved
+  Example: "what did we save?" or "show me my saved scenarios"
+
+• Before loading a state (to see options)
+  Example: User says "compare with earlier" without specifying which
+
+• User wants to review saved alternatives
+  Example: "show me all the options we've tried"
+
+• Discovering available saved states
+  Example: You don't know what states exist
+
+═══════════════════════════════════════════════════════════════════
+📊 WHAT YOU'LL RECEIVE
+═══════════════════════════════════════════════════════════════════
+Array of saved states:
+[
+  {
+    "stateName": "5% interest",
+    "inputs": { "interest_rate": 0.05, ... },
+    "savedAt": "2025-10-27T10:30:00Z"
+  },
+  {
+    "stateName": "baseline",
+    "inputs": { "interest_rate": 0.04, ... },
+    "savedAt": "2025-10-27T09:15:00Z"
+  }
+]
+
+💡 Use state names to load specific calculations with spreadapi_load_state
 
 AUTO-USE: If user references "earlier calculation" but you don't know the name, call this first!`,
     inputSchema: {
