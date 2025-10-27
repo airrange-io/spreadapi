@@ -279,9 +279,11 @@ WHEN TO USE:
 - This is your main tool for calculations!
 
 ${apiDefinition.aiDescription ? `⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n\n` : ''}${apiDefinition.aiUsageGuidance ? `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n\n` : ''}⚠️  CRITICAL - PERCENTAGE VALUES:
-ALWAYS convert percentages to decimals (divide by 100):
-• "5%" → 0.05 (NOT 5)
-• "42%" → 0.42 (NOT 42)
+The system auto-converts percentage inputs to decimals:
+• You can send: 5, "5%", or 0.05 — all work!
+• System expects decimals internally (0.05 = 5%)
+• Best practice: use decimal format (0.05) for clarity
+• The system will auto-convert if you send 5 instead of 0.05
 
 🔑 PARAMETER NAMES vs TITLES:
 • Use NAMES (e.g., "interest_rate") when calling the API
@@ -291,7 +293,7 @@ ALWAYS convert percentages to decimals (divide by 100):
 📊 PRESENTING RESULTS:
 Outputs include formatString - ALWAYS use it when available!
 Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Payment"}
-→ Present as: "Monthly Payment: €265.53"`,
+→ Present as: "Monthly Payment: €265.53"${parameterSchemaString}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -300,21 +302,43 @@ Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Paym
           description: 'Input values for the calculation. Use parameter names as keys. ' +
             (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
           additionalProperties: true,
-          ...(apiDefinition.inputs && apiDefinition.inputs.length > 0 && {
-            properties: apiDefinition.inputs.reduce((acc, input) => {
-              acc[input.name] = {
-                description: input.title || input.name,
-                type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string'
-              };
-              return acc;
-            }, {})
-          })
+          properties: inputProperties
         }
       },
       required: ['inputs']
     }
   };
   tools.push(calcTool);
+
+  // Build the properties object for schema
+  const inputProperties = (apiDefinition.inputs && apiDefinition.inputs.length > 0)
+    ? apiDefinition.inputs.reduce((acc, input) => {
+        acc[input.name] = {
+          description: input.title || input.name,
+          type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string'
+        };
+        return acc;
+      }, {})
+    : {};
+
+  // WORKAROUND for ChatGPT's nested schema bug: Create a stringified parameter reference
+  const parameterSchemaString = (apiDefinition.inputs && apiDefinition.inputs.length > 0)
+    ? '\n\n📋 PARAMETER SCHEMA (for ChatGPT compatibility):\n```json\n' +
+      JSON.stringify(
+        apiDefinition.inputs.reduce((acc, input) => {
+          acc[input.name] = {
+            type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string',
+            description: input.title || input.name,
+            ...(input.min !== undefined && { min: input.min }),
+            ...(input.max !== undefined && { max: input.max }),
+            ...(input.mandatory !== false && { required: true })
+          };
+          return acc;
+        }, {}),
+        null,
+        2
+      ) + '\n```'
+    : '';
 
   // Tool 2: Batch calculations
   const batchTool = {
@@ -337,18 +361,24 @@ EXAMPLE:
 User: "Compare loan with 5%, 6%, and 7% interest"
 → Call spreadapi_batch with 3 scenarios, each with different interest_rate
 
-MUCH FASTER than calling spreadapi_calc 3 times separately!`,
+MUCH FASTER than calling spreadapi_calc 3 times separately!${parameterSchemaString}`,
     inputSchema: {
       type: 'object',
       properties: {
         scenarios: {
           type: 'array',
-          description: 'Array of scenarios to calculate. Each scenario needs a label and inputs.',
+          description: 'Array of scenarios to calculate. Each scenario needs a label and inputs using parameter NAMES as keys.',
           items: {
             type: 'object',
             properties: {
               label: { type: 'string', description: 'Descriptive label (e.g., "5% interest", "Option A")' },
-              inputs: { type: 'object', description: 'Input values for this scenario' }
+              inputs: {
+                type: 'object',
+                description: 'Input values for this scenario. Use parameter names as keys. ' +
+                  (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
+                additionalProperties: true,
+                properties: inputProperties
+              }
             },
             required: ['inputs']
           },
@@ -358,7 +388,20 @@ MUCH FASTER than calling spreadapi_calc 3 times separately!`,
       required: ['scenarios']
     }
   };
+
   tools.push(batchTool);
+
+  // DIAGNOSTIC TOOL: Return what we built
+  tools.push({
+    name: 'spreadapi_diagnostic',
+    description: 'DIAGNOSTIC: Returns the actual batch schema we built server-side (for debugging)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        check: { type: 'string', description: 'Just type "schema"' }
+      }
+    }
+  });
 
   // Tool 3: Get service details
   const detailsTool = {
@@ -589,6 +632,17 @@ ${apiDefinition.aiDescription ? `\n⚠️  IMPORTANT: ${apiDefinition.aiDescript
 async function handleToolsList(serviceId, apiDefinition, rpcId) {
   const tools = await buildServiceTools(serviceId, apiDefinition);
 
+  // Log what we're sending (for debugging in Vercel logs if needed)
+  if (process.env.NODE_ENV === 'development') {
+    const batchTool = tools.find(t => t.name === 'spreadapi_batch');
+    if (batchTool?.inputSchema?.properties?.scenarios?.items?.properties?.inputs?.properties) {
+      console.log('[MCP tools/list] Batch tool HAS nested input properties:',
+        Object.keys(batchTool.inputSchema.properties.scenarios.items.properties.inputs.properties));
+    } else {
+      console.log('[MCP tools/list] WARNING: Batch tool missing nested input properties!');
+    }
+  }
+
   return {
     jsonrpc: '2.0',
     result: { tools },
@@ -652,34 +706,37 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
           });
         });
 
-        const results = await Promise.all(
-          scenarios.map(async (scenario, index) => {
-            try {
-              // Batch calculations typically don't have area updates
-              // Use calculateDirect for better performance and reliability
-              const calcResult = await calculateDirect(
-                serviceId,
-                scenario.inputs || {},
-                null, // token handled by MCP auth layer
-                {}   // no special options
-              );
+        // IMPORTANT: Run sequentially to avoid workbook cache race conditions
+        // The workbook cache returns the same instance, so parallel access causes corruption
+        // Sequential execution is still fast because we avoid HTTP overhead and reuse the cached workbook
+        const results = [];
+        for (let index = 0; index < scenarios.length; index++) {
+          const scenario = scenarios[index];
+          try {
+            // Batch calculations typically don't have area updates
+            // Use calculateDirect for better performance and reliability
+            const calcResult = await calculateDirect(
+              serviceId,
+              scenario.inputs || {},
+              null, // token handled by MCP auth layer
+              {}   // no special options
+            );
 
-              // Return compact response (outputs only, not full metadata)
-              return {
-                label: scenario.label || `Scenario ${index + 1}`,
-                inputs: scenario.inputs,
-                outputs: calcResult.outputs || {},
-                ...(calcResult.error && { error: calcResult.error })
-              };
-            } catch (error) {
-              console.error(`[MCP Batch] Error in scenario ${index}:`, error);
-              return {
-                label: scenario.label || `Scenario ${index + 1}`,
-                error: error.message || 'Calculation failed'
-              };
-            }
-          })
-        );
+            // Return compact response (outputs only, not full metadata)
+            results.push({
+              label: scenario.label || `Scenario ${index + 1}`,
+              inputs: scenario.inputs,
+              outputs: calcResult.outputs || {},
+              ...(calcResult.error && { error: calcResult.error })
+            });
+          } catch (error) {
+            console.error(`[MCP Batch] Error in scenario ${index}:`, error);
+            results.push({
+              label: scenario.label || `Scenario ${index + 1}`,
+              error: error.message || 'Calculation failed'
+            });
+          }
+        }
 
         console.log(`[MCP Batch] Completed ${results.length} scenarios, ${results.filter(r => !r.error).length} successful`);
         result = { scenarios: results };
@@ -725,6 +782,26 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
       case 'spreadapi_list_saved_states': {
         // List all saved states
         result = await listStates(userId, serviceId);
+        break;
+      }
+
+      case 'spreadapi_diagnostic': {
+        // DIAGNOSTIC: Return the actual schema we built
+        const tools = await buildServiceTools(serviceId, apiDefinition);
+        const batchTool = tools.find(t => t.name === 'spreadapi_batch');
+
+        result = {
+          diagnostic: true,
+          timestamp: new Date().toISOString(),
+          hasApiInputs: !!apiDefinition.inputs,
+          inputCount: apiDefinition.inputs?.length || 0,
+          inputNames: apiDefinition.inputs?.map(i => i.name) || [],
+          batchSchemaDescription: batchTool?.inputSchema?.properties?.scenarios?.items?.properties?.inputs?.description,
+          batchSchemaHasProperties: !!batchTool?.inputSchema?.properties?.scenarios?.items?.properties?.inputs?.properties,
+          batchSchemaHasAdditionalProperties: batchTool?.inputSchema?.properties?.scenarios?.items?.properties?.inputs?.additionalProperties,
+          batchSchemaProperties: batchTool?.inputSchema?.properties?.scenarios?.items?.properties?.inputs?.properties,
+          fullBatchSchema: batchTool?.inputSchema
+        };
         break;
       }
 
