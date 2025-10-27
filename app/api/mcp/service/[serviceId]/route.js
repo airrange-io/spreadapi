@@ -1055,6 +1055,60 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 }
 
 /**
+ * GET handler - ChatGPT's MCP client makes GET requests during connection setup
+ *
+ * User Agent: openai-mcp/1.0.0
+ * This appears to be part of ChatGPT's endpoint verification/health check flow.
+ * We return helpful information about the MCP endpoint instead of 405 error.
+ */
+export async function GET(request, { params }) {
+  const { serviceId } = await params;
+
+  try {
+    // Try to get service name for better response
+    let serviceName = 'SpreadAPI Service';
+    try {
+      const apiDefinition = await getApiDefinition(serviceId);
+      serviceName = apiDefinition.name || serviceName;
+    } catch (e) {
+      // If service lookup fails, continue with generic name
+    }
+
+    return NextResponse.json({
+      protocol: 'Model Context Protocol (MCP)',
+      version: MCP_VERSION,
+      endpoint: `/api/mcp/service/${serviceId}`,
+      service: serviceName,
+      serviceId,
+      methods: ['POST'],
+      hint: 'This is an MCP endpoint. Use POST requests with JSON-RPC 2.0 format.',
+      availableRPCMethods: [
+        'initialize',
+        'initialized',
+        'tools/list',
+        'tools/call'
+      ],
+      documentation: 'https://modelcontextprotocol.io/',
+      note: 'ChatGPT MCP client (openai-mcp/1.0.0) makes GET requests during connection setup. This is expected behavior.'
+    }, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-MCP-Version': MCP_VERSION,
+        'X-Server-Name': SERVER_NAME,
+        'X-Server-Version': SERVER_VERSION
+      }
+    });
+  } catch (error) {
+    return NextResponse.json({
+      error: 'Failed to process GET request',
+      message: error.message,
+      hint: 'Use POST requests for MCP protocol communication'
+    }, { status: 500 });
+  }
+}
+
+/**
  * Main POST handler
  */
 export async function POST(request, { params }) {
