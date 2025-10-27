@@ -260,7 +260,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
               console.log(`[calculateDirect] Found workbook in Redis cache for ${serviceId}`);
               workbook.fromJSON(cachedWorkbookJson, {
                 calcOnDemand: false,
-                doNotRecalculateAfterLoad: false,
+                doNotRecalculateAfterLoad: true,  // Performance optimization: Skip initial calc
               });
               loadedFromRedis = true;
               fromRedisCache = true; // Set flag for metadata
@@ -273,7 +273,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           if (!loadedFromRedis) {
             workbook.fromJSON(fileJson, {
               calcOnDemand: false,
-              doNotRecalculateAfterLoad: false,
+              doNotRecalculateAfterLoad: true,  // Performance optimization: Skip initial calc
             });
 
             // Initialize tables if needed
@@ -358,7 +358,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       spread = createWorkbook();
       spread.fromJSON(fileJson, {
         calcOnDemand: false,
-        doNotRecalculateAfterLoad: false,
+        doNotRecalculateAfterLoad: true,  // Performance optimization: Skip initial calc
       });
     }
 
