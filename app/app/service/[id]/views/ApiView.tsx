@@ -1,12 +1,14 @@
 'use client';
 
-import React, { lazy, Suspense, useRef, useState, useLayoutEffect } from 'react';
+import React, { lazy, Suspense, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Skeleton, Space, Alert, Button } from 'antd';
+import { Skeleton, Space, Alert, Button, Layout } from 'antd';
 import { FullscreenOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import ApiNavigationMenu, { type ApiMenuSection } from '../components/ApiNavigationMenu';
 import FullScreenPreview from '@/components/FullScreenPreview';
+
+const { Sider, Content } = Layout;
 
 // Dynamically import components
 const ServiceTester = dynamic(() => import('../ServiceTester'), {
@@ -102,6 +104,7 @@ const ApiView: React.FC<ApiViewProps> = ({
   const [mounted, setMounted] = useState(false);
   const [selectedKey, setSelectedKey] = useState<ApiMenuSection>('test');
   const [fullScreenOpen, setFullScreenOpen] = useState(false);
+  const [siderCollapsed, setSiderCollapsed] = useState(false);
   const tokenManagementRef = useRef<{ refreshTokens: () => Promise<void> }>(null);
 
   // Use robust container width measurement
@@ -114,6 +117,22 @@ const ApiView: React.FC<ApiViewProps> = ({
   // Track fade-in effect separately
   useLayoutEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Track window width for sider collapse
+  useEffect(() => {
+    const handleResize = () => {
+      setSiderCollapsed(window.innerWidth < 1024);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleTestComplete = async () => {
@@ -278,30 +297,36 @@ const ApiView: React.FC<ApiViewProps> = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{
+    <div ref={containerRef} style={{ height: '100%' }}>
+      <Layout style={{
         height: '100%',
-        display: 'flex',
+        backgroundColor: '#ffffff',
         opacity: mounted ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out'
-      }}
-    >
-      {/* Left Menu Navigation */}
-      <ApiNavigationMenu
-        selectedKey={selectedKey}
-        onSelect={setSelectedKey}
-      />
-
-      {/* Right Content Area */}
-      <div style={{
-        flex: 1,
-        padding: '16px',
-        overflow: 'auto',
-        background: '#fff'
       }}>
-        {renderContent()}
-      </div>
+        {/* Left Menu Navigation */}
+        <Sider
+          width={220}
+          collapsedWidth={80}
+          collapsed={siderCollapsed}
+          style={{ backgroundColor: '#ffffff' }}
+        >
+          <ApiNavigationMenu
+            selectedKey={selectedKey}
+            onSelect={setSelectedKey}
+          />
+        </Sider>
+
+        {/* Right Content Area */}
+        <Content style={{
+          height: '100%',
+          padding: '16px',
+          overflow: 'auto',
+          backgroundColor: '#ffffff'
+        }}>
+          {renderContent()}
+        </Content>
+      </Layout>
 
       {/* Full Screen Preview */}
       <FullScreenPreview

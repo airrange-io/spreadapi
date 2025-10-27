@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -23,6 +23,22 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
   selectedKey,
   onSelect
 }) => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCollapsed(window.innerWidth < 1024);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const menuItems: MenuProps['items'] = [
     {
       key: 'ai-info',
@@ -53,14 +69,16 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
       `}</style>
       <Menu
         mode="inline"
+        inlineCollapsed={collapsed}
         selectedKeys={[selectedKey]}
         className="agents-navigation-menu"
         style={{
-          width: 200,
+          width: collapsed ? 80 : 200,
           height: '100%',
           borderRight: '1px solid #f0f0f0',
           paddingTop: 10,
-          paddingRight: 10
+          paddingRight: collapsed ? 2 : 10,
+          transition: 'width 0.2s'
         }}
         items={menuItems}
         onClick={({ key }) => onSelect(key as AgentsMenuSection)}

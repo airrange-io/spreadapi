@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useLayoutEffect, Suspense, useEffect, useCallback } from 'react';
-import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, QRCode, Select, Segmented, Card, Row, Col } from 'antd';
+import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, QRCode, Select, Segmented, Card, Row, Col, Layout } from 'antd';
 import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
@@ -10,6 +10,7 @@ import FullScreenPreview from '@/components/FullScreenPreview';
 
 const { TextArea } = Input;
 const { Text } = Typography;
+const { Sider, Content } = Layout;
 
 // Debounce delay for validation (milliseconds)
 const VALIDATION_DEBOUNCE_DELAY = 300;
@@ -59,10 +60,27 @@ const AppsView: React.FC<AppsViewProps> = ({
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('all');
   const [showCaption, setShowCaption] = useState<boolean>(true);
+  const [menuCollapsed, setMenuCollapsed] = useState(false);
 
   // Track fade-in effect separately
   useLayoutEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Track window width for menu collapse
+  useEffect(() => {
+    const handleResize = () => {
+      setMenuCollapsed(window.innerWidth < 1024);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Cleanup validation timer on unmount
@@ -874,15 +892,7 @@ const AppsView: React.FC<AppsViewProps> = ({
   ];
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        height: '100%',
-        display: 'flex',
-        opacity: mounted ? 1 : 0,
-        transition: 'opacity 0.3s ease-in-out'
-      }}
-    >
+    <div ref={containerRef} style={{ height: '100%' }}>
       <style jsx global>{`
         .apps-navigation-menu .ant-menu-item-selected {
           background-color: #f0f0f0 !important;
@@ -892,36 +902,48 @@ const AppsView: React.FC<AppsViewProps> = ({
         }
       `}</style>
 
-      {/* Left Menu */}
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        defaultOpenKeys={[]}
-        className="apps-navigation-menu"
-        style={{
-          width: 200,
-          height: '100%',
-          borderRight: '1px solid #f0f0f0',
-          paddingTop: 10,
-          paddingRight: 10
-        }}
-        items={menuItems}
-        onClick={({ key }) => setSelectedKey(key)}
-      />
+      <Layout style={{
+        height: '100%',
+        backgroundColor: '#ffffff',
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out'
+      }}>
+        {/* Left Menu */}
+        <Sider
+          width={200}
+          collapsedWidth={80}
+          collapsed={menuCollapsed}
+          style={{ backgroundColor: '#ffffff' }}
+        >
+          <Menu
+            mode="inline"
+            inlineCollapsed={menuCollapsed}
+            selectedKeys={[selectedKey]}
+            defaultOpenKeys={[]}
+            className="apps-navigation-menu"
+            style={{
+              height: '100%',
+              borderRight: '1px solid #f0f0f0',
+              paddingTop: 10,
+              paddingRight: menuCollapsed ? 2 : 10
+            }}
+            items={menuItems}
+            onClick={({ key }) => setSelectedKey(key)}
+          />
+        </Sider>
 
-      {/* Right Content */}
-      <div
-        style={{
-          flex: 1,
+        {/* Right Content */}
+        <Content style={{
+          height: '100%',
           padding: '16px',
           overflow: 'auto',
-          height: '100%',
+          backgroundColor: '#ffffff',
           display: 'flex',
           flexDirection: 'column'
-        }}
-      >
-        {renderContent()}
-      </div>
+        }}>
+          {renderContent()}
+        </Content>
+      </Layout>
 
       {/* QR Code Modal */}
       <Modal

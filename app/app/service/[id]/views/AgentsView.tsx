@@ -56,9 +56,26 @@ const AgentsView: React.FC<AgentsViewProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [selectedSection, setSelectedSection] = useState<AgentsMenuSection>('ai-info');
+  const [siderCollapsed, setSiderCollapsed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Track window width for sider collapse
+  useEffect(() => {
+    const handleResize = () => {
+      setSiderCollapsed(window.innerWidth < 1024);
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const renderContent = () => {
@@ -114,7 +131,12 @@ const AgentsView: React.FC<AgentsViewProps> = ({
       opacity: mounted ? 1 : 0,
       transition: 'opacity 0.3s ease-in-out'
     }}>
-      <Sider width={200} style={{ backgroundColor: '#ffffff' }}>
+      <Sider
+        width={200}
+        collapsedWidth={80}
+        collapsed={siderCollapsed}
+        style={{ backgroundColor: '#ffffff' }}
+      >
         <AgentsNavigationMenu
           selectedKey={selectedSection}
           onSelect={setSelectedSection}
