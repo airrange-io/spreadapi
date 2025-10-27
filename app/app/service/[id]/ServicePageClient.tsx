@@ -498,9 +498,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               workbookUrl: data.service?.workbookUrl || null
             });
 
-            // Filter out undefined/null values from aiExamples in inputs
+            // Normalize numeric fields and filter out undefined/null values from aiExamples in inputs
+            const normalizeNumeric = (val: any) => {
+              if (val === '' || val === null || val === undefined) return undefined;
+              if (typeof val === 'string') {
+                const parsed = parseFloat(val);
+                return isNaN(parsed) ? undefined : parsed;
+              }
+              return val;
+            };
+
             const sanitizedInputs = (data.service.inputs || []).map((input: any) => ({
               ...input,
+              min: normalizeNumeric(input.min),
+              max: normalizeNumeric(input.max),
+              defaultValue: normalizeNumeric(input.defaultValue),
               aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
             }));
 
@@ -536,9 +548,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               workbookUrl: data.workbookUrl || null
             });
 
-            // Filter out undefined/null values from aiExamples in inputs
+            // Normalize numeric fields and filter out undefined/null values from aiExamples in inputs
+            const normalizeNumeric = (val: any) => {
+              if (val === '' || val === null || val === undefined) return undefined;
+              if (typeof val === 'string') {
+                const parsed = parseFloat(val);
+                return isNaN(parsed) ? undefined : parsed;
+              }
+              return val;
+            };
+
             const sanitizedInputs = (data.inputs || []).map((input: any) => ({
               ...input,
+              min: normalizeNumeric(input.min),
+              max: normalizeNumeric(input.max),
+              defaultValue: normalizeNumeric(input.defaultValue),
               aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
             }));
 

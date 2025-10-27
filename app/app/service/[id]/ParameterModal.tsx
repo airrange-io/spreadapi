@@ -287,8 +287,24 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         layout="vertical"
         variant={'filled'}
         onFinish={(values) => {
+          // Normalize empty strings to undefined for optional numeric fields
+          const normalizeValue = (val: any) => {
+            if (val === '' || val === null) return undefined;
+            if (typeof val === 'string') {
+              const parsed = parseFloat(val);
+              return isNaN(parsed) ? undefined : parsed;
+            }
+            return val;
+          };
+
           // For input parameters, detect and set format based on formatString
-          let processedValues = { ...values };
+          let processedValues = {
+            ...values,
+            min: normalizeValue(values.min),
+            max: normalizeValue(values.max),
+            defaultValue: normalizeValue(values.defaultValue)
+          };
+
           if (parameterType === 'input' && values.formatString) {
             if (values.formatString.includes('%')) {
               processedValues.format = 'percentage';

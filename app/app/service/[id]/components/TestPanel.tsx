@@ -481,6 +481,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
                   fieldName={input.name}
                   showLabel={true}
                   marginBottom={12}
+                  hideAiDescriptions={true}
                 />
               ))}
             </Form>

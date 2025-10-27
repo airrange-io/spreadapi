@@ -10,6 +10,7 @@ interface InputRendererProps {
   fieldName: string;
   showLabel?: boolean;
   marginBottom?: number;
+  hideAiDescriptions?: boolean; // Hide descriptions that are meant for AI (start with "CRITICAL:", etc.)
 }
 
 // Helper function to determine smart step size
@@ -53,15 +54,33 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
   input,
   fieldName,
   showLabel = true,
-  marginBottom = 12
+  marginBottom = 12,
+  hideAiDescriptions = false
 }) => {
+  // Helper to check if description is AI-specific
+  const isAiDescription = (desc: string) => {
+    if (!desc) return false;
+    const aiPatterns = [
+      /^CRITICAL:/i,
+      /you MUST pass/i,
+      /Never pass the whole number/i,
+      /Pass actual boolean value/i,
+      /Accept multiple formats.*yes\/no.*true\/false/i
+    ];
+    return aiPatterns.some(pattern => pattern.test(desc));
+  };
+
+  // Determine if we should show the description
+  const shouldShowDescription = input.description &&
+    (!hideAiDescriptions || !isAiDescription(input.description));
+
   const label = showLabel ? (
     <div>
       <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
         {input.title || input.name}
         {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>}
       </div>
-      {input.description && (
+      {shouldShowDescription && (
         <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginBottom: 4 }}>
           {input.description}
         </div>
@@ -209,7 +228,7 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
             {input.title || input.name}
             {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>}
           </div>
-          {input.description && (
+          {shouldShowDescription && (
             <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
               {input.description}
             </div>
