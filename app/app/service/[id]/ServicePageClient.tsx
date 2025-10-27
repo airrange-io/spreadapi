@@ -149,6 +149,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
+  const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const [showApiDefinitionModal, setShowApiDefinitionModal] = useState(false); // View API Definition modal
@@ -454,9 +455,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Skip if component unmounted (prevents double fetch in StrictMode)
       if (!mounted) return;
 
-      // Skip if we're importing a service package
-      if (isImporting) {
-        console.log('[Load] Skipping API load - importing service package');
+      // Skip if we're importing a service package OR just finished importing
+      if (isImporting || justImportedRef.current) {
+        console.log('[Load] Skipping API load - importing service package or just imported');
         return;
       }
 
@@ -1683,37 +1684,46 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           }));
 
           // Then, set the configuration (include ALL properties)
-          setApiConfig(prev => {
-            const newConfig = {
-              ...prev,
-              name: service.name || 'Imported Service',
-              description: service.description || '',
-              aiDescription: service.aiDescription || '',
-              aiUsageGuidance: service.aiUsageGuidance || '',
-              aiUsageExamples: service.aiUsageExamples || [],
-              aiTags: service.aiTags || [],
-              category: service.category || '',
-              requireToken: service.requireToken || false,
-              enableCaching: service.enableCaching !== false,
-              cacheTableSheetData: service.cacheTableSheetData !== false,
-              tableSheetCacheTTL: service.tableSheetCacheTTL || 300,
-              inputs: sanitizedInputs,
-              outputs: service.outputs || [],
-              areas: service.areas || [],
-              webAppToken: service.webAppToken || '',
-              webAppConfig: service.webAppConfig || '',
-              webAppTheme: service.webAppTheme || 'default',
-              customThemeParams: service.customThemeParams || ''
-            };
-            console.log('[Import] Setting apiConfig:', newConfig);
-            return newConfig;
-          });
+          const importedConfig = {
+            name: service.name || 'Imported Service',
+            description: service.description || '',
+            aiDescription: service.aiDescription || '',
+            aiUsageGuidance: service.aiUsageGuidance || '',
+            aiUsageExamples: service.aiUsageExamples || [],
+            aiTags: service.aiTags || [],
+            category: service.category || '',
+            requireToken: service.requireToken || false,
+            enableCaching: service.enableCaching !== false,
+            cacheTableSheetData: service.cacheTableSheetData !== false,
+            tableSheetCacheTTL: service.tableSheetCacheTTL || 300,
+            inputs: sanitizedInputs,
+            outputs: service.outputs || [],
+            areas: service.areas || [],
+            webAppToken: service.webAppToken || '',
+            webAppConfig: service.webAppConfig || '',
+            webAppTheme: service.webAppTheme || 'default',
+            customThemeParams: service.customThemeParams || ''
+          };
+
+          console.log('[Import] Setting apiConfig:', importedConfig);
+          console.log('[Import] Config has inputs:', importedConfig.inputs?.length, 'outputs:', importedConfig.outputs?.length);
+
+          setApiConfig(importedConfig);
+          // DON'T set savedConfig - leave it as the old value so comparison shows changes
+          // This ensures the Save button appears after import
+
+          // Small delay to ensure state updates propagate before marking as loaded
+          await new Promise(resolve => setTimeout(resolve, 50));
 
           // Set config as loaded
           setConfigLoaded(true);
 
-          // Mark config as changed so it can be saved
-          setConfigHasChanges(true);
+          // configHasChanges will be automatically set by the useEffect that compares apiConfig vs savedConfig
+          // No need to manually set it here
+
+          // Clear importing flag and set justImported flag
+          setIsImporting(false);
+          justImportedRef.current = true; // Prevent API reload after import
 
           message.destroy();
           message.success('Service package imported successfully! Remember to save your changes.');

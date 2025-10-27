@@ -132,13 +132,40 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
              r1EndCol < r2StartCol || r2EndCol < r1StartCol);
   };
 
-  // Update initial data when loading completes
+  // Update initial data when loading completes OR when config changes
   useEffect(() => {
-    if (!isLoading && initialConfig && !hasInitialized) {
-      setInputs(initialConfig.inputs || []);
-      setOutputs(initialConfig.outputs || []);
-      setAreas(initialConfig.areas || []);
-      setHasInitialized(true);
+    if (!isLoading && initialConfig) {
+      // Check if config has changed significantly (compare lengths and first item IDs)
+      const inputsChanged =
+        initialConfig.inputs.length !== inputs.length ||
+        (initialConfig.inputs.length > 0 && inputs.length > 0 && initialConfig.inputs[0].id !== inputs[0].id) ||
+        (initialConfig.inputs.length > 0 && inputs.length === 0);
+
+      const outputsChanged =
+        initialConfig.outputs.length !== outputs.length ||
+        (initialConfig.outputs.length > 0 && outputs.length > 0 && initialConfig.outputs[0].id !== outputs[0].id) ||
+        (initialConfig.outputs.length > 0 && outputs.length === 0);
+
+      const areasChanged =
+        initialConfig.areas && initialConfig.areas.length !== areas.length;
+
+      // Initialize or re-initialize if config has changed
+      if (!hasInitialized || inputsChanged || outputsChanged || areasChanged) {
+        console.log('[ParametersPanel] Initializing/updating config:', {
+          hasInitialized,
+          inputsChanged,
+          outputsChanged,
+          areasChanged,
+          inputCount: initialConfig.inputs.length,
+          outputCount: initialConfig.outputs.length,
+          areaCount: initialConfig.areas?.length || 0
+        });
+
+        setInputs(initialConfig.inputs || []);
+        setOutputs(initialConfig.outputs || []);
+        setAreas(initialConfig.areas || []);
+        setHasInitialized(true);
+      }
     }
   }, [initialConfig, isLoading]);
 
