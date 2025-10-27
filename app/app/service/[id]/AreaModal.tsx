@@ -187,11 +187,14 @@ const AreaModal: React.FC<AreaModalProps> = ({
                   <Text type="secondary">- AI can modify values but not formulas</Text>
                 </Space>
               </Radio>
-              <Radio value="interactive">
+              <Radio value="interactive" disabled>
                 <Space>
                   <TableOutlined />
                   <span>Full Interactive</span>
                   <Text type="secondary">- AI can modify values, formulas, and structure</Text>
+                  <Text type="warning" style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>
+                    ⚠️ Disabled for safety - Formula editing by AI is too risky for production
+                  </Text>
                 </Space>
               </Radio>
             </Space>
@@ -219,9 +222,14 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       ...editingArea,
                       permissions: { ...editingArea.permissions, canWriteFormulas: e.target.checked }
                     })}
-                    disabled={!editingArea.permissions.canReadFormulas}
+                    disabled={true}
                   >
-                    Allow formula modifications
+                    <span style={{ opacity: 0.5 }}>
+                      Allow formula modifications
+                      <Text type="secondary" style={{ display: 'block', fontSize: '11px' }}>
+                        (Disabled for production safety)
+                      </Text>
+                    </span>
                   </Checkbox>
                   <Checkbox
                     checked={editingArea.permissions.canReadFormatting}
