@@ -1970,19 +1970,29 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </span>
             </Button>
           )}
-          {isDemoMode ? (
+          {/* Demo Mode Tag - Hidden on mobile */}
+          {isDemoMode && !isMobile && (
             <Tag color='geekblue' style={{
               cursor: 'default',
               fontSize: '12px',
               padding: '4px 12px',
               marginRight: 0
             }}>
-              {isMobile ? 'Demo' : 'Demo Mode'}
+              Demo Mode
             </Tag>
-          ) : (
-            <Dropdown
-              menu={{
-                items: [
+          )}
+          {isMobile && (
+            <Button
+              type="text"
+              icon={<MenuUnfoldOutlined />}
+              onClick={() => setDrawerVisible(!drawerVisible)}
+            />
+          )}
+          <Dropdown
+            menu={{
+              items: [
+                // Publish/Draft options (only for non-demo services)
+                ...(!isDemoMode ? [
                   serviceStatus?.published ? {
                     key: 'republish',
                     label: 'Republish this service',
@@ -1996,57 +2006,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     onClick: handlePublish,
                     disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
                   },
-                  serviceStatus?.published ? {
+                  ...(serviceStatus?.published ? [{
                     key: 'unpublish',
                     label: 'Unpublish this service',
                     icon: <CloseCircleOutlined />,
                     danger: true,
                     onClick: handleUnpublish,
                     disabled: hasAnyChanges
-                  } : null
-                ].filter(Boolean)
-              }}
-              trigger={['click']}
-              disabled={loading}
-            >
-              <Button style={{
-                borderRadius: 6,
-                paddingTop: 4,
-                paddingBottom: 4,
-                paddingLeft: 12,
-                paddingRight: 12,
-                minWidth: 108,
-                backgroundColor: serviceStatus?.published ? '#E4F2D4' : '#f5f5f5', //'#FFFBE6',
-                borderColor: serviceStatus?.published ? '#f6ffed' : '#f5f5f5', // '#FFE58F',
-                // borderColor: serviceStatus?.published ? '#b7eb8f' : '#ffd591',
-                color: serviceStatus?.published ? '#389E0E' : '#666666', //'#fa8c16'
-              }}>
-                <Space size={4}>
-                  {loading ? (
-                    <>
-                      <Spin size="small" />
-                      <span>Working...</span>
-                    </>
-                  ) : configLoaded ? (
-                    serviceStatus?.published ? 'Published' : 'Draft'
-                  ) : (
-                    <Spin size="small" />
-                  )}
-                  {!loading && <DownOutlined style={{ fontSize: 12 }} />}
-                </Space>
-              </Button>
-            </Dropdown>
-          )}
-          {isMobile && (
-            <Button
-              type="text"
-              icon={<MenuUnfoldOutlined />}
-              onClick={() => setDrawerVisible(!drawerVisible)}
-            />
-          )}
-          <Dropdown
-            menu={{
-              items: [
+                  }] : []),
+                  {
+                    type: 'divider' as const
+                  }
+                ] : []),
                 {
                   key: 'view-definition',
                   label: 'View API Definition',
@@ -2055,7 +2026,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   disabled: !serviceStatus?.published
                 },
                 {
-                  type: 'divider'
+                  type: 'divider' as const
                 },
                 {
                   key: 'import-excel',
@@ -2065,7 +2036,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   disabled: !spreadInstance || activeView !== 'Workbook'
                 },
                 {
-                  type: 'divider'
+                  type: 'divider' as const
                 },
                 {
                   key: 'export-excel',
@@ -2074,7 +2045,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   onClick: () => handleExportToExcel()
                 },
                 {
-                  type: 'divider'
+                  type: 'divider' as const
                 },
                 {
                   key: 'export-package',
