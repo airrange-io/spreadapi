@@ -116,6 +116,9 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
   }
 
   if (input.type === 'number') {
+    // Detect percentage formatting
+    const isPercentage = input.format === 'percentage' || input.formatString?.includes('%');
+
     // Ensure min/max are numbers
     const minValue = input.min !== undefined ? Number(input.min) : undefined;
     const maxValue = input.max !== undefined ? Number(input.max) : undefined;
@@ -130,34 +133,36 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
         <Row gutter={16} align="middle">
           <Col flex="auto">
             <Slider
-              value={value}
-              onChange={onChange}
-              min={minValue}
-              max={maxValue}
-              step={getSmartStep(input.value, minValue, maxValue)}
+              value={isPercentage ? (value !== undefined ? value * 100 : undefined) : value}
+              onChange={(val) => onChange?.(isPercentage ? val / 100 : val)}
+              min={isPercentage && minValue !== undefined ? minValue * 100 : minValue}
+              max={isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue}
+              step={getSmartStep(input.value, minValue, maxValue) * (isPercentage ? 100 : 1)}
               tooltip={{
                 formatter: (val) => {
                   if (val === null || val === undefined) return '';
                   const num = typeof val === 'number' ? val : parseFloat(String(val));
                   if (isNaN(num)) return '';
-                  if (Number.isInteger(num)) {
-                    return formatters.integer.format(num);
+                  const displayNum = isPercentage ? num : num;
+                  if (Number.isInteger(displayNum)) {
+                    return formatters.integer.format(displayNum) + (isPercentage ? '%' : '');
                   }
-                  return formatters.decimal.format(num);
+                  return formatters.decimal.format(displayNum) + (isPercentage ? '%' : '');
                 }
               }}
             />
           </Col>
           <Col flex="120px">
             <InputNumber
-              value={value}
-              onChange={onChange}
+              value={isPercentage ? (value !== undefined ? value * 100 : undefined) : value}
+              onChange={(val) => onChange?.(val !== null && val !== undefined && isPercentage ? val / 100 : val)}
               style={{ width: '100%' }}
-              min={minValue}
-              max={maxValue}
-              step={getSmartStep(input.value, minValue, maxValue)}
+              min={isPercentage && minValue !== undefined ? minValue * 100 : minValue}
+              max={isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue}
+              step={getSmartStep(input.value, minValue, maxValue) * (isPercentage ? 100 : 1)}
               size="middle"
               keyboard={true}
+              addonAfter={isPercentage ? '%' : undefined}
               formatter={(val) => {
                 if (!val) return '';
                 const num = parseFloat(val.toString());
@@ -187,6 +192,47 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     }
 
     // Regular InputNumber without slider
+    // For percentage fields, we need a custom component to handle the conversion
+    if (isPercentage) {
+      const PercentageInput = ({ value, onChange }: { value?: number; onChange?: (val: number | null) => void }) => (
+        <InputNumber
+          value={value !== undefined ? value * 100 : undefined}
+          onChange={(val) => onChange?.(val !== null && val !== undefined ? val / 100 : null)}
+          style={{ width: '100%' }}
+          min={minValue !== undefined ? minValue * 100 : undefined}
+          max={maxValue !== undefined ? maxValue * 100 : undefined}
+          step={getSmartStep(input.value, minValue, maxValue) * 100}
+          placeholder={`Enter ${input.title || input.name}`}
+          size="middle"
+          keyboard={true}
+          addonAfter="%"
+          formatter={(value) => {
+            if (!value) return '';
+            const num = parseFloat(value.toString());
+            if (isNaN(num)) return value.toString();
+            if (Number.isInteger(num)) {
+              return formatters.integer.format(num);
+            }
+            return formatters.decimal.format(num);
+          }}
+          parser={parseLocaleNumber}
+        />
+      );
+
+      return (
+        <Form.Item
+          key={fieldName}
+          name={fieldName}
+          label={label}
+          rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+          style={{ marginBottom }}
+        >
+          <PercentageInput />
+        </Form.Item>
+      );
+    }
+
+    // Non-percentage InputNumber
     return (
       <Form.Item
         key={fieldName}

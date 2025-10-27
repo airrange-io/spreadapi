@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, Form, Button, Space, Typography, Alert, Card, Segmented } from 'antd';
 import { CaretRightOutlined } from '@ant-design/icons';
-import { validateParameters, applyDefaults, coerceTypes } from '@/lib/parameterValidation';
+import { applyDefaults } from '@/lib/parameterValidation';
 import { InputRenderer } from '@/components/InputRenderer';
 import type { InputDefinition, OutputDefinition } from './ParametersSection';
 
@@ -323,19 +323,15 @@ const TestPanel: React.FC<TestPanelProps> = ({
       const formValues = form.getFieldsValue();
       const startTime = Date.now();
 
-      // Step 1: Validate inputs
-      const validation = validateParameters(formValues, inputs);
-      if (!validation.valid) {
-        throw new Error(validation.message || 'Validation failed');
-      }
-
-      // Step 2: Apply defaults
+      // Apply defaults for optional parameters
       const withDefaults = applyDefaults(formValues, inputs);
 
-      // Step 3: Coerce types
-      const coerced = coerceTypes(withDefaults, inputs);
+      // NOTE: We do NOT use validateParameters/coerceTypes here because:
+      // - InputRenderer already handles percentage formatting (200% → 2)
+      // - coerceTypes is designed for API calls (where "200" means "200%")
+      // - Using coerceTypes would cause double conversion (2 → 0.02)
 
-      // Step 4: Set values in spreadsheet
+      // Set values in spreadsheet
       if (!spreadInstance) {
         throw new Error('Spreadsheet not loaded. Please switch to Workbook view first.');
       }
@@ -345,7 +341,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
       for (const input of inputs) {
         try {
           const key = input.name;
-          const value = coerced[key];
+          const value = withDefaults[key];
 
           // Validate and parse address
           const { sheetName } = parseAddress(input.address, input.name);
