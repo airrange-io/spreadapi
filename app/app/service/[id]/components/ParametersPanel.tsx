@@ -289,19 +289,33 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
     try {
       spreadInstance.suspendPaint();
-      
-      const targetSheet = spreadInstance.getSheetFromName(param.sheetName);
-      if (targetSheet) {
-        spreadInstance.setActiveSheet(targetSheet);
+
+      // Extract sheet name from address (e.g., "Sheet1!A1" or just "A1")
+      let sheetName = param.sheetName;
+      if (!sheetName && param.address) {
+        const addressParts = param.address.split('!');
+        if (addressParts.length > 1) {
+          sheetName = addressParts[0];
+        }
+      }
+
+      // Switch to target sheet if specified
+      if (sheetName) {
+        const targetSheet = spreadInstance.getSheetFromName(sheetName);
+        if (targetSheet) {
+          spreadInstance.setActiveSheet(targetSheet);
+        }
       }
 
       const sheet = spreadInstance.getActiveSheet();
       if (sheet) {
         sheet.setActiveCell(param.row, param.col);
         sheet.showCell(param.row, param.col, 3, 3);
-        
+
         sheet.clearSelection();
-        sheet.addSelection(param.row, param.col, param.rowCount, param.colCount);
+        const rowCount = param.rowCount || 1;
+        const colCount = param.colCount || 1;
+        sheet.addSelection(param.row, param.col, rowCount, colCount);
       }
     } finally {
       spreadInstance.resumePaint();
