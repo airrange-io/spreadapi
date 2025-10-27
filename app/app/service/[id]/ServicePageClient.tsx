@@ -1894,45 +1894,61 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           )}
         </Space>
 
-        <div ref={viewSwitcherRef}>
-          <Segmented
-            value={activeView}
-            // shape="round"
-            onChange={(value) => {
-              const newView = value as 'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage';
-              setActiveView(newView);
-              // Save view preference using helper
-              saveViewPreference(serviceId, newView);
-            }}
-            options={isMobile ? [
-            {
-              value: 'Settings',
-              icon: <Tooltip title="Settings"><SettingOutlined /></Tooltip>
-            },
-            {
-              value: 'Workbook',
-              icon: <Tooltip title="Workbook"><TableOutlined /></Tooltip>
-            },
-            {
-              value: 'API',
-              icon: <Tooltip title="API"><CaretRightOutlined /></Tooltip>
-            },
-            {
-              value: 'Agents',
-              icon: <Tooltip title="Agents"><RobotOutlined /></Tooltip>
-            },
-            {
-              value: 'Apps',
-              icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
-            },
-            {
-              value: 'Usage',
-              icon: <Tooltip title="Usage"><BarChartOutlined /></Tooltip>
-            }
-          ] : ['Settings', 'Workbook', 'API', 'Agents', 'Apps', 'Usage']}
-          style={{ marginLeft: 'auto', marginRight: 'auto' }}
-        />
-        </div>
+        <Space size="small">
+          <div ref={viewSwitcherRef}>
+            <Segmented
+              value={activeView}
+              // shape="round"
+              onChange={(value) => {
+                const newView = value as 'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage';
+                setActiveView(newView);
+                // Save view preference using helper
+                saveViewPreference(serviceId, newView);
+              }}
+              options={isMobile ? [
+              {
+                value: 'Settings',
+                icon: <Tooltip title="Settings"><SettingOutlined /></Tooltip>
+              },
+              {
+                value: 'Workbook',
+                icon: <Tooltip title="Workbook"><TableOutlined /></Tooltip>
+              },
+              {
+                value: 'API',
+                icon: <Tooltip title="API"><CaretRightOutlined /></Tooltip>
+              },
+              {
+                value: 'Agents',
+                icon: <Tooltip title="Agents"><RobotOutlined /></Tooltip>
+              },
+              {
+                value: 'Apps',
+                icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
+              },
+              {
+                value: 'Usage',
+                icon: <Tooltip title="Usage"><BarChartOutlined /></Tooltip>
+              }
+            ] : ['Settings', 'Workbook', 'API', 'Agents', 'Apps', 'Usage']}
+            style={{ marginLeft: 'auto', marginRight: 'auto' }}
+          />
+          </div>
+          {/* Test Parameters Button */}
+          {(apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0) && (
+            <Tooltip title="Test your service instantly! Play with parameters, change formulas, and see outputs in real-time - no publishing needed.">
+              <Button
+                ref={testButtonRef}
+                type="primary"
+                icon={<CaretRightOutlined />}
+                onClick={() => setTestPanelOpen(!testPanelOpen)}
+                style={{
+                  boxShadow: 'none',
+                }}
+              />
+            </Tooltip>
+          )}
+        </Space>
 
         <Space>
           {hasAnyChanges && !isDemoMode && (
@@ -2430,9 +2446,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           selectedCount={0}
           zoomLevel={zoomLevel}
           onZoomChange={handleZoomChange}
-          hasParameters={apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0}
-          onTestClick={() => setTestPanelOpen(!testPanelOpen)}
-          testButtonRef={testButtonRef}
         />
       </div>
 

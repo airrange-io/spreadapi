@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Slider, Space, Divider, Dropdown, Tooltip } from 'antd';
-import { TableOutlined, ZoomInOutlined, ZoomOutOutlined, CloseCircleOutlined, TagOutlined, CloseOutlined, HistoryOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { TableOutlined, ZoomInOutlined, ZoomOutOutlined, CloseCircleOutlined, TagOutlined, CloseOutlined, HistoryOutlined } from '@ant-design/icons';
 import { COLORS } from '@/constants/theme';
 
 interface StatusBarProps {
@@ -21,9 +21,6 @@ interface StatusBarProps {
   onTagRemove?: (tag: string) => void;
   changeCount?: number;
   onChangesClick?: () => void;
-  hasParameters?: boolean;
-  onTestClick?: () => void;
-  testButtonRef?: React.RefObject<HTMLButtonElement | HTMLAnchorElement>;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -38,9 +35,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onTagRemove,
   changeCount = 0,
   onChangesClick,
-  hasParameters = false,
-  onTestClick,
-  testButtonRef,
 }) => {
   // Create a lighter version of the primary color
   const lighterPrimary = '#6B4A99'; // Lighter shade of #4F2D7F
@@ -90,33 +84,6 @@ const StatusBar: React.FC<StatusBarProps> = ({
             )}
           </span> */}
         </div>
-
-        {/* Test Button - After table icon */}
-        {hasParameters && onTestClick && (
-          <>
-            <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} />
-            <Button
-              ref={testButtonRef}
-              type="text"
-              size="small"
-              icon={<CaretRightOutlined />}
-              onClick={onTestClick}
-              style={{
-                color: '#fff',
-                height: '24px',
-                padding: '0 0px',
-                opacity: 0.9,
-                fontSize: '13px',
-                fontWeight: 500
-              }}
-              title="Test current parameters"
-            >
-              Test Parameters
-            </Button>
-          </>
-        )}
-
-        {/* <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} /> */}
         
         {/* Selected Count - Clickable with menu */}
         {selectedCount > 0 && (
