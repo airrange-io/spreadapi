@@ -53,7 +53,15 @@
       "WebFetch(domain:sdk.vercel.ai)",
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:www.datacamp.com)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(npx @next/codemod@canary upgrade:*)",
+      "Bash(npx @next/codemod@canary middleware-to-proxy --force .)",
+      "Bash(tee:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
