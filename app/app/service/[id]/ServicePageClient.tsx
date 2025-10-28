@@ -1861,6 +1861,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             icon={<MenuOutlined />}
             onClick={appStore.toggleSidebar}
           />
+          {isMobile && (
+            <Tooltip title="Open parameters panel to configure inputs and outputs">
+              <Button
+                type="text"
+                icon={<MenuUnfoldOutlined />}
+                onClick={() => setDrawerVisible(!drawerVisible)}
+              />
+            </Tooltip>
+          )}
           {!isMobile && (
             <Breadcrumb
               items={[
@@ -1970,6 +1979,53 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               </span>
             </Button>
           )}
+
+          {/* Desktop Publish Button - Only visible on desktop */}
+          {!isMobile && !isDemoMode && (
+            serviceStatus?.published ? (
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'republish',
+                      label: 'Republish',
+                      icon: <CheckCircleOutlined />,
+                      onClick: handleRepublish,
+                      disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                    },
+                    {
+                      type: 'divider' as const
+                    },
+                    {
+                      key: 'unpublish',
+                      label: 'Unpublish',
+                      icon: <CloseCircleOutlined />,
+                      danger: true,
+                      onClick: handleUnpublish,
+                      disabled: hasAnyChanges
+                    }
+                  ]
+                }}
+                trigger={['click']}
+              >
+                <Button
+                  icon={<CheckCircleOutlined />}
+                  style={{ color: '#52c41a', borderColor: '#52c41a' }}
+                >
+                  Published <DownOutlined />
+                </Button>
+              </Dropdown>
+            ) : (
+              <Button
+                icon={<CheckCircleOutlined />}
+                onClick={handlePublish}
+                disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
+              >
+                Publish
+              </Button>
+            )
+          )}
+
           {/* Demo Mode Tag - Hidden on mobile */}
           {isDemoMode && !isMobile && (
             <Tag color='geekblue' style={{
@@ -1981,18 +2037,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               Demo Mode
             </Tag>
           )}
-          {isMobile && (
-            <Button
-              type="text"
-              icon={<MenuUnfoldOutlined />}
-              onClick={() => setDrawerVisible(!drawerVisible)}
-            />
-          )}
           <Dropdown
             menu={{
               items: [
-                // Publish/Draft options (only for non-demo services)
-                ...(!isDemoMode ? [
+                // Publish/Draft options (only for mobile and non-demo services)
+                ...(isMobile && !isDemoMode ? [
                   serviceStatus?.published ? {
                     key: 'republish',
                     label: 'Republish this service',
