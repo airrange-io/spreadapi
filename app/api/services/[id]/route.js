@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { revalidateServicesCache } from '@/lib/revalidateServices';
-import { isDemoService, DEMO_USER_ID } from '@/lib/constants';
+import { isDemoService } from '@/lib/constants';
 
 // GET /api/services/[id] - Get full service data
 export async function GET(request, { params }) {
@@ -26,9 +26,8 @@ export async function GET(request, { params }) {
       return new NextResponse(null, { status: 204 });
     }
     
-    // Verify ownership (allow demo-user to access demo service)
-    const isDemoAccess = userId === DEMO_USER_ID && isDemoService(serviceId);
-    if (serviceData.userId !== userId && !isDemoAccess) {
+    // Verify ownership (allow any authenticated user to access demo services)
+    if (serviceData.userId !== userId && !isDemoService(serviceId)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }

@@ -2016,13 +2016,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 </Button>
               </Dropdown>
             ) : (
-              <Button
-                icon={<CheckCircleOutlined />}
-                onClick={handlePublish}
-                disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
+              <Tooltip
+                title={
+                  hasAnyChanges
+                    ? 'Please save your changes before publishing'
+                    : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                    ? 'Please define at least one input, output, or editable area. Switch to the Workbook view to create your spreadsheet and define parameters.'
+                    : ''
+                }
               >
-                Publish
-              </Button>
+                <Button
+                  icon={<CheckCircleOutlined />}
+                  onClick={handlePublish}
+                  disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
+                >
+                  Publish
+                </Button>
+              </Tooltip>
             )
           )}
 
@@ -2047,13 +2057,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     label: 'Republish this service',
                     icon: <CheckCircleOutlined />,
                     onClick: handleRepublish,
-                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
+                    title: hasAnyChanges
+                      ? 'Please save your changes before republishing'
+                      : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      ? 'Please define at least one input, output, or editable area'
+                      : undefined
                   } : {
                     key: 'publish',
                     label: 'Publish this service',
                     icon: <CheckCircleOutlined />,
                     onClick: handlePublish,
-                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
+                    title: hasAnyChanges
+                      ? 'Please save your changes before publishing'
+                      : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      ? 'Please define at least one input, output, or editable area'
+                      : undefined
                   },
                   ...(serviceStatus?.published ? [{
                     key: 'unpublish',

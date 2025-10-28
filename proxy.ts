@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
 import { jwtVerify, createRemoteJWKSet } from "jose";
-import { DEMO_SERVICE_IDS, DEMO_USER_ID, isDemoService } from "@/lib/constants";
 
 const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
@@ -70,13 +69,6 @@ export async function proxy(req: NextRequest) {
   
   // Services list endpoint should be public to allow service discovery
   const isServicesListEndpoint = pathname === '/api/v1/services';
-  
-  // Extract service ID from pathname
-  const serviceIdMatch = pathname.match(/\/(app\/service|service|api\/services|api\/workbook)\/([^\/]+)/);
-  const serviceId = serviceIdMatch ? serviceIdMatch[2] : null;
-
-  // Allow unauthenticated access to demo services (both page and API routes)
-  const isDemoServiceRequest = serviceId && isDemoService(serviceId);
 
   // Check if this is a web app request (has token query parameter)
   const isWebAppRequest = pathname.match(/^\/app\/v1\/services\/[^\/]+$/) && req.nextUrl.searchParams.has('token');
@@ -84,21 +76,8 @@ export async function proxy(req: NextRequest) {
   // Check if this is a view route (embeddable views - should be public or token-protected)
   const isViewRoute = pathname.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+$/);
 
-  // Skip auth for public routes and demo service
-  if (!isProtectedRoute || isDemoServiceRequest || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
-    // For demo service, add a header to indicate read-only mode
-    if (isDemoServiceRequest) {
-      const requestHeaders = new Headers(req.headers);
-      requestHeaders.set('x-demo-mode', 'true');
-      requestHeaders.set('x-user-id', DEMO_USER_ID);
-      
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
-    }
-    
+  // Skip auth for public routes
+  if (!isProtectedRoute || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
     // For web app requests, add header to indicate public access
     if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);

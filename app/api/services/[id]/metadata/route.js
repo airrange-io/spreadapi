@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { isDemoService, DEMO_USER_ID } from '@/lib/constants';
+import { isDemoService } from '@/lib/constants';
 
 // GET /api/services/[id]/metadata - Get only service metadata without workbook
 export async function GET(request, { params }) {
@@ -32,9 +32,8 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Verify ownership
-    const isDemoAccess = userId === DEMO_USER_ID && isDemoService(id);
-    if (serviceData.userId !== userId && !isDemoAccess) {
+    // Verify ownership (allow any authenticated user to access demo services)
+    if (serviceData.userId !== userId && !isDemoService(id)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
