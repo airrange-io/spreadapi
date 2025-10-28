@@ -267,8 +267,8 @@ export async function GET(request, { params }) {
       headers: newHeaders,
       body: JSON.stringify(postBody)
     });
-    
-    const response = await POST(postRequest, { params: await params });
+
+    const response = await POST(postRequest, { params: Promise.resolve({ id: serviceId }) });
     
     // Check if the response is an error
     if (!response.ok) {
