@@ -4,7 +4,7 @@ import { DEMO_SERVICE_IDS, DEMO_USER_ID, isDemoService } from "@/lib/constants";
 
 const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   
   // Handle redirects for old URLs

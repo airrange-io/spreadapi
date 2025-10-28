@@ -36,7 +36,7 @@ export async function deleteServiceAction(serviceId: string, userId?: string): P
     await redis.hDel(`user:${userId}:services`, serviceId);
     
     // Revalidate the services cache
-    revalidateTag('services');
+    revalidateTag('services', 'max');
     
     return { success: true };
   } catch (error) {
@@ -46,5 +46,5 @@ export async function deleteServiceAction(serviceId: string, userId?: string): P
 }
 
 export async function revalidateServices() {
-  revalidateTag('services');
+  revalidateTag('services', 'max');
 }
