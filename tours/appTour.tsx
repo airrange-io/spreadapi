@@ -17,10 +17,10 @@ export const appTour: TourDefinition = {
       description: (
         <div>
           <p style={{ marginBottom: 12 }}>
-            These are <strong>demo services</strong> you can explore to get a good impression of how SpreadAPI works.
+            These are <strong>example services</strong> showing how SpreadAPI works.
           </p>
           <p style={{ margin: 0 }}>
-            Click on a service name to see the parameters, workbook, API endpoints, and web apps in action.
+            Click any service to explore its parameters, workbook, API endpoints, and web apps in action.
           </p>
         </div>
       ),

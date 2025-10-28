@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Hanko } from '@teamhanko/hanko-elements';
 import { useRouter, usePathname } from 'next/navigation';
-import { isDemoService } from '@/lib/constants';
 
 interface AuthContextType {
   user: any | null;
@@ -42,21 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check if we're on a public view route (embeddable snippets/apps)
   const isViewRoute = pathname?.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+/);
 
-  // Check if we're on a demo service page
-  const serviceIdMatch = pathname?.match(/\/app\/service\/([^\/]+)/);
-  const serviceId = serviceIdMatch ? serviceIdMatch[1] : null;
-  const isDemoServicePage = serviceId ? isDemoService(serviceId) : false;
-
   useEffect(() => {
-    // Skip Hanko initialization on public view routes and demo service pages
-    if (isViewRoute || isDemoServicePage) {
+    // Skip Hanko initialization only on public view routes (embeds)
+    if (isViewRoute) {
       setLoading(false);
       return;
     }
 
     const hankoInstance = new Hanko(hankoApi);
     setHanko(hankoInstance);
-  }, [isViewRoute, isDemoServicePage]);
+  }, [isViewRoute]);
 
   useEffect(() => {
     if (!hanko) return;

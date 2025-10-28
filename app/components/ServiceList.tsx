@@ -541,7 +541,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     icon={<EditOutlined />}
                     onClick={() => handleEdit(service.id)}
                   >
-                    {service.id === DEMO_SERVICE_ID ? 'Try Demo' : 'Edit'}
+                    Edit
                   </Button>
                 </div>,
                 // <div onClick={(e) => e.stopPropagation()}>
