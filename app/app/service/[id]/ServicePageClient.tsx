@@ -178,7 +178,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Load tour dynamically only when conditions are met and tour hasn't been completed
   useEffect(() => {
-    const shouldShowTour = isDemoMode && activeView === 'Workbook' && workbookLoaded;
+    const shouldShowTour = isDemoMode && activeView === 'Workbook' && workbookLoaded && !isMobile;
 
     if (!shouldShowTour) return;
 

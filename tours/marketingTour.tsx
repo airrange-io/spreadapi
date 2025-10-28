@@ -13,14 +13,11 @@ export const marketingTour: TourDefinition = {
   route: '/',
   steps: [
     {
-      title: 'Try SpreadAPI Without Signing Up!',
+      title: "Try SpreadAPI - It's Free to Get Started!",
       description: (
         <div>
-          <p style={{ marginBottom: 12 }}>
-            Click <strong>"Get Started"</strong> to see SpreadAPI in action.
-          </p>
           <p style={{ margin: 0 }}>
-            You can <strong>explore demo services, test APIs, and see the workbook editor</strong> — all without creating an account!
+            Create your free SpreadAPI account to explore demo services, test APIs, and use the workbook editor — no credit card required!
           </p>
         </div>
       ),

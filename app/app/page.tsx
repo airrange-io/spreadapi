@@ -69,6 +69,9 @@ const ListsPage: React.FC = observer(() => {
 
   // Load tour dynamically only when user hasn't seen it
   useEffect(() => {
+    // Don't show tour on mobile devices
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+
     // Check localStorage first (zero cost for returning users)
     const tourCompleted = typeof window !== 'undefined' &&
       localStorage.getItem('spreadapi_tour_completed_app-welcome-tour') === 'true';
