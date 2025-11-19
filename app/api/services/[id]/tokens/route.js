@@ -71,13 +71,12 @@ export async function GET(request, { params }) {
       .map((tokenData, index) => {
         if (!tokenData || Object.keys(tokenData).length === 0) return null;
         
-        // Don't return the actual token hash
-        const { tokenHash, ...safeData } = tokenData;
-        
+        // Don't return the actual token hash or scopes
+        const { tokenHash, scopes, ...safeData } = tokenData;
+
         return {
           id: tokenIds[index],
           ...safeData,
-          scopes: safeData.scopes ? JSON.parse(safeData.scopes) : [],
           createdAt: safeData.createdAt || null,
           lastUsedAt: safeData.lastUsedAt || null,
           expiresAt: safeData.expiresAt || null,
@@ -122,7 +121,7 @@ export async function POST(request, { params }) {
     }
     
     const body = await request.json();
-    const { name, description, scopes = ['execute'], expiresAt } = body;
+    const { name, description, expiresAt } = body;
     
     if (!name) {
       return NextResponse.json(
@@ -153,7 +152,6 @@ export async function POST(request, { params }) {
       serviceId: id,
       name,
       description: description || '',
-      scopes: JSON.stringify(scopes),
       tokenHash,
       createdAt: new Date().toISOString(),
       usageCount: '0',
@@ -184,7 +182,6 @@ export async function POST(request, { params }) {
       token, // This is the only time we return the actual token
       name,
       description: description || '',
-      scopes,
       createdAt: tokenData.createdAt,
       expiresAt: expiresAt || null,
       message: 'Save this token securely. It will not be shown again.'

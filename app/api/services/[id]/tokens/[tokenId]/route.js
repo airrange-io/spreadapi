@@ -107,13 +107,12 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Token does not belong to this service' }, { status: 403 });
     }
     
-    // Don't return the token hash
-    const { tokenHash, ...safeData } = tokenData;
-    
+    // Don't return the token hash or scopes
+    const { tokenHash, scopes, ...safeData } = tokenData;
+
     return NextResponse.json({
       id: tokenId,
       ...safeData,
-      scopes: safeData.scopes ? JSON.parse(safeData.scopes) : [],
       createdAt: safeData.createdAt || null,
       lastUsedAt: safeData.lastUsedAt || null,
       expiresAt: safeData.expiresAt || null,

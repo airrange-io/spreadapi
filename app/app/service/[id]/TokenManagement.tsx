@@ -37,7 +37,6 @@ interface Token {
   id: string;
   name: string;
   description?: string;
-  scopes: string[];
   createdAt: string;
   lastUsedAt?: string;
   expiresAt?: string;
@@ -148,7 +147,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         body: JSON.stringify({
           name: values.name,
           description: values.description,
-          scopes: values.scopes || ['read'],
           expiresAt: values.expiresAt ? values.expiresAt.toISOString() : undefined
         })
       });
@@ -218,31 +216,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           <Text strong>{name}</Text>
         </Space>
       )
-    },
-    {
-      title: 'Scopes',
-      dataIndex: 'scopes',
-      key: 'scopes',
-      render: (scopes: string[]) => {
-        const scopeLabels: Record<string, { label: string; color: string }> = {
-          execute: { label: 'Execute API', color: 'green' },
-          mcp: { label: 'MCP Access', color: 'purple' },
-          '*': { label: 'All Permissions', color: 'red' }
-        };
-
-        return (
-          <Space>
-            {scopes.map(scope => {
-              const scopeInfo = scopeLabels[scope] || { label: scope, color: 'default' };
-              return (
-                <Tag key={scope} color={scopeInfo.color}>
-                  {scopeInfo.label}
-                </Tag>
-              );
-            })}
-          </Space>
-        );
-      }
     },
     {
       title: 'Usage',
@@ -404,7 +377,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           >
             <Input
               placeholder="e.g., Production API Key"
-              prefix={<KeyOutlined />}
             />
           </Form.Item>
 
@@ -415,21 +387,6 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             <Input.TextArea
               placeholder="Optional description for this token"
               rows={2}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="scopes"
-            label="Permissions"
-            initialValue={['execute']}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select token permissions"
-              options={[
-                { label: 'Execute API', value: 'execute', description: 'Can call the service and get results' },
-                { label: 'MCP Access', value: 'mcp', description: 'For MCP client connections (future)' }
-              ]}
             />
           </Form.Item>
 

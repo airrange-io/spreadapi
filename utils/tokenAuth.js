@@ -87,10 +87,7 @@ export async function validateServiceToken(request, serviceId) {
     return {
       valid: true,
       tokenId,
-      tokenData: {
-        ...tokenData,
-        scopes: tokenData.scopes ? JSON.parse(tokenData.scopes) : []
-      }
+      tokenData
     };
     
   } catch (error) {
@@ -101,54 +98,4 @@ export async function validateServiceToken(request, serviceId) {
       status: 500
     };
   }
-}
-
-// Helper function to check if token has required scope
-export function hasScope(tokenData, requiredScope) {
-  if (!tokenData.scopes || !Array.isArray(tokenData.scopes)) {
-    return false;
-  }
-  
-  // Token with 'execute' scope can perform the main service operation
-  return tokenData.scopes.includes(requiredScope) || 
-         tokenData.scopes.includes('*') ||
-         tokenData.scopes.includes('execute'); // execute grants general API access
-}
-
-// Middleware helper for protected routes
-export async function requireTokenAuth(request, serviceId, requiredScope = 'execute') {
-  const validation = await validateServiceToken(request, serviceId);
-  
-  if (!validation.valid) {
-    return {
-      authorized: false,
-      response: new Response(
-        JSON.stringify({ error: validation.error }),
-        { 
-          status: validation.status,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
-    };
-  }
-  
-  // Check scope if required
-  if (requiredScope && !hasScope(validation.tokenData, requiredScope)) {
-    return {
-      authorized: false,
-      response: new Response(
-        JSON.stringify({ error: 'Insufficient permissions' }),
-        { 
-          status: 403,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
-    };
-  }
-  
-  return {
-    authorized: true,
-    tokenData: validation.tokenData,
-    tokenId: validation.tokenId
-  };
 }
