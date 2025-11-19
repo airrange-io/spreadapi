@@ -305,7 +305,7 @@ const AppsView: React.FC<AppsViewProps> = ({
             <Space direction="vertical" style={{ width: '100%' }} size={16}>
               <div>
                 <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                  Access Token
+                  Web App Token
                 </div>
                 <Space.Compact style={{ width: '100%' }}>
                   <Input
