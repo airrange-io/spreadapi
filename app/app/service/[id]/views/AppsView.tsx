@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useLayoutEffect, Suspense, useEffect, useCallback } from 'react';
 import { Skeleton, Menu, Button, Input, Alert, Modal, Tooltip, Space, Typography, QRCode, Select, Segmented, Card, Row, Col, Layout } from 'antd';
-import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined, FullscreenOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined, FolderOutlined, FileTextOutlined, AppstoreOutlined, QrcodeOutlined, DownloadOutlined, BgColorsOutlined, FullscreenOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
 import { VIEW_THEMES } from '@/lib/viewThemes';
@@ -61,6 +61,7 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('all');
   const [showCaption, setShowCaption] = useState<boolean>(true);
   const [menuCollapsed, setMenuCollapsed] = useState(false);
+  const [appRulesCollapsed, setAppRulesCollapsed] = useState(true);
 
   // Track fade-in effect separately
   useLayoutEffect(() => {
@@ -274,13 +275,6 @@ const AppsView: React.FC<AppsViewProps> = ({
     if (selectedKey === 'intro') {
       return (
         <div>
-          <Alert
-            message="Build Web Applications & Embeddable Snippets"
-            description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation."
-            type="info"
-            style={{ marginTop: -2, marginBottom: 24, padding: 10, paddingLeft: 15 }}
-          />
-
           <h3 style={{ marginTop: 0, marginBottom: 16 }}>Token Management</h3>
 
           {!webAppToken ? (
@@ -332,6 +326,12 @@ const AppsView: React.FC<AppsViewProps> = ({
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
                   Regenerate to revoke access to old links
                 </div>
+                <Alert
+                  message="Build Web Applications & Embeddable Snippets"
+                  description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation. All requests are rate limited to 1,000 requests per minute per service."
+                  type="info"
+                  style={{ marginTop: 24, marginBottom: 24, padding: 10, paddingLeft: 15 }}
+                />
               </div>
             </Space>
           )}
@@ -642,13 +642,27 @@ const AppsView: React.FC<AppsViewProps> = ({
           )}
 
           <div>
-            <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-              App Rules (Advanced)
-              <Tooltip title={
-                <div>
-                  <div style={{ marginBottom: 8 }}>Control which inputs/outputs are visible based on input values.</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: 11, whiteSpace: 'pre' }}>
-{`{
+            <div
+              style={{
+                marginBottom: 8,
+                fontSize: 12,
+                color: '#666',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'space-between',
+                cursor: 'pointer'
+              }}
+              onClick={() => setAppRulesCollapsed(!appRulesCollapsed)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                App Rules (Advanced)
+                <Tooltip title={
+                  <div>
+                    <div style={{ marginBottom: 8 }}>Control which inputs/outputs are visible based on input values.</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 11, whiteSpace: 'pre' }}>
+                      {`{
   "rules": [
     {
       "input": "inputName",
@@ -659,32 +673,38 @@ const AppsView: React.FC<AppsViewProps> = ({
     }
   ]
 }`}
+                    </div>
                   </div>
-                </div>
-              }>
-                <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14, cursor: 'help' }} />
-              </Tooltip>
-            </div>
-            <TextArea
-              value={webAppConfig}
-              onChange={(e) => handleConfigChange(e.target.value)}
-              placeholder='{"rules": []}'
-              rows={6}
-              style={{
-                fontFamily: 'monospace',
-                fontSize: 12,
-                backgroundColor: '#f5f5f5'
-              }}
-              disabled={isLoading || isDemoMode}
-            />
-            {configError && (
-              <div style={{ fontSize: 11, color: '#ff4d4f', marginTop: 4 }}>
-                {configError}
+                }>
+                  <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14, cursor: 'help' }} onClick={(e) => e.stopPropagation()} />
+                </Tooltip>
               </div>
-            )}
-            <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-              Leave empty for default behavior (show all outputs)
+              {appRulesCollapsed ? <DownOutlined style={{ fontSize: 12, marginRight: 8 }} /> : <UpOutlined style={{ fontSize: 12, marginRight: 8 }} />}
             </div>
+            {!appRulesCollapsed && (
+              <>
+                <TextArea
+                  value={webAppConfig}
+                  onChange={(e) => handleConfigChange(e.target.value)}
+                  placeholder='{"rules": []}'
+                  rows={6}
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    backgroundColor: '#f5f5f5'
+                  }}
+                  disabled={isLoading || isDemoMode}
+                />
+                {configError && (
+                  <div style={{ fontSize: 11, color: '#ff4d4f', marginTop: 4 }}>
+                    {configError}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                  Leave empty for default behavior (show all outputs)
+                </div>
+              </>
+            )}
           </div>
 
           {/* Preview Section */}
@@ -869,26 +889,28 @@ const AppsView: React.FC<AppsViewProps> = ({
       icon: <BgColorsOutlined />,
       label: 'Theme'
     },
-    {
-      key: 'webapp-folder',
-      icon: <AppstoreOutlined />,
-      label: 'Web App',
-      children: (webAppToken || isDemoMode) ? [
-        {
-          key: 'webapp',
-          label: 'Default App'
-        }
-      ] : []
-    },
-    {
-      key: 'templates-folder',
-      icon: <FolderOutlined />,
-      label: 'Web Snippets',
-      children: Object.values(SYSTEM_TEMPLATES).map(template => ({
-        key: template.id,
-        label: template.name
-      }))
-    }
+    ...(webAppToken || isDemoMode ? [
+      {
+        key: 'webapp-folder',
+        icon: <AppstoreOutlined />,
+        label: 'Web App',
+        children: [
+          {
+            key: 'webapp',
+            label: 'Default App'
+          }
+        ]
+      },
+      {
+        key: 'templates-folder',
+        icon: <FolderOutlined />,
+        label: 'Web Snippets',
+        children: Object.values(SYSTEM_TEMPLATES).map(template => ({
+          key: template.id,
+          label: template.name
+        }))
+      }
+    ] : [])
   ];
 
   return (

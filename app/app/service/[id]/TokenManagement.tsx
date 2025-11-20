@@ -222,10 +222,10 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       dataIndex: 'usageCount',
       key: 'usageCount',
       render: (count: number, record: Token) => {
-        const lastUsedText = record.lastUsedAt 
+        const lastUsedText = record.lastUsedAt
           ? `Last used: ${dayjs(record.lastUsedAt).format('YYYY-MM-DD HH:mm:ss')} (${dayjs(record.lastUsedAt).fromNow()})`
           : 'Never used';
-        
+
         return (
           <Tooltip title={lastUsedText}>
             <Text>{count.toLocaleString()} calls</Text>
@@ -347,7 +347,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
                   The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
               ) : (
                 <>When you create API tokens, you'll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
-                  to authenticate your API calls. The test will automatically include the token parameter placeholder.</>
+                  to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
               )}
             </Text>
           </div>

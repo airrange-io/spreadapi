@@ -54,9 +54,10 @@ interface Props {
   serviceData: ServiceData;
   initialLanguage: 'de' | 'en';
   themeStyles: ViewTheme['styles'];
+  webAppToken: string;
 }
 
-export default function WebAppClient({ serviceId, serviceData, initialLanguage, themeStyles }: Props) {
+export default function WebAppClient({ serviceId, serviceData, initialLanguage, themeStyles, webAppToken }: Props) {
   const [form] = Form.useForm();
   const [executing, setExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -508,6 +509,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           params.append(key, String(value));
         }
       });
+
+      // Add webApp token for authentication
+      if (webAppToken) {
+        params.append('token', webAppToken);
+      }
 
       const response = await fetch(`/api/v1/services/${serviceId}/execute?${params.toString()}`, {
         signal: abortController.signal

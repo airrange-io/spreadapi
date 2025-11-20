@@ -97,6 +97,7 @@ function logCalls(apiId, apiToken) {
  */
 export async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
   const timeAll = Date.now();
+  const { nocdn = false, nocache = false, isWebAppAuthenticated = false } = options;
 
   try {
     // Log the call
@@ -105,9 +106,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     // L1: Check result cache FIRST (fastest - complete result cached)
     // This is the express lane: if exact same calculation was done before, return it immediately
     // Uses Redis Hash: all results for a service stored in single hash for efficient invalidation
-    // options.nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
-    // options.nocache = bypass ALL caches (HTTP/edge + Redis result cache + workbook cache)
-    if (!options.nocache) {
+    // nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
+    // nocache = bypass ALL caches (HTTP/edge + Redis result cache + workbook cache)
+    if (!nocache) {
       const inputHash = generateResultCacheHash(inputs);
       const cacheKey = CACHE_KEYS.resultCache(serviceId);
 
@@ -159,7 +160,8 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     }
 
     // Check token authentication if required
-    if (apiDefinition.needsToken || apiDefinition.requireToken) {
+    // Skip validation if request is from authenticated WebApp
+    if ((apiDefinition.needsToken || apiDefinition.requireToken) && !isWebAppAuthenticated) {
       const mockRequest = {
         headers: {
           get: (name) => {
@@ -229,9 +231,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       }
     }
     // Server-side caching (result cache, workbook cache, process cache)
-    // options.nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
-    // options.nocache = bypass ALL caches including Redis (forces fresh calculation)
-    const useCaching = apiDefinition.useCaching !== false && !options.nocache;
+    // nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
+    // nocache = bypass ALL caches including Redis (forces fresh calculation)
+    const useCaching = apiDefinition.useCaching !== false && !nocache;
 
     let spread;
     let fromProcessCache = false;

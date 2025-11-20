@@ -204,7 +204,7 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
             ${customCss}
           `
         }} />
-        <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} themeStyles={themeStyles} />
+        <WebAppClient serviceId={serviceId} serviceData={serviceInfo} initialLanguage={userLanguage} themeStyles={themeStyles} webAppToken={token || ''} />
       </>
     );
   } catch (error) {

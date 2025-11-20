@@ -31,16 +31,20 @@ export async function POST(request, { params}) {
       return NextResponse.json(errorBody, { status });
     }
 
-    // Rate limiting check
+    // Validate webApp token and determine if this is a webApp request
     const token = body.token;
-    const clientIp = request.headers.get('x-forwarded-for') ||
-                     request.headers.get('x-real-ip') ||
-                     'unknown';
+    let isWebAppAuthenticated = false;
+    if (token && !token.startsWith('svc_tk_')) {
+      // Looks like a webApp token - validate it
+      const webAppToken = await redis.hGet(`service:${serviceId}`, 'webAppToken');
+      if (webAppToken === token) {
+        isWebAppAuthenticated = true;
+      }
+    }
 
-    // Determine rate limit tier (simplified - using token presence)
-    const rateLimitConfig = token ? RATE_LIMITS.PRO : RATE_LIMITS.IP_LIMIT;
-    const rateLimitKey = token ? `service:${serviceId}:token:${token}` : `ip:${clientIp}`;
-
+    // Rate limiting - apply to ALL requests (1000/min per service)
+    const rateLimitConfig = RATE_LIMITS.PRO;
+    const rateLimitKey = `service:${serviceId}`;
     const rateLimitResult = await checkRateLimit(rateLimitKey, rateLimitConfig);
 
     if (!rateLimitResult.allowed) {
@@ -77,7 +81,8 @@ export async function POST(request, { params}) {
     const calcStart = Date.now();
     const result = await calculateDirect(serviceId, body.inputs, body.token, {
       nocdn: body.nocdn,
-      nocache: body.nocache
+      nocache: body.nocache,
+      isWebAppAuthenticated
     });
     console.log(`[v1/execute] Direct calculation: ${Date.now() - calcStart}ms`);
     
