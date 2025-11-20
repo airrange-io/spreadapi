@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col } from 'antd';
-import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined } from '@ant-design/icons';
+import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Tooltip } from 'antd';
+import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 
 const { Text } = Typography;
@@ -127,7 +127,12 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     }
   };
 
-  // Remove this function as Form handles the state
+  // Handle opening URL in new tab
+  const handleOpenUrl = () => {
+    if (wizardUrl) {
+      window.open(wizardUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   // Build wizard test URL dynamically
   const buildWizardUrl = (params: Record<string, any>) => {
@@ -367,18 +372,26 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             />
           </div>
 
-          {/* Test Button */}
-          <Button
-            type="primary"
-            icon={<PlayCircleOutlined />}
-            onClick={handleWizardTest}
-            loading={wizardTesting}
-            disabled={!isPublished}
-            block
-            style={{ marginTop: 15, marginBottom: 15 }}
-          >
-            Run Test
-          </Button>
+          {/* Test Buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 15, marginBottom: 15 }}>
+            <Button
+              type="primary"
+              icon={<PlayCircleOutlined />}
+              onClick={handleWizardTest}
+              loading={wizardTesting}
+              disabled={!isPublished}
+              style={{ boxShadow: 'none', flex: 1 }}
+            >
+              Run Test
+            </Button>
+            <Tooltip title="Open URL in new tab">
+              <Button
+                icon={<ExportOutlined />}
+                onClick={handleOpenUrl}
+                disabled={!isPublished || !wizardUrl}
+              />
+            </Tooltip>
+          </div>
 
           {/* Results Section */}
           {(wizardResult || wizardError) && (

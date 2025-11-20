@@ -4,6 +4,14 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
+  // Speed up development
+  ...(process.env.NODE_ENV === 'development' && {
+    typescript: {
+      // Disable type checking during dev (run separately with npm run typecheck)
+      ignoreBuildErrors: true,
+    },
+  }),
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -33,10 +41,9 @@ const nextConfig = {
   
   experimental: {
     // Optimize package imports (removed @mescius packages as they're in serverExternalPackages)
-    optimizePackageImports: ['antd', '@ant-design/icons', 'rc-slider'],
-    // Better memory usage
-    workerThreads: false,
-    cpus: 1,
+    optimizePackageImports: ['antd', '@ant-design/icons', 'rc-slider', 'react-syntax-highlighter'],
+    // Enable Turbopack file system caching for faster dev server restarts (beta)
+    turbopackFileSystemCacheForDev: true,
   },
   webpack: (config, { isServer, nextRuntime, webpack }) => {
     // Avoid bundling native modules on the server
