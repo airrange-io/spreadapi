@@ -58,8 +58,8 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [fullScreenOpen, setFullScreenOpen] = useState(false);
   const [fullScreenContent, setFullScreenContent] = useState<{ url: string; title: string } | null>(null);
   const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('all');
-  const [showCaption, setShowCaption] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<'results' | 'inputs' | 'all'>('results');
+  const [showCaption, setShowCaption] = useState<boolean>(false);
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const [appRulesCollapsed, setAppRulesCollapsed] = useState(true);
 
