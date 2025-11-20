@@ -120,10 +120,12 @@ export const CACHE_KEYS = {
   // API definition cache
   apiCache: (serviceId: string) => `service:${serviceId}:cache:api`,
 
-  // Calculation result cache (standard - inputs only)
-  resultCache: (serviceId: string, inputHash: string) => `service:${serviceId}:cache:result:${inputHash}`,
+  // Calculation result cache - Hash containing all results for a service
+  // Hash fields are inputHash -> JSON stringified result
+  // Allows O(1) invalidation by deleting entire hash on publish
+  resultCache: (serviceId: string) => `service:${serviceId}:cache:results`,
 
-  // Enhanced result cache (includes area state)
+  // Enhanced result cache (includes area state) - Used by MCP for area-aware caching
   enhancedResultCache: (serviceId: string, enhancedHash: string) => `service:${serviceId}:cache:result:enhanced:${enhancedHash}`,
 
   // Workbook process cache (if needed in future)
@@ -134,7 +136,44 @@ export const CACHE_KEYS = {
  * Cache TTL values in seconds
  */
 export const CACHE_TTL = {
-  api: 30 * 60,      // 30 minutes for API definitions
-  result: 5 * 60,    // 5 minutes for calculation results
-  workbook: 60 * 60  // 60 minutes for workbooks
+  api: 24 * 60 * 60, // 24 hours for API definitions (invalidated on publish)
+  result: 15 * 60,   // 15 minutes for calculation results (with invalidation on publish)
+  workbook: 10 * 60  // 10 minutes for workbooks (future use)
 };
+
+/**
+ * Invalidate all cached results for a service
+ * Call this when a service is published/updated to ensure fresh calculations
+ *
+ * Uses hash-based storage: deletes single hash containing all results (O(1) operation)
+ * Much more efficient than scanning/deleting individual keys
+ *
+ * @param redis - Redis client instance
+ * @param serviceId - Service ID to invalidate
+ * @returns Number of keys deleted
+ */
+export async function invalidateServiceCache(redis: any, serviceId: string): Promise<number> {
+  try {
+    // Delete ALL caches for this service when republished
+    // Use multi for atomic deletion in single round-trip
+    const apiCacheKey = CACHE_KEYS.apiCache(serviceId);
+    const resultCacheKey = `service:${serviceId}:cache:results`; // Hash-based result cache
+    const workbookKey = CACHE_KEYS.workbookCache(serviceId);
+
+    const multi = redis.multi();
+    multi.del(apiCacheKey);    // Clear API metadata so fresh version is loaded
+    multi.del(resultCacheKey); // Clear calculation results
+    multi.del(workbookKey);    // Clear workbook cache
+    const results = await multi.exec();
+
+    const deletedApi = results[0];
+    const deletedResults = results[1];
+
+    console.log(`[Cache] Invalidated service ${serviceId}: API=${deletedApi > 0 ? 'yes' : 'no'}, Results=${deletedResults > 0 ? 'yes' : 'no'}`);
+
+    return deletedApi + deletedResults;
+  } catch (error) {
+    console.error(`Error invalidating cache for ${serviceId}:`, error);
+    return 0;
+  }
+}
