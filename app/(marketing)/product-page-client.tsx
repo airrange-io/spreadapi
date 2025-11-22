@@ -6,6 +6,7 @@ import './product.css';
 import Footer from '@/components/product/Footer';
 import { developerFAQs } from '@/data/developer-faq';
 import ProductHeader from '@/components/product/ProductHeader';
+import WistiaVideo from '@/components/product/WistiaVideo';
 import Navigation from '@/components/Navigation';
 
 const ProductPage: React.FC = () => {
@@ -122,6 +123,9 @@ const ProductPage: React.FC = () => {
               secondaryButtonHref="/docs"
               showImage={true}
             />
+
+            {/* Wistia Video Section */}
+            <WistiaVideo />
 
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
