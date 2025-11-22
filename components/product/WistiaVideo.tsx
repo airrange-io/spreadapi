@@ -37,17 +37,28 @@ export default function WistiaVideo({
   return (
     <section style={{
       background: '#ffffff',
-      padding: '60px 0'
+      padding: 0,
+      paddingBottom: 60
     }}>
       <div className="padding-global">
         <div className="container-large">
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+            {/* Subheading */}
+            <div className="margin-bottom margin-xsmall" style={{ textAlign: 'center' }}>
+              <div className="subheading">
+                <div>Learn how to turn an Excel model in an API in 2 Minutes</div>
+              </div>
+            </div>
+
             {/* Wistia Responsive Embed - Modern Standard (Async) Implementation */}
             <div
               className="wistia_responsive_padding"
               style={{
                 padding: `${paddingBottom} 0 0 0`,
-                position: 'relative'
+                position: 'relative',
+                border: '2px solid #E7E1FF',
+                borderRadius: '16px',
+                overflow: 'hidden'
               }}
             >
               <div

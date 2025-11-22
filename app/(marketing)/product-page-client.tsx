@@ -117,10 +117,10 @@ const ProductPage: React.FC = () => {
               subheading="Headless Spreadsheets for AI & Automation"
               title={<>Turn Excel Into Live APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
               description="Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic."
-              primaryButtonText="Create your first free Excel API"
-              primaryButtonHref="/app"
-              secondaryButtonText="View Documentation"
-              secondaryButtonHref="/docs"
+              // primaryButtonText="Create your first free Excel API"
+              // primaryButtonHref="/app"
+              secondaryButtonText="Create your first free Excel API"
+              secondaryButtonHref="/app"
               showImage={true}
             />
 
