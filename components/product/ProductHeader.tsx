@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -13,6 +13,10 @@ interface ProductHeaderProps {
   secondaryButtonText?: string;
   secondaryButtonHref?: string;
   showImage?: boolean;
+  showVideo?: boolean;
+  videoSubheading?: string;
+  englishVideoId?: string;
+  germanVideoId?: string;
   primaryButtonRef?: React.RefObject<HTMLAnchorElement>;
 }
 
@@ -25,8 +29,32 @@ export default function ProductHeader({
   secondaryButtonText,
   secondaryButtonHref,
   showImage = false,
+  showVideo = false,
+  videoSubheading = 'From Excel to API in Minutes — Power Automations, Apps & AI Agents',
+  englishVideoId = 'rfdcf8rpnd',
+  germanVideoId = 'pi5ljxwf4o',
   primaryButtonRef
 }: ProductHeaderProps) {
+  // Video language detection - always default to English on server to avoid hydration mismatch
+  const [selectedVideoId, setSelectedVideoId] = useState(englishVideoId);
+
+  useEffect(() => {
+    if (showVideo) {
+      // Only detect language on client side after hydration
+      if (typeof navigator !== 'undefined') {
+        const isGerman = navigator.language?.startsWith('de');
+        setSelectedVideoId(isGerman ? germanVideoId : englishVideoId);
+      }
+
+      // Load Wistia script if not already loaded
+      if (typeof window !== 'undefined' && !(window as any)._wq) {
+        const script = document.createElement('script');
+        script.src = 'https://fast.wistia.com/assets/external/E-v1.js';
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, [showVideo, germanVideoId, englishVideoId]);
   return (
     <header className="section-home-header">
       <div className="padding-global">
@@ -98,6 +126,52 @@ export default function ProductHeader({
                       }}
                       priority
                     />
+                  </div>
+                </div>
+              )}
+
+              {showVideo && (
+                <div style={{ marginTop: '60px' }}>
+                  <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    {/* Wistia Responsive Embed - Modern Standard (Async) Implementation */}
+                    <div
+                      className="wistia_responsive_padding"
+                      style={{
+                        padding: '56.25% 0 0 0',
+                        position: 'relative',
+                        border: '2px solid #E7E1FF',
+                        borderRadius: '16px',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <div
+                        className="wistia_responsive_wrapper"
+                        style={{
+                          height: '100%',
+                          left: 0,
+                          position: 'absolute',
+                          top: 0,
+                          width: '100%'
+                        }}
+                      >
+                        <div
+                          className={`wistia_embed wistia_async_${selectedVideoId} videoFoam=true preload=metadata`}
+                          style={{
+                            height: '100%',
+                            position: 'relative',
+                            width: '100%'
+                          }}
+                        >
+                          &nbsp;
+                        </div>
+                      </div>
+                    </div>
+                    {/* Subheading */}
+                    <div className="margin-top margin-small" style={{ textAlign: 'center' }}>
+                      <div className="subheading">
+                        <div>{videoSubheading}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
