@@ -37,13 +37,15 @@ export default function ProductHeader({
 }: ProductHeaderProps) {
   // Video language detection - always default to English on server to avoid hydration mismatch
   const [selectedVideoId, setSelectedVideoId] = useState(englishVideoId);
+  const [isGerman, setIsGerman] = useState(false);
 
   useEffect(() => {
     if (showVideo) {
       // Only detect language on client side after hydration
       if (typeof navigator !== 'undefined') {
-        const isGerman = navigator.language?.startsWith('de');
-        setSelectedVideoId(isGerman ? germanVideoId : englishVideoId);
+        const german = navigator.language?.startsWith('de');
+        setIsGerman(german);
+        setSelectedVideoId(german ? germanVideoId : englishVideoId);
       }
 
       // Load Wistia script if not already loaded
@@ -169,7 +171,11 @@ export default function ProductHeader({
                     {/* Subheading */}
                     <div className="margin-top margin-small" style={{ textAlign: 'center' }}>
                       <div className="subheading">
-                        <div>{videoSubheading}</div>
+                        <div>
+                          {isGerman
+                            ? 'Von Excel zur API in Minuten — Automatisierung, Apps & KI-Agenten'
+                            : videoSubheading}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -56,6 +56,7 @@ const ListsPage: React.FC = observer(() => {
   const [isCreatingService, setIsCreatingService] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
+  const [isGerman, setIsGerman] = useState(false);
 
   // Tour refs
   const demoServicesRef = useRef<HTMLDivElement>(null);
@@ -151,8 +152,9 @@ const ListsPage: React.FC = observer(() => {
   // Detect language for video selection
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
-      const isGerman = navigator.language?.startsWith('de');
-      setSelectedVideoId(isGerman ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
+      const german = navigator.language?.startsWith('de');
+      setIsGerman(german);
+      setSelectedVideoId(german ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
     }
   }, []);
 
@@ -668,8 +670,12 @@ const ListsPage: React.FC = observer(() => {
                           </div>
                         </div>
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>Watch Video</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>5 minute tutorial</div>
+                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
+                            {isGerman ? 'Video ansehen' : 'Watch Video'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            {isGerman ? '5-Minuten-Tutorial' : '5 minute tutorial'}
+                          </div>
                         </div>
                       </div>
 
@@ -717,8 +723,12 @@ const ListsPage: React.FC = observer(() => {
                           </svg>
                         </div>
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>How it Works</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>See it in action</div>
+                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
+                            {isGerman ? 'So funktioniert\'s' : 'How it Works'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            {isGerman ? 'In Aktion sehen' : 'See it in action'}
+                          </div>
                         </div>
                       </a>
 
