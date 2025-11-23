@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal } from 'antd';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -54,6 +54,8 @@ const ListsPage: React.FC = observer(() => {
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
 
   // Tour refs
   const demoServicesRef = useRef<HTMLDivElement>(null);
@@ -145,6 +147,24 @@ const ListsPage: React.FC = observer(() => {
       setIsAuthenticated(authIsAuthenticated);
     }
   }, [authIsAuthenticated, authLoading]);
+
+  // Detect language for video selection
+  useEffect(() => {
+    if (typeof navigator !== 'undefined') {
+      const isGerman = navigator.language?.startsWith('de');
+      setSelectedVideoId(isGerman ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
+    }
+  }, []);
+
+  // Load Wistia script when video modal opens
+  useEffect(() => {
+    if (isVideoModalOpen && typeof window !== 'undefined' && !(window as any)._wq) {
+      const script = document.createElement('script');
+      script.src = 'https://fast.wistia.com/assets/external/E-v1.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }, [isVideoModalOpen]);
 
   // Share notifications are handled by a separate component to prevent re-renders
 
@@ -587,15 +607,15 @@ const ListsPage: React.FC = observer(() => {
                       justifyContent: 'center',
                       flexWrap: 'wrap'
                     }}>
-                      {/* Overview Card */}
-                      <a
-                        href="/"
+                      {/* Watch Video Card */}
+                      <div
+                        onClick={() => setIsVideoModalOpen(true)}
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
                           borderRadius: '8px',
                           padding: '16px 20px',
-                          textDecoration: 'none',
+                          cursor: 'pointer',
                           color: '#262626',
                           display: 'flex',
                           alignItems: 'center',
@@ -618,22 +638,40 @@ const ListsPage: React.FC = observer(() => {
                         <div style={{
                           width: '32px',
                           height: '32px',
-                          background: '#f0e6ff',
                           borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          position: 'relative',
+                          background: '#f0f0f0'
                         }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7V17C2 17.55 2.17 18.08 2.47 18.5L12 21L21.53 18.5C21.83 18.08 22 17.55 22 17V7L12 2ZM12 4.15L19.04 7.53L12 10.15L4.96 7.53L12 4.15ZM4 9.31L11 11.93V18.07L4 15.77V9.31ZM13 18.07V11.93L20 9.31V15.77L13 18.07Z" fill="#502D80"/>
-                          </svg>
+                          <img
+                            src={`https://fast.wistia.com/embed/medias/${selectedVideoId}/swatch`}
+                            alt="Video thumbnail"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(0, 0, 0, 0.3)'
+                          }}>
+                            <PlayCircleOutlined style={{ fontSize: '14px', color: 'white' }} />
+                          </div>
                         </div>
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>Overview</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>What is SpreadAPI?</div>
+                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>Watch Video</div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>5 minute tutorial</div>
                         </div>
-                      </a>
+                      </div>
 
                       {/* How it Works Card */}
                       <a
@@ -765,6 +803,48 @@ const ListsPage: React.FC = observer(() => {
           />
         </>
       )}
+
+      {/* Video Modal */}
+      <Modal
+        open={isVideoModalOpen}
+        onCancel={() => setIsVideoModalOpen(false)}
+        footer={null}
+        width={900}
+        centered
+        styles={{
+          body: { padding: 0 }
+        }}
+      >
+        <div
+          className="wistia_responsive_padding"
+          style={{
+            padding: '56.25% 0 0 0',
+            position: 'relative'
+          }}
+        >
+          <div
+            className="wistia_responsive_wrapper"
+            style={{
+              height: '100%',
+              left: 0,
+              position: 'absolute',
+              top: 0,
+              width: '100%'
+            }}
+          >
+            <div
+              className={`wistia_embed wistia_async_${selectedVideoId} videoFoam=true preload=metadata`}
+              style={{
+                height: '100%',
+                position: 'relative',
+                width: '100%'
+              }}
+            >
+              &nbsp;
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 });
