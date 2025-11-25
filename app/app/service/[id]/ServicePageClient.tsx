@@ -442,10 +442,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Load workbook when switching to Workbook view
   useEffect(() => {
-    if (activeView === 'Workbook' && !workbookLoaded && !workbookLoading && configLoaded) {
+    // Don't load workbook from API if we have a pending drag & drop file to import
+    if (activeView === 'Workbook' && !workbookLoaded && !workbookLoading && configLoaded && !importFileForEmptyState) {
       loadWorkbookOnDemand();
     }
-  }, [activeView, workbookLoaded, workbookLoading, configLoaded, loadWorkbookOnDemand]);
+  }, [activeView, workbookLoaded, workbookLoading, configLoaded, importFileForEmptyState, loadWorkbookOnDemand]);
 
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
@@ -655,18 +656,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       const file = (window as any).__draggedFile;
       console.log('[Drag & Drop] Found dragged file:', file.name, 'type:', file.type, 'size:', file.size);
 
-      // Set flag to prevent loadWorkbook from overwriting the imported file
-      hasDragDropFileRef.current = true;
-      console.log('[Drag & Drop] Set hasDragDropFileRef flag to prevent data overwrite');
-
       // Store the file to be imported once the workbook is ready
-      // This uses the same approach as the Upload button flow
       setImportFileForEmptyState(file);
       console.log('[Drag & Drop] File stored in importFileForEmptyState');
 
-      // Create default spreadsheet data first
+      // Create default spreadsheet data so WorkbookViewer can initialize
+      // This will be replaced by the imported file once import completes
       setDefaultSpreadsheetData();
-      console.log('[Drag & Drop] Default spreadsheet data set');
+      console.log('[Drag & Drop] Default spreadsheet data set (will be replaced by import)');
 
       delete (window as any).__draggedFile;
       console.log('[Drag & Drop] Cleaned up window.__draggedFile');
@@ -1766,13 +1763,30 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     if (importFileForEmptyState && spreadInstance && workbookRef.current) {
       console.log('[Import Effect] All conditions met, importing file:', importFileForEmptyState.name);
-      // Import the file using the existing handleImportExcel function
-      handleImportExcel(importFileForEmptyState);
-      // Clear the stored file
+
+      // Store the file locally before clearing state
+      const fileToImport = importFileForEmptyState;
+
+      // Mark workbook as loaded FIRST to prevent loadWorkbookOnDemand() effect from
+      // fetching from API when we clear importFileForEmptyState below
+      setWorkbookLoaded(true);
+      console.log('[Import Effect] Set workbookLoaded=true to prevent API fetch');
+
+      // Clear the stored file IMMEDIATELY to prevent effect from running again
+      // if component re-renders during import
       setImportFileForEmptyState(null);
-      // Clear the flag after import to allow normal loadWorkbook behavior
-      hasDragDropFileRef.current = false;
-      console.log('[Import Effect] Cleared hasDragDropFileRef flag after import');
+      console.log('[Import Effect] Cleared importFileForEmptyState to prevent duplicate imports');
+
+      // Import the file using the existing handleImportExcel function
+      const doImport = async () => {
+        await handleImportExcel(fileToImport);
+
+        // Clear the flag after import to allow normal loadWorkbook behavior
+        hasDragDropFileRef.current = false;
+        console.log('[Import Effect] Import complete, cleared hasDragDropFileRef flag');
+      };
+
+      doImport();
     }
   }, [importFileForEmptyState, spreadInstance, handleImportExcel]);
 
