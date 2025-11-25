@@ -350,6 +350,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
+            console.log("Loading flag cleared - ready to track changes");
             if (props.actionHandlerProc) {
               props.actionHandlerProc("workbook-loaded", spread);
             }
@@ -359,6 +360,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
+            console.log("Loading flag cleared after error - ready to track changes");
           },
           {
             openMode: 1 // 1 = normal
@@ -404,6 +406,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         setDataLoaded(true);
         setIsLoading(false);
         isLoadingData.current = false; // Clear loading flag
+        console.log("Loading flag cleared - ready to track changes");
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
@@ -413,6 +416,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       setDataLoaded(true);
       setIsLoading(false);
       isLoadingData.current = false; // Clear loading flag
+      console.log("Loading flag cleared after error - ready to track changes");
     }
     
     // If it's a default workbook, immediately mark as loaded
@@ -421,13 +425,8 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       setDataLoaded(true);
       setIsLoading(false);
       isLoadingData.current = false; // Clear loading flag
-    }
-    
-    // Clear loading flag with a delay to ensure all initial events have fired
-    setTimeout(() => {
-      isLoadingData.current = false;
       console.log("Loading flag cleared - ready to track changes");
-    }, 1000);
+    }
   }, [designer, spread, props.storeLocal?.spread, dataLoaded]);
 
   const getDesignerConfig = useMemo(() => {

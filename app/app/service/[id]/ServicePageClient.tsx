@@ -151,6 +151,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
+  const workbookLoadAbortControllerRef = useRef<AbortController | null>(null); // Cleanup for workbook loading
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const [showApiDefinitionModal, setShowApiDefinitionModal] = useState(false); // View API Definition modal
@@ -388,7 +389,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
 
     setWorkbookLoading(true);
+
+    // Abort any previous workbook load request
+    if (workbookLoadAbortControllerRef.current) {
+      workbookLoadAbortControllerRef.current.abort();
+    }
+
     const controller = new AbortController();
+    workbookLoadAbortControllerRef.current = controller;
 
     try {
       const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
@@ -437,6 +445,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         message.error('Failed to load workbook');
       }
       setWorkbookLoading(false);
+    } finally {
+      // Clear the abort controller ref after request completes
+      workbookLoadAbortControllerRef.current = null;
     }
   }, [serviceId, workbookLoaded, workbookLoading, spreadsheetData, message, processWorkbookData]);
 
@@ -1789,6 +1800,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       doImport();
     }
   }, [importFileForEmptyState, spreadInstance, handleImportExcel]);
+
+  // Cleanup: Abort any pending workbook load on unmount
+  useEffect(() => {
+    return () => {
+      if (workbookLoadAbortControllerRef.current) {
+        console.log('[Cleanup] Aborting pending workbook load request');
+        workbookLoadAbortControllerRef.current.abort();
+        workbookLoadAbortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
