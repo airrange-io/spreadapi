@@ -175,6 +175,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         
         // Check if this is a clear action (delete key)
         if (args.action === GC.Spread.Sheets.RangeChangedAction.clear) {
+          console.log("Delete key pressed - cells cleared");
           setChangeCount((prev) => {
             const newCount = prev + 1;
             changeCountRef.current = newCount;
@@ -201,6 +202,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         ];
         
         if (args.propertyName && trackedProperties.includes(args.propertyName)) {
+          console.log("Cell property changed:", args.propertyName);
           setChangeCount((prev) => {
             const newCount = prev + 1;
             changeCountRef.current = newCount;
@@ -277,6 +279,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     
     // Don't load if spreadsheet data is null (still loading)
     if (!props.storeLocal?.spread) {
+      console.log("WorkbookViewer: No spreadsheet data yet, waiting...");
       return;
     }
     
@@ -290,14 +293,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     });
     
     if (dataLoaded && lastLoadedDataRef.current === currentDataKey) {
+      console.log("WorkbookViewer: Data already loaded, skipping re-initialization");
       return;
     }
     
     // Check if this is just the default empty workbook
-    const isDefaultWorkbook = props.storeLocal.spread.version &&
-                             props.storeLocal.spread.sheets &&
+    const isDefaultWorkbook = props.storeLocal.spread.version && 
+                             props.storeLocal.spread.sheets && 
                              Object.keys(props.storeLocal.spread.sheets).length === 1 &&
                              !props.storeLocal.spread.type;
+
+    console.log("WorkbookViewer: Attempting to load data", {
+      hasSpread: !!spread,
+      dataType: typeof props.storeLocal.spread,
+      isExcel: props.storeLocal.spread.type === "excel",
+      isSJS: props.storeLocal.spread.type === "sjs",
+      hasSheets: !!(props.storeLocal.spread.sheets),
+      dataKeys: Object.keys(props.storeLocal.spread || {}).slice(0, 10) // First 10 keys
+    });
 
     try {
       // Set loading flag to ignore change events during load
@@ -310,11 +323,15 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         props.storeLocal.spread.blob
       ) {
         // Load SJS binary format
+        console.log("Loading SJS file...");
         spread.open(
           props.storeLocal.spread.blob,
           () => {
+            console.log("SJS file loaded successfully");
+            
             // Apply initial zoom immediately after loading
             if (props.initialZoom && props.initialZoom !== 100) {
+              console.log("Applying initial zoom:", props.initialZoom);
               const zoomFactor = props.initialZoom / 100;
               spread.options.zoomFactor = zoomFactor;
               
@@ -332,6 +349,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
+            console.log("Loading flag cleared - ready to track changes");
             if (props.actionHandlerProc) {
               props.actionHandlerProc("workbook-loaded", spread);
             }
@@ -341,6 +359,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             setDataLoaded(true);
             setIsLoading(false);
             isLoadingData.current = false; // Clear loading flag
+            console.log("Loading flag cleared after error - ready to track changes");
           },
           {
             openMode: 1 // 1 = normal
@@ -362,10 +381,12 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         typeof props.storeLocal.spread === "object"
       ) {
         // Load JSON data - don't check for specific properties, just try to load
+        console.log("Loading JSON data into spread...");
         spread.fromJSON(props.storeLocal.spread);
-
+        
         // Apply initial zoom immediately after loading data
         if (props.initialZoom && props.initialZoom !== 100) {
+          console.log("Applying initial zoom:", props.initialZoom);
           const zoomFactor = props.initialZoom / 100;
           spread.options.zoomFactor = zoomFactor;
           
@@ -379,10 +400,12 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           }
           setZoomLevel(props.initialZoom);
         }
-
+        
+        console.log("JSON data loaded successfully");
         setDataLoaded(true);
         setIsLoading(false);
         isLoadingData.current = false; // Clear loading flag
+        console.log("Loading flag cleared - ready to track changes");
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
@@ -392,13 +415,16 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       setDataLoaded(true);
       setIsLoading(false);
       isLoadingData.current = false; // Clear loading flag
+      console.log("Loading flag cleared after error - ready to track changes");
     }
-
+    
     // If it's a default workbook, immediately mark as loaded
     if (isDefaultWorkbook) {
+      console.log("Default workbook detected, marking as loaded");
       setDataLoaded(true);
       setIsLoading(false);
       isLoadingData.current = false; // Clear loading flag
+      console.log("Loading flag cleared - ready to track changes");
     }
   }, [designer, spread, props.storeLocal?.spread, dataLoaded]);
 
@@ -438,10 +464,12 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     getSpread: () => spread,
     // Check if workbook has changes
     hasChanges: () => {
+      console.log('Checking hasChanges:', changeCountRef.current > 0, 'count:', changeCountRef.current);
       return changeCountRef.current > 0;
     },
     // Reset change count
     resetChangeCount: () => {
+      console.log('Resetting change count from', changeCountRef.current, 'to 0');
       setChangeCount(0);
       changeCountRef.current = 0;
     },
@@ -449,18 +477,49 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     saveWorkbookSJS: () => {
       return new Promise((resolve, reject) => {
         if (spread) {
+          const startTime = performance.now();
+          console.log("🔄 Starting workbook save operation...");
+          
+          // Gather workbook information
+          const sheetCount = spread.getSheetCount();
+          const activeSheet = spread.getActiveSheet();
+          const activeSheetName = activeSheet ? activeSheet.name() : "Unknown";
+          
           // Check if workbook contains TableSheets
           let hasTableSheets = false;
-          const sheetCount = spread.getSheetCount();
-
+          let tableSheetCount = 0;
+          const sheetInfo = [];
+          
           for (let i = 0; i < sheetCount; i++) {
             const sheet = spread.getSheet(i);
-            if (sheet && sheet.getDataView && sheet.getDataView()) {
-              hasTableSheets = true;
-              break;
+            if (sheet) {
+              const isTableSheet = sheet.getDataView && sheet.getDataView();
+              if (isTableSheet) {
+                hasTableSheets = true;
+                tableSheetCount++;
+              }
+              sheetInfo.push({
+                name: sheet.name(),
+                type: isTableSheet ? "TableSheet" : "Worksheet",
+                rowCount: sheet.getRowCount(),
+                colCount: sheet.getColumnCount()
+              });
             }
           }
-
+          
+          console.log(`📋 Workbook Details:
+   • Total Sheets: ${sheetCount}
+   • Active Sheet: ${activeSheetName}
+   • TableSheets: ${tableSheetCount}
+   • Regular Sheets: ${sheetCount - tableSheetCount}`);
+          
+          if (sheetInfo.length > 0) {
+            console.log("📊 Sheet Information:");
+            sheetInfo.forEach((info, index) => {
+              console.log(`   ${index + 1}. ${info.name} (${info.type}) - ${info.rowCount} rows × ${info.colCount} cols`);
+            });
+          }
+          
           // Optimize save options for TableSheets
           const saveOptions = {
             includeStyles: true,
@@ -469,22 +528,33 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             saveAsView: false,
             includeBindingSource: false
           };
-
+          
           // If workbook has TableSheets, try to optimize by saving without data
           if (hasTableSheets) {
+            console.log("Optimizing save for TableSheet workbook...");
+            
             // First try: Save with minimal data inclusion
             saveOptions.includeData = false; // Try to exclude TableSheet data
             saveOptions.fullRecalc = false; // Skip recalculation
           }
-
+          
           spread.save(
             (blob) => {
+              const endTime = performance.now();
+              const duration = endTime - startTime;
+              
+              console.log(`✅ Workbook save completed:
+   • Duration: ${duration.toFixed(0)}ms
+   • Blob Size: ${(blob.size / 1024 / 1024).toFixed(3)}MB (${blob.size.toLocaleString()} bytes)
+   • Compression: ${blob.type || 'application/zip'}
+   • Performance: ${(blob.size / duration * 1000 / 1024 / 1024).toFixed(2)} MB/s`);
+              
               // If TableSheet workbook is still large, warn about it
               if (hasTableSheets && blob.size > 5 * 1024 * 1024) { // > 5MB
                 console.warn(`⚠️  Large TableSheet workbook detected (${(blob.size / 1024 / 1024).toFixed(2)}MB).
    Consider using external data sources instead of embedded data for better performance.`);
               }
-
+              
               resolve(blob);
             },
             (error) => {
@@ -513,6 +583,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
                 
                 // Check if this is a TableSheet
                 if (sheet.dataTable) {
+                  console.log(`Removing data from TableSheet: ${sheetName}`);
                   // Keep the TableSheet configuration but remove the data
                   if (sheet.dataTable.table) {
                     // Preserve table structure but clear data
@@ -528,6 +599,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             // Now save the modified workbook
             spread.save(
               (blob) => {
+                console.log(`Structure-only workbook saved, size: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
                 // Restore original workbook state
                 // Note: In production, you'd want to save the original state first
                 resolve(blob);
@@ -560,6 +632,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           spread.open(
             blob,
             () => {
+              console.log("SJS workbook loaded successfully");
               if (props.actionHandlerProc) {
                 props.actionHandlerProc("workbook-loaded", spread);
               }

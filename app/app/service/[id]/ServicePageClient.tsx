@@ -470,7 +470,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Skip if we're importing a service package OR just finished importing
       if (isImporting || justImportedRef.current) {
-        console.log('[Load] Skipping API load - importing service package or just imported');
         return;
       }
 
@@ -580,8 +579,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               aiExamples: (input.aiExamples || []).filter((ex: any) => ex !== undefined && ex !== null && ex !== '')
             }));
 
-            console.log('Loading service - webAppConfig from API:', data.webAppConfig);
-
             const loadedConfig = {
               name: data.name || '',
               description: data.description || '',
@@ -602,8 +599,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               webAppTheme: data.webAppTheme || 'default',
               customThemeParams: data.customThemeParams || ''
             };
-
-            console.log('Loading service - webAppConfig in loadedConfig:', loadedConfig.webAppConfig);
 
             setApiConfig(loadedConfig);
             setSavedConfig(loadedConfig);
@@ -665,19 +660,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     // Check for pre-uploaded file from drag & drop
     if (typeof window !== 'undefined' && (window as any).__draggedFile) {
       const file = (window as any).__draggedFile;
-      console.log('[Drag & Drop] Found dragged file:', file.name, 'type:', file.type, 'size:', file.size);
 
       // Store the file to be imported once the workbook is ready
       setImportFileForEmptyState(file);
-      console.log('[Drag & Drop] File stored in importFileForEmptyState');
 
       // Create default spreadsheet data so WorkbookViewer can initialize
       // This will be replaced by the imported file once import completes
       setDefaultSpreadsheetData();
-      console.log('[Drag & Drop] Default spreadsheet data set (will be replaced by import)');
 
       delete (window as any).__draggedFile;
-      console.log('[Drag & Drop] Cleaned up window.__draggedFile');
     }
 
     // Initial loading will be handled in a separate effect
@@ -689,7 +680,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     // Always load workbook to get service config (needed for ParametersPanel)
     // This only loads config, not spreadsheet data
-    console.log('[Init] Loading service configuration');
     loadWorkbook();
 
     return () => {
@@ -1034,13 +1024,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Get workbook JSON
       const workbookJSON = spreadInstance.toJSON();
 
-      console.log('[Export] Workbook JSON:', workbookJSON);
-      console.log('[Export] ApiConfig:', {
-        inputs: apiConfig.inputs,
-        outputs: apiConfig.outputs,
-        areas: apiConfig.areas
-      });
-
       // Create service package with all configuration
       const servicePackage = {
         version: '1.0.0',
@@ -1067,8 +1050,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           workbook: workbookJSON
         }
       };
-
-      console.log('[Export] Service package:', servicePackage);
 
       // Create and download JSON file
       const blob = new Blob([JSON.stringify(servicePackage, null, 2)], { type: 'application/json' });
@@ -1649,21 +1630,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           const jsonContent = e.target?.result as string;
           const servicePackage = JSON.parse(jsonContent);
 
-          console.log('[Import] Parsed service package:', servicePackage);
-
           // Validate package structure
           if (!servicePackage.version || !servicePackage.service) {
             throw new Error('Invalid service package format');
           }
 
           const { service } = servicePackage;
-
-          console.log('[Import] Service data:', {
-            name: service.name,
-            inputs: service.inputs,
-            outputs: service.outputs,
-            hasWorkbook: !!service.workbook
-          });
 
           // First, hide empty state and load the workbook
           if (service.workbook) {
@@ -1718,9 +1690,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             customThemeParams: service.customThemeParams || ''
           };
 
-          console.log('[Import] Setting apiConfig:', importedConfig);
-          console.log('[Import] Config has inputs:', importedConfig.inputs?.length, 'outputs:', importedConfig.outputs?.length);
-
           setApiConfig(importedConfig);
           // DON'T set savedConfig - leave it as the old value so comparison shows changes
           // This ensures the Save button appears after import
@@ -1765,28 +1734,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Import the stored file once the workbook is ready
   useEffect(() => {
-    console.log('[Import Effect] Checking conditions:', {
-      hasFile: !!importFileForEmptyState,
-      hasSpread: !!spreadInstance,
-      hasWorkbookRef: !!workbookRef.current,
-      fileName: importFileForEmptyState?.name
-    });
-
     if (importFileForEmptyState && spreadInstance && workbookRef.current) {
-      console.log('[Import Effect] All conditions met, importing file:', importFileForEmptyState.name);
-
       // Store the file locally before clearing state
       const fileToImport = importFileForEmptyState;
 
       // Mark workbook as loaded FIRST to prevent loadWorkbookOnDemand() effect from
       // fetching from API when we clear importFileForEmptyState below
       setWorkbookLoaded(true);
-      console.log('[Import Effect] Set workbookLoaded=true to prevent API fetch');
 
       // Clear the stored file IMMEDIATELY to prevent effect from running again
       // if component re-renders during import
       setImportFileForEmptyState(null);
-      console.log('[Import Effect] Cleared importFileForEmptyState to prevent duplicate imports');
 
       // Import the file using the existing handleImportExcel function
       const doImport = async () => {
@@ -1794,7 +1752,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         // Clear the flag after import to allow normal loadWorkbook behavior
         hasDragDropFileRef.current = false;
-        console.log('[Import Effect] Import complete, cleared hasDragDropFileRef flag');
       };
 
       doImport();
@@ -1805,7 +1762,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   useEffect(() => {
     return () => {
       if (workbookLoadAbortControllerRef.current) {
-        console.log('[Cleanup] Aborting pending workbook load request');
         workbookLoadAbortControllerRef.current.abort();
         workbookLoadAbortControllerRef.current = null;
       }
