@@ -77,7 +77,7 @@ const { Text } = Typography;
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
   const workbookRef = useRef<any>(null);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
@@ -653,19 +653,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     if (typeof window !== 'undefined' && (window as any).__draggedFile) {
       const file = (window as any).__draggedFile;
 
-      // Process the dragged file
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const arrayBuffer = e.target?.result;
-        if (arrayBuffer) {
-          setSpreadsheetData({
-            type: 'excel',
-            data: arrayBuffer,
-            fileName: file.name
-          });
-        }
-      };
-      reader.readAsArrayBuffer(file);
+      // Store the file to be imported once the workbook is ready
+      // This uses the same approach as the Upload button flow
+      setImportFileForEmptyState(file);
+
+      // Create default spreadsheet data first
+      setDefaultSpreadsheetData();
 
       delete (window as any).__draggedFile;
     }
@@ -768,7 +761,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
 
         // Show modal asking user to switch to Workbook view
-        Modal.confirm({
+        modal.confirm({
           title: 'Workbook Required for Publishing',
           content: 'Publishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try publishing again.',
           okText: 'Switch to Workbook',
@@ -855,7 +848,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
 
         // Show modal asking user to switch to Workbook view
-        Modal.confirm({
+        modal.confirm({
           title: 'Workbook Required for Republishing',
           content: 'Republishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try republishing again.',
           okText: 'Switch to Workbook',
@@ -1561,7 +1554,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     // Check for unsaved changes
     const hasUnsavedChanges = workbookRef.current?.hasChanges?.() || false;
 
-    Modal.confirm({
+    modal.confirm({
       title: 'Import Excel File',
       content: (
         <div>
@@ -1609,7 +1602,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         input.click();
       }
     });
-  }, [handleImportExcel]);
+  }, [handleImportExcel, workbookRef, spreadInstance, activeView, modal, message]);
 
   // Handle Excel import for empty state (when workbook is not initialized yet)
   const handleEmptyStateImport = useCallback((file: File) => {

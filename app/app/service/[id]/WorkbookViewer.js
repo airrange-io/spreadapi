@@ -9,7 +9,8 @@ import React, {
 } from "react";
 import { Spin } from "antd";
 import * as GC from "@mescius/spread-sheets";
-import "@mescius/spread-sheets-io";
+// Note: Excel IO module is not needed - we use spread.import(file) directly
+// import "@mescius/spread-sheets-io";
 // import "@mescius/spread-sheets-charts";
 // import "@mescius/spread-sheets-shapes";
 import "@mescius/spread-sheets-tablesheet";
@@ -30,6 +31,9 @@ if (typeof window !== "undefined") {
       process.env.NEXT_PUBLIC_SPREADJS18_DESIGNER_KEY;
   }
 }
+
+// Note: Excel IO module code removed - we now use spread.import(file) directly
+// which is part of the core SpreadJS API and doesn't require the Excel IO module
 
 export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [designer, setDesigner] = useState(null);
@@ -361,113 +365,17 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
           }
         );
       } else if (
+        // Note: Excel import from ArrayBuffer removed - we now use spread.import(file)
+        // directly via the importExcel() method, which works reliably
         props.storeLocal.spread.type === "excel" &&
         props.storeLocal.spread.data
       ) {
-        // Check if Excel IO is available
-        if (!GC.Spread.Excel || !GC.Spread.Excel.IO) {
-          console.error("GC.Spread.Excel.IO is not available yet");
-          // Try again after a short delay
-          const retryTimeout = setTimeout(() => {
-            if (spread && !dataLoaded) {
-              console.log("Retrying Excel import...");
-              if (GC.Spread.Excel && GC.Spread.Excel.IO) {
-                const excelIO = new GC.Spread.Excel.IO();
-                excelIO.import(
-                  props.storeLocal.spread.data,
-                  (json) => {
-                    spread.fromJSON(json);
-                    
-                    // Apply initial zoom immediately after loading
-                    if (props.initialZoom && props.initialZoom !== 100) {
-                      console.log("Applying initial zoom:", props.initialZoom);
-                      const zoomFactor = props.initialZoom / 100;
-                      spread.options.zoomFactor = zoomFactor;
-                      
-                      // Apply zoom to all sheets
-                      const sheetCount = spread.getSheetCount();
-                      for (let i = 0; i < sheetCount; i++) {
-                        const sheet = spread.getSheet(i);
-                        if (sheet) {
-                          sheet.zoom(zoomFactor);
-                        }
-                      }
-                      setZoomLevel(props.initialZoom);
-                    }
-                    
-                    console.log("Excel file imported successfully (retry)");
-                    setDataLoaded(true);
-                    setIsLoading(false);
-                    isLoadingData.current = false; // Clear loading flag
-                    if (props.actionHandlerProc) {
-                      props.actionHandlerProc("file-loaded", spread);
-                      props.actionHandlerProc("workbook-loaded", spread);
-                    }
-                  },
-                  (error) => {
-                    console.error("Error importing Excel file:", error);
-                    setDataLoaded(true);
-                    setIsLoading(false);
-                    isLoadingData.current = false; // Clear loading flag
-                  },
-                  {
-                    fileType: GC.Spread.Sheets.FileType.excel
-                  }
-                );
-              } else {
-                // If still not available, give up and show error
-                console.error("Excel IO still not available after retry");
-                setDataLoaded(true);
-                setIsLoading(false);
-              }
-            }
-          }, 1000);
-          
-          // Cleanup timeout on unmount
-          return () => clearTimeout(retryTimeout);
-        }
-        
-        // Import Excel file
-        const excelIO = new GC.Spread.Excel.IO();
-        excelIO.import(
-          props.storeLocal.spread.data,
-          (json) => {
-            spread.fromJSON(json);
-            
-            // Apply initial zoom immediately after loading
-            if (props.initialZoom && props.initialZoom !== 100) {
-              console.log("Applying initial zoom:", props.initialZoom);
-              const zoomFactor = props.initialZoom / 100;
-              spread.options.zoomFactor = zoomFactor;
-              
-              // Apply zoom to all sheets
-              const sheetCount = spread.getSheetCount();
-              for (let i = 0; i < sheetCount; i++) {
-                const sheet = spread.getSheet(i);
-                if (sheet) {
-                  sheet.zoom(zoomFactor);
-                }
-              }
-              setZoomLevel(props.initialZoom);
-            }
-            
-            setDataLoaded(true);
-            setIsLoading(false);
-            isLoadingData.current = false; // Clear loading flag
-            if (props.actionHandlerProc) {
-              props.actionHandlerProc("file-loaded", spread);
-            }
-          },
-          (error) => {
-            console.error("Error importing Excel file:", error);
-            setDataLoaded(true);
-            setIsLoading(false);
-            isLoadingData.current = false; // Clear loading flag
-          },
-          {
-            fileType: GC.Spread.Sheets.FileType.excel
-          }
-        );
+        // This code path is no longer used - Excel files are now imported via
+        // the importExcel() method exposed on the workbook ref
+        console.warn("Excel import via spreadsheetData is deprecated - use importExcel() method instead");
+        setDataLoaded(true);
+        setIsLoading(false);
+        isLoadingData.current = false;
       } else if (
         typeof props.storeLocal.spread === "object"
       ) {
