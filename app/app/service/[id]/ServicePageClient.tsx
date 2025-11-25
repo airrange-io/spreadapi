@@ -150,6 +150,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
+  const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
   const [showApiDefinitionModal, setShowApiDefinitionModal] = useState(false); // View API Definition modal
@@ -652,15 +653,23 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     // Check for pre-uploaded file from drag & drop
     if (typeof window !== 'undefined' && (window as any).__draggedFile) {
       const file = (window as any).__draggedFile;
+      console.log('[Drag & Drop] Found dragged file:', file.name, 'type:', file.type, 'size:', file.size);
+
+      // Set flag to prevent loadWorkbook from overwriting the imported file
+      hasDragDropFileRef.current = true;
+      console.log('[Drag & Drop] Set hasDragDropFileRef flag to prevent data overwrite');
 
       // Store the file to be imported once the workbook is ready
       // This uses the same approach as the Upload button flow
       setImportFileForEmptyState(file);
+      console.log('[Drag & Drop] File stored in importFileForEmptyState');
 
       // Create default spreadsheet data first
       setDefaultSpreadsheetData();
+      console.log('[Drag & Drop] Default spreadsheet data set');
 
       delete (window as any).__draggedFile;
+      console.log('[Drag & Drop] Cleaned up window.__draggedFile');
     }
 
     // Initial loading will be handled in a separate effect
@@ -670,6 +679,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setDrawerVisible(true);
     }
 
+    // Always load workbook to get service config (needed for ParametersPanel)
+    // This only loads config, not spreadsheet data
+    console.log('[Init] Loading service configuration');
     loadWorkbook();
 
     return () => {
@@ -1745,11 +1757,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   // Import the stored file once the workbook is ready
   useEffect(() => {
+    console.log('[Import Effect] Checking conditions:', {
+      hasFile: !!importFileForEmptyState,
+      hasSpread: !!spreadInstance,
+      hasWorkbookRef: !!workbookRef.current,
+      fileName: importFileForEmptyState?.name
+    });
+
     if (importFileForEmptyState && spreadInstance && workbookRef.current) {
+      console.log('[Import Effect] All conditions met, importing file:', importFileForEmptyState.name);
       // Import the file using the existing handleImportExcel function
       handleImportExcel(importFileForEmptyState);
       // Clear the stored file
       setImportFileForEmptyState(null);
+      // Clear the flag after import to allow normal loadWorkbook behavior
+      hasDragDropFileRef.current = false;
+      console.log('[Import Effect] Cleared hasDragDropFileRef flag after import');
     }
   }, [importFileForEmptyState, spreadInstance, handleImportExcel]);
 
