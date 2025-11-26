@@ -418,7 +418,11 @@ export function isAiDescription(desc: string | undefined): boolean {
     /you MUST pass/i,
     /Never pass the whole number/i,
     /Pass actual boolean value/i,
-    /Accept multiple formats.*yes\/no.*true\/false/i
+    /Accept multiple formats.*yes\/no.*true\/false/i,
+    /this is only relevant if/i,
+    /only relevant when/i,
+    /only applies if/i,
+    /only applies when/i
   ];
 
   return aiPatterns.some(pattern => pattern.test(desc));

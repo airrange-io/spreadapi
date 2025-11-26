@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, Statistic, Row, Col, Tooltip } from 'antd';
+import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
@@ -228,14 +228,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   //   {inputs.map(input => <div key={input.id}>...</div>)}
   // </div>
 
-  // Get column span for statistics
-  const getStatColumnSpan = () => {
-    if (containerWidth === 0 || containerWidth < 400) return 24; // 1 column
-    if (containerWidth < 600) return 12; // 2 columns
-    if (containerWidth < 900) return 8; // 3 columns
-    return 6; // 4 columns
-  };
-
   return (
     <div style={{ width: '100%' }}>
       <Space orientation="vertical" style={{ width: '100%' }} size={8}>
@@ -320,136 +312,152 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {/* Results Section */}
           {(wizardResult || wizardError) && (
             <>
-              {/* Output Results Statistics */}
+              {/* Output Results - Clean grid of result boxes */}
               {wizardResult && wizardResult.outputs && wizardResult.outputs.length > 0 && (
-                <>
-                  <Row gutter={[16, 4]}>
-                    {wizardResult.outputs.map((output: any) => {
-                      
-                      // Use title if available, otherwise alias or name
-                      const displayTitle = output.title || output.name;
-                      
-                      // Format the value based on type
-                      let displayValue: string | number;
-                      let precision: number | undefined;
-                      
-                      if (typeof output.value === 'number') {
-                        displayValue = output.value;
-                        precision = 2;
-                      } else if (typeof output.value === 'boolean') {
-                        displayValue = output.value ? 'True' : 'False';
-                      } else if (Array.isArray(output.value)) {
-                        // Handle arrays/areas
-                        if (output.value.length === 0) {
-                          displayValue = 'Empty';
-                        } else if (Array.isArray(output.value[0])) {
-                          // 2D array (area)
-                          const rows = output.value.length;
-                          const cols = output.value[0].length;
-                          displayValue = `${rows}×${cols} area`;
-                        } else {
-                          // 1D array
-                          displayValue = `${output.value.length} items`;
-                        }
-                      } else if (output.value === null || output.value === undefined) {
-                        displayValue = 'N/A';
-                      } else {
-                        // String or other - truncate if too long
-                        const strValue = String(output.value);
-                        displayValue = strValue.length > 20 ? strValue.substring(0, 17) + '...' : strValue;
-                      }
-                      
-                        return (
-                          <Col key={output.name} span={getColumnSpan()}>
-                            <Statistic
-                              title={displayTitle}
-                              value={displayValue}
-                              precision={precision}
-                              styles={{ content: {
-                                fontSize: '18px',
-                                color: output.error ? '#ff4d4f' : undefined
-                              } }}
-                            />
-                          </Col>
-                        );
-                      })}
-                  </Row>
-                </>
-              )}
-              
-              {/* Call Statistics */}
-              <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginTop: 12, marginBottom: 4 }}>
-                Call Statistics
-              </Typography.Text>
-              <Row gutter={[16, 4]}>
-                <Col span={getStatColumnSpan()}>
-                  <Statistic
-                    title="Calculation Time"
-                    value={wizardResponseTime}
-                    suffix="ms"
-                    prefix={<ClockCircleOutlined />}
-                    styles={{ content: { fontSize: '18px' } }}
-                  />
-                  {wizardResult?.metadata && (
-                    <Typography.Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
-                      {wizardResult.metadata.fromProcessCache && "From process cache"}
-                      {wizardResult.metadata.fromRedisCache && "From Redis cache"}
-                      {wizardResult.metadata.fromResultCache && "From result cache"}
-                      {!(wizardResult.metadata.fromProcessCache || 
-                         wizardResult.metadata.fromRedisCache || 
-                         wizardResult.metadata.fromResultCache) && "Fresh calculation"}
-                    </Typography.Text>
-                  )}
-                </Col>
-                <Col span={getStatColumnSpan()}>
-                  <Statistic
-                    title="Status"
-                    value={wizardError ? "Error" : "Success"}
-                    styles={{ content: { color: wizardError ? '#ff4d4f' : '#52c41a', fontSize: '18px' } }}
-                    prefix={wizardError ? <InfoCircleOutlined /> : <CheckCircleOutlined />}
-                  />
-                </Col>
-                <Col span={getStatColumnSpan()}>
-                  <Statistic
-                    title="Total Calls"
-                    value={totalCalls}
-                    prefix={<ApiOutlined />}
-                    styles={{ content: { fontSize: '18px' } }}
-                  />
-                </Col>
-              </Row>
+                <Row gutter={[12, 12]}>
+                  {wizardResult.outputs.map((output: any) => {
+                    const displayTitle = output.title || output.name;
 
-              {/* Result or Error Display */}
-              <div style={{ marginTop: 16 }}>
+                    // Format the value based on type
+                    let displayValue: React.ReactNode;
+                    let valueStyle: React.CSSProperties = {
+                      fontSize: 20,
+                      fontWeight: 600,
+                      color: '#262626',
+                      lineHeight: 1.2
+                    };
+
+                    if (typeof output.value === 'number') {
+                      const formatted = new Intl.NumberFormat(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 4
+                      }).format(output.value);
+                      displayValue = formatted;
+                    } else if (typeof output.value === 'boolean') {
+                      displayValue = output.value ? '✓ Yes' : '✗ No';
+                      valueStyle.color = output.value ? '#52c41a' : '#8c8c8c';
+                    } else if (Array.isArray(output.value)) {
+                      if (output.value.length === 0) {
+                        displayValue = 'Empty';
+                        valueStyle.color = '#8c8c8c';
+                      } else if (Array.isArray(output.value[0])) {
+                        const rows = output.value.length;
+                        const cols = output.value[0].length;
+                        displayValue = `${rows} × ${cols}`;
+                        valueStyle.fontSize = 16;
+                      } else {
+                        displayValue = `${output.value.length} items`;
+                        valueStyle.fontSize = 16;
+                      }
+                    } else if (output.value === null || output.value === undefined) {
+                      displayValue = '—';
+                      valueStyle.color = '#8c8c8c';
+                    } else {
+                      const strValue = String(output.value);
+                      displayValue = strValue.length > 20 ? (
+                        <Tooltip title={strValue}>
+                          <span>{strValue.substring(0, 18)}...</span>
+                        </Tooltip>
+                      ) : strValue;
+                      valueStyle.fontSize = 16;
+                    }
+
+                    return (
+                      <Col key={output.name} span={getColumnSpan()}>
+                        <div style={{
+                          background: '#fafafa',
+                          borderRadius: 8,
+                          padding: '12px 16px',
+                          height: '100%'
+                        }}>
+                          <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
+                            {displayTitle}
+                          </div>
+                          <div style={valueStyle}>
+                            {displayValue}
+                          </div>
+                        </div>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              )}
+
+              {/* Call Statistics - Unified subtle bar */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                flexWrap: 'wrap',
+                padding: '10px 14px',
+                marginTop: 12,
+                background: '#fafafa',
+                borderRadius: 6,
+                fontSize: 13,
+                color: '#595959'
+              }}>
                 {wizardError ? (
-                  <Alert
-                    title="Test Failed"
-                    description={wizardError}
-                    type="error"
-                    showIcon
-                  />
+                  <span style={{ color: '#ff4d4f', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <InfoCircleOutlined /> Error
+                  </span>
                 ) : (
-                  <div>
-                    <Typography.Text strong style={{ fontSize: 14, color: '#666', display: 'block', marginBottom: 8 }}>
-                      API Response
-                    </Typography.Text>
-                    <div
-                      ref={responseBoxRef}
-                      style={{
-                        background: '#f5f5f5',
-                        padding: 12,
-                        borderRadius: 4,
-                        height: responseBoxHeight,
-                        overflow: 'auto'
-                      }}
-                    >
-                      <pre style={{ margin: 0, fontSize: 12 }}>
-                        {JSON.stringify(wizardResult, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
+                  <span style={{ color: '#52c41a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircleOutlined /> Success
+                  </span>
+                )}
+                <span style={{ color: '#d9d9d9' }}>|</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ClockCircleOutlined style={{ color: '#8c8c8c' }} />
+                  {wizardResponseTime} ms
+                </span>
+                {wizardResult?.metadata && (
+                  <>
+                    <span style={{ color: '#d9d9d9' }}>|</span>
+                    <span style={{ color: '#8c8c8c' }}>
+                      {wizardResult.metadata.fromProcessCache && "process cache"}
+                      {wizardResult.metadata.fromRedisCache && "redis cache"}
+                      {wizardResult.metadata.fromResultCache && "result cache"}
+                      {!(wizardResult.metadata.fromProcessCache ||
+                         wizardResult.metadata.fromRedisCache ||
+                         wizardResult.metadata.fromResultCache) && "fresh calculation"}
+                    </span>
+                  </>
                 )}
               </div>
+
+              {/* Error Display */}
+              {wizardError && (
+                <Alert
+                  message={wizardError}
+                  type="error"
+                  showIcon
+                  style={{ marginTop: 8 }}
+                />
+              )}
+
+              {/* Raw API Response (collapsible) */}
+              {wizardResult && (
+                <details style={{ marginTop: 8 }}>
+                  <summary style={{ cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
+                    View raw response
+                  </summary>
+                  <div
+                    ref={responseBoxRef}
+                    style={{
+                      background: '#fafafa',
+                      padding: 12,
+                      borderRadius: 6,
+                      maxHeight: responseBoxHeight,
+                      overflow: 'auto',
+                      marginTop: 8
+                    }}
+                  >
+                    <pre style={{ margin: 0, fontSize: 11, color: '#595959' }}>
+                      {JSON.stringify(wizardResult, null, 2)}
+                    </pre>
+                  </div>
+                </details>
+              )}
             </>
           )}
       </Space>

@@ -153,7 +153,7 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
                   parser={parseLocaleNumber}
                 />
                 <Input
-                  style={{ width: 40, textAlign: 'center', pointerEvents: 'none' }}
+                  style={{ width: 45, textAlign: 'center', pointerEvents: 'none' }}
                   value="%"
                   readOnly
                   tabIndex={-1}
@@ -225,7 +225,7 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
           parser={parseLocaleNumber}
         />
         <Input
-          style={{ width: 50, textAlign: 'center', pointerEvents: 'none' }}
+          style={{ width: 45, textAlign: 'center', pointerEvents: 'none' }}
           value="%"
           readOnly
           tabIndex={-1}
@@ -284,33 +284,15 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
   // 5. Boolean switch
   // ============================================================================
   if (config.editorType === 'boolean') {
-    const SwitchWithLabel = ({ checked, onChange }: { checked?: boolean; onChange?: (val: boolean) => void }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <Switch checked={checked} onChange={onChange} />
-        <div>
-          <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
-            {displayTitle}
-            {!input.mandatory && (
-              <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>
-            )}
-          </div>
-          {shouldShowDescription && (
-            <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
-              {input.description}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-
     return (
       <Form.Item
         key={fieldName}
         name={fieldName}
+        label={label}
         valuePropName="checked"
         style={{ marginBottom }}
       >
-        <SwitchWithLabel />
+        <Switch />
       </Form.Item>
     );
   }
