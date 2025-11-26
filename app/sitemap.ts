@@ -2,11 +2,23 @@ import { MetadataRoute } from 'next';
 import { getSortedPostsData } from '@/lib/blog';
 import { supportedLocales } from '@/lib/translations/blog-helpers';
 
+// Marketing locales (separate from blog locales)
+const marketingLocales = ['de', 'fr', 'es'] as const;
+
+// Marketing pages that have locale versions
+const localizedMarketingPages = [
+  '', // homepage
+  'automation-calculations',
+  'stop-rewriting-excel-in-code',
+  'how-excel-api-works',
+  'excel-ai-integration',
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://spreadapi.com';
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
-  // Static marketing pages
+  // Static marketing pages (English)
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -57,8 +69,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
   ];
-  
+
   sitemapEntries.push(...staticPages);
+
+  // Add localized marketing pages
+  marketingLocales.forEach(locale => {
+    localizedMarketingPages.forEach(page => {
+      const url = page
+        ? `${baseUrl}/${locale}/${page}`
+        : `${baseUrl}/${locale}`;
+
+      sitemapEntries.push({
+        url,
+        lastModified: new Date(),
+        changeFrequency: 'monthly',
+        priority: page === '' ? 0.9 : 0.7,
+      });
+    });
+  });
   
   // Add blog list pages for each locale
   supportedLocales.forEach(locale => {

@@ -3,9 +3,30 @@ import { jwtVerify, createRemoteJWKSet } from "jose";
 
 const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
+// Cookie name for locale preference
+const LOCALE_COOKIE = 'NEXT_LOCALE';
+
+// Check if path has a marketing locale prefix
+function getMarketingLocale(pathname: string): string | null {
+  const match = pathname.match(/^\/(de|fr|es)(\/|$)/);
+  return match ? match[1] : null;
+}
+
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
-  
+
+  // Handle locale preference for marketing pages
+  const marketingLocale = getMarketingLocale(pathname);
+  if (marketingLocale) {
+    const response = NextResponse.next();
+    response.cookies.set(LOCALE_COOKIE, marketingLocale, {
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      path: '/',
+      sameSite: 'lax',
+    });
+    return response;
+  }
+
   // Handle redirects for old URLs
   const redirects: Record<string, string> = {
     // Redirect old product routes to new root locations

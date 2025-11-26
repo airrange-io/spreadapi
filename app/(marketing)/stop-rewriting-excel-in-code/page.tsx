@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import '../product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 export const metadata: Metadata = {
   title: 'Stop Rewriting Excel in Code | SpreadAPI',
@@ -30,13 +31,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function StopRewritingExcelPage() {
+interface StopRewritingExcelContentProps {
+  locale?: SupportedLocale;
+}
+
+export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelContentProps) {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <div className="page-wrapper">
-          <Navigation currentPage="stop-rewriting-excel-in-code" />
+          <Navigation currentPage="stop-rewriting-excel-in-code" locale={locale} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -742,9 +747,13 @@ class PricingCalculator {
             </section>
           </main>
 
-          <Footer />
+          <Footer locale={locale} />
         </div>
       </div>
     </>
   );
+}
+
+export default function StopRewritingExcelPage() {
+  return <StopRewritingExcelContent />;
 }

@@ -3,6 +3,7 @@ import '../product.css';
 import './excel-ai-integration.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 export const metadata: Metadata = {
   title: 'Excel AI Integration - SpreadAPI | Connect ChatGPT & Claude to Excel',
@@ -28,7 +29,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AIIntegrationPage() {
+interface AIIntegrationContentProps {
+  locale?: SupportedLocale;
+}
+
+export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProps) {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
@@ -36,7 +41,7 @@ export default function AIIntegrationPage() {
 
         <div className="page-wrapper">
           {/* Navigation */}
-          <Navigation currentPage="excel-ai-integration" />
+          <Navigation currentPage="excel-ai-integration" locale={locale} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -1008,9 +1013,13 @@ export default function AIIntegrationPage() {
           </main>
 
           {/* Footer */}
-          <Footer />
+          <Footer locale={locale} />
         </div>
       </div>
     </>
   );
+}
+
+export default function AIIntegrationPage() {
+  return <AIIntegrationContent />;
 }

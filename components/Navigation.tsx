@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import './Navigation.css';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getMarketingTranslations } from '@/lib/translations/marketing';
 
 const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitcher'), {
   ssr: false,
@@ -20,7 +22,9 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', locale = 'en', showLanguageSwitcher = false, getStartedRef }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  const t = getMarketingTranslations(locale as SupportedLocale);
+  const prefix = locale === 'en' ? '' : `/${locale}`;
+
   // Always show language switcher on blog pages
   const shouldShowLanguageSwitcher = showLanguageSwitcher || currentPage === 'blog';
 
@@ -37,11 +41,11 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   // Define menu items with their labels and paths
   // All items shown on all pages (except Blog which hides on medium screens)
   const menuItems = [
-    { label: 'How it Works', path: '/how-excel-api-works', key: 'how-excel-api-works', hideOnMedium: false },
-    { label: 'Developers', path: '/stop-rewriting-excel-in-code', key: 'stop-rewriting-excel-in-code', hideOnMedium: false },
-    { label: 'Automations', path: '/automation-calculations', key: 'automation-calculations', hideOnMedium: false },
-    { label: 'AI', path: '/excel-ai-integration', key: 'excel-ai-integration', hideOnMedium: false },
-    { label: 'Blog', path: '/blog', key: 'blog', hideOnMedium: true },
+    { label: t.nav.howItWorks, path: `${prefix}/how-excel-api-works`, key: 'how-excel-api-works', hideOnMedium: false },
+    { label: t.nav.developers, path: `${prefix}/stop-rewriting-excel-in-code`, key: 'stop-rewriting-excel-in-code', hideOnMedium: false },
+    { label: t.nav.automations, path: `${prefix}/automation-calculations`, key: 'automation-calculations', hideOnMedium: false },
+    { label: t.nav.ai, path: `${prefix}/excel-ai-integration`, key: 'excel-ai-integration', hideOnMedium: false },
+    { label: t.nav.blog, path: '/blog', key: 'blog', hideOnMedium: true },
   ];
 
   // Show all menu items, highlight current page
@@ -50,10 +54,10 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   return (
     <nav className={`navigation-component ${className}`}>
       <div className="navigation-container">
-        <Link href="/" className="navigation-logo-link">
-          <Image 
-            src="/icons/logo-full.svg" 
-            alt="SpreadAPI" 
+        <Link href={prefix || '/'} className="navigation-logo-link">
+          <Image
+            src="/icons/logo-full.svg"
+            alt="SpreadAPI"
             className="navigation-logo"
             width={120}
             height={32}
@@ -75,14 +79,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
         </div>
 
         <div className="navigation-button-wrapper">
-          <div style={{ 
+          <div style={{
             marginRight: '16px',
             minWidth: '48px',
             display: shouldShowLanguageSwitcher ? 'block' : 'none'
           }}>
             <LanguageSwitcher currentLocale={locale} />
           </div>
-          <Link href="/app" ref={getStartedRef} className="header-button hide-mobile-portrait">Get Started</Link>
+          <Link href="/app" ref={getStartedRef} className="header-button hide-mobile-portrait">{t.nav.getStarted}</Link>
           <button
             className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -101,11 +105,11 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
         <div className="navigation-mobile-menu">
           <nav className="navigation-mobile-nav">
             <Link
-              href="/"
+              href={prefix || '/'}
               className={`navigation-link ${currentPage === 'product' ? 'active' : ''}`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Home
+              {t.nav.home}
             </Link>
             {visibleMenuItems.map((item) => (
               <Link
@@ -122,7 +126,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
               className="button w-button"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Get Started
+              {t.nav.getStarted}
             </Link>
           </nav>
         </div>

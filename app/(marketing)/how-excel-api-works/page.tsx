@@ -3,6 +3,7 @@ import '../product.css';
 import './how-excel-api-works.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 export const metadata: Metadata = {
   title: 'How Excel API Works - SpreadAPI | Transform Spreadsheets to APIs',
@@ -28,15 +29,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HowItWorksPage() {
+interface HowItWorksContentProps {
+  locale?: SupportedLocale;
+}
+
+export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
-      
+
       <div className="page-wrapper">
         {/* Navigation */}
-        <Navigation currentPage="how-excel-api-works" />
+        <Navigation currentPage="how-excel-api-works" locale={locale} />
 
         <main className="main-wrapper">
           {/* Hero Section */}
@@ -696,10 +701,14 @@ export default function HowItWorksPage() {
         </footer> */}
         
         {/* Footer */}
-        <Footer />
+        <Footer locale={locale} />
       </div>
     </div>
     </>
   );
-};
+}
+
+export default function HowItWorksPage() {
+  return <HowItWorksContent />;
+}
 

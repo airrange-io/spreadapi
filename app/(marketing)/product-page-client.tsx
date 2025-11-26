@@ -7,8 +7,13 @@ import Footer from '@/components/product/Footer';
 import { developerFAQs } from '@/data/developer-faq';
 import ProductHeader from '@/components/product/ProductHeader';
 import Navigation from '@/components/Navigation';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
-const ProductPage: React.FC = () => {
+interface ProductPageProps {
+  locale?: SupportedLocale;
+}
+
+const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
   // Tour ref for header "Get Started" button
   const getStartedRef = useRef<HTMLAnchorElement>(null);
 
@@ -108,7 +113,7 @@ const ProductPage: React.FC = () => {
 
         <div className="page-wrapper">
           {/* Navigation */}
-          <Navigation currentPage="product" getStartedRef={getStartedRef} />
+          <Navigation currentPage="product" locale={locale} getStartedRef={getStartedRef} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -1250,7 +1255,7 @@ const ProductPage: React.FC = () => {
           </main>
 
           {/* Footer */}
-          <Footer />
+          <Footer locale={locale} />
         </div>
       </div>
 
