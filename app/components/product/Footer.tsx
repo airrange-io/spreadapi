@@ -4,11 +4,27 @@ import { getMarketingTranslations } from '@/lib/translations/marketing';
 
 interface FooterProps {
   locale?: SupportedLocale;
+  currentPath?: string; // The current page path without locale prefix (e.g., '/how-excel-api-works')
 }
 
-const Footer: React.FC<FooterProps> = ({ locale = 'en' }) => {
+const languageOptions: { code: SupportedLocale; flag: string; label: string }[] = [
+  { code: 'en', flag: '🇺🇸', label: 'EN' },
+  { code: 'de', flag: '🇩🇪', label: 'DE' },
+  { code: 'fr', flag: '🇫🇷', label: 'FR' },
+  { code: 'es', flag: '🇪🇸', label: 'ES' },
+];
+
+const Footer: React.FC<FooterProps> = ({ locale = 'en', currentPath = '' }) => {
   const t = getMarketingTranslations(locale);
   const prefix = locale === 'en' ? '' : `/${locale}`;
+
+  // Build the path for language switching
+  const getLocalePath = (targetLocale: SupportedLocale) => {
+    if (targetLocale === 'en') {
+      return currentPath || '/';
+    }
+    return `/${targetLocale}${currentPath || ''}`;
+  };
 
   return (
     <>
@@ -57,6 +73,19 @@ const Footer: React.FC<FooterProps> = ({ locale = 'en' }) => {
                   <div className="footer-legal-links">
                     <a href="https://airrange.io/privacy-policy" className="footer-legal-link">{t.footer.privacyPolicy}</a>
                     <a href="https://airrange.io/terms" className="footer-legal-link">{t.footer.termsOfService}</a>
+                  </div>
+                  {/* Language Switcher */}
+                  <div className="footer-language-switcher">
+                    {languageOptions.map((lang) => (
+                      <a
+                        key={lang.code}
+                        href={getLocalePath(lang.code)}
+                        className={`footer-language-link ${locale === lang.code ? 'active' : ''}`}
+                        title={lang.label}
+                      >
+                        <span className="footer-language-flag">{lang.flag}</span>
+                      </a>
+                    ))}
                   </div>
                 </div>
               </div>

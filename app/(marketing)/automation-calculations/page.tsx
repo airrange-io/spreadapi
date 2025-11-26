@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import '../product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 export const metadata: Metadata = {
   title: 'When Your Automation Needs to Think | SpreadAPI',
@@ -37,13 +38,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AutomationCalculationsPage() {
+interface AutomationCalculationsContentProps {
+  locale?: SupportedLocale;
+}
+
+export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalculationsContentProps) {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <div className="page-wrapper">
-          <Navigation currentPage="automation-calculations" />
+          <Navigation currentPage="automation-calculations" locale={locale} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -742,9 +747,13 @@ export default function AutomationCalculationsPage() {
             </section>
           </main>
 
-          <Footer />
+          <Footer locale={locale} currentPath="/automation-calculations" />
         </div>
       </div>
     </>
   );
+}
+
+export default function AutomationCalculationsPage() {
+  return <AutomationCalculationsContent />;
 }

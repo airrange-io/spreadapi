@@ -1255,7 +1255,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
           </main>
 
           {/* Footer */}
-          <Footer locale={locale} />
+          <Footer locale={locale} currentPath="" />
         </div>
       </div>
 

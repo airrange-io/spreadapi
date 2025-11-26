@@ -1023,7 +1023,7 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
           </main>
 
           {/* Footer */}
-          <Footer locale={locale} />
+          <Footer locale={locale} currentPath="/excel-ai-integration" />
         </div>
       </div>
     </>

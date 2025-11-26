@@ -1402,6 +1402,41 @@ p {
   color: #a0a0a0;
 }
 
+/* Language Switcher */
+.footer-language-switcher {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.footer-language-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.footer-language-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.footer-language-link.active {
+  opacity: 1;
+  background-color: rgba(124, 58, 237, 0.2);
+}
+
+.footer-language-flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
 /* Footer Responsive */
 @media (max-width: 992px) {
   .footer-content-grid {

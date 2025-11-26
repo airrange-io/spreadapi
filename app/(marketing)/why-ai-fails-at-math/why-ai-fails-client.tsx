@@ -606,7 +606,7 @@ export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProp
             </section>
           </main>
 
-          <Footer locale={locale} />
+          <Footer locale={locale} currentPath="/why-ai-fails-at-math" />
         </div>
       </div>
     </>

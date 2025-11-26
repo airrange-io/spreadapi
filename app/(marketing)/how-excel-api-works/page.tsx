@@ -711,7 +711,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
         </footer> */}
         
         {/* Footer */}
-        <Footer locale={locale} />
+        <Footer locale={locale} currentPath="/how-excel-api-works" />
       </div>
     </div>
     </>

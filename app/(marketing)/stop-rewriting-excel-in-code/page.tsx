@@ -754,7 +754,7 @@ class PricingCalculator {
             </section>
           </main>
 
-          <Footer locale={locale} />
+          <Footer locale={locale} currentPath="/stop-rewriting-excel-in-code" />
         </div>
       </div>
     </>
