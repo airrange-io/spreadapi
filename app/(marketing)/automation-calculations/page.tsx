@@ -27,6 +27,13 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://spreadapi.com/automation-calculations',
+    languages: {
+      'en': 'https://spreadapi.com/automation-calculations',
+      'de': 'https://spreadapi.com/de/automation-calculations',
+      'fr': 'https://spreadapi.com/fr/automation-calculations',
+      'es': 'https://spreadapi.com/es/automation-calculations',
+      'x-default': 'https://spreadapi.com/automation-calculations',
+    },
   },
 };
 

@@ -1,5 +1,29 @@
 import { MetadataRoute } from 'next';
 
+// Marketing pages available in multiple languages
+const marketingPages = [
+  '/',
+  '/how-excel-api-works',
+  '/stop-rewriting-excel-in-code',
+  '/automation-calculations',
+  '/excel-ai-integration',
+];
+
+// Generate locale versions of marketing pages
+const localeMarketingPages = ['de', 'fr', 'es'].flatMap(locale =>
+  marketingPages.map(page => page === '/' ? `/${locale}` : `/${locale}${page}`)
+);
+
+// All allowed marketing pages (English + localized)
+const allMarketingPages = [
+  ...marketingPages,
+  ...localeMarketingPages,
+  '/why-ai-fails-at-math',
+  '/docs',
+  '/pricing',
+  '/blog/',
+];
+
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = 'https://spreadapi.com';
 
@@ -18,17 +42,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'GPTBot',
-        allow: [
-          '/',
-          '/blog/',
-          '/how-excel-api-works',
-          '/stop-rewriting-excel-in-code',
-          '/automation-calculations',
-          '/excel-ai-integration',
-          '/why-ai-fails-at-math',
-          '/docs',
-          '/pricing',
-        ],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',
@@ -36,17 +50,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'ChatGPT-User',
-        allow: [
-          '/',
-          '/blog/',
-          '/how-excel-api-works',
-          '/stop-rewriting-excel-in-code',
-          '/automation-calculations',
-          '/excel-ai-integration',
-          '/why-ai-fails-at-math',
-          '/docs',
-          '/pricing',
-        ],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',
@@ -54,17 +58,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Claude-Web',
-        allow: [
-          '/',
-          '/blog/',
-          '/how-excel-api-works',
-          '/stop-rewriting-excel-in-code',
-          '/automation-calculations',
-          '/excel-ai-integration',
-          '/why-ai-fails-at-math',
-          '/docs',
-          '/pricing',
-        ],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',

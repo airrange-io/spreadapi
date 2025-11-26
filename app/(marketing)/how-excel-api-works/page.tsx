@@ -27,6 +27,16 @@ export const metadata: Metadata = {
     title: 'How SpreadAPI Works - Excel to API',
     description: 'Transform Excel spreadsheets into REST APIs. No coding required.',
   },
+  alternates: {
+    canonical: 'https://spreadapi.com/how-excel-api-works',
+    languages: {
+      'en': 'https://spreadapi.com/how-excel-api-works',
+      'de': 'https://spreadapi.com/de/how-excel-api-works',
+      'fr': 'https://spreadapi.com/fr/how-excel-api-works',
+      'es': 'https://spreadapi.com/es/how-excel-api-works',
+      'x-default': 'https://spreadapi.com/how-excel-api-works',
+    },
+  },
 };
 
 interface HowItWorksContentProps {

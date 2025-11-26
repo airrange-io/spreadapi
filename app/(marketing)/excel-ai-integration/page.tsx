@@ -27,6 +27,16 @@ export const metadata: Metadata = {
     title: 'Excel + AI = Superpowers - SpreadAPI',
     description: 'Connect AI assistants to Excel calculations. Accurate, reproducible results.',
   },
+  alternates: {
+    canonical: 'https://spreadapi.com/excel-ai-integration',
+    languages: {
+      'en': 'https://spreadapi.com/excel-ai-integration',
+      'de': 'https://spreadapi.com/de/excel-ai-integration',
+      'fr': 'https://spreadapi.com/fr/excel-ai-integration',
+      'es': 'https://spreadapi.com/es/excel-ai-integration',
+      'x-default': 'https://spreadapi.com/excel-ai-integration',
+    },
+  },
 };
 
 interface AIIntegrationContentProps {

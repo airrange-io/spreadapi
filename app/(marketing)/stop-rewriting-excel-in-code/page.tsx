@@ -28,6 +28,13 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://spreadapi.com/stop-rewriting-excel-in-code',
+    languages: {
+      'en': 'https://spreadapi.com/stop-rewriting-excel-in-code',
+      'de': 'https://spreadapi.com/de/stop-rewriting-excel-in-code',
+      'fr': 'https://spreadapi.com/fr/stop-rewriting-excel-in-code',
+      'es': 'https://spreadapi.com/es/stop-rewriting-excel-in-code',
+      'x-default': 'https://spreadapi.com/stop-rewriting-excel-in-code',
+    },
   },
 };
 

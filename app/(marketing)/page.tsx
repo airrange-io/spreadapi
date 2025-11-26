@@ -29,6 +29,13 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://spreadapi.com/',
+    languages: {
+      'en': 'https://spreadapi.com/',
+      'de': 'https://spreadapi.com/de',
+      'fr': 'https://spreadapi.com/fr',
+      'es': 'https://spreadapi.com/es',
+      'x-default': 'https://spreadapi.com/',
+    },
   },
   robots: {
     index: true,
