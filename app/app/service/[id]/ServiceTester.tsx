@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip } from 'antd';
-import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined, ExportOutlined } from '@ant-design/icons';
+import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App } from 'antd';
+import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
 
@@ -32,6 +32,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   containerWidth: propsContainerWidth,
   onTestComplete
 }) => {
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [parameterValues, setParameterValues] = useState<Record<string, any>>({});
   const [wizardTesting, setWizardTesting] = useState(false);
@@ -73,7 +74,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const handleWizardTest = async () => {
     setWizardTesting(true);
     setWizardError('');
-    setWizardResult(null);
+    // Don't clear wizardResult - keep previous results visible while loading
 
     // Validate form before testing
     try {
@@ -232,57 +233,102 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     <div style={{ width: '100%' }}>
       <Space orientation="vertical" style={{ width: '100%' }} size={8}>
           {/* Input Parameters Form */}
-          <Form
-            form={form}
-            layout="vertical"
-            initialValues={parameterValues}
-            style={{ width: '100%' }}
-            onValuesChange={(changedValues, allValues) => {
-              setParameterValues(allValues);
-              // Update URL immediately when values change
-              setWizardUrl(buildWizardUrl(allValues));
-            }}
-          >
-            {inputs.length > 0 && (
-              <Row gutter={[16, 4]}>
-                {inputs.map((input) => (
-                  <Col key={input.id} span={getColumnSpan()}>
-                    <InputRenderer
-                      input={input}
-                      fieldName={input.name}
-                      showLabel={true}
-                      marginBottom={8}
-                      hideAiDescriptions={true}
-                    />
-                  </Col>
-                ))}
-              </Row>
-            )}
-          </Form>
+          {inputs.length > 0 && (
+            <div style={{
+              background: '#fafafa',
+              borderRadius: 6,
+              padding: '14px 14px 6px 14px',
+            }}>
+              <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
+                Input Parameters
+              </div>
+              <Form
+                form={form}
+                layout="vertical"
+                initialValues={parameterValues}
+                style={{ width: '100%' }}
+                onValuesChange={(changedValues, allValues) => {
+                  setParameterValues(allValues);
+                  // Update URL immediately when values change
+                  setWizardUrl(buildWizardUrl(allValues));
+                }}
+              >
+                <Row gutter={[16, 4]}>
+                  {inputs.map((input) => (
+                    <Col key={input.id} span={getColumnSpan()}>
+                      <InputRenderer
+                        input={input}
+                        fieldName={input.name}
+                        showLabel={true}
+                        marginBottom={8}
+                        hideAiDescriptions={true}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+              </Form>
+            </div>
+          )}
 
           {/* Dynamic URL Input */}
-          <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Test URL (Modify to test with different values):
-            </Text>
-            {requireToken && (
-              <div style={{ marginTop: 4 }}>
-                <Text type="warning" style={{ fontSize: 12 }}>
-                  ⚠️ Replace REPLACE_WITH_YOUR_TOKEN with your actual token
-                </Text>
-                <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                  Note: Token usage is only tracked when using a real token, not the placeholder.
-                </Text>
-              </div>
-            )}
+          <div style={{
+            background: '#fafafa',
+            borderRadius: 6,
+            padding: '10px 14px',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 8,
+              fontSize: 13,
+              color: '#595959'
+            }}>
+              <Tooltip title={isPublished ?
+                'This endpoint is active and ready to receive requests' :
+                'This endpoint is in draft mode. Publish the service to make it available.'
+              }>
+                <span style={{
+                  background: isPublished ? '#52c41a' : '#faad14',
+                  color: 'white',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'help'
+                }}>GET</span>
+              </Tooltip>
+              <span style={{ flex: 1 }}>Test URL</span>
+              {requireToken && (
+                <>
+                  <span style={{ color: '#d9d9d9' }}>|</span>
+                  <span style={{ color: '#faad14', fontSize: 12 }}>
+                    Replace REPLACE_WITH_YOUR_TOKEN with your actual token
+                  </span>
+                </>
+              )}
+              <Tooltip title="Copy URL to clipboard">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={() => {
+                    navigator.clipboard.writeText(wizardUrl);
+                    message.success('URL copied to clipboard');
+                  }}
+                  style={{ color: '#8c8c8c' }}
+                />
+              </Tooltip>
+            </div>
             <TextArea
               value={wizardUrl}
               onChange={(e) => setWizardUrl(e.target.value)}
               rows={3}
               style={{
-                marginTop: 4,
                 fontFamily: 'monospace',
-                fontSize: 12
+                fontSize: 12,
+                background: 'white',
+                border: '1px solid #e8e8e8'
               }}
               disabled={!isPublished}
             />
@@ -311,7 +357,11 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
           {/* Results Section */}
           {(wizardResult || wizardError) && (
-            <>
+            <div style={{
+              opacity: wizardTesting ? 0.5 : 1,
+              transition: 'opacity 0.15s ease-in-out',
+              pointerEvents: wizardTesting ? 'none' : 'auto'
+            }}>
               {/* Output Results - Clean grid of result boxes */}
               {wizardResult && wizardResult.outputs && wizardResult.outputs.length > 0 && (
                 <Row gutter={[12, 12]}>
@@ -458,7 +508,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   </div>
                 </details>
               )}
-            </>
+            </div>
           )}
       </Space>
     </div>

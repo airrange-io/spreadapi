@@ -11,11 +11,6 @@ const ServiceTester = dynamic(() => import('../ServiceTester'), {
   ssr: false
 });
 
-const ApiEndpointPreview = dynamic(() => import('../ApiEndpointPreview'), {
-  loading: () => <Skeleton active paragraph={{ rows: 2 }} />,
-  ssr: false
-});
-
 const TokenManagement = dynamic(() => import('../TokenManagement'), {
   loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
   ssr: false
@@ -144,13 +139,6 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
             showIcon
           />
         )}
-
-        {/* API Endpoint Preview */}
-        <ApiEndpointPreview
-          serviceId={serviceId}
-          isPublished={serviceStatus?.published || false}
-          requireToken={apiConfig.requireToken || false}
-        />
 
         {/* Service Tester */}
         <ServiceTester

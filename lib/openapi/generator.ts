@@ -12,7 +12,7 @@ export function generateOpenAPISpec(
   baseUrl: string = 'https://spreadapi.io'
 ) {
   const spec = {
-    openapi: '3.1.0',
+    openapi: '3.0.3',
     info: {
       title: definition.name || 'SpreadAPI Service',
       description: definition.description || '',
@@ -423,9 +423,9 @@ function mapTypeToSchema(input: any) {
     schema.default = input.defaultValue;
   }
 
-  // Add examples
+  // Add example (OpenAPI 3.0.x uses singular 'example' in schemas)
   if (input.aiExamples && input.aiExamples.length > 0) {
-    schema.examples = input.aiExamples;
+    schema.example = input.aiExamples[0];
   }
 
   schema.description = input.description || input.title;

@@ -16,11 +16,6 @@ const ServiceTester = dynamic(() => import('../ServiceTester'), {
   ssr: false
 });
 
-const ApiEndpointPreview = dynamic(() => import('../ApiEndpointPreview'), {
-  loading: () => <Skeleton active paragraph={{ rows: 2 }} />,
-  ssr: false
-});
-
 const TokenManagement = dynamic(() => import('../TokenManagement'), {
   loading: () => <Skeleton active paragraph={{ rows: 4 }} />,
   ssr: false
@@ -205,12 +200,7 @@ const ApiView: React.FC<ApiViewProps> = ({
       'test': (
         <>
           {alertBanner}
-          <ApiEndpointPreview
-            serviceId={serviceId}
-            isPublished={serviceStatus?.published || false}
-            requireToken={apiConfig.requireToken || false}
-          />
-          <div style={{ marginTop: 16 }}>
+          <div>
             <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
                 API Tester

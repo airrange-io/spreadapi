@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   const spec = {
-    openapi: '3.1.0',
+    openapi: '3.0.3',
     info: {
       title: 'SpreadAPI Platform',
       version: '1.0.0',
@@ -128,7 +128,7 @@ export async function GET() {
         get: {
           summary: 'Get OpenAPI spec for specific service',
           tags: ['metadata'],
-          description: 'Download the OpenAPI 3.1 specification for a specific service. Use this to generate client SDKs or import into API tools.',
+          description: 'Download the OpenAPI specification for a specific service. Use this to generate client SDKs or import into API tools.',
           parameters: [
             {
               name: 'serviceId',
