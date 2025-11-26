@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -15,8 +15,10 @@ interface ProductHeaderProps {
   showImage?: boolean;
   showVideo?: boolean;
   videoSubheading?: string;
+  germanVideoSubheading?: string;
   englishVideoId?: string;
   germanVideoId?: string;
+  locale?: string;
   primaryButtonRef?: React.RefObject<HTMLAnchorElement>;
 }
 
@@ -31,23 +33,18 @@ export default function ProductHeader({
   showImage = false,
   showVideo = false,
   videoSubheading = 'From Excel to API in Minutes — Power Automations, Apps & AI Agents',
+  germanVideoSubheading = 'Von Excel zur API in Minuten — Automatisierung, Apps & KI-Agenten',
   englishVideoId = 'rfdcf8rpnd',
   germanVideoId = 'pi5ljxwf4o',
+  locale = 'en',
   primaryButtonRef
 }: ProductHeaderProps) {
-  // Video language detection - always default to English on server to avoid hydration mismatch
-  const [selectedVideoId, setSelectedVideoId] = useState(englishVideoId);
-  const [isGerman, setIsGerman] = useState(false);
+  // Use German video only for 'de' locale, English for all others (en, fr, es)
+  const isGerman = locale === 'de';
+  const selectedVideoId = isGerman ? germanVideoId : englishVideoId;
 
   useEffect(() => {
     if (showVideo) {
-      // Only detect language on client side after hydration
-      if (typeof navigator !== 'undefined') {
-        const german = navigator.language?.startsWith('de');
-        setIsGerman(german);
-        setSelectedVideoId(german ? germanVideoId : englishVideoId);
-      }
-
       // Load Wistia script if not already loaded
       if (typeof window !== 'undefined' && !(window as any)._wq) {
         const script = document.createElement('script');
@@ -56,7 +53,7 @@ export default function ProductHeader({
         document.head.appendChild(script);
       }
     }
-  }, [showVideo, germanVideoId, englishVideoId]);
+  }, [showVideo]);
   return (
     <header className="section-home-header">
       <div className="padding-global">
@@ -172,9 +169,7 @@ export default function ProductHeader({
                     <div className="margin-top margin-small" style={{ textAlign: 'center' }}>
                       <div className="subheading">
                         <div>
-                          {isGerman
-                            ? 'Von Excel zur API in Minuten — Automatisierung, Apps & KI-Agenten'
-                            : videoSubheading}
+                          {isGerman ? germanVideoSubheading : videoSubheading}
                         </div>
                       </div>
                     </div>

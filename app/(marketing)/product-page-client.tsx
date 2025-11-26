@@ -127,6 +127,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               secondaryButtonHref="/app"
               showImage={false}
               showVideo={true}
+              locale={locale}
             />
 
             {/* Pain Point Section */}
