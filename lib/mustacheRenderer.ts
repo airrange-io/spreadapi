@@ -1,6 +1,16 @@
 // Simple Mustache-like template renderer
 // Supports: {{variable}}, {{#section}}, {{/section}}, {{^inverted}}, {{/inverted}}
 
+import {
+  getEditorConfig,
+  getHtmlInputType,
+  parseFormatString,
+  parseBooleanValue,
+  getNumberFormatter,
+  detectLocale,
+  type InputParameter
+} from './editorTypes';
+
 export function renderTemplate(template: string, data: any): string {
   let result = template;
 
@@ -59,38 +69,18 @@ export function renderTemplate(template: string, data: any): string {
   return result;
 }
 
-// Get HTML input type from parameter type
-export function getInputType(paramType: string): string {
-  switch (paramType?.toLowerCase()) {
-    case 'number':
-    case 'integer':
-    case 'float':
-    case 'double':
-      return 'number';
-    case 'boolean':
-      return 'checkbox';
-    case 'date':
-      return 'date';
-    case 'email':
-      return 'email';
-    case 'url':
-      return 'url';
-    case 'tel':
-    case 'phone':
-      return 'tel';
-    default:
-      return 'text';
-  }
-}
+// Re-export getHtmlInputType for backwards compatibility
+export { getHtmlInputType as getInputType } from './editorTypes';
 
 // Generate optimized HTML input based on input metadata (lightweight version)
-export function generateOptimizedInput(input: any): string {
+export function generateOptimizedInput(input: InputParameter): string {
+  const config = getEditorConfig(input);
   const name = input.name;
-  const value = input.value || '';
+  const value = input.value ?? '';
 
-  // 1. Dropdown for allowedValues - compact and user-friendly
-  if (input.allowedValues && Array.isArray(input.allowedValues) && input.allowedValues.length > 0) {
-    const options = input.allowedValues.map((val: string) => {
+  // 1. Dropdown for allowedValues
+  if (config.editorType === 'select' && config.allowedValues) {
+    const options = config.allowedValues.map((val: string) => {
       const selected = String(val) === String(value) ? ' selected' : '';
       return `<option value="${val}"${selected}>${val}</option>`;
     }).join('');
@@ -98,9 +88,9 @@ export function generateOptimizedInput(input: any): string {
     return `<select id="${name}" name="${name}" class="optimized-select">${options}</select>`;
   }
 
-  // 2. Boolean as dropdown with visual indicators - universal icons
-  if (input.type === 'boolean') {
-    const currentValue = (value === true || value === 'true' || value === '1') ? 'true' : 'false';
+  // 2. Boolean as dropdown with visual indicators
+  if (config.editorType === 'boolean') {
+    const currentValue = parseBooleanValue(value) ? 'true' : 'false';
     const trueSelected = currentValue === 'true' ? ' selected' : '';
     const falseSelected = currentValue === 'false' ? ' selected' : '';
 
@@ -111,81 +101,74 @@ export function generateOptimizedInput(input: any): string {
   }
 
   // 3. Percentage input - with % suffix and value transformation
-  const isPercentage = input.format === 'percentage' || input.formatString?.includes('%');
-  if (isPercentage) {
-    const inputType = getInputType(input.type);
-
+  if (config.isPercentage) {
     // Transform value: storage (0-1) -> display (0-100)
     const displayValue = value !== '' && value !== undefined && value !== null
-      ? (typeof value === 'number' ? value * 100 : parseFloat(value) * 100)
+      ? (typeof value === 'number' ? value * 100 : parseFloat(String(value)) * 100)
       : '';
 
-    // Transform min/max for percentage display
-    const displayMin = input.min !== undefined ? input.min * 100 : undefined;
-    const displayMax = input.max !== undefined ? input.max * 100 : undefined;
-
-    const min = displayMin !== undefined ? ` min="${displayMin}"` : '';
-    const max = displayMax !== undefined ? ` max="${displayMax}"` : '';
+    const min = config.displayMin !== undefined ? ` min="${config.displayMin}"` : '';
+    const max = config.displayMax !== undefined ? ` max="${config.displayMax}"` : '';
     const placeholder = input.placeholder ? ` placeholder="${input.placeholder}"` : '';
+    const displayValueStr = isNaN(Number(displayValue)) ? '' : String(displayValue);
 
-    return `<div class="percentage-input-wrapper"><input id="${name}" type="${inputType}" name="${name}" value="${displayValue}"${min}${max}${placeholder} class="percentage-input" data-is-percentage="true"><span class="percentage-suffix">%</span></div>`;
+    return `<div class="percentage-input-wrapper"><input id="${name}" type="number" name="${name}" value="${displayValueStr}"${min}${max}${placeholder} class="percentage-input" data-is-percentage="true"><span class="percentage-suffix">%</span></div>`;
   }
 
   // 4. Regular input (fallback)
-  const inputType = getInputType(input.type);
-  const min = input.min !== undefined ? ` min="${input.min}"` : '';
-  const max = input.max !== undefined ? ` max="${input.max}"` : '';
+  const inputType = getHtmlInputType(input.type);
+  const min = config.min !== undefined ? ` min="${config.min}"` : '';
+  const max = config.max !== undefined ? ` max="${config.max}"` : '';
   const placeholder = input.placeholder ? ` placeholder="${input.placeholder}"` : '';
 
   return `<input id="${name}" type="${inputType}" name="${name}" value="${value}"${min}${max}${placeholder}>`;
 }
 
 // Format output value based on formatString
-export function formatValue(output: any): string {
+// Note: Uses browser locale for formatting
+export function formatValue(output: any, locale?: string): string {
   const value = output.value;
+  const effectiveLocale = locale || detectLocale();
 
   if (value === null || value === undefined) {
     return 'N/A';
   }
 
+  // Helper to format a number with formatString
+  const formatNumber = (num: number, formatStr?: string): string => {
+    if (formatStr) {
+      const formatInfo = parseFormatString(formatStr);
+
+      if (formatInfo.isPercentage) {
+        const formatter = getNumberFormatter(effectiveLocale, {
+          minimumFractionDigits: formatInfo.decimals,
+          maximumFractionDigits: formatInfo.decimals
+        });
+        return formatter.format(num) + '%';
+      }
+
+      const formatter = getNumberFormatter(effectiveLocale, {
+        minimumFractionDigits: formatInfo.decimals,
+        maximumFractionDigits: formatInfo.decimals,
+        useGrouping: formatInfo.hasThousands
+      });
+      return formatInfo.prefix + formatter.format(num) + formatInfo.suffix;
+    }
+
+    // Default formatting
+    const formatter = Number.isInteger(num)
+      ? getNumberFormatter(effectiveLocale, { maximumFractionDigits: 0 })
+      : getNumberFormatter(effectiveLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return formatter.format(num);
+  };
+
   // Handle arrays (cell ranges) - format as HTML table
   if (Array.isArray(value)) {
-    // Helper to format individual cell values
     const formatCell = (cellValue: any): string => {
       if (cellValue === null || cellValue === undefined) return '';
 
-      // Apply formatString if available and value is a number
-      if (output.formatString && typeof cellValue === 'number') {
-        const formatStr = output.formatString.trim();
-
-        if (formatStr.includes('%')) {
-          const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
-          return new Intl.NumberFormat('de-DE', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          }).format(cellValue) + '%';
-        }
-
-        const prefixMatch = formatStr.match(/^([^#0,.\s]+)/);
-        const suffixMatch = formatStr.match(/([^#0,.\s]+)$/);
-        const decimalMatch = formatStr.match(/\.0+/);
-        const hasThousands = formatStr.includes(',');
-        const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
-        const prefix = prefixMatch ? prefixMatch[1] : '';
-        const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
-
-        return prefix + new Intl.NumberFormat('de-DE', {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-          useGrouping: hasThousands
-        }).format(cellValue) + suffix;
-      }
-
       if (typeof cellValue === 'number') {
-        const formatter = Number.isInteger(cellValue)
-          ? new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 })
-          : new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return formatter.format(cellValue);
+        return formatNumber(cellValue, output.formatString);
       }
 
       return String(cellValue);
@@ -218,42 +201,8 @@ export function formatValue(output: any): string {
   }
 
   // Handle number formatting
-  if (typeof value === 'number' && output.formatString) {
-    const formatStr = output.formatString.trim();
-
-    // Handle percentage
-    if (formatStr.includes('%')) {
-      const decimals = (formatStr.match(/\.0+/)?.[0].length || 1) - 1;
-      return new Intl.NumberFormat('de-DE', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-      }).format(value) + '%';
-    }
-
-    // Handle currency and other formats
-    const prefixMatch = formatStr.match(/^([^#0,.\s]+)/);
-    const suffixMatch = formatStr.match(/([^#0,.\s]+)$/);
-    const decimalMatch = formatStr.match(/\.0+/);
-    const hasThousands = formatStr.includes(',');
-
-    const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
-    const prefix = prefixMatch ? prefixMatch[1] : '';
-    const suffix = suffixMatch && !prefixMatch ? suffixMatch[1] : '';
-
-    const formattedNum = new Intl.NumberFormat('de-DE', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-      useGrouping: hasThousands
-    }).format(value);
-
-    return `${prefix}${formattedNum}${suffix}`;
-  }
-
   if (typeof value === 'number') {
-    const formatter = Number.isInteger(value)
-      ? new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 })
-      : new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return formatter.format(value);
+    return formatNumber(value, output.formatString);
   }
 
   if (typeof value === 'boolean') {

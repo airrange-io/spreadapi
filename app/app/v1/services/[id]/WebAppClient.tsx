@@ -1,9 +1,15 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { ConfigProvider, Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch } from 'antd';
+import { ConfigProvider, Card, Form, Input, InputNumber, Select, Button, Alert, Typography, Slider, Row, Col, Switch, Space } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import type { ViewTheme } from '@/lib/viewThemes';
+import {
+  getEditorConfig,
+  parseFormatString,
+  getSmartStep,
+  type InputParameter
+} from '@/lib/editorTypes';
 
 const { Title, Text } = Typography;
 
@@ -553,84 +559,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
     }
   };
 
-  // Parse formatString to extract prefix, suffix, decimals, and thousands separator
-  const parseFormatString = useCallback((formatStr: string | undefined): {
-    prefix: string;
-    suffix: string;
-    decimals: number;
-    hasThousands: boolean;
-    isPercentage: boolean;
-  } => {
-    if (!formatStr) {
-      return { prefix: '', suffix: '', decimals: 2, hasThousands: false, isPercentage: false };
-    }
-
-    const isPercentage = formatStr.includes('%');
-    const prefixMatch = formatStr.match(/^([^#0,.%]+)/);
-    const suffixMatch = formatStr.match(/([^#0,.%]+)$/);
-    const decimalMatch = formatStr.match(/\.0+/);
-    const hasThousands = formatStr.includes(',');
-
-    const decimals = decimalMatch ? decimalMatch[0].length - 1 : 0;
-    const prefix = prefixMatch ? prefixMatch[1].trim() : '';
-    const suffix = suffixMatch ? suffixMatch[1].trim() : '';
-
-    return { prefix, suffix, decimals, hasThousands, isPercentage };
-  }, []);
-
-  // Smart step size calculator - aims for ~2-5% steps
-  const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
-    // Convert to numbers in case they're strings
-    const minNum = min !== undefined ? Number(min) : undefined;
-    const maxNum = max !== undefined ? Number(max) : undefined;
-    const valueNum = value !== undefined ? Number(value) : undefined;
-
-    // If we have a range, use 1% of the range (max 100 steps)
-    if (minNum !== undefined && maxNum !== undefined && !isNaN(minNum) && !isNaN(maxNum)) {
-      const range = maxNum - minNum;
-      const step = range / 100;
-
-      // For small ranges (like 0-1 for percentages), use decimal steps even if min/max are integers
-      if (range <= 10) {
-        return Math.max(step, 0.01);
-      }
-
-      if (Number.isInteger(minNum) && Number.isInteger(maxNum)) {
-        // For integer ranges, round to nice numbers
-        const intStep = Math.floor(step);
-        if (intStep >= 10) return Math.round(intStep / 10) * 10; // Round to nearest 10
-        if (intStep >= 5) return 5;
-        return Math.max(intStep, 1);
-      }
-
-      return Math.max(step, 0.01);
-    }
-
-    // No range defined - use percentage of current value
-    const currentValue = (valueNum !== undefined && !isNaN(valueNum)) ? valueNum : 0;
-    const absValue = Math.abs(currentValue);
-
-    // For very small values, use fixed small steps
-    if (absValue < 1) return 0.1;
-    if (absValue < 10) return 1;
-
-    // For larger values, use ~2-5% of the value, rounded to nice numbers
-    if (Number.isInteger(currentValue) || absValue >= 10) {
-      // Aim for 2-5% step size, rounded to nice numbers
-      if (absValue < 100) return 1;        // 20 → step 1 (5%)
-      if (absValue < 500) return 10;       // 200 → step 10 (5%)
-      if (absValue < 1000) return 25;      // 500 → step 25 (5%)
-      if (absValue < 5000) return 100;     // 2000 → step 100 (5%)
-      if (absValue < 10000) return 250;    // 5000 → step 250 (5%)
-      if (absValue < 100000) return 1000;  // 50000 → step 1000 (2%)
-      return Math.round(absValue / 50);    // Large values: ~2% step
-    }
-
-    // For decimals, use appropriate decimal steps
-    if (absValue < 100) return 1;
-    if (absValue < 1000) return 10;
-    return 100;
-  };
+  // Use shared parseFormatString from editorTypes (imported at top)
 
   const renderInputControl = useCallback((input: Input) => {
     const fieldName = input.name;
@@ -906,7 +835,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
         />
       </Form.Item>
     );
-  }, [formatters, t, parseFormatString, parseLocaleNumber, userLocale]);
+  }, [formatters, t, parseLocaleNumber, userLocale]);
 
   return (
     <ConfigProvider

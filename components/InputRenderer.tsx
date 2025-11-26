@@ -1,84 +1,65 @@
 'use client';
 
-import React from 'react';
-import { Form, InputNumber, Input, Switch, Select, Slider, Row, Col, Typography } from 'antd';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Form, InputNumber, Input, Switch, Select, Slider, Row, Col, Typography, Space } from 'antd';
+import {
+  getEditorConfig,
+  detectLocale,
+  createFormatters,
+  createLocaleParser,
+  isAiDescription,
+  toDisplayValue,
+  toStoredValue,
+  type InputParameter
+} from '@/lib/editorTypes';
 
 const { Text } = Typography;
 
 interface InputRendererProps {
-  input: any;
+  input: InputParameter;
   fieldName: string;
   showLabel?: boolean;
   marginBottom?: number;
-  hideAiDescriptions?: boolean; // Hide descriptions that are meant for AI (start with "CRITICAL:", etc.)
+  hideAiDescriptions?: boolean;
+  locale?: string;  // Optional locale override
 }
-
-// Helper function to determine smart step size
-const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined) => {
-  // If we have min and max, calculate step based on range
-  if (min !== undefined && max !== undefined) {
-    const range = max - min;
-    if (range <= 1) return 0.01;
-    if (range <= 10) return 0.1;
-    if (range <= 100) return 1;
-    if (range <= 1000) return 10;
-    return 100;
-  }
-
-  // Otherwise, base step on current value
-  const currentValue = value || 0;
-  const absValue = Math.abs(currentValue);
-
-  if (absValue === 0) return 1;
-  if (absValue < 1) return 0.01;
-  if (absValue < 10) return 0.1;
-  if (absValue < 100) return 1;
-  if (absValue < 1000) return 10;
-  return 100;
-};
-
-// Parse locale number (handle both . and , as decimal separator)
-const parseLocaleNumber = (value: string | undefined): number => {
-  if (!value) return NaN;
-  const parsed = parseFloat(value.replace(/\./g, '').replace(',', '.'));
-  return isNaN(parsed) ? NaN : parsed;
-};
-
-// Format numbers for display
-const formatters = {
-  integer: new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 }),
-  decimal: new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-};
 
 export const InputRenderer: React.FC<InputRendererProps> = ({
   input,
   fieldName,
   showLabel = true,
   marginBottom = 12,
-  hideAiDescriptions = false
+  hideAiDescriptions = false,
+  locale
 }) => {
-  // Helper to check if description is AI-specific
-  const isAiDescription = (desc: string) => {
-    if (!desc) return false;
-    const aiPatterns = [
-      /^CRITICAL:/i,
-      /you MUST pass/i,
-      /Never pass the whole number/i,
-      /Pass actual boolean value/i,
-      /Accept multiple formats.*yes\/no.*true\/false/i
-    ];
-    return aiPatterns.some(pattern => pattern.test(desc));
-  };
+  // Detect locale client-side only to avoid SSR hydration mismatch
+  // Start with 'en-US' (same as SSR default), then update to browser locale
+  const [clientLocale, setClientLocale] = useState('en-US');
+  useEffect(() => {
+    setClientLocale(detectLocale());
+  }, []);
+
+  const effectiveLocale = locale || clientLocale;
+  const formatters = useMemo(() => createFormatters(effectiveLocale), [effectiveLocale]);
+  const parseLocaleNumber = useMemo(() => createLocaleParser(effectiveLocale), [effectiveLocale]);
+
+  // Get editor configuration
+  const config = getEditorConfig(input);
 
   // Determine if we should show the description
-  const shouldShowDescription = input.description &&
-    (!hideAiDescriptions || !isAiDescription(input.description));
+  const shouldShowDescription = !!(
+    input.description && (!hideAiDescriptions || !isAiDescription(input.description))
+  );
+
+  const displayTitle = input.title || input.name;
 
   const label = showLabel ? (
     <div>
       <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
-        {input.title || input.name}
-        {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>}
+        {displayTitle}
+        {!input.mandatory && (
+          <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>
+        )}
       </div>
       {shouldShowDescription && (
         <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginBottom: 4 }}>
@@ -88,25 +69,27 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     </div>
   ) : undefined;
 
-  // If input has allowedValues, render a dropdown
-  if (input.allowedValues && input.allowedValues.length > 0) {
+  // ============================================================================
+  // 1. Dropdown for allowedValues
+  // ============================================================================
+  if (config.editorType === 'select' && config.allowedValues) {
     return (
       <Form.Item
         key={fieldName}
         name={fieldName}
         label={label}
-        rules={[{ required: input.mandatory !== false, message: `Please select ${input.title || input.name}` }]}
+        rules={[{ required: input.mandatory !== false, message: `Please select ${displayTitle}` }]}
         style={{ marginBottom }}
       >
         <Select
-          placeholder={`Select ${input.title || input.name}`}
+          placeholder={`Select ${displayTitle}`}
           size="middle"
           showSearch
           optionFilterProp="children"
           filterOption={(inputValue, option) =>
             String(option?.label ?? '').toLowerCase().includes(inputValue.toLowerCase())
           }
-          options={input.allowedValues.map((value: any) => ({
+          options={config.allowedValues.map((value) => ({
             value: value,
             label: value
           }))}
@@ -115,148 +98,181 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     );
   }
 
-  if (input.type === 'number') {
-    // Detect percentage formatting
-    const isPercentage = input.format === 'percentage' || input.formatString?.includes('%');
+  // ============================================================================
+  // 2. Number with slider
+  // ============================================================================
+  if (config.hasSlider && (config.editorType === 'number' || config.editorType === 'percentage')) {
+    const SliderWithInput = ({ value, onChange }: { value?: number; onChange?: (val: number) => void }) => {
+      const displayValue = toDisplayValue(value, config.isPercentage);
+      const min = config.isPercentage ? config.displayMin : config.min;
+      const max = config.isPercentage ? config.displayMax : config.max;
+      const step = config.isPercentage ? config.displayStep : config.step;
 
-    // Ensure min/max are numbers
-    const minValue = input.min !== undefined ? Number(input.min) : undefined;
-    const maxValue = input.max !== undefined ? Number(input.max) : undefined;
-
-    const hasRange = minValue !== undefined && maxValue !== undefined && !isNaN(minValue) && !isNaN(maxValue);
-    const rangeSize = hasRange ? maxValue! - minValue! : 0;
-    const useSlider = hasRange && rangeSize > 0 && rangeSize <= 10000; // Use slider for reasonable ranges
-
-    if (useSlider) {
-      // Combined Slider + InputNumber for best UX
-      const SliderWithInput = ({ value, onChange }: { value?: number; onChange?: (val: number) => void }) => (
+      return (
         <Row gutter={16} align="middle">
           <Col flex="auto">
             <Slider
-              value={isPercentage ? (value !== undefined ? value * 100 : undefined) : value}
-              onChange={(val) => onChange?.(isPercentage ? val / 100 : val)}
-              min={isPercentage && minValue !== undefined ? minValue * 100 : minValue}
-              max={isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue}
-              step={getSmartStep(input.value, minValue, maxValue) * (isPercentage ? 100 : 1)}
+              value={displayValue}
+              onChange={(val) => onChange?.(toStoredValue(val, config.isPercentage) ?? 0)}
+              min={min}
+              max={max}
+              step={step}
               tooltip={{
                 formatter: (val) => {
                   if (val === null || val === undefined) return '';
                   const num = typeof val === 'number' ? val : parseFloat(String(val));
                   if (isNaN(num)) return '';
-                  const displayNum = isPercentage ? num : num;
-                  if (Number.isInteger(displayNum)) {
-                    return formatters.integer.format(displayNum) + (isPercentage ? '%' : '');
-                  }
-                  return formatters.decimal.format(displayNum) + (isPercentage ? '%' : '');
+                  const formatted = Number.isInteger(num)
+                    ? formatters.integer.format(num)
+                    : formatters.decimal.format(num);
+                  return config.isPercentage ? `${formatted}%` : formatted;
                 }
               }}
             />
           </Col>
           <Col flex="120px">
-            <InputNumber
-              value={isPercentage ? (value !== undefined ? value * 100 : undefined) : value}
-              onChange={(val) => onChange?.(val !== null && val !== undefined && isPercentage ? val / 100 : val)}
-              style={{ width: '100%' }}
-              min={isPercentage && minValue !== undefined ? minValue * 100 : minValue}
-              max={isPercentage && maxValue !== undefined ? maxValue * 100 : maxValue}
-              step={getSmartStep(input.value, minValue, maxValue) * (isPercentage ? 100 : 1)}
-              size="middle"
-              keyboard={true}
-              addonAfter={isPercentage ? '%' : undefined}
-              formatter={(val) => {
-                if (!val) return '';
-                const num = parseFloat(val.toString());
-                if (isNaN(num)) return val.toString();
-                if (Number.isInteger(num)) {
-                  return formatters.integer.format(num);
-                }
-                return formatters.decimal.format(num);
-              }}
-              parser={parseLocaleNumber}
-            />
+            {config.isPercentage ? (
+              <Space.Compact style={{ width: '100%' }}>
+                <InputNumber
+                  value={displayValue}
+                  onChange={(val) => onChange?.(toStoredValue(val, config.isPercentage) ?? 0)}
+                  style={{ width: '100%' }}
+                  min={min}
+                  max={max}
+                  step={step}
+                  size="middle"
+                  keyboard={true}
+                  formatter={(val) => {
+                    if (!val) return '';
+                    const num = parseFloat(val.toString());
+                    if (isNaN(num)) return val.toString();
+                    return Number.isInteger(num)
+                      ? formatters.integer.format(num)
+                      : formatters.decimal.format(num);
+                  }}
+                  parser={parseLocaleNumber}
+                />
+                <Input
+                  style={{ width: 40, textAlign: 'center', pointerEvents: 'none' }}
+                  value="%"
+                  readOnly
+                  tabIndex={-1}
+                />
+              </Space.Compact>
+            ) : (
+              <InputNumber
+                value={displayValue}
+                onChange={(val) => onChange?.(toStoredValue(val, config.isPercentage) ?? 0)}
+                style={{ width: '100%' }}
+                min={min}
+                max={max}
+                step={step}
+                size="middle"
+                keyboard={true}
+                formatter={(val) => {
+                  if (!val) return '';
+                  const num = parseFloat(val.toString());
+                  if (isNaN(num)) return val.toString();
+                  return Number.isInteger(num)
+                    ? formatters.integer.format(num)
+                    : formatters.decimal.format(num);
+                }}
+                parser={parseLocaleNumber}
+              />
+            )}
           </Col>
         </Row>
       );
+    };
 
-      return (
-        <Form.Item
-          key={fieldName}
-          name={fieldName}
-          label={label}
-          rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
-          style={{ marginBottom }}
-        >
-          <SliderWithInput />
-        </Form.Item>
-      );
-    }
-
-    // Regular InputNumber without slider
-    // For percentage fields, we need a custom component to handle the conversion
-    if (isPercentage) {
-      const PercentageInput = ({ value, onChange }: { value?: number; onChange?: (val: number | null) => void }) => (
-        <InputNumber
-          value={value !== undefined ? value * 100 : undefined}
-          onChange={(val) => onChange?.(val !== null && val !== undefined ? val / 100 : null)}
-          style={{ width: '100%' }}
-          min={minValue !== undefined ? minValue * 100 : undefined}
-          max={maxValue !== undefined ? maxValue * 100 : undefined}
-          step={getSmartStep(input.value, minValue, maxValue) * 100}
-          placeholder={`Enter ${input.title || input.name}`}
-          size="middle"
-          keyboard={true}
-          addonAfter="%"
-          formatter={(value) => {
-            if (!value) return '';
-            const num = parseFloat(value.toString());
-            if (isNaN(num)) return value.toString();
-            if (Number.isInteger(num)) {
-              return formatters.integer.format(num);
-            }
-            return formatters.decimal.format(num);
-          }}
-          parser={parseLocaleNumber}
-        />
-      );
-
-      return (
-        <Form.Item
-          key={fieldName}
-          name={fieldName}
-          label={label}
-          rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
-          style={{ marginBottom }}
-        >
-          <PercentageInput />
-        </Form.Item>
-      );
-    }
-
-    // Non-percentage InputNumber
     return (
       <Form.Item
         key={fieldName}
         name={fieldName}
         label={label}
-        rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+        rules={[{ required: input.mandatory !== false, message: `Please enter ${displayTitle}` }]}
+        style={{ marginBottom }}
+      >
+        <SliderWithInput />
+      </Form.Item>
+    );
+  }
+
+  // ============================================================================
+  // 3. Percentage input (without slider)
+  // ============================================================================
+  if (config.editorType === 'percentage') {
+    const PercentageInput = ({ value, onChange }: { value?: number; onChange?: (val: number | null) => void }) => (
+      <Space.Compact style={{ width: '100%' }}>
+        <InputNumber
+          value={toDisplayValue(value, true)}
+          onChange={(val) => onChange?.(toStoredValue(val, true))}
+          style={{ width: '100%' }}
+          min={config.displayMin}
+          max={config.displayMax}
+          step={config.displayStep ?? config.step}
+          placeholder={`Enter ${displayTitle}`}
+          size="middle"
+          keyboard={true}
+          formatter={(val) => {
+            if (!val) return '';
+            const num = parseFloat(val.toString());
+            if (isNaN(num)) return val.toString();
+            return Number.isInteger(num)
+              ? formatters.integer.format(num)
+              : formatters.decimal.format(num);
+          }}
+          parser={parseLocaleNumber}
+        />
+        <Input
+          style={{ width: 50, textAlign: 'center', pointerEvents: 'none' }}
+          value="%"
+          readOnly
+          tabIndex={-1}
+        />
+      </Space.Compact>
+    );
+
+    return (
+      <Form.Item
+        key={fieldName}
+        name={fieldName}
+        label={label}
+        rules={[{ required: input.mandatory !== false, message: `Please enter ${displayTitle}` }]}
+        style={{ marginBottom }}
+      >
+        <PercentageInput />
+      </Form.Item>
+    );
+  }
+
+  // ============================================================================
+  // 4. Regular number input
+  // ============================================================================
+  if (config.editorType === 'number') {
+    return (
+      <Form.Item
+        key={fieldName}
+        name={fieldName}
+        label={label}
+        rules={[{ required: input.mandatory !== false, message: `Please enter ${displayTitle}` }]}
         style={{ marginBottom }}
       >
         <InputNumber
           style={{ width: '100%' }}
-          min={minValue}
-          max={maxValue}
-          step={getSmartStep(input.value, minValue, maxValue)}
-          placeholder={`Enter ${input.title || input.name}`}
+          min={config.min}
+          max={config.max}
+          step={config.step}
+          placeholder={`Enter ${displayTitle}`}
           size="middle"
           keyboard={true}
-          formatter={(value) => {
-            if (!value) return '';
-            const num = parseFloat(value.toString());
-            if (isNaN(num)) return value.toString();
-            if (Number.isInteger(num)) {
-              return formatters.integer.format(num);
-            }
-            return formatters.decimal.format(num);
+          formatter={(val) => {
+            if (!val) return '';
+            const num = parseFloat(val.toString());
+            if (isNaN(num)) return val.toString();
+            return Number.isInteger(num)
+              ? formatters.integer.format(num)
+              : formatters.decimal.format(num);
           }}
           parser={parseLocaleNumber}
         />
@@ -264,15 +280,19 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     );
   }
 
-  if (input.type === 'boolean') {
-    // Custom component to properly receive checked prop from Form.Item
+  // ============================================================================
+  // 5. Boolean switch
+  // ============================================================================
+  if (config.editorType === 'boolean') {
     const SwitchWithLabel = ({ checked, onChange }: { checked?: boolean; onChange?: (val: boolean) => void }) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <Switch checked={checked} onChange={onChange} />
         <div>
           <div style={{ fontWeight: 400, fontSize: 13, color: '#666' }}>
-            {input.title || input.name}
-            {!input.mandatory && <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>}
+            {displayTitle}
+            {!input.mandatory && (
+              <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>
+            )}
           </div>
           {shouldShowDescription && (
             <div style={{ fontSize: 11, color: '#999', fontWeight: 400, marginTop: 2 }}>
@@ -295,17 +315,19 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     );
   }
 
-  // Default to string/text
+  // ============================================================================
+  // 6. Default to text input
+  // ============================================================================
   return (
     <Form.Item
       key={fieldName}
       name={fieldName}
       label={label}
-      rules={[{ required: input.mandatory !== false, message: `Please enter ${input.title || input.name}` }]}
+      rules={[{ required: input.mandatory !== false, message: `Please enter ${displayTitle}` }]}
       style={{ marginBottom }}
     >
       <Input
-        placeholder={`Enter ${input.title || input.name}`}
+        placeholder={`Enter ${displayTitle}`}
         size="middle"
       />
     </Form.Item>

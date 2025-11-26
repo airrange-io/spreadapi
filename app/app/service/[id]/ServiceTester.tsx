@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, InputNumber, Switch, Statistic, Row, Col, Tooltip } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { Button, Input, Space, Typography, Alert, Form, Statistic, Row, Col, Tooltip } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, ApiOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
+import { InputRenderer } from '@/components/InputRenderer';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -235,70 +236,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     return 6; // 4 columns
   };
 
-  const renderParameterInput = (input: any) => {
-    // Debug log to check what types we're getting
-    
-    const commonProps = {
-      style: { width: '100%' }
-    };
-
-    // Helper function to determine smart step size
-    const getSmartStep = (value: number | undefined, min: number | undefined, max: number | undefined, fieldName: string) => {
-      // If we have min and max, calculate step based on range
-      if (min !== undefined && max !== undefined) {
-        const range = max - min;
-        if (range <= 1) return 0.01;
-        if (range <= 10) return 0.1;
-        if (range <= 100) return 1;
-        if (range <= 1000) return 10;
-        return 100;
-      }
-
-      // Otherwise, base step on current value
-      // Use parameterValues instead of form.getFieldValue to avoid warning during initial render
-      const currentValue = value || parameterValues[fieldName] || 0;
-      const absValue = Math.abs(currentValue);
-
-      if (absValue === 0) return 1;
-      if (absValue < 1) return 0.01;
-      if (absValue < 10) return 0.1;
-      if (absValue < 100) return 1;
-      if (absValue < 1000) return 10;
-      return 100;
-    };
-
-    // Check both type and dataType properties
-    const inputType = input.type || input.dataType;
-    const fieldName = input.name;
-
-    switch (inputType) {
-      case 'number':
-        return (
-          <InputNumber
-            {...commonProps}
-            min={input.min}
-            max={input.max}
-            step={getSmartStep(input.value, input.min, input.max, fieldName)}
-            placeholder={`Enter ${input.name}`}
-            keyboard={true}
-            controls={true}
-            precision={input.min !== undefined && input.max !== undefined && (input.max - input.min) <= 1 ? 2 : undefined}
-          />
-        );
-      case 'boolean':
-        return (
-          <Switch />
-        );
-      default:
-        return (
-          <Input
-            {...commonProps}
-            placeholder={`Enter ${input.name}`}
-          />
-        );
-    }
-  };
-
   return (
     <div style={{ width: '100%' }}>
       <Space orientation="vertical" style={{ width: '100%' }} size={8}>
@@ -315,32 +252,19 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             }}
           >
             {inputs.length > 0 && (
-              <div style={{ width: '100%' }}>
-                <Row gutter={[16, 4]}>
-                  {inputs.map((input) => {
-                    // Only span full width if the input has a description or is a text area
-                    const shouldSpanFull = false; // Allow all inputs to use responsive columns
-                    const colSpan = shouldSpanFull ? 24 : getColumnSpan();
-                    
-                    return (
-                      <Col key={input.id} span={colSpan}>
-                        <Form.Item
-                          name={input.name}
-                          label={(input.title || input.name).replace(/\*+\s*$/g, '').trim()}
-                          rules={[
-                            {
-                              required: input.mandatory,
-                              message: `Please enter ${input.name}`
-                            }
-                          ]}
-                        >
-                          {renderParameterInput(input)}
-                        </Form.Item>
-                      </Col>
-                    );
-                  })}
-                </Row>
-              </div>
+              <Row gutter={[16, 4]}>
+                {inputs.map((input) => (
+                  <Col key={input.id} span={getColumnSpan()}>
+                    <InputRenderer
+                      input={input}
+                      fieldName={input.name}
+                      showLabel={true}
+                      marginBottom={8}
+                      hideAiDescriptions={true}
+                    />
+                  </Col>
+                ))}
+              </Row>
             )}
           </Form>
 
