@@ -93,7 +93,7 @@ export default function CacheStatsPage() {
         </div>
       ) : error ? (
         <Alert
-          message="Error"
+          title="Error"
           description={error}
           type="error"
           showIcon

@@ -476,7 +476,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               </div>
             }
             type="info"
-            style={{ marginTop: 16, padding: 10, paddingLeft: 15 }}
+            style={{ marginTop: 16, padding: '10px 10px 10px 15px' }}
           />
         </Card>
       )}

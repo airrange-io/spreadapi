@@ -957,7 +957,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
           {error && (
             <Alert
               className="spreadapi-error"
-              message={t('error')}
+              title={t('error')}
               description={error}
               type="error"
               showIcon
@@ -1031,7 +1031,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
               {resultsAreStale && (
                 <Alert
                   className="spreadapi-warning"
-                  message={t('staleWarning')}
+                  title={t('staleWarning')}
                   type="warning"
                   showIcon={false}
                   style={{ marginTop: 24 }}

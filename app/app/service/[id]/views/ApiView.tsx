@@ -162,7 +162,7 @@ const ApiView: React.FC<ApiViewProps> = ({
 
     const alertBanner = showUnpublishedAlert && (
       <Alert
-        message="Service must be published to test"
+        title="Service must be published to test"
         type="warning"
         style={{ marginBottom: 16, borderRadius: 8 }}
         showIcon

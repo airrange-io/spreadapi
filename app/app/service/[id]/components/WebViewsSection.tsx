@@ -179,7 +179,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {/* Description */}
         <Alert
-          message="Embeddable Result Views"
+          title="Embeddable Result Views"
           description={
             <>
               Create customizable HTML views that display API results. Perfect for embedding in websites, blogs, and documentation.
@@ -328,7 +328,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
 
         {/* Help Text */}
         <Alert
-          message="How to Use"
+          title="How to Use"
           description={
             <div>
               <p style={{ marginBottom: 8 }}>

@@ -72,7 +72,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   if (!isPublished) {
     return (
       <Alert
-        message="Service Not Published"
+        title="Service Not Published"
         description="API documentation is only available for published services. Publish your service first to view the interactive documentation."
         type="info"
         showIcon
@@ -94,7 +94,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   if (error) {
     return (
       <Alert
-        message="Error Loading Documentation"
+        title="Error Loading Documentation"
         description={error}
         type="error"
         showIcon

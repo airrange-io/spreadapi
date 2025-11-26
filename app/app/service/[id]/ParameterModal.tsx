@@ -532,19 +532,19 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
 
             {parsedAddress && parsedAddress.rowCount > 1 && (
               <Alert
-                message="Range Selection"
+                title="Range Selection"
                 description={`This is a range of ${parsedAddress.rowCount} rows × ${parsedAddress.colCount} columns. The entire range will be returned as an array of values.`}
                 type="info"
-                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
+                style={{ marginBottom: 16, padding: '10px 10px 10px 15px' }}
               />
             )}
 
             {isRange && !parsedAddress && (
               <Alert
-                message="Range Selection"
+                title="Range Selection"
                 description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
                 type="info"
-                style={{ marginBottom: 16, padding: 10, paddingLeft: 15 }}
+                style={{ marginBottom: 16, padding: '10px 10px 10px 15px' }}
               />
             )}
 

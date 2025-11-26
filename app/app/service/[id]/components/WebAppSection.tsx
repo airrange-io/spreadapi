@@ -98,7 +98,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
     <CollapsibleSection title="Create a Web Frontend for Your API" defaultOpen={false}>
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         <Alert
-          message="Web Frontend"
+          title="Web Frontend"
           description="Create a shareable web application that users can access directly without API knowledge. Generate a token to enable."
           type="info"
           showIcon
@@ -151,17 +151,17 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
                 Web App URL
               </div>
-              <Input
-                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
-                readOnly
-                addonAfter={
-                  <CopyOutlined
-                    onClick={handleCopyLink}
-                    style={{ cursor: 'pointer' }}
-                    title="Copy to clipboard"
-                  />
-                }
-              />
+              <Space.Compact style={{ width: '100%' }}>
+                <Input
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
+                  readOnly
+                />
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyLink}
+                  title="Copy to clipboard"
+                />
+              </Space.Compact>
               <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
                 Share this{' '}
                 <a
@@ -178,7 +178,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
 
             {hasUnsavedChanges && (
               <Alert
-                message="Remember to click the Save button at the top to activate your web app settings"
+                title="Remember to click the Save button at the top to activate your web app settings"
                 type="info"
                 showIcon={false}
                 style={{ fontSize: '12px', padding: '8px 12px' }}

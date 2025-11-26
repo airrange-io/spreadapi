@@ -305,7 +305,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           {/* Tokens list */}
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px', paddingTop: '10%' }}>
+            <div style={{ textAlign: 'center', padding: '10% 20px 20px 20px' }}>
               <Spin size="default" />
             </div>
           ) : tokens.length === 0 ? (
@@ -439,7 +439,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         {newToken && (
           <Space orientation="vertical" style={{ width: '100%' }}>
             <Alert
-              message="Save this token securely"
+              title="Save this token securely"
               description="This token will not be shown again. Copy it now and store it in a safe place."
               type="warning"
               showIcon

@@ -128,7 +128,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
         {/* Test Result */}
         {testResult && (
           <Alert
-            message={testResult.success ? 'Test Successful' : 'Test Failed'}
+            title={testResult.success ? 'Test Successful' : 'Test Failed'}
             description={
               <div style={{ fontSize: 13 }}>
                 {testResult.success ? (
@@ -167,7 +167,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
         {/* Info Alert */}
         <Alert
-          message="How Webhooks Work"
+          title="How Webhooks Work"
           description={
             <div style={{ fontSize: 13 }}>
               <ul style={{ paddingLeft: 20, margin: 0 }}>
@@ -188,7 +188,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
         {isDemoMode && (
           <Alert
-            message="Webhook configuration is disabled in demo mode"
+            title="Webhook configuration is disabled in demo mode"
             type="warning"
             showIcon
           />

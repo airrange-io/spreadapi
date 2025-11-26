@@ -499,7 +499,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
           {/* Error */}
           {error && (
             <Alert
-              message="Test Failed"
+              title="Test Failed"
               description={error}
               type="error"
               showIcon

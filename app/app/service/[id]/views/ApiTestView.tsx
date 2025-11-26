@@ -137,7 +137,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {!serviceStatus?.published && (
           <Alert
-            message="Service must be published to test"
+            title="Service must be published to test"
             type="warning"
             style={{ borderRadius: 8 }}
             // banner

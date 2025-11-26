@@ -106,7 +106,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 <li>Perfect for: lookup tables, configuration grids, what-if scenarios, data transformation</li>
               </ul>
               <Alert
-                message="Key Insight"
+                title="Key Insight"
                 description="Areas let AI discover and work with your spreadsheet's intelligence. Instead of hardcoding every parameter, AI can explore a tax rate table, modify assumptions in a financial model, or adjust lookup values to test scenarios."
                 type="success"
                 style={{ marginTop: 8 }}
@@ -177,7 +177,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
                 <strong>AI Query Example:</strong> "What if we increased the top tax rate to 30%?"
               </Paragraph>
               <Alert
-                message="AI automatically modifies cell C14 to 30%, recalculates, and shows the impact"
+                title="AI automatically modifies cell C14 to 30%, recalculates, and shows the impact"
                 type="info"
                 style={{ marginTop: 8 }}
               />
@@ -229,7 +229,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
           <div>
             <Title level={4}>🤖 Making Your Service AI-Friendly</Title>
             <Alert
-              message="Key to AI Success: Descriptions and Context"
+              title="Key to AI Success: Descriptions and Context"
               description="The more context you provide, the better AI can understand and use your service. Think of it as training your AI assistant."
               type="success"
               icon={<InfoCircleOutlined />}
@@ -297,7 +297,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
             </div>
 
             <Alert
-              message="Pro Tip: Think Like You're Training a New Employee"
+              title="Pro Tip: Think Like You're Training a New Employee"
               description="Write descriptions as if you're explaining to a smart colleague who doesn't know your specific domain. Include examples of valid values, explain abbreviations, and clarify any business logic."
               type="info"
               style={{ marginTop: 16 }}
@@ -319,7 +319,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               <li><strong>Complex Workflows:</strong> Combine multiple services and areas</li>
             </ul>
             <Alert
-              message="Power User Tip"
+              title="Power User Tip"
               description="Create a 'scenarios' area where AI can save and compare different parameter sets. Or make your entire assumptions section an editable area so AI can perform comprehensive sensitivity analysis."
               type="success"
               style={{ marginTop: 16 }}
@@ -357,7 +357,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
               <li><strong>Examples in Descriptions</strong>: "Interest rate as decimal (0.05 = 5%)" is better than "Interest rate"</li>
             </ul>
             <Alert
-              message="Golden Rule"
+              title="Golden Rule"
               description="Design your areas as you would explain them to a colleague: 'This is our tax table', 'These are the configuration parameters', 'This grid calculates the results'. AI will understand and work with them intelligently."
               type="warning"
               style={{ marginTop: 16 }}

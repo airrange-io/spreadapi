@@ -327,10 +327,10 @@ const AppsView: React.FC<AppsViewProps> = ({
                   Regenerate to revoke access to old links
                 </div>
                 <Alert
-                  message="Build Web Applications & Embeddable Snippets"
+                  title="Build Web Applications & Embeddable Snippets"
                   description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation. All requests are rate limited to 1,000 requests per minute per service."
                   type="info"
-                  style={{ marginTop: 24, marginBottom: 24, padding: 10, paddingLeft: 15 }}
+                  style={{ marginTop: 24, marginBottom: 24, padding: '10px 10px 10px 15px' }}
                 />
               </div>
             </Space>
@@ -411,7 +411,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           {hasUnsavedChanges && (
             <Alert
-              message="Remember to click the Save button at the top to save your theme settings"
+              title="Remember to click the Save button at the top to save your theme settings"
               type="info"
               showIcon={false}
               style={{ fontSize: 12, padding: '8px 12px', marginBottom: 24 }}
@@ -569,7 +569,7 @@ const AppsView: React.FC<AppsViewProps> = ({
       if (!webAppToken && !isDemoMode) {
         return (
           <Alert
-            message="No Web App Token"
+            title="No Web App Token"
             description="Please generate a token in 'Intro & Token Management' to enable your web app."
             type="warning"
             showIcon
@@ -586,10 +586,10 @@ const AppsView: React.FC<AppsViewProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
           {isDemoMode && (
             <Alert
-              // message="Demo Mode - Web App Preview"
+              // title="Demo Mode - Web App Preview"
               description="You're viewing the web app in demo mode. This service is publicly accessible."
               // type="info"
-              style={{ marginBottom: 0, padding: 10, paddingLeft: 15 }}
+              style={{ marginBottom: 0, padding: '10px 10px 10px 15px' }}
             />
           )}
 
@@ -598,17 +598,17 @@ const AppsView: React.FC<AppsViewProps> = ({
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
               Web App URL
             </div>
-            <Input
-              value={webAppUrl}
-              readOnly
-              addonAfter={
-                <CopyOutlined
-                  onClick={() => handleCopyLink(webAppUrl)}
-                  style={{ cursor: 'pointer' }}
-                  title="Copy to clipboard"
-                />
-              }
-            />
+            <Space.Compact style={{ width: '100%' }}>
+              <Input
+                value={webAppUrl}
+                readOnly
+              />
+              <Button
+                icon={<CopyOutlined />}
+                onClick={() => handleCopyLink(webAppUrl)}
+                title="Copy to clipboard"
+              />
+            </Space.Compact>
             <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
               Share this{' '}
               <a
@@ -634,7 +634,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           {hasUnsavedChanges && (
             <Alert
-              message="Remember to click the Save button at the top to activate your web app settings"
+              title="Remember to click the Save button at the top to activate your web app settings"
               type="info"
               showIcon={false}
               style={{ fontSize: 12, padding: '8px 12px' }}
@@ -749,7 +749,7 @@ const AppsView: React.FC<AppsViewProps> = ({
         return (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Alert
-              message="Token Required"
+              title="Token Required"
               description="Web Snippets require a token to be configured. Please set up a token in the Web App section first."
               type="warning"
               showIcon

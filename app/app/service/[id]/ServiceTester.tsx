@@ -499,7 +499,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               <div style={{ marginTop: 16 }}>
                 {wizardError ? (
                   <Alert
-                    message="Test Failed"
+                    title="Test Failed"
                     description={wizardError}
                     type="error"
                     showIcon

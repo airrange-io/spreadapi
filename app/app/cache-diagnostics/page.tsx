@@ -177,7 +177,7 @@ export default function CacheDiagnosticsPage() {
           <>
             {result.error ? (
               <Alert
-                message="Diagnosis Error"
+                title="Diagnosis Error"
                 description={result.error}
                 type="error"
                 showIcon

@@ -45,7 +45,7 @@ function OAuthAuthorizeContent() {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', padding: 20 }}>
         <Alert
-          message="Invalid Authorization Request"
+          title="Invalid Authorization Request"
           description="Missing or invalid OAuth parameters"
           type="error"
           showIcon
@@ -58,7 +58,7 @@ function OAuthAuthorizeContent() {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', padding: 20 }}>
         <Alert
-          message="Missing Service ID"
+          title="Missing Service ID"
           description={
             <div>
               <p>Could not determine which service to authorize.</p>
@@ -157,7 +157,7 @@ function OAuthAuthorizeContent() {
 
           {/* Client Info */}
           <Alert
-            message="Connection Details"
+            title="Connection Details"
             description={
               <div>
                 <Text strong>Client: </Text>
@@ -172,7 +172,7 @@ function OAuthAuthorizeContent() {
 
           {/* Service Info */}
           <Alert
-            message="Connecting to Service"
+            title="Connecting to Service"
             description={
               <div>
                 <Text strong>Service ID: </Text>
@@ -228,7 +228,7 @@ function OAuthAuthorizeContent() {
           </Space>
 
           <Alert
-            message="Where to get service token?"
+            title="Where to get service token?"
             description={
               <div style={{ fontSize: 12 }}>
                 <p style={{ marginBottom: 0 }}>
@@ -244,7 +244,7 @@ function OAuthAuthorizeContent() {
           />
           {/* Privacy Notice */}
           {/* <Alert
-            message="Privacy & Security"
+            title="Privacy & Security"
             description={
               <div style={{ fontSize: 12 }}>
                 <p style={{ marginBottom: 8 }}>
