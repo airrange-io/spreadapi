@@ -35,7 +35,7 @@
 
 .navigation-menu {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
 }
 
@@ -50,6 +50,18 @@
 
 .navigation-link:hover {
   color: #9333EA !important;
+}
+
+.navigation-link.active {
+  color: #502D80 !important;
+  font-weight: 600 !important;
+}
+
+/* Hide Blog link on medium screens to save space */
+@media (max-width: 1024px) {
+  .navigation-link.hide-on-medium {
+    display: none;
+  }
 }
 
 .navigation-button-wrapper {

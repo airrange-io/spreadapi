@@ -11,7 +11,7 @@ const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitche
 });
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs';
+  currentPage: 'product' | 'how-excel-api-works' | 'stop-rewriting-excel-in-code' | 'automation-calculations' | 'excel-ai-integration' | 'blog' | 'pricing' | 'docs';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
@@ -35,22 +35,17 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   };
 
   // Define menu items with their labels and paths
+  // All items shown on all pages (except Blog which hides on medium screens)
   const menuItems = [
-    { label: 'Overview', path: '/', key: 'product' },
-    { label: 'How it Works', path: '/how-excel-api-works', key: 'how-excel-api-works' },
-    { label: 'AI Integration', path: '/excel-ai-integration', key: 'excel-ai-integration' },
-    { label: 'Blog', path: '/blog', key: 'blog' },
+    { label: 'How it Works', path: '/how-excel-api-works', key: 'how-excel-api-works', hideOnMedium: false },
+    { label: 'Developers', path: '/stop-rewriting-excel-in-code', key: 'stop-rewriting-excel-in-code', hideOnMedium: false },
+    { label: 'Automations', path: '/automation-calculations', key: 'automation-calculations', hideOnMedium: false },
+    { label: 'AI', path: '/excel-ai-integration', key: 'excel-ai-integration', hideOnMedium: false },
+    { label: 'Blog', path: '/blog', key: 'blog', hideOnMedium: true },
   ];
 
-  // Filter out the current page from the menu
-  let visibleMenuItems = menuItems.filter(item => item.key !== currentPage);
-  
-  // Show fewer items on blog page to make room for language selector
-  if (currentPage === 'blog') {
-    visibleMenuItems = visibleMenuItems.filter(item => 
-      item.key === 'product' || item.key === 'how-excel-api-works' || item.key === 'excel-ai-integration'
-    );
-  }
+  // Show all menu items, highlight current page
+  const visibleMenuItems = menuItems;
 
   return (
     <nav className={`navigation-component ${className}`}>
@@ -68,10 +63,10 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
 
         <div className="navigation-menu">
           {visibleMenuItems.map((item) => (
-            <Link 
-              key={item.key} 
-              href={item.path} 
-              className="navigation-link"
+            <Link
+              key={item.key}
+              href={item.path}
+              className={`navigation-link ${item.key === currentPage ? 'active' : ''} ${item.hideOnMedium ? 'hide-on-medium' : ''}`}
               style={linkStyle}
             >
               {item.label}
@@ -105,11 +100,18 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
       {mobileMenuOpen && (
         <div className="navigation-mobile-menu">
           <nav className="navigation-mobile-nav">
+            <Link
+              href="/"
+              className={`navigation-link ${currentPage === 'product' ? 'active' : ''}`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
             {visibleMenuItems.map((item) => (
               <Link
                 key={item.key}
                 href={item.path}
-                className="navigation-link"
+                className={`navigation-link ${item.key === currentPage ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}
