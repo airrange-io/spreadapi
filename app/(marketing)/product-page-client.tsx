@@ -8,12 +8,16 @@ import { developerFAQs } from '@/data/developer-faq';
 import ProductHeader from '@/components/product/ProductHeader';
 import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getHomepageTranslations } from '@/lib/translations/marketing';
 
 interface ProductPageProps {
   locale?: SupportedLocale;
 }
 
 const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
+  // Get translations for the current locale
+  const t = getHomepageTranslations(locale);
+
   // Tour ref for header "Get Started" button
   const getStartedRef = useRef<HTMLAnchorElement>(null);
 
@@ -118,12 +122,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
           <main className="main-wrapper">
             {/* Hero Section */}
             <ProductHeader
-              subheading="Headless Spreadsheets for AI & Automation"
-              title={<>Turn Excel Into Live APIs.<br /><span className="text-color-primary">Let AI Talk to Spreadsheets</span></>}
-              description="Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic."
-              // primaryButtonText="Create your first free Excel API"
-              // primaryButtonHref="/app"
-              secondaryButtonText="Create your first free Excel API"
+              subheading={t.hero.subheading}
+              title={<>{t.hero.title1}<br /><span className="text-color-primary">{t.hero.title2}</span></>}
+              description={t.hero.description}
+              secondaryButtonText={t.hero.cta}
               secondaryButtonHref="/app"
               showImage={false}
               showVideo={true}
@@ -136,10 +138,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                 <div className="container-large">
                   <div className="text-align-center" style={{ maxWidth: '1000px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
-                      Why AI Struggles with <span style={{ color: '#9333EA' }}>Spreadsheet Math</span>
+                      {t.painPoints.title1} <span style={{ color: '#9333EA' }}>{t.painPoints.title2}</span>
                     </h2>
                     <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
-                      We asked AI about its spreadsheet skills — here’s what it honestly told us.
+                      {t.painPoints.subtitle}
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
                       <div style={{
@@ -157,12 +159,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Run Your Formulas"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card1.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          I see your formulas and Excel's results, but I can't execute them. I work with saved values, not live calculations.
+                          {t.painPoints.card1.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Claude, ChatGPT & Gemini
+                          {t.painPoints.card1.author}
                         </p>
                       </div>
                       <div style={{
@@ -180,12 +182,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Only Know 50-100 Functions"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card2.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          Basic math? Sure. But Excel has hundreds more - XIRR, YIELD, array formulas? I'll miss edge cases.
+                          {t.painPoints.card2.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Claude, being honest
+                          {t.painPoints.card2.author}
                         </p>
                       </div>
                       <div style={{
@@ -203,12 +205,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <circle cx="12" cy="14" r="2" fill="#9333EA" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"My Errors Compound Fast"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card3.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          One small mistake in cell A1? By row 1000, I'm completely off. Error propagation is my nightmare.
+                          {t.painPoints.card3.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Every AI Model
+                          {t.painPoints.card3.author}
                         </p>
                       </div>
                       <div style={{
@@ -224,12 +226,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Take Forever to Calculate"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card4.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          1000+ formulas? That's 2-15 minutes of dependency mapping. Excel does it in 1-2 seconds.
+                          {t.painPoints.card4.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Every AI Model
+                          {t.painPoints.card4.author}
                         </p>
                       </div>
                       <div style={{
@@ -247,12 +249,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <path d="M18 10L22 10M18 14L22 14M18 18L22 18" stroke="#9333EA" strokeWidth="1" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"Complex Models? 20% Accuracy"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card5.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          With 1000+ formulas, I have 20-40% chance of getting it right. SpreadAPI? Always 100%.
+                          {t.painPoints.card5.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Claude & ChatGPT
+                          {t.painPoints.card5.author}
                         </p>
                       </div>
                       <div style={{
@@ -272,18 +274,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5" />
                           </svg>
                         </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>"I Can't Handle Dependencies"</h3>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card6.title}</h3>
                         <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          Cell A depends on B, B on C... I spend most time figuring out order, not calculating.
+                          {t.painPoints.card6.text}
                         </p>
                         <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          - Gemini
+                          {t.painPoints.card6.author}
                         </p>
                       </div>
                     </div>
 
                     <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                      <Link href="/why-ai-fails-at-math" style={{
+                      <Link href={locale === 'en' ? '/why-ai-fails-at-math' : `/${locale}/why-ai-fails-at-math`} style={{
                         fontSize: '20px',
                         color: '#9333EA',
                         textDecoration: 'none',
@@ -293,7 +295,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                         paddingBottom: '2px',
                         transition: 'all 0.2s ease'
                       }}>
-                        Click here to see more AI limitations →
+                        {t.painPoints.link}
                       </Link>
                     </div>
                   </div>
@@ -307,11 +309,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                 <div className="container-large">
                   <div className="text-align-center" style={{ maxWidth: '900px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
-                      Here's How We Help AI <span style={{ color: '#9333EA' }}>Excel at Spreadsheet Math</span>
+                      {t.solution.title1} <span style={{ color: '#9333EA' }}>{t.solution.title2}</span>
                     </h2>
                     <p style={{ fontSize: '18px', color: '#666666', marginBottom: '10px', lineHeight: '1.6' }}>
-                      Transform your spreadsheets into real-time APIs that AI can call — no guessing, no hallucinations, just accurate results powered by your Excel logic.
-                      Whether it’s simple calculations or complex chains of nested formulas, your Excel logic is executed exactly as you built it. The result: clean, reliable JSON that AI assistants, developers, and automation tools can work with — instantly and securely.
+                      {t.solution.description}
                     </p>
                   </div>
                 </div>
@@ -327,12 +328,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">AI Sales Agents</span> Creating Complex Excel Quotes
+                            <span className="text-color-primary">{t.feature1.title1}</span> {t.feature1.title2}
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            Your AI sales assistant can now generate accurate quotes using your actual Excel pricing models. No more approximations or hallucinations — just precise calculations from your trusted spreadsheets, accessible through a simple API.
+                            {t.feature1.description}
                           </p>
                         </div>
                         <div className="feature-keypoint-list">
@@ -343,7 +344,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">100% Accurate Calculations</p>
+                            <p className="text-size-medium">{t.feature1.point1}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -352,7 +353,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">Your Business Logic Protected</p>
+                            <p className="text-size-medium">{t.feature1.point2}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -361,7 +362,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">Works with Any AI Assistant</p>
+                            <p className="text-size-medium">{t.feature1.point3}</p>
                           </div>
                         </div>
                       </div>
@@ -387,7 +388,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               maxWidth: '85%',
                               fontSize: '14px'
                             }}>
-                              I need a quote for 500 units with our enterprise discount, shipped to 3 locations in California
+                              {t.feature1.chatCustomer}
                             </div>
                           </div>
 
@@ -414,7 +415,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               fontSize: '14px'
                             }}>
                               <div style={{ marginBottom: '12px', color: '#374151' }}>
-                                I've calculated your quote using our Excel pricing model:
+                                {t.feature1.chatAI}
                               </div>
                               <div style={{
                                 background: 'white',
@@ -425,24 +426,24 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 fontFamily: 'monospace'
                               }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span>Base Price (500 × $47.99):</span>
-                                  <strong>$23,995.00</strong>
+                                  <span>{t.feature1.basePrice}</span>
+                                  <strong>{locale === 'de' ? '23.995,00 €' : '$23,995.00'}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span>Enterprise Discount (15%):</span>
-                                  <strong style={{ color: '#16a34a' }}>-$3,599.25</strong>
+                                  <span>{t.feature1.enterpriseDiscount}</span>
+                                  <strong style={{ color: '#16a34a' }}>{locale === 'de' ? '-3.599,25 €' : '-$3,599.25'}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span>Volume Discount (500+):</span>
-                                  <strong style={{ color: '#16a34a' }}>-$1,199.75</strong>
+                                  <span>{t.feature1.volumeDiscount}</span>
+                                  <strong style={{ color: '#16a34a' }}>{locale === 'de' ? '-1.199,75 €' : '-$1,199.75'}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span>CA Shipping (3 locations):</span>
-                                  <strong>$485.00</strong>
+                                  <span>{t.feature1.shipping}</span>
+                                  <strong>{locale === 'de' ? '485,00 €' : '$485.00'}</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span>CA Sales Tax (7.25%):</span>
-                                  <strong>$1,431.88</strong>
+                                  <span>{t.feature1.salesTax}</span>
+                                  <strong>{locale === 'de' ? '3.719,39 €' : '$1,431.88'}</strong>
                                 </div>
                                 <div style={{
                                   borderTop: '1px solid #E8E0FF',
@@ -453,8 +454,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                   fontWeight: 'bold',
                                   color: '#9333EA'
                                 }}>
-                                  <span>Total Quote:</span>
-                                  <span>$21,112.88</span>
+                                  <span>{t.feature1.totalQuote}</span>
+                                  <span>{locale === 'de' ? '23.399,39 €' : '$21,112.88'}</span>
                                 </div>
                               </div>
                               <div style={{
@@ -465,7 +466,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 alignItems: 'center',
                                 justifyContent: 'space-between'
                               }}>
-                                <span>Calculated by Excel in 47ms • 100% accurate</span>
+                                <span>{t.feature1.calcNote}</span>
                                 <span style={{
                                   color: '#9333EA',
                                   textDecoration: 'none',
@@ -473,7 +474,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                   opacity: 0.8,
                                   cursor: 'pointer'
                                 }}>
-                                  Download PDF
+                                  {t.feature1.downloadPdf}
                                 </span>
                               </div>
                             </div>
@@ -523,13 +524,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">Automation Tools</span> Running Your Excel Logic
+                            <span className="text-color-primary">{t.feature2.title1}</span> {t.feature2.title2}
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            Tools like Zapier, Make, and n8n can now trigger calculations in your Excel models with live inputs and return real results — instantly.
-                            No logic reimplementation. No formula rewrites. Just exact Excel behavior delivered as a secure, real-time API.
+                            {t.feature2.description}
                           </p>
                         </div>
                         <div className="feature-keypoint-list">
@@ -540,7 +540,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">Plug & play with any workflow tool</p>
+                            <p className="text-size-medium">{t.feature2.point1}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -549,7 +549,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">Returns only clean JSON, never shows formulas</p>
+                            <p className="text-size-medium">{t.feature2.point2}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -558,7 +558,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
-                            <p className="text-size-medium">Handles any Excel complexity — IFs, XLOOKUPs, ARRAY functions, VAT logic, pricing</p>
+                            <p className="text-size-medium">{t.feature2.point3}</p>
                           </div>
                         </div>
                       </div>
@@ -577,12 +577,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">“Just convert this Excel to code”</span>, they said.
+                            <span className="text-color-primary">{t.feature3.title1}</span>{t.feature3.title2}
                           </h2>
                         </div>
                         <p className="text-size-medium" style={{ marginBottom: '30px' }}>
-                          It’s one of the most common dev requests — turning business-critical spreadsheets into code. But nested IFs, lookup chains, and constantly changing logic quickly turn it into a maintenance nightmare.
-                          With SpreadAPI, developers don’t need to rebuild spreadsheet logic — they can run it directly, through a secure and versioned API.
+                          {t.feature3.description}
                         </p>
                         <div className="feature-list">
                           <div className="feature-item">
@@ -593,8 +592,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               </svg>
                             </div>
                             <div>
-                              <strong>100% Formula Accuracy</strong> - VLOOKUP, SUMIFS, financial functions - they all
-                              work exactly as designed. Because it's real Excel, not a JavaScript approximation.
+                              <strong>{t.feature3.point1Title}</strong> - {t.feature3.point1Text}
                             </div>
                           </div>
                           <div className="feature-item">
@@ -605,8 +603,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               </svg>
                             </div>
                             <div>
-                              <strong>Business Users Keep Control</strong> - When formulas change, they update the Excel.
-                              Your API instantly reflects the changes. No code deployment needed.
+                              <strong>{t.feature3.point2Title}</strong> - {t.feature3.point2Text}
                             </div>
                           </div>
                         </div>
@@ -621,7 +618,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             fontWeight: '500',
                             textDecoration: 'none'
                           }}>
-                          Read: Why reimplementing Excel always fails →
+                          {t.feature3.link}
                         </a>
                       </div>
                       <div className="feature-image-wrapper">
@@ -667,13 +664,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                     <div className="text-align-center">
                       <div className="margin-bottom margin-xsmall">
                         <div className="subheading">
-                          <div>Why We're Different</div>
+                          <div>{t.differentiators.subheading}</div>
                         </div>
                       </div>
                       <div className="margin-bottom margin-large">
-                        <h2>Give AI & Tools <span className="text-color-primary">Excel Superpowers</span></h2>
+                        <h2>{t.differentiators.title1} <span className="text-color-primary">{t.differentiators.title2}</span></h2>
                         <p style={{ fontSize: '18px', color: '#666666', marginTop: '20px', marginBottom: '0', maxWidth: '800px', margin: '20px auto 0' }}>
-                          Transform your spreadsheets into powerful APIs that can be called by applications, AI assistants, or integrated into any workflow. Your Excel expertise becomes instantly accessible.
+                          {t.differentiators.description}
                         </p>
                       </div>
 
@@ -698,9 +695,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Predictable Every Time</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card1.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            AI gives different answers each time. But Excel? Excel actually calculates. Every. Single. Time.
+                            {t.differentiators.card1.text}
                           </p>
                         </div>
 
@@ -716,9 +713,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>500+ Excel Functions</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card2.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            VLOOKUP, XLOOKUP, array formulas, financial functions - 500+ functions work exactly as in Excel
+                            {t.differentiators.card2.text}
                           </p>
                         </div>
 
@@ -733,9 +730,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Real-Time Calculations</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card3.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            50ms response times with intelligent caching and pre-warmed Excel engines
+                            {t.differentiators.card3.text}
                           </p>
                         </div>
 
@@ -753,9 +750,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>No Files Sent to OpenAI/Anthropic</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card4.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Your Excel stays on SpreadAPI servers. AI only sees the specific inputs and outputs you define
+                            {t.differentiators.card4.text}
                           </p>
                         </div>
 
@@ -775,9 +772,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>AI-Ready with MCP</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card5.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Native Model Context Protocol support for seamless ChatGPT and Claude integration
+                            {t.differentiators.card5.text}
                           </p>
                         </div>
 
@@ -794,9 +791,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                               <circle cx="14" cy="14" r="2" fill="#9333EA" />
                             </svg>
                           </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>Zero Learning Curve</h3>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card6.title}</h3>
                           <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            Your team keeps using Excel as always. AI gets superpowers. No training needed
+                            {t.differentiators.card6.text}
                           </p>
                         </div>
                       </div>
@@ -908,12 +905,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            <span className="text-color-primary">Editable Areas</span> Give AI Controlled Access
+                            <span className="text-color-primary">{t.editableAreas.title1}</span> {t.editableAreas.title2}
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            Define exactly what parts of your spreadsheet AI can access. Grant read-only access to outputs, or let AI modify specific input cells or even formulas within designated areas. You stay in control while AI does the work.
+                            {t.editableAreas.description}
                           </p>
                         </div>
                         <div className="feature-list">
@@ -926,9 +923,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             </div>
                             <div className="feature-item-content-wrapper">
                               <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">Granular Permissions</h3>
+                                <h3 className="heading-style-h5">{t.editableAreas.feature1Title}</h3>
                               </div>
-                              <p className="text-size-medium">Control exactly what AI can see and modify. Set permissions for values, formulas, formatting, and structure — keeping your core business logic secure.</p>
+                              <p className="text-size-medium">{t.editableAreas.feature1Text}</p>
                             </div>
                           </div>
                           <div className="feature-item">
@@ -940,9 +937,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             </div>
                             <div className="feature-item-content-wrapper">
                               <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">Formula Intelligence</h3>
+                                <h3 className="heading-style-h5">{t.editableAreas.feature2Title}</h3>
                               </div>
-                              <p className="text-size-medium">AI can not only read values but understand and even optimize your Excel formulas. Enable what-if scenarios and let AI experiment within safe boundaries.</p>
+                              <p className="text-size-medium">{t.editableAreas.feature2Text}</p>
                             </div>
                           </div>
                         </div>
@@ -991,15 +988,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                       <div className="tools-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            Works With <span className="text-color-primary">Every AI Platform</span> and Automation Tool
+                            {t.tools.title1} <span className="text-color-primary">{t.tools.title2}</span> {t.tools.title3}
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            SpreadAPI works with Claude, ChatGPT, and any AI assistant through our MCP server. Connect via REST API, webhooks, or integrate with Zapier, Make, and n8n. Your Excel calculations become accessible everywhere.
+                            {t.tools.description}
                           </p>
                         </div>
-                        <a href="/" className="button">Start Building</a>
+                        <a href="/" className="button">{t.tools.cta}</a>
                       </div>
                     </div>
                   </div>
@@ -1017,12 +1014,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                         <div className="max-width-large">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Use Cases</div>
+                              <div>{t.useCases.subheading}</div>
                             </div>
                           </div>
                           <div className="text-align-center">
                             <h2>
-                              What <span className="text-color-primary">Game-Changing Technology</span> Enables
+                              {t.useCases.title1} <span className="text-color-primary">{t.useCases.title2}</span> {t.useCases.title3}
                             </h2>
                           </div>
                         </div>
@@ -1041,9 +1038,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>Financial Advisors</h3>
+                          <h3>{t.useCases.case1.title}</h3>
                         </div>
-                        <p>Run complex what-if scenarios using actual Excel models. AI analyzes options without errors.</p>
+                        <p>{t.useCases.case1.text}</p>
                       </div>
                       <div className="benefits-item">
                         <div className="margin-bottom margin-medium">
@@ -1059,9 +1056,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>Business Analysts</h3>
+                          <h3>{t.useCases.case2.title}</h3>
                         </div>
-                        <p>Automate report generation from spreadsheet data. AI extracts insights from your calculations.</p>
+                        <p>{t.useCases.case2.text}</p>
                       </div>
                       <div className="benefits-item">
                         <div className="margin-bottom margin-medium">
@@ -1074,9 +1071,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>AI Assistants</h3>
+                          <h3>{t.useCases.case3.title}</h3>
                         </div>
-                        <p>Optimize spreadsheet formulas automatically. AI suggests improvements while preserving logic.</p>
+                        <p>{t.useCases.case3.text}</p>
                       </div>
                       <div className="benefits-item">
                         <div className="margin-bottom margin-medium">
@@ -1090,9 +1087,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>Sales Teams</h3>
+                          <h3>{t.useCases.case4.title}</h3>
                         </div>
-                        <p>Generate accurate quotes instantly. AI uses your pricing models to create perfect proposals.</p>
+                        <p>{t.useCases.case4.text}</p>
                       </div>
                       <div className="benefits-item">
                         <div className="margin-bottom margin-medium">
@@ -1106,9 +1103,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>Operations</h3>
+                          <h3>{t.useCases.case5.title}</h3>
                         </div>
-                        <p>Complex resource planning with Excel. AI optimizes allocation using your business rules.</p>
+                        <p>{t.useCases.case5.text}</p>
                       </div>
                       <div className="benefits-item">
                         <div className="margin-bottom margin-medium">
@@ -1121,9 +1118,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                           </div>
                         </div>
                         <div className="margin-bottom margin-xsmall">
-                          <h3>Developers</h3>
+                          <h3>{t.useCases.case6.title}</h3>
                         </div>
-                        <p>Skip rebuilding Excel logic in code. Use spreadsheets as calculation engines via API.</p>
+                        <p>{t.useCases.case6.text}</p>
                       </div>
                     </div>
                   </div>
@@ -1190,13 +1187,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                         <div className="max-width-large align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Developer FAQ</div>
+                              <div>{t.faq.subheading}</div>
                             </div>
                           </div>
                           <div className="margin-bottom margin-small">
-                            <h2>Technical Questions <span className="text-color-primary">Answered</span></h2>
+                            <h2>{t.faq.title1} <span className="text-color-primary">{t.faq.title2}</span></h2>
                           </div>
-                          <p className="text-size-medium">Deep dive into the technical details. Built by developers, for developers.</p>
+                          <p className="text-size-medium">{t.faq.description}</p>
                         </div>
                       </div>
                     </div>
@@ -1233,11 +1230,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                         <div className="max-width-large align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Contact</div>
+                              <div>{t.contact.subheading}</div>
                             </div>
                           </div>
                           <h2>
-                            <span className="text-color-primary">Get Started</span> in Minutes
+                            <span className="text-color-primary">{t.contact.title1}</span> {t.contact.title2}
                           </h2>
                         </div>
                       </div>
@@ -1245,7 +1242,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                     <div className="home-contact-component">
                       <div className="home-contact-item">
                         <p>
-                          Questions about SpreadAPI? We're here to help at <a href="mailto:team@airrange.io">team@airrange.io</a>.
+                          {t.contact.text} <a href="mailto:team@airrange.io">team@airrange.io</a>.
                         </p>
                       </div>
                     </div>
