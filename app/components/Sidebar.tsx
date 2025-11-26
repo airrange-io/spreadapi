@@ -17,8 +17,7 @@ const Sidebar: React.FC = observer(() => {
       placement="left"
       open={!sidebarCollapsed}
       onClose={appStore.toggleSidebar}
-      width={SIZES.sidebarWidth}
-      styles={{ body: { padding: 0 }, header: { display: 'none' } }}
+      styles={{ body: { padding: 0 }, header: { display: 'none' }, wrapper: { width: SIZES.sidebarWidth } }}
       style={{ zIndex: 100 }}
     >
       <SidebarContent isMobile={true} />

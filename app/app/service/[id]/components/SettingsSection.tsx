@@ -180,9 +180,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
       width: '100%',
       marginTop: '8px',
     }}>
-      <Space direction="vertical" size={12} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={12} style={{ width: '100%' }}>
         <CollapsibleSection title="Service Info" defaultOpen={true}>
-          <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           <div>
             <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
             <DebouncedInput
@@ -208,7 +208,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
           <div style={{ marginTop: '0px' }}>
             <div style={{ marginBottom: '8px', color: "#898989" }}><strong>External Data Caching</strong></div>
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" style={{ width: '100%' }}>
               <Space align="center">
                 <Checkbox
                   checked={enableCaching}

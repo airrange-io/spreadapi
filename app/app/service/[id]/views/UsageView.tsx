@@ -165,7 +165,7 @@ const UsageView: React.FC<UsageViewProps> = ({
         transition: 'opacity 0.3s ease-in-out'
       }}>
         <Alert
-          message="Usage Analytics Not Available"
+          title="Usage Analytics Not Available"
           description="Analytics are only available for published services. Please publish your service to start tracking usage metrics."
           type="info"
           showIcon
@@ -228,7 +228,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               title="Total API Calls"
               value={analytics.summary.totalCalls}
               prefix={<ApiOutlined />}
-              valueStyle={{ color: COLORS.primary, fontSize: '20px' }}
+              styles={{ content: { color: COLORS.primary, fontSize: '20px' } }}
             />
           </Card>
         </Col>
@@ -239,7 +239,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               title="Today's Calls"
               value={analytics.summary.todayCalls}
               prefix={<CalendarOutlined />}
-              valueStyle={{ fontSize: '20px' }}
+              styles={{ content: { fontSize: '20px' } }}
               suffix={
                 Number(callsTrend) !== 0 && (
                   <span style={{ fontSize: 14, color: Number(callsTrend) > 0 ? '#389E0E' : '#ff4d4f' }}>
@@ -259,7 +259,7 @@ const UsageView: React.FC<UsageViewProps> = ({
               value={analytics.summary.successRate}
               suffix="%"
               prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: COLORS.primary, fontSize: '20px' }}
+              styles={{ content: { color: COLORS.primary, fontSize: '20px' } }}
             />
           </Card>
         </Col>
@@ -271,10 +271,10 @@ const UsageView: React.FC<UsageViewProps> = ({
               value={analytics.summary.avgResponseTime}
               suffix="ms"
               prefix={<ThunderboltOutlined />}
-              valueStyle={{ 
+              styles={{ content: {
                 color: analytics.summary.avgResponseTime < 500 ? COLORS.primary : '#faad14',
                 fontSize: '20px'
-              }}
+              } }}
             />
             {analytics.summary.p95 && (
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
@@ -302,21 +302,21 @@ const UsageView: React.FC<UsageViewProps> = ({
               <Statistic
                 title="Total Attempts"
                 value={analytics.webhooks.total}
-                valueStyle={{ fontSize: '18px' }}
+                styles={{ content: { fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
                 title="Successful"
                 value={analytics.webhooks.success}
-                valueStyle={{ color: '#52c41a', fontSize: '18px' }}
+                styles={{ content: { color: '#52c41a', fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
                 title="Failed"
                 value={analytics.webhooks.failed}
-                valueStyle={{ color: analytics.webhooks.failed > 0 ? '#ff4d4f' : undefined, fontSize: '18px' }}
+                styles={{ content: { color: analytics.webhooks.failed > 0 ? '#ff4d4f' : undefined, fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
@@ -324,10 +324,10 @@ const UsageView: React.FC<UsageViewProps> = ({
                 title="Success Rate"
                 value={analytics.webhooks.successRate}
                 suffix="%"
-                valueStyle={{
+                styles={{ content: {
                   color: analytics.webhooks.successRate >= 95 ? '#52c41a' : analytics.webhooks.successRate >= 80 ? '#faad14' : '#ff4d4f',
                   fontSize: '18px'
-                }}
+                } }}
               />
             </Col>
           </Row>
@@ -335,7 +335,7 @@ const UsageView: React.FC<UsageViewProps> = ({
           <div style={{ marginTop: 16 }}>
             {analytics.webhooks.circuitBreakerOpen && (
               <Alert
-                message="Circuit Breaker Open"
+                title="Circuit Breaker Open"
                 description={`Webhooks are temporarily disabled due to ${analytics.webhooks.consecutiveFailures} consecutive failures. Check your webhook endpoint and test it in the API section.`}
                 type="error"
                 icon={<WarningOutlined />}
@@ -363,7 +363,7 @@ const UsageView: React.FC<UsageViewProps> = ({
 
             {analytics.webhooks.consecutiveFailures > 0 && !analytics.webhooks.circuitBreakerOpen && (
               <Alert
-                message={`${analytics.webhooks.consecutiveFailures} consecutive failures (${10 - analytics.webhooks.consecutiveFailures} remaining before circuit breaker opens)`}
+                title={`${analytics.webhooks.consecutiveFailures} consecutive failures (${10 - analytics.webhooks.consecutiveFailures} remaining before circuit breaker opens)`}
                 type="warning"
                 showIcon
                 style={{ marginTop: 12 }}
@@ -405,7 +405,7 @@ const UsageView: React.FC<UsageViewProps> = ({
                 title="Total Requests"
                 value={analytics.cache.hits + analytics.cache.misses}
                 prefix={<ApiOutlined />}
-                valueStyle={{ fontSize: '18px' }}
+                styles={{ content: { fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                 All API calls (cached + calculated)
@@ -416,7 +416,7 @@ const UsageView: React.FC<UsageViewProps> = ({
                 title="Cache Hits"
                 value={analytics.cache.hits}
                 prefix={<ThunderboltOutlined />}
-                valueStyle={{ color: '#52c41a', fontSize: '18px' }}
+                styles={{ content: { color: '#52c41a', fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                 Instant responses (~5ms)
@@ -427,7 +427,7 @@ const UsageView: React.FC<UsageViewProps> = ({
                 title="Calculations"
                 value={analytics.cache.misses}
                 prefix={<CloudOutlined />}
-                valueStyle={{ color: COLORS.primary, fontSize: '18px' }}
+                styles={{ content: { color: COLORS.primary, fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
                 Full spreadsheet computations
@@ -461,7 +461,7 @@ const UsageView: React.FC<UsageViewProps> = ({
           )}
 
           <Alert
-            message="Understanding Cache Metrics"
+            title="Understanding Cache Metrics"
             description={
               <div style={{ fontSize: 13 }}>
                 <p style={{ marginBottom: 8 }}>

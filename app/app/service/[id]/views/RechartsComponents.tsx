@@ -217,7 +217,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                   </ResponsiveContainer>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Space direction="vertical" style={{ width: '100%', padding: '20px' }}>
+                  <Space orientation="vertical" style={{ width: '100%', padding: '20px' }}>
                     <div>
                       <Text type="secondary">Process Cache: </Text>
                       <Text strong>

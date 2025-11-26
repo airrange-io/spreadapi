@@ -151,16 +151,6 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
 
       // Initialize or re-initialize if config has changed
       if (!hasInitialized || inputsChanged || outputsChanged || areasChanged) {
-        console.log('[ParametersPanel] Initializing/updating config:', {
-          hasInitialized,
-          inputsChanged,
-          outputsChanged,
-          areasChanged,
-          inputCount: initialConfig.inputs.length,
-          outputCount: initialConfig.outputs.length,
-          areaCount: initialConfig.areas?.length || 0
-        });
-
         setInputs(initialConfig.inputs || []);
         setOutputs(initialConfig.outputs || []);
         setAreas(initialConfig.areas || []);

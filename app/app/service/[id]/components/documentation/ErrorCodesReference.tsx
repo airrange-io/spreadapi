@@ -73,7 +73,7 @@ const ErrorCodesReference: React.FC = () => {
   ];
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
         <Title level={4}>Error Code Reference</Title>
         <Paragraph>
@@ -100,7 +100,7 @@ const ErrorCodesReference: React.FC = () => {
           borderRadius: 6,
           padding: 16
         }}>
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <code style={{
                 background: '#fff1f0',

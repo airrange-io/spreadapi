@@ -96,7 +96,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
 
   return (
     <CollapsibleSection title="Create a Web Frontend for Your API" defaultOpen={false}>
-      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         <Alert
           message="Web Frontend"
           description="Create a shareable web application that users can access directly without API knowledge. Generate a token to enable."
@@ -120,7 +120,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
                 Access Token
               </div>
-              <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                 <Space.Compact style={{ width: '100%' }}>
                   <Input
                     value={webAppToken}

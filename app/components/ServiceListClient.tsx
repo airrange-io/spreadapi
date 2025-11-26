@@ -152,7 +152,7 @@ export default function ServiceListClient({
                 </div>
               }
               description={
-                <Space direction="vertical" style={{ width: '100%' }}>
+                <Space orientation="vertical" style={{ width: '100%' }}>
                   <Paragraph
                     ellipsis={{ rows: 2 }}
                     style={{ marginBottom: 8 }}

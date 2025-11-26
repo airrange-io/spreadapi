@@ -145,7 +145,7 @@ function OAuthAuthorizeContent() {
   return (
     <div style={{ maxWidth: 700, margin: '80px auto', padding: 20 }}>
       <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           {/* Header */}
           <div style={{ textAlign: 'center' }}>
             <ApiOutlined style={{ fontSize: 48, color: '#502D81', marginBottom: 16 }} />
@@ -208,7 +208,7 @@ function OAuthAuthorizeContent() {
           </div>
 
           {error && (
-            <Alert message="Authorization Error" description={error} type="error" showIcon />
+            <Alert title="Authorization Error" description={error} type="error" showIcon />
           )}
 
           {/* Actions */}

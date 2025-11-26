@@ -302,7 +302,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           </Tooltip>
         </div>
 
-        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           {/* Tokens list */}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px', paddingTop: '10%' }}>
@@ -437,7 +437,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         ]}
       >
         {newToken && (
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space orientation="vertical" style={{ width: '100%' }}>
             <Alert
               message="Save this token securely"
               description="This token will not be shown again. Copy it now and store it in a safe place."

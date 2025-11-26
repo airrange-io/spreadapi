@@ -176,7 +176,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
 
   return (
     <CollapsibleSection title="Create Web Views for Your API" defaultOpen={false}>
-      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {/* Description */}
         <Alert
           message="Embeddable Result Views"
@@ -211,7 +211,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
         {views.length === 0 ? (
           <Empty description="No views created yet" />
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }} size={12}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={12}>
             {views.map((view) => (
               <Card
                 key={view.id}
@@ -264,7 +264,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                   </Space>
                 }
               >
-                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {view.description}
                   </Text>

@@ -461,7 +461,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           description="No APIs created yet"
           style={{ marginTop: 180 }}
         >
-          <Space direction="vertical" align="center">
+          <Space orientation="vertical" align="center">
             <Button type="primary" onClick={() => {
               const newId = generateServiceId(userId);
               router.push(`/app/service/${newId}`);
@@ -571,7 +571,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   </div>
                 }
                 description={
-                  <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
                     <Paragraph
                       ellipsis={{ rows: 2 }}
                       style={{ marginBottom: 8 }}

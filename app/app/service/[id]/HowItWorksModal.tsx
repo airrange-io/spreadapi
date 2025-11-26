@@ -31,7 +31,7 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ open, onClose }) => {
       centered
     >
       <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+        <Space orientation="vertical" style={{ width: '100%' }} size="large">
           {/* Overview */}
           <div>
             <Title level={4}>Overview</Title>

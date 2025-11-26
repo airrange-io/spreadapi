@@ -105,13 +105,13 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
               e.currentTarget.style.opacity = '1';
             }}
           >
-            <Space direction="vertical" size={0}>
-              <Space direction='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
+            <Space orientation="vertical" size={0}>
+              <Space orientation='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
                 <strong style={{ color: input?.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
                   {parameter.name}
                 </strong>
               </Space>
-              <Space direction='horizontal' style={{ flexWrap: 'wrap' }}>
+              <Space orientation='horizontal' style={{ flexWrap: 'wrap' }}>
                 {useCompactLayout ? (
                   <div style={{ color: '#888', fontSize: '11px' }}>{parameter.address}</div>
                 ) : (

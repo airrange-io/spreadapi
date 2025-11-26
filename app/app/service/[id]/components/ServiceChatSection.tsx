@@ -196,7 +196,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Title level={5} style={{ margin: 0 }}>
             Chat Test
           </Title>
@@ -246,7 +246,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
           <Empty
             image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
             description={
-              <Space direction="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
+              <Space orientation="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
                 <Text strong style={{ fontSize: '16px' }}>
                   Test Your AI Configuration
                 </Text>
@@ -270,7 +270,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
             }
           />
         ) : (
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             {messages
               .filter((message, index) => {
                 // Only show completed messages (not currently streaming)

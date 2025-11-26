@@ -243,7 +243,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
   return (
     <div style={{ padding: '16px' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
             AI Description
@@ -381,7 +381,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
         }}
       >
         {suggestions && (
-          <Space direction="vertical" style={{ width: '100%' }} size={16}>
+          <Space orientation="vertical" style={{ width: '100%' }} size={16}>
             <div>
               <Typography.Title level={5} style={{ marginBottom: 8 }}>AI Description</Typography.Title>
               <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
@@ -474,7 +474,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
             Please answer these questions to help generate better AI suggestions:
           </Typography.Text>
         </div>
-        <Space direction="vertical" style={{ width: '100%' }} size={16}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={16}>
           {currentQuestions.map((question, index) => (
             <div key={index}>
               <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>

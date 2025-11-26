@@ -296,7 +296,7 @@ const AppsView: React.FC<AppsViewProps> = ({
               )}
             </div>
           ) : (
-            <Space direction="vertical" style={{ width: '100%' }} size={16}>
+            <Space orientation="vertical" style={{ width: '100%' }} size={16}>
               <div>
                 <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
                   Web App Token

@@ -485,7 +485,7 @@ export default function ChatWrapperBubbles() {
                 <Empty
                   image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
                   description={
-                    <Space direction="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
+                    <Space orientation="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
                       <Typography.Text strong style={{ fontSize: '16px' }}>
                         Start a Conversation
                       </Typography.Text>
@@ -519,7 +519,7 @@ export default function ChatWrapperBubbles() {
                 <Empty
                   image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
                   description={
-                    <Space direction="vertical" size={4}>
+                    <Space orientation="vertical" size={4}>
                       <Typography.Text>Select a service to start chatting</Typography.Text>
                       <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
                         Choose a calculation service from the dropdown above

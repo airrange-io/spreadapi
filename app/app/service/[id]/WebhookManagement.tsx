@@ -69,7 +69,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
         Automatically trigger webhooks after each calculation. Enter a URL to enable.
       </Text>
 
-      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {/* Webhook URL */}
         <div>
           <div style={{ fontWeight: 500, marginBottom: 8 }}>Webhook URL</div>

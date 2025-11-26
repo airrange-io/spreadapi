@@ -451,9 +451,9 @@ const TestPanel: React.FC<TestPanelProps> = ({
       placement="right"
       onClose={onClose}
       open={open}
-      width={Math.min(500, typeof window !== 'undefined' ? window.innerWidth - 40 : 500)}
       styles={{
-        body: { padding: '16px' }
+        body: { padding: '16px' },
+        wrapper: { width: Math.min(500, typeof window !== 'undefined' ? window.innerWidth - 40 : 500) }
       }}
     >
       {/* Content - Quick Test */}
@@ -462,7 +462,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
         overflow: 'auto',
         padding: '16px'
       }}>
-        <Space direction="vertical" style={{ width: '100%' }} size={16}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={16}>
           {/* Input Parameters */}
           {inputs.length > 0 && (
             <Form
@@ -605,7 +605,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
                   </pre>
                 </div>
               ) : (
-                <Space direction="vertical" style={{ width: '100%' }} size={16}>
+                <Space orientation="vertical" style={{ width: '100%' }} size={16}>
                   {/* GET Request */}
                   <div>
                     <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>

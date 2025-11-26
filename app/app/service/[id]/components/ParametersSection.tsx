@@ -192,7 +192,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
       width: '100%',
       marginTop: '8px',
     }}>
-      <Space direction="vertical" size={12} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={12} style={{ width: '100%' }}>
         {/* Input Parameters */}
         <CollapsibleSection title="Input Parameters" defaultOpen={true}>
         {isLoading || !hasInitialized ? (
@@ -209,7 +209,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
               items={inputs.map(i => i.id)}
               strategy={verticalListSortingStrategy}
             >
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space orientation="vertical" style={{ width: '100%' }}>
                 {inputs.map((input) => (
                   <SortableParameterItem
                     key={input.id}
@@ -253,7 +253,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
               items={outputs.map(o => o.id)}
               strategy={verticalListSortingStrategy}
             >
-              <Space direction="vertical" style={{ width: '100%' }}>
+              <Space orientation="vertical" style={{ width: '100%' }}>
                 {outputs.map((output) => (
                   <SortableParameterItem
                     key={output.id}
@@ -298,7 +298,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
             Select a range and click "Add as Editable Area"
           </div>
         ) : (
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space orientation="vertical" style={{ width: '100%' }}>
             {areas.map((area, index) => (
               <div
                 key={area.id || index}

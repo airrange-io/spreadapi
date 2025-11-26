@@ -301,7 +301,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   return (
     <div style={{ width: '100%' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size={8}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={8}>
           {/* Input Parameters Form */}
           <Form
             form={form}
@@ -441,10 +441,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                               title={displayTitle}
                               value={displayValue}
                               precision={precision}
-                              valueStyle={{ 
+                              styles={{ content: {
                                 fontSize: '18px',
                                 color: output.error ? '#ff4d4f' : undefined
-                              }}
+                              } }}
                             />
                           </Col>
                         );
@@ -464,7 +464,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     value={wizardResponseTime}
                     suffix="ms"
                     prefix={<ClockCircleOutlined />}
-                    valueStyle={{ fontSize: '18px' }}
+                    styles={{ content: { fontSize: '18px' } }}
                   />
                   {wizardResult?.metadata && (
                     <Typography.Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px' }}>
@@ -481,7 +481,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   <Statistic
                     title="Status"
                     value={wizardError ? "Error" : "Success"}
-                    valueStyle={{ color: wizardError ? '#ff4d4f' : '#52c41a', fontSize: '18px' }}
+                    styles={{ content: { color: wizardError ? '#ff4d4f' : '#52c41a', fontSize: '18px' } }}
                     prefix={wizardError ? <InfoCircleOutlined /> : <CheckCircleOutlined />}
                   />
                 </Col>
@@ -490,7 +490,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     title="Total Calls"
                     value={totalCalls}
                     prefix={<ApiOutlined />}
-                    valueStyle={{ fontSize: '18px' }}
+                    styles={{ content: { fontSize: '18px' } }}
                   />
                 </Col>
               </Row>

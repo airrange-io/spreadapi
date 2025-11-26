@@ -104,7 +104,7 @@ export default function CacheStatsPage() {
           }
         />
       ) : stats ? (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           {/* Overall Performance */}
           <Card>
             <Title level={4}>Overall Performance</Title>
@@ -164,21 +164,21 @@ export default function CacheStatsPage() {
                   title="Hit Rate"
                   value={stats.processCache.hitRate}
                   suffix="%"
-                  valueStyle={{ color: getStatusColor(stats.processCache.hitRate) }}
+                  styles={{ content: { color: getStatusColor(stats.processCache.hitRate) } }}
                 />
               </Col>
               <Col xs={24} sm={6}>
                 <Statistic
                   title="Hits"
                   value={stats.processCache.hits}
-                  valueStyle={{ color: '#52c41a' }}
+                  styles={{ content: { color: '#52c41a' } }}
                 />
               </Col>
               <Col xs={24} sm={6}>
                 <Statistic
                   title="Misses"
                   value={stats.processCache.misses}
-                  valueStyle={{ color: '#f5222d' }}
+                  styles={{ content: { color: '#f5222d' } }}
                 />
               </Col>
             </Row>
@@ -204,21 +204,21 @@ export default function CacheStatsPage() {
                   title="Hit Rate"
                   value={stats.redisCache.hitRate}
                   suffix="%"
-                  valueStyle={{ color: getStatusColor(stats.redisCache.hitRate) }}
+                  styles={{ content: { color: getStatusColor(stats.redisCache.hitRate) } }}
                 />
               </Col>
               <Col xs={24} sm={6}>
                 <Statistic
                   title="Hits"
                   value={stats.redisCache.hits}
-                  valueStyle={{ color: '#52c41a' }}
+                  styles={{ content: { color: '#52c41a' } }}
                 />
               </Col>
               <Col xs={24} sm={6}>
                 <Statistic
                   title="Misses"
                   value={stats.redisCache.misses}
-                  valueStyle={{ color: '#f5222d' }}
+                  styles={{ content: { color: '#f5222d' } }}
                 />
               </Col>
               <Col xs={24} sm={6}>

@@ -134,7 +134,7 @@ const ApiTestView: React.FC<ApiTestViewProps> = ({
         transition: 'opacity 0.3s ease-in-out'
       }}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size={16}>
+      <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {!serviceStatus?.published && (
           <Alert
             message="Service must be published to test"

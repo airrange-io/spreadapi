@@ -3,7 +3,6 @@
 import React from 'react';
 import { Collapse } from 'antd';
 import type { CollapseProps } from 'antd';
-import './CollapsibleSection.css';
 
 interface CollapsibleSectionProps {
   title: React.ReactNode;
@@ -36,13 +35,25 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         </div>
       ),
       extra: extra,
+      styles: {
+        header: {
+          backgroundColor: '#f8f8f8',
+          borderBottom: 'none',
+          padding: '14px',
+        },
+        body: {
+          backgroundColor: '#f8f8f8',
+          padding: '8px 14px 14px 14px',
+        },
+      },
     },
   ];
 
   return (
     <Collapse
       defaultActiveKey={defaultOpen ? ['1'] : []}
-      expandIconPosition="end"
+      expandIconPlacement="end"
+      bordered={false}
       style={{
         backgroundColor: '#f8f8f8',
         border: 'none',
@@ -51,7 +62,6 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         ...style
       }}
       items={items}
-      className="custom-collapse-section"
     />
   );
 };

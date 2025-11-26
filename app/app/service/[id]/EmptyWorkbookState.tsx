@@ -53,7 +53,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
         width: '100%',
         textAlign: 'center'
       }}>
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           <Button
             type="default"
             size="large"

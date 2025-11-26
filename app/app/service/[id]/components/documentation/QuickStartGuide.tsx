@@ -48,7 +48,7 @@ const QuickStartGuide: React.FC<QuickStartGuideProps> = ({ serviceId, isPublishe
   const exampleInput = spec?.paths?.[`/api/v1/services/${serviceId}/execute`]?.post?.requestBody?.content?.['application/json']?.examples?.basic;
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
         <Title level={4}>Getting Started</Title>
         <Paragraph>

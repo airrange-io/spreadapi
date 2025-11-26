@@ -129,7 +129,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
       ]}
       centered
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
         {/* Basic Info */}
         <div>
           <Form layout="vertical">
@@ -172,7 +172,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
               });
             }}
           >
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Radio value="readonly">
                 <Space>
                   <LockOutlined />
@@ -206,7 +206,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
           <Panel header="Advanced Permissions" key="1">
             <Row gutter={16}>
               <Col span={12}>
-                <Space direction="vertical">
+                <Space orientation="vertical">
                   <Checkbox
                     checked={editingArea.permissions.canReadFormulas}
                     onChange={e => onAreaChange({
@@ -243,7 +243,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 </Space>
               </Col>
               <Col span={12}>
-                <Space direction="vertical">
+                <Space orientation="vertical">
                   <Checkbox
                     checked={editingArea.permissions.canAddRows}
                     onChange={e => onAreaChange({

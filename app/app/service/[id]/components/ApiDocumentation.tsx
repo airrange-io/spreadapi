@@ -115,7 +115,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
         borderBottom: '1px solid #f0f0f0',
         background: '#fafafa'
       }}>
-        <Space direction="vertical" size={8} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={8} style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text strong style={{ fontSize: 15 }}>Interactive API Documentation</Text>
             <Space>
@@ -223,7 +223,7 @@ const QuickStartGuide: React.FC<{ serviceId: string; spec: any }> = ({ serviceId
   const exampleInput = spec?.paths?.[`/api/v1/services/${serviceId}/execute`]?.post?.requestBody?.content?.['application/json']?.examples?.basic;
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
         <Title level={4}>Getting Started</Title>
         <Paragraph>
@@ -378,7 +378,7 @@ const ErrorCodesReference: React.FC = () => {
   ];
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+    <Space orientation="vertical" size={24} style={{ width: '100%' }}>
       <div>
         <Title level={4}>Error Code Reference</Title>
         <Paragraph>
@@ -405,7 +405,7 @@ const ErrorCodesReference: React.FC = () => {
           borderRadius: 6,
           padding: 16
         }}>
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={8} style={{ width: '100%' }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <code style={{
                 background: '#fff1f0',

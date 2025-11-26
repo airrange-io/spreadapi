@@ -29,7 +29,7 @@ export default function LoginPage() {
           }}
           variant="borderless"
         >
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             <div style={{ textAlign: 'center' }}>
               <Title level={2} style={{ marginBottom: 8 }}>
                 Welcome to SpreadAPI

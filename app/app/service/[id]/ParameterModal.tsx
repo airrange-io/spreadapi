@@ -794,7 +794,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
 
         {/* AI Info View */}
         {activeView === 'ai' && (
-          <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 24 }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 24 }}>
             <div>
               <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
                 Description (for AI assistants)

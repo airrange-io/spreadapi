@@ -115,7 +115,7 @@ export default function CacheDiagnosticsPage() {
 
   return (
     <SubPageLayout title="Cache Diagnostics">
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <Card>
           <Title level={4}>Diagnose Cache Lookup</Title>
           <Paragraph type="secondary">
@@ -184,7 +184,7 @@ export default function CacheDiagnosticsPage() {
               />
             ) : (
               <Card title="Diagnosis Results">
-                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
                   <div>
                     <Text strong>Token: </Text>
                     <Text code>{result.token}</Text>
