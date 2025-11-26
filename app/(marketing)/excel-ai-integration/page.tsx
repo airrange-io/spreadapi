@@ -430,7 +430,7 @@ export default function AIIntegrationPage() {
               </div>
             </section>
 
-            {/* MCP Installation Guide */}
+            {/* AI Integration Guide */}
             <section id="quick-setup" className="section-home-setup" style={{ background: '#f8f9fa' }}>
               <div className="padding-global">
                 <div className="container-large">
@@ -444,262 +444,462 @@ export default function AIIntegrationPage() {
                             </div>
                           </div>
                           <h2>
-                            Connect Claude Desktop in <span className="text-color-primary">5 Minutes</span>
+                            Connect Your AI Assistant in <span className="text-color-primary">3 Minutes</span>
                           </h2>
                           <p className="text-size-medium margin-top margin-small">
-                            Follow these simple steps to give Claude access to your Excel calculations
+                            Choose your AI platform and follow the simple setup guide
                           </p>
                         </div>
                       </div>
                     </div>
 
+                    {/* Platform Tabs */}
                     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                      {/* Step 1 */}
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '40px', 
-                        borderRadius: '16px',
-                        marginBottom: '24px',
-                        border: '1px solid #e8e8e8'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
-                          <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: '#502D80',
+
+                      {/* ChatGPT Section */}
+                      <div style={{ marginBottom: '48px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          marginBottom: '24px',
+                          paddingBottom: '16px',
+                          borderBottom: '2px solid #10a37f'
+                        }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.6 8.3829l2.02-1.1638a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z" fill="#10a37f"/>
+                          </svg>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '24px' }}>ChatGPT</h3>
+                            <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Easiest setup with OAuth - no configuration files needed</p>
+                          </div>
+                          <span style={{
+                            background: '#10a37f',
                             color: 'white',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            flexShrink: 0
-                          }}>1</div>
-                          <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Create Your SpreadAPI Account</h3>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              Sign up for free and upload your Excel file. Define inputs and outputs with simple point-and-click.
-                            </p>
-                            <a href="/" className="button is-primary" style={{
-                              display: 'inline-block',
-                              background: '#502D80',
+                            padding: '4px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            marginLeft: 'auto'
+                          }}>RECOMMENDED</span>
+                        </div>
+
+                        {/* ChatGPT Step 1 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          marginBottom: '16px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              background: '#10a37f',
                               color: 'white',
-                              padding: '12px 24px',
-                              borderRadius: '8px',
-                              textDecoration: 'none',
-                              fontWeight: '600'
-                            }}>
-                              Get Started Free →
-                            </a>
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>1</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Open ChatGPT Settings</h4>
+                              <p style={{ marginBottom: '16px', color: '#666', fontSize: '15px' }}>
+                                In ChatGPT, click your profile icon and navigate to <strong>Settings → Apps and Connectors</strong> (or "Apps und Konnektoren" in German).
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ChatGPT Step 2 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          marginBottom: '16px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              background: '#10a37f',
+                              color: 'white',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>2</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Add SpreadAPI as MCP Server</h4>
+                              <p style={{ marginBottom: '16px', color: '#666', fontSize: '15px' }}>
+                                Click <strong>Create</strong> to add a new connector. In the "MCP Server URL" field, paste your service URL:
+                              </p>
+                              <div style={{
+                                background: '#f5f5f5',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                fontFamily: 'monospace',
+                                fontSize: '14px',
+                                marginBottom: '16px',
+                                border: '1px solid #e8e8e8',
+                                wordBreak: 'break-all'
+                              }}>
+                                https://spreadapi.io/api/mcp/service/YOUR_SERVICE_ID
+                              </div>
+                              <p style={{ marginBottom: '0', color: '#666', fontSize: '14px' }}>
+                                Select <strong>OAuth</strong> as authentication method, then click <strong>Create</strong>.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ChatGPT Step 3 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              background: '#10a37f',
+                              color: 'white',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>3</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Start Using Your Excel Calculations!</h4>
+                              <p style={{ marginBottom: '16px', color: '#666', fontSize: '15px' }}>
+                                ChatGPT will initiate the OAuth flow. Once connected, your service appears in the connectors list. Try these prompts:
+                              </p>
+                              <div style={{ display: 'grid', gap: '10px' }}>
+                                <div style={{
+                                  background: '#e8f5e9',
+                                  padding: '14px 16px',
+                                  borderRadius: '8px',
+                                  borderLeft: '4px solid #10a37f',
+                                  fontSize: '14px'
+                                }}>
+                                  "What parameters does this service need?"
+                                </div>
+                                <div style={{
+                                  background: '#e8f5e9',
+                                  padding: '14px 16px',
+                                  borderRadius: '8px',
+                                  borderLeft: '4px solid #10a37f',
+                                  fontSize: '14px'
+                                }}>
+                                  "Calculate the quote for 500 units with enterprise discount"
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Step 2 */}
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '40px', 
-                        borderRadius: '16px',
-                        marginBottom: '24px',
-                        border: '1px solid #e8e8e8'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
-                          <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: '#502D80',
-                            color: 'white',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            flexShrink: 0
-                          }}>2</div>
-                          <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Generate Your API Token</h3>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              In SpreadAPI, click the <strong>MCP</strong> button in the top toolbar (next to "New Service"). This opens the MCP Integration modal where you can create tokens.
-                            </p>
+                      {/* Claude Desktop Section */}
+                      <div style={{ marginBottom: '48px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          marginBottom: '24px',
+                          paddingBottom: '16px',
+                          borderBottom: '2px solid #D97757'
+                        }}>
+                          <svg height="40" viewBox="0 0 24 24" width="40" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fillRule="nonzero" />
+                          </svg>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '24px' }}>Claude Desktop</h3>
+                            <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Native MCP support with automatic NPX bridge</p>
+                          </div>
+                        </div>
+
+                        {/* Claude Step 1 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          marginBottom: '16px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
                             <div style={{
-                              background: '#f0f0f0',
-                              padding: '16px',
-                              borderRadius: '8px',
-                              marginBottom: '16px'
-                            }}>
-                              <strong>Where to find it:</strong>
-                              <ol style={{ marginTop: '8px', marginBottom: 0, paddingLeft: '20px' }}>
-                                <li>Go to your SpreadAPI dashboard</li>
-                                <li>Look for the <strong>MCP</strong> button in the top toolbar</li>
-                                <li>Click it to open the MCP Integration modal</li>
-                              </ol>
-                            </div>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              In the modal, generate a new token:
-                            </p>
-                            <div style={{
-                              background: '#f8f6fe',
-                              padding: '16px',
-                              borderRadius: '8px',
-                              fontFamily: 'monospace',
-                              fontSize: '14px',
-                              color: '#666'
-                            }}>
-                              <strong>Token name:</strong> Claude Desktop<br />
-                              <strong>Services:</strong> ✓ All published services
+                              width: '40px',
+                              height: '40px',
+                              background: '#D97757',
+                              color: 'white',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>1</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Open Claude Desktop Settings</h4>
+                              <p style={{ marginBottom: '0', color: '#666', fontSize: '15px' }}>
+                                Click <strong>Claude → Settings</strong> (Mac) or <strong>File → Settings</strong> (Windows), then select the <strong>Developer</strong> tab and click <strong>Edit Config</strong>.
+                              </p>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Step 3 */}
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '40px', 
-                        borderRadius: '16px',
-                        marginBottom: '24px',
-                        border: '1px solid #e8e8e8'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
-                          <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: '#502D80',
-                            color: 'white',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            flexShrink: 0
-                          }}>3</div>
-                          <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Configure Claude Desktop</h3>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              Open the configuration file in Claude Desktop:
-                            </p>
+                        {/* Claude Step 2 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          marginBottom: '16px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
                             <div style={{
-                              background: '#f0f0f0',
-                              padding: '20px',
-                              borderRadius: '8px',
-                              marginBottom: '20px'
-                            }}>
-                              <ol style={{ marginTop: 0, marginBottom: 0, paddingLeft: '20px' }}>
-                                <li style={{ marginBottom: '12px' }}>
-                                  Open Claude Desktop
-                                </li>
-                                <li style={{ marginBottom: '12px' }}>
-                                  Click on <strong>Claude → Settings</strong> (Mac) or <strong>File → Settings</strong> (Windows)
-                                </li>
-                                <li style={{ marginBottom: '12px' }}>
-                                  Select <strong>Developer</strong> tab
-                                </li>
-                                <li style={{ marginBottom: '12px' }}>
-                                  Click <strong>Edit Config</strong> button
-                                </li>
-                              </ol>
-                            </div>
-                            <p style={{ marginBottom: '12px', color: '#666', fontSize: '16px' }}>
-                              Add this configuration to the file (replace YOUR_TOKEN with your actual token):
-                            </p>
-                            <pre style={{
-                              background: '#1a1a1a',
-                              color: '#e0e0e0',
-                              padding: '20px',
-                              borderRadius: '8px',
-                              overflow: 'auto',
-                              fontSize: '14px',
-                              lineHeight: '1.6'
-                            }}>
+                              width: '40px',
+                              height: '40px',
+                              background: '#D97757',
+                              color: 'white',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>2</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Add the SpreadAPI Configuration</h4>
+                              <p style={{ marginBottom: '16px', color: '#666', fontSize: '15px' }}>
+                                Add this to your <code style={{ background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>claude_desktop_config.json</code> file:
+                              </p>
+                              <pre style={{
+                                background: '#1a1a1a',
+                                color: '#e0e0e0',
+                                padding: '20px',
+                                borderRadius: '8px',
+                                overflow: 'auto',
+                                fontSize: '13px',
+                                lineHeight: '1.6'
+                              }}>
 {`{
   "mcpServers": {
     "spreadapi": {
       "command": "npx",
       "args": ["spreadapi-mcp"],
       "env": {
-        "SPREADAPI_URL": "https://spreadapi.com/api/mcp/bridge",
-        "SPREADAPI_TOKEN": "YOUR_TOKEN"
+        "SPREADAPI_URL": "https://spreadapi.io/api/mcp/service/YOUR_SERVICE_ID",
+        "SPREADAPI_TOKEN": "your_token_here"
       }
     }
   }
 }`}
-                            </pre>
+                              </pre>
+                              <div style={{
+                                background: '#fff4e6',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                marginTop: '16px',
+                                fontSize: '13px',
+                                color: '#ad6800',
+                                border: '1px solid #ffd591'
+                              }}>
+                                <strong>Note:</strong> Replace <code style={{ background: '#fff', padding: '2px 4px', borderRadius: '4px' }}>YOUR_SERVICE_ID</code> with your actual service ID and <code style={{ background: '#fff', padding: '2px 4px', borderRadius: '4px' }}>your_token_here</code> with your API token from SpreadAPI.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Claude Step 3 */}
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
                             <div style={{
-                              background: '#e6f7ff',
-                              padding: '12px 16px',
-                              borderRadius: '8px',
-                              marginTop: '16px',
-                              fontSize: '14px',
-                              color: '#0050b3'
-                            }}>
-                              <strong>Note:</strong> Using "npx" means the MCP bridge will be automatically downloaded when Claude starts. No manual installation needed!
+                              width: '40px',
+                              height: '40px',
+                              background: '#D97757',
+                              color: 'white',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}>3</div>
+                            <div style={{ flex: 1 }}>
+                              <h4 style={{ marginBottom: '12px', fontSize: '18px' }}>Restart and Start Using!</h4>
+                              <p style={{ marginBottom: '16px', color: '#666', fontSize: '15px' }}>
+                                Restart Claude Desktop. The MCP bridge downloads automatically via NPX. Your service will appear in the MCP menu. Try these prompts:
+                              </p>
+                              <div style={{ display: 'grid', gap: '10px' }}>
+                                <div style={{
+                                  background: '#fef3ed',
+                                  padding: '14px 16px',
+                                  borderRadius: '8px',
+                                  borderLeft: '4px solid #D97757',
+                                  fontSize: '14px'
+                                }}>
+                                  "What parameters does this service need?"
+                                </div>
+                                <div style={{
+                                  background: '#fef3ed',
+                                  padding: '14px 16px',
+                                  borderRadius: '8px',
+                                  borderLeft: '4px solid #D97757',
+                                  fontSize: '14px'
+                                }}>
+                                  "Compare 3 pricing scenarios using this calculator"
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Step 4 */}
-                      <div style={{ 
-                        background: 'white', 
-                        padding: '40px', 
-                        borderRadius: '16px',
-                        border: '1px solid #e8e8e8'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px' }}>
+                      {/* Other Platforms Section */}
+                      <div style={{ marginBottom: '48px' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          marginBottom: '24px',
+                          paddingBottom: '16px',
+                          borderBottom: '2px solid #9333EA'
+                        }}>
                           <div style={{
-                            width: '48px',
-                            height: '48px',
-                            background: '#502D80',
-                            color: 'white',
-                            borderRadius: '50%',
+                            width: '40px',
+                            height: '40px',
+                            background: '#9333EA',
+                            borderRadius: '8px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '24px',
-                            fontWeight: 'bold',
-                            flexShrink: 0
-                          }}>4</div>
-                          <div style={{ flex: 1 }}>
-                            <h3 style={{ marginBottom: '16px', fontSize: '24px' }}>Start Using Excel in Claude!</h3>
-                            <p style={{ marginBottom: '20px', color: '#666', fontSize: '16px' }}>
-                              Restart Claude Desktop and try these example prompts:
-                            </p>
-                            <div style={{ display: 'grid', gap: '12px' }}>
-                              <div style={{
-                                background: '#e6f7ff',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                borderLeft: '4px solid #1890ff'
-                              }}>
-                                "What Excel calculations can you help me with?"
-                              </div>
-                              <div style={{
-                                background: '#e6f7ff',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                borderLeft: '4px solid #1890ff'
-                              }}>
-                                "Calculate the monthly payment for a $300,000 loan"
-                              </div>
-                              <div style={{
-                                background: '#e6f7ff',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                borderLeft: '4px solid #1890ff'
-                              }}>
-                                "Help me analyze different pricing scenarios"
-                              </div>
-                            </div>
+                            justifyContent: 'center'
+                          }}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 style={{ margin: 0, fontSize: '24px' }}>Other AI Platforms & Custom Apps</h3>
+                            <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>REST API, SDKs, and MCP protocol for any integration</p>
                           </div>
                         </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '32px',
+                          borderRadius: '12px',
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          <p style={{ marginBottom: '20px', color: '#666', fontSize: '15px' }}>
+                            SpreadAPI works with any platform that supports REST APIs or the Model Context Protocol (MCP). Perfect for:
+                          </p>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '16px',
+                            marginBottom: '24px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>Custom GPTs</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>GitHub Copilot</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>Cursor IDE</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>Zapier / Make</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>n8n Workflows</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ color: '#9333EA', fontSize: '18px' }}>✓</span>
+                              <span>Your own apps</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <a href="/how-excel-api-works" style={{
+                              display: 'inline-block',
+                              background: '#9333EA',
+                              color: 'white',
+                              padding: '10px 20px',
+                              borderRadius: '8px',
+                              textDecoration: 'none',
+                              fontWeight: '500',
+                              fontSize: '14px'
+                            }}>
+                              See How It Works →
+                            </a>
+                            <a href="/app" style={{
+                              display: 'inline-block',
+                              background: 'transparent',
+                              color: '#9333EA',
+                              padding: '10px 20px',
+                              borderRadius: '8px',
+                              textDecoration: 'none',
+                              fontWeight: '500',
+                              fontSize: '14px',
+                              border: '1px solid #9333EA'
+                            }}>
+                              Get Started Free
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Getting Your Service URL */}
+                      <div style={{
+                        padding: '32px',
+                        background: '#f0f5ff',
+                        borderRadius: '12px',
+                        border: '1px solid #adc6ff',
+                        marginBottom: '24px'
+                      }}>
+                        <h4 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px' }}>
+                          <span style={{ fontSize: '24px' }}>💡</span>
+                          Where to Find Your Service URL & Token
+                        </h4>
+                        <ol style={{ marginBottom: 0, paddingLeft: '20px', fontSize: '15px', color: '#444', lineHeight: '1.8' }}>
+                          <li><a href="/" style={{ color: '#502D80', fontWeight: '500' }}>Sign up for SpreadAPI</a> and upload your Excel file</li>
+                          <li>Define your inputs and outputs (point-and-click, no coding)</li>
+                          <li>Publish your service</li>
+                          <li>Go to <strong>Agents → MCP Integration</strong> to find your service URL and generate tokens</li>
+                        </ol>
                       </div>
 
                       {/* Troubleshooting */}
-                      <div style={{ 
-                        marginTop: '48px',
+                      <div style={{
                         padding: '32px',
                         background: '#fff4e6',
                         borderRadius: '12px',
@@ -713,9 +913,9 @@ export default function AIIntegrationPage() {
                           Need Help?
                         </h4>
                         <div style={{ display: 'grid', gap: '12px', fontSize: '15px', color: '#666' }}>
-                          <div><strong>Claude not finding tools?</strong> Make sure you restarted Claude Desktop after adding the config</div>
+                          <div><strong>ChatGPT connector not working?</strong> Make sure you completed the OAuth flow and your service is published</div>
+                          <div><strong>Claude not finding tools?</strong> Restart Claude Desktop after adding the config</div>
                           <div><strong>Authentication error?</strong> Double-check your token is copied correctly</div>
-                          <div><strong>Services not published?</strong> Go to SpreadAPI and publish your services first</div>
                           <div style={{ marginTop: '8px' }}>
                             Still stuck? Email us at <a href="mailto:team@airrange.io" style={{ color: '#502D80' }}>team@airrange.io</a>
                           </div>
