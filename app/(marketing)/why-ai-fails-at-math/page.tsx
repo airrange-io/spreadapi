@@ -11,6 +11,16 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://spreadapi.com/why-ai-fails-at-math',
   },
+  alternates: {
+    canonical: 'https://spreadapi.com/why-ai-fails-at-math',
+    languages: {
+      'en': 'https://spreadapi.com/why-ai-fails-at-math',
+      'de': 'https://spreadapi.com/de/why-ai-fails-at-math',
+      'fr': 'https://spreadapi.com/fr/why-ai-fails-at-math',
+      'es': 'https://spreadapi.com/es/why-ai-fails-at-math',
+      'x-default': 'https://spreadapi.com/why-ai-fails-at-math',
+    },
+  },
 };
 
 export default function WhyAIFailsAtMathPage() {

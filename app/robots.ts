@@ -7,6 +7,7 @@ const marketingPages = [
   '/stop-rewriting-excel-in-code',
   '/automation-calculations',
   '/excel-ai-integration',
+  '/why-ai-fails-at-math',
 ];
 
 // Generate locale versions of marketing pages
@@ -18,7 +19,6 @@ const localeMarketingPages = ['de', 'fr', 'es'].flatMap(locale =>
 const allMarketingPages = [
   ...marketingPages,
   ...localeMarketingPages,
-  '/why-ai-fails-at-math',
   '/docs',
   '/pricing',
   '/blog/',

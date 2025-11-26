@@ -5,8 +5,13 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/product/Footer';
 import ProductHeader from '@/components/product/ProductHeader';
 import '../product.css';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
-export default function WhyAIFailsClient() {
+interface WhyAIFailsClientProps {
+  locale?: SupportedLocale;
+}
+
+export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProps) {
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
@@ -25,7 +30,7 @@ export default function WhyAIFailsClient() {
         `}</style>
 
         <div className="page-wrapper">
-          <Navigation currentPage="product" />
+          <Navigation currentPage="product" locale={locale} />
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -601,7 +606,7 @@ export default function WhyAIFailsClient() {
             </section>
           </main>
 
-          <Footer />
+          <Footer locale={locale} />
         </div>
       </div>
     </>
