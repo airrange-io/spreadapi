@@ -3,22 +3,16 @@ import { getSortedPostsData } from '@/lib/blog';
 import { supportedLocales } from '@/lib/translations/blog-helpers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://spreadapi.io';
+  const baseUrl = 'https://spreadapi.com';
   const sitemapEntries: MetadataRoute.Sitemap = [];
-  
-  // Static pages
+
+  // Static marketing pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
-    },
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
     },
     {
       url: `${baseUrl}/how-excel-api-works`,
