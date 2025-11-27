@@ -185,11 +185,11 @@ export const homepage = {
 
   de: {
     hero: {
-      subheading: 'Headless Spreadsheets für KI & Automation',
+      subheading: 'Headless Spreadsheets für KI & Automatisierung',
       title1: 'Excel wird zur Live-API.',
       title2: 'KI spricht jetzt Tabellenkalkulation',
-      description: 'Verwandeln Sie Ihre Tabellen in sichere Echtzeit-Webservices. Geben Sie KI-Assistenten, Automatisierungstools und Entwicklern direkten Zugriff — ohne Halluzinationen oder fehlerhafte Logik.',
-      cta: 'Erste Excel-API kostenlos erstellen',
+      description: 'Verwandeln Sie Excel-Tabellen in sichere Echtzeit-Webservices. KI-Assistenten, Automatisierungstools und Entwickler erhalten direkten Zugriff — ohne Halluzinationen oder fehlerhafte Logik.',
+      cta: 'Jetzt Excel-API kostenlos erstellen',
     },
     painPoints: {
       title1: 'Warum KI an',
@@ -202,7 +202,7 @@ export const homepage = {
       },
       card2: {
         title: '„Ich kenne nur 50-100 Funktionen"',
-        text: 'Grundrechenarten? Klar. Aber Excel hat hunderte mehr — XIRR, YIELD, Array-Formeln? Da übersehe ich Randfälle.',
+        text: 'Grundrechenarten? Klar. Aber Excel hat Hunderte mehr — XINTZINSFUSS, RENDITE, Array-Formeln? Da übersehe ich Randfälle.',
         author: '- Claude, ganz ehrlich',
       },
       card3: {
@@ -230,7 +230,7 @@ export const homepage = {
     solution: {
       title1: 'So befähigen wir KI,',
       title2: 'Excel-Berechnungen zu meistern',
-      description: 'Transformieren Sie Ihre Tabellen in Echtzeit-APIs, die KI aufrufen kann — kein Raten, keine Halluzinationen, nur präzise Ergebnisse durch Ihre Excel-Logik. Ob einfache Berechnungen oder komplexe verschachtelte Formeln — Ihre Excel-Logik wird exakt so ausgeführt, wie Sie sie erstellt haben. Das Ergebnis: sauberes, zuverlässiges JSON, mit dem KI-Assistenten, Entwickler und Automatisierungstools sofort und sicher arbeiten können.',
+      description: 'Verwandeln Sie Ihre Tabellen in Echtzeit-APIs, die KI aufrufen kann — kein Raten, keine Halluzinationen, nur präzise Ergebnisse durch Ihre Excel-Logik. Ob einfache Berechnungen oder komplexe verschachtelte Formeln — Ihre Excel-Logik wird exakt so ausgeführt, wie Sie sie erstellt haben. Das Ergebnis: sauberes, zuverlässiges JSON, mit dem KI-Assistenten, Entwickler und Automatisierungstools sofort und sicher arbeiten können.',
     },
     feature1: {
       title1: 'KI-Vertriebsassistenten',
@@ -253,10 +253,10 @@ export const homepage = {
     feature2: {
       title1: 'Automatisierungstools',
       title2: 'führen Ihre Excel-Logik aus',
-      description: 'Tools wie Zapier, Make und n8n können jetzt Berechnungen in Ihren Excel-Modellen mit Live-Eingaben auslösen und echte Ergebnisse liefern — sofort. Keine Logik-Neuimplementierung. Kein Formel-Umschreiben. Einfach exaktes Excel-Verhalten als sichere Echtzeit-API.',
+      description: 'Zapier, Make und n8n können jetzt Berechnungen in Ihren Excel-Modellen mit Live-Eingaben auslösen und echte Ergebnisse liefern — sofort. Keine Logik-Neuimplementierung. Kein Formel-Umschreiben. Einfach exaktes Excel-Verhalten als sichere Echtzeit-API.',
       point1: 'Plug & Play mit jedem Workflow-Tool',
       point2: 'Liefert nur sauberes JSON, zeigt nie Formeln',
-      point3: 'Bewältigt jede Excel-Komplexität — WENN, XVERWEIS, ARRAY-Funktionen, MwSt.-Logik, Preiskalkulationen',
+      point3: 'Bewältigt jede Excel-Komplexität — WENN, XVERWEIS, ARRAY-Funktionen, MwSt.-Logik, Preiskalkulation',
     },
     feature3: {
       title1: '„Bau das Excel mal eben in Code um"',
@@ -272,7 +272,7 @@ export const homepage = {
       subheading: 'Was uns unterscheidet',
       title1: 'Geben Sie KI & Tools',
       title2: 'Excel-Superkräfte',
-      description: 'Transformieren Sie Ihre Tabellen in leistungsstarke APIs, die von Anwendungen, KI-Assistenten aufgerufen oder in jeden Workflow integriert werden können. Ihre Excel-Expertise wird sofort zugänglich.',
+      description: 'Verwandeln Sie Ihre Tabellen in leistungsstarke APIs, die von Anwendungen und KI-Assistenten aufgerufen oder in jeden Workflow integriert werden können. Ihre Excel-Expertise wird sofort zugänglich.',
       card1: {
         title: 'Vorhersagbar. Immer.',
         text: 'KI liefert jedes Mal andere Antworten. Aber Excel? Excel rechnet. Jedes. Einzelne. Mal.',
@@ -295,7 +295,7 @@ export const homepage = {
       },
       card6: {
         title: 'Keine Einarbeitung nötig',
-        text: 'Ihr Team arbeitet weiter mit Excel wie gewohnt. KI bekommt Superkräfte. Ohne Schulung',
+        text: 'Ihr Team arbeitet weiter mit Excel wie gewohnt. KI erhält Superkräfte. Ohne Schulung',
       },
     },
     editableAreas: {
@@ -332,11 +332,11 @@ export const homepage = {
       },
       case3: {
         title: 'KI-Assistenten',
-        text: 'Optimieren Sie Tabellenformeln automatisch. KI schlägt Verbesserungen vor und bewahrt die Logik.',
+        text: 'Optimieren Sie Tabellenformeln automatisch. KI schlägt Verbesserungen vor und bewahrt dabei die Logik.',
       },
       case4: {
         title: 'Vertriebsteams',
-        text: 'Erstellen Sie präzise Angebote sofort. KI nutzt Ihre Preismodelle für perfekte Proposals.',
+        text: 'Erstellen Sie präzise Angebote in Sekunden. KI nutzt Ihre Preismodelle für perfekte Angebote.',
       },
       case5: {
         title: 'Operations',
@@ -864,7 +864,7 @@ export const howItWorksPage = {
     hero: {
       subheading: 'Dokumentation',
       title: 'So funktioniert SpreadAPI',
-      description: 'Transformieren Sie Ihre Tabellen in leistungsstarke APIs, die von Anwendungen, KI-Assistenten aufgerufen oder in jeden Workflow integriert werden können. Ihre Excel-Expertise wird sofort zugänglich.',
+      description: 'Verwandeln Sie Ihre Tabellen in leistungsstarke APIs, die von Anwendungen und KI-Assistenten aufgerufen oder in jeden Workflow integriert werden können. Ihre Excel-Expertise wird sofort zugänglich.',
     },
     overview: {
       title1: 'Tabellen werden zu',
@@ -955,7 +955,7 @@ export const howItWorksPage = {
       },
       feature2: {
         title: 'Natürliche Sprache',
-        description: 'Nutzer können Berechnungen auf Deutsch anfordern — die KI erledigt den Rest',
+        description: 'Anfragen einfach in natürlicher Sprache stellen — die KI erledigt den Rest',
       },
       feature3: {
         title: 'Interaktive Analyse',
@@ -1262,15 +1262,15 @@ export const stopRewritingPage = {
     hero: {
       subheading: 'Für Entwickler',
       title1: 'Schluss mit Excel',
-      title2: 'nachbauen in Code',
-      description: 'Ihre Tabelle funktioniert bereits. Machen Sie sie zur API in Minuten — nicht Monaten. Löschen Sie tausende Zeilen Formelübersetzungs-Code. Liefern Sie schneller mit 100% Genauigkeit.',
+      title2: 'nachprogrammieren',
+      description: 'Ihre Tabelle funktioniert bereits. Machen Sie sie zur API in Minuten — nicht Monaten. Löschen Sie tausende Zeilen Formel-Code. Schneller liefern mit 100% Genauigkeit.',
       cta: 'Kostenlos testen',
       ctaSecondary: 'So funktioniert\'s',
     },
     scenario: {
       title1: '„Bau das Excel mal eben in Code um"',
       title2: ', hieß es.',
-      description1: 'Kennen wir alle. Die Fachabteilung übergibt eine Tabelle — ihr Preismodell, Finanzrechner oder technischer Konfigurator. Jahre verfeinerter Logik in diesen Zellen.',
+      description1: 'Kennen wir alle. Die Fachabteilung übergibt eine Tabelle — ihr Preismodell, Finanzrechner oder technischer Konfigurator. Jahre verfeinerte Logik in diesen Zellen.',
       description2: '„Kannst du das einfach auf die Website stellen?" fragen sie. Klingt simpel. Drei Monate später debuggst du immer noch, warum dein JavaScript nicht mit Excel übereinstimmt.',
       pmTitle: 'Produktmanager',
       pmText: '„Das ist nur eine Excel-Datei mit ein paar Formeln. Sollte schnell gehen, oder?"',
@@ -1279,29 +1279,29 @@ export const stopRewritingPage = {
     },
     complexity: {
       subheading: 'Die versteckte Komplexität',
-      title1: 'Warum Excel-zu-Code',
+      title1: 'Warum Excel in Code umwandeln',
       title2: 'schwerer ist als gedacht',
       card1: {
         title: 'Formelübersetzung',
-        description: 'Eine einzelne Excel-Formel wird zu dutzenden Zeilen Code. SVERWEIS allein erfordert Suchlogik, Fehlerbehandlung und 1-basierte Indizierung.',
+        description: 'Eine einzelne Excel-Formel wird zu Dutzenden Zeilen Code. SVERWEIS allein erfordert Suchlogik, Fehlerbehandlung und 1-basierte Indizierung.',
         excelLabel: 'Excel:',
         jsLabel: 'JavaScript:',
         jsCode: '// 50+ Zeilen Code...',
       },
       card2: {
         title: 'Versteckte Abhängigkeiten',
-        description: 'Diese Formel referenziert andere Blätter, benannte Bereiche und externe Datenquellen. Ihr Code muss einen kompletten Abhängigkeitsgraphen nachbilden.',
+        description: 'Diese Formel referenziert andere Blätter, benannte Bereiche und externe Datenquellen. Ihr Code muss einen kompletten Abhängigkeitsgraph nachbilden.',
         list: ['Blattübergreifende Referenzen', 'Benannte Bereiche', 'Bedingte Formatierungslogik', 'Datenvalidierungsregeln'],
       },
       card3: {
         title: 'Excel-spezifische Funktionen',
-        description: 'ARBEITSTAG, RMZ, XINTZINSFUSS, SUMMENPRODUKT... Excel hat 500+ Funktionen. Jede braucht eine perfekte JavaScript-Implementierung.',
-        note: '→ Wochenendlogik + Feiertagshandling + Datumssystemabgleich',
+        description: 'ARBEITSTAG, RMZ, XINTZINSFUSS, SUMMENPRODUKT... Excel hat über 500 Funktionen. Jede braucht eine perfekte JavaScript-Implementierung.',
+        note: '→ Wochenendlogik + Feiertagsbehandlung + Datumssystemabgleich',
       },
       card4: {
         title: 'Das 1000-Formeln-Problem',
-        description: 'Echte Geschäftsmodelle haben hunderte oder tausende verknüpfte Formeln. Alle übersetzen und dabei die Berechnungsreihenfolge wahren? Ein Albtraum.',
-        example: 'Echtes Beispiel: Ein Preiskonfigurator mit Materialkosten, Mengenrabatten, regionalen Anpassungen, Versand, Steuerregeln und Margenberechnungen.',
+        description: 'Echte Geschäftsmodelle haben Hunderte oder Tausende verknüpfte Formeln. Alle übersetzen und dabei die Berechnungsreihenfolge wahren? Ein Albtraum.',
+        example: 'Praxisbeispiel: Ein Preiskonfigurator mit Materialkosten, Mengenrabatten, regionalen Anpassungen, Versand, Steuerregeln und Margenberechnungen.',
       },
       card5: {
         title: 'Randfälle & Rundung',
@@ -1316,7 +1316,7 @@ export const stopRewritingPage = {
     },
     cost: {
       subheading: 'Die echten Kosten',
-      title1: 'Was Excel-zu-Code',
+      title1: 'Was Excel nachprogrammieren',
       title2: 'wirklich kostet',
       stat1: { value: '2-6', label: 'Monate', description: 'Initiale Implementierungszeit' },
       stat2: { value: '70-95%', label: 'Genauigkeit', description: 'Randfälle werden immer übersehen' },
@@ -1324,10 +1324,10 @@ export const stopRewritingPage = {
     },
     solution: {
       title1: 'Was wäre, wenn Sie',
-      title2: 'es nicht müssten?',
+      title2: 'das nicht müssten?',
       description1: 'Die Tabelle funktioniert bereits. Die Formeln sind getestet. Die Fachabteilung vertraut den Zahlen.',
-      description2: 'Warum also umschreiben?',
-      description3: 'Mit SpreadAPI ist Excel Ihre Berechnungsmaschine. Laden Sie Ihre Tabelle hoch, definieren Sie Ein- und Ausgaben, und erhalten Sie eine API. Die Originalformeln laufen — keine Übersetzung.',
+      description2: 'Warum also neu schreiben?',
+      description3: 'Mit SpreadAPI ist Excel Ihre Berechnungs-Engine. Tabelle hochladen, Ein- und Ausgaben definieren, API erhalten. Die Originalformeln laufen — keine Übersetzung nötig.',
       badge1: '100% Genauigkeit',
       badge2: 'Minuten statt Monate',
       badge3: 'Null Wartung',
@@ -1357,20 +1357,20 @@ export const stopRewritingPage = {
     },
     benefits: {
       subheading: 'Wer profitiert',
-      title1: 'Gebaut für',
+      title1: 'Gemacht für',
       title2: 'alle',
       developers: {
         title: 'Für Entwickler',
-        point1: 'Tausende Zeilen Formelübersetzungs-Code löschen',
-        point2: 'Schluss mit Debugging „warum stimmt das nicht mit Excel überein?"',
+        point1: 'Tausende Zeilen Formel-Code löschen',
+        point2: 'Schluss mit „Warum stimmt das nicht mit Excel überein?"',
         point3: 'Schneller liefern — Stunden statt Monate',
         point4: 'Fokus auf die App, nicht auf Formelübersetzung',
       },
       nocode: {
         title: 'Für No-Code-Builder',
-        point1: 'Komplexe Berechnungen ohne Codezeilen',
-        point2: 'Verbindung zu Webflow, Bubble, Zapier über simple API',
-        point3: 'Preisrechner, Konfiguratoren, Angebotstools erstellen',
+        point1: 'Komplexe Berechnungen ohne eine Zeile Code',
+        point2: 'Anbindung an Webflow, Bubble, Zapier per API',
+        point3: 'Preisrechner, Konfiguratoren, Angebotstools bauen',
         point4: 'Kein Entwickler für die Berechnungslogik nötig',
       },
     },
@@ -1412,8 +1412,8 @@ export const stopRewritingPage = {
       ],
     },
     cta: {
-      title: 'Bereit, Schluss mit Excel-Nachbauen zu machen?',
-      description: 'Tabelle hochladen. API erhalten. Tausende Zeilen Code löschen. So einfach ist das wirklich.',
+      title: 'Bereit, Schluss mit Excel nachprogrammieren zu machen?',
+      description: 'Tabelle hochladen. API erhalten. Tausende Zeilen Code löschen. So einfach ist es wirklich.',
       button: 'Kostenlos testen',
       buttonSecondary: 'So funktioniert\'s',
     },
@@ -1679,21 +1679,21 @@ export const aiIntegrationPage = {
       subheading: 'Excel trifft KI',
       title1: 'Geben Sie KI-Assistenten',
       title2: 'Excel-Superkräfte',
-      description: 'Stellen Sie sich vor, ChatGPT erstellt perfekte Angebote mit Ihrer Preistabelle. Oder Claude analysiert Szenarien mit Ihren Finanzmodellen. SpreadAPI macht es möglich — in Minuten, nicht Monaten.',
+      description: 'Stellen Sie sich vor: ChatGPT erstellt perfekte Angebote mit Ihrer Preistabelle. Oder Claude analysiert Szenarien mit Ihren Finanzmodellen. SpreadAPI macht es möglich — in Minuten, nicht Monaten.',
     },
     gap: {
       title1: 'Die KI-Excel-Lücke,',
-      title2: 'die alle kennen',
-      description: 'Ihre Excel-Dateien enthalten jahrelang verfeinerte Geschäftslogik. Komplexe Preisregeln, Finanzmodelle, Ressourcenberechnungen — alles über die Zeit perfektioniert. Aber wenn KI helfen will:',
+      title2: 'die jeder kennt',
+      description: 'Ihre Excel-Dateien enthalten jahrelang verfeinerte Geschäftslogik. Komplexe Preisregeln, Finanzmodelle, Ressourcenberechnungen — über Jahre perfektioniert. Aber wenn KI helfen soll:',
       point1: 'Halluziniert Zahlen statt korrekt zu rechnen',
       point2: 'Erfordert manuelles Kopieren von Daten hin und her',
-      point3: 'Kann Ihre Tabellenformeln gar nicht zugreifen',
+      point3: 'Kann auf Ihre Tabellenformeln gar nicht zugreifen',
       withoutLabel: 'Ohne SpreadAPI:',
       withoutText: '„Nach meiner Schätzung liegt der Preis bei etwa 4.500 €..."',
-      withoutError: '❌ Falsch um 823 €',
+      withoutError: '❌ Daneben um 823 €',
       withLabel: 'Mit SpreadAPI:',
-      withText: '„Mit Ihrem Preismodell beträgt der exakte Preis 3.677,42 €"',
-      withSuccess: '✓ 100% genau, alle Rabatte eingerechnet',
+      withText: '„Laut Ihrem Preismodell beträgt der exakte Preis 3.677,42 €"',
+      withSuccess: '✓ 100% genau, alle Rabatte berücksichtigt',
     },
     setup: {
       subheading: 'Einfache Einrichtung',
@@ -1724,7 +1724,7 @@ export const aiIntegrationPage = {
       },
       case2: {
         title: 'Vertriebsteams erstellen perfekte Angebote',
-        intro: 'Befähigen Sie Ihren Vertrieb:',
+        intro: 'Befähigen Sie Ihr Vertriebsteam:',
         points: ['Komplexe Multi-Produkt-Angebote sofort zu erstellen', 'Was-wäre-wenn-Szenarien während Kundengesprächen durchzuspielen', 'Immer die aktuellsten Preise und Aktionen zu nutzen'],
         quote: '„Vertriebszyklen um 40% verkürzt durch sofortige, präzise Preisgestaltung"',
       },
@@ -1735,9 +1735,9 @@ export const aiIntegrationPage = {
         quote: '„Nie wieder Excel-Formeln nachbauen — einfach das Original nutzen"',
       },
       case4: {
-        title: 'Finanzanalyse in KI-Geschwindigkeit',
+        title: 'Finanzanalyse mit KI-Geschwindigkeit',
         intro: 'Ermöglichen Sie Claude oder ChatGPT:',
-        points: ['Komplexe Finanzmodelle sofort auszuführen', 'Investitionsszenarien mit echten Berechnungen zu generieren', 'Berichte mit Ihren exakten Methoden zu erstellen'],
+        points: ['Komplexe Finanzmodelle sofort auszuführen', 'Investitionsszenarien mit echten Berechnungen zu erstellen', 'Berichte mit Ihren exakten Methoden zu generieren'],
         quote: '„KI kann jetzt unsere Finanzprognosen erklären UND berechnen"',
       },
     },
@@ -1825,7 +1825,7 @@ export const aiIntegrationPage = {
       subheading: 'Fragen?',
       title1: 'Wir sind für Sie',
       title2: 'da',
-      text: 'Ob Sie Möglichkeiten erkunden oder bereit zur Umsetzung sind — wir helfen gerne unter',
+      text: 'Ob Sie Möglichkeiten erkunden oder startklar sind — wir helfen gerne unter',
     },
   },
 } as const;
@@ -2030,8 +2030,8 @@ export const automationPage = {
     hero: {
       subheading: 'Für Automatisierungs-Builder',
       title1: 'Wenn Ihre Automatisierung',
-      title2: 'denken muss',
-      description: 'Zapier bewegt Daten. Make löst Aktionen aus. Aber wer rechnet? Ihre Excel-Tabellen können jetzt die komplexen Berechnungen übernehmen, die Ihre Automatisierungen nicht schaffen.',
+      title2: 'rechnen muss',
+      description: 'Zapier bewegt Daten. Make löst Aktionen aus. Aber wer rechnet? Ihre Excel-Tabellen übernehmen jetzt die komplexen Berechnungen, die Ihre Automatisierungen nicht schaffen.',
       cta: 'Kostenlos starten',
       ctaSecondary: 'So funktioniert\'s',
     },
@@ -2040,17 +2040,17 @@ export const automationPage = {
     },
     gap: {
       title: 'Die Berechnungslücke',
-      description1: 'Automatisierungsplattformen sind großartig im Datentransfer und Aktionen auslösen. Aber wenn Sie etwas Komplexes berechnen müssen?',
-      description2: 'Dann ist Schluss. Verschachtelte WENNs, die brechen. Formelfelder, die Ihre Logik nicht abbilden können. Workarounds, die nicht skalieren.',
+      description1: 'Automatisierungsplattformen sind großartig beim Datentransfer und Aktionen auslösen. Aber wenn Sie etwas Komplexes berechnen müssen?',
+      description2: 'Dann ist Schluss. Verschachtelte WENNs, die brechen. Formelfelder, die Ihre Logik nicht abbilden. Workarounds, die nicht skalieren.',
       goodAt: 'Automatisierungen können gut:',
       goodItems: ['Trigger', 'Datentransfer', 'Einfache WENN/DANN', 'API-Aufrufe', 'Benachrichtigungen'],
       badAt: 'Automatisierungen scheitern bei:',
-      badItems: ['Mehrstufige Preisgestaltung', 'Gewichtete Bewertungen', 'Komplexe Regeln', 'Finanzberechnungen', 'Entscheidungsbäume'],
+      badItems: ['Mehrstufiger Preisgestaltung', 'Gewichteten Bewertungen', 'Komplexen Regeln', 'Finanzberechnungen', 'Entscheidungsbäumen'],
     },
     scenarios: {
       subheading: 'Kommt Ihnen das bekannt vor?',
       title1: 'Wenn Sie sich wünschen, Ihre Automatisierung',
-      title2: 'könnte denken',
+      title2: 'könnte rechnen',
       items: [
         { scenario: 'Angebot mit 47 Preisregeln berechnen', icon: '💰' },
         { scenario: 'Leads mit Ihrem bewährten Excel-Modell bewerten', icon: '📊' },
@@ -2059,12 +2059,12 @@ export const automationPage = {
         { scenario: 'Provisionen mit Beschleunigern und Staffeln berechnen', icon: '💼' },
         { scenario: 'Nachbestellmengen anhand von 20 Faktoren entscheiden', icon: '📦' },
       ],
-      footer: 'Ihre Automatisierung kann den ganzen Tag triggern — aber sie kann nicht denken.',
+      footer: 'Ihre Automatisierung kann den ganzen Tag triggern — aber sie kann nicht rechnen.',
     },
     solution: {
       subheading: 'Die Lösung',
       title1: 'Ihre Tabelle wird',
-      title2: 'zum Gehirn',
+      title2: 'zur Rechenmaschine',
       description: 'Sie haben bereits ein Excel-Modell, das genau das tut, was Sie brauchen. SpreadAPI macht daraus einen API-Endpunkt, den Ihre Automatisierung aufrufen kann.',
       flow: {
         trigger: { title: 'Trigger', description: 'Neue Bestellung, Lead, etc.' },
@@ -2202,7 +2202,7 @@ export const automationPage = {
       ],
     },
     cta: {
-      title: 'Geben Sie Ihren Automatisierungen ein Gehirn',
+      title: 'Geben Sie Ihren Automatisierungen Rechenkraft',
       description: 'Schluss mit Workarounds für komplexe Berechnungen. Ihr Excel-Modell + SpreadAPI = intelligentere Automatisierungen in Minuten.',
       button: 'Kostenlos starten',
       buttonSecondary: 'Dokumentation ansehen',
@@ -2331,20 +2331,20 @@ export const whyAIFailsPage = {
     hero: {
       subheading: 'KI-Geständnisse',
       title: '🤖 „Warum wir kein Excel können"',
-      description: 'Ein ehrliches Gespräch mit KI über Tabellenkalkulationen',
-      cta: 'SpreadAPI stattdessen testen',
+      description: 'Ein ehrliches Gespräch mit KI über Tabellenkalkulation',
+      cta: 'Stattdessen SpreadAPI testen',
       ctaSecondary: '← Zurück zum Produkt',
     },
     chat: {
-      human1: '„Ich habe eine komplexe Excel mit 1000+ Formeln. Kannst du neu berechnen, wenn ich 5 Variablen ändere?"',
-      ai1: '„Ich kann es versuchen, aber ehrlich? Bei 1000+ Formeln bräuchte ich 2-15 Minuten und würde es wahrscheinlich falsch machen."',
+      human1: '„Ich habe eine komplexe Excel mit über 1000 Formeln. Kannst du neu berechnen, wenn ich 5 Variablen ändere?"',
+      ai1: '„Ich kann es versuchen, aber ehrlich? Bei über 1000 Formeln bräuchte ich 2-15 Minuten und würde es wahrscheinlich falsch machen."',
       human2: '„Moment, du kannst die Excel-Formeln nicht einfach ausführen?"',
       ai2Part1: '„Nein, ich kann Excel-Formeln nicht wirklich ausführen. Wenn Sie eine Tabelle hochladen, sehe ich die Formeln und gespeicherten Werte, aber ich kann sie nicht berechnen. Ich müsste die Logik selbst nachbauen.',
       ai2Part2: 'Bei komplexen Abhängigkeiten (A hängt von B ab, B von C...) verbringe ich die meiste Zeit damit, die Berechnungsreihenfolge herauszufinden. Meine Erfolgsquote? Vielleicht 20-40% bei komplexen Modellen.',
-      ai2Part3: 'Ich kenne nur etwa 50-100 von 500+ Excel-Funktionen. XIRR? YIELD? Array-Formeln? Ich rate größtenteils."',
+      ai2Part3: 'Ich kenne nur etwa 50-100 von über 500 Excel-Funktionen. XINTZINSFUSS? RENDITE? Array-Formeln? Ich rate größtenteils."',
     },
     successRate: {
-      title1: 'KI-Erfolgsquote',
+      title1: 'KI-Erfolgsquote:',
       title2: 'Realitätscheck',
       subtitle: '🎲 Meine realistischen Erfolgsquoten',
       simple: {
@@ -2353,7 +2353,7 @@ export const whyAIFailsPage = {
         rate: '80-90%',
       },
       complex: {
-        label: 'Komplexes Modell (1000+ Formeln)',
+        label: 'Komplexes Modell (über 1000 Formeln)',
         description: 'Abhängigkeiten, Array-Formeln, Finanzfunktionen',
         rate: '20-40%',
       },
@@ -2372,9 +2372,9 @@ export const whyAIFailsPage = {
         title: 'Wenn Sie mir Excel hochladen:',
         points: [
           'Ich sehe Formeln, kann sie aber nicht ausführen',
-          'Ich kenne nur 50-100 von 500+ Funktionen',
+          'Ich kenne nur 50-100 von über 500 Funktionen',
           'Ich brauche 2-15 Minuten für komplexe Tabellen',
-          '20-40% Genauigkeit bei 1000+ Formeln',
+          '20-40% Genauigkeit bei über 1000 Formeln',
           'Fehler potenzieren sich durch Abhängigkeiten',
         ],
         quote: '„Ich arbeite mit gespeicherten Werten, nicht mit Live-Berechnungen"',
@@ -2384,7 +2384,7 @@ export const whyAIFailsPage = {
         title: 'Wenn SpreadAPI berechnet:',
         points: [
           'Führt echte Excel-Formeln aus',
-          'Unterstützt 500+ Excel-Funktionen',
+          'Unterstützt über 500 Excel-Funktionen',
           'Liefert Ergebnisse in Millisekunden',
           '100% Genauigkeit, jede Komplexität',
           'Ihre Formeln bleiben geschützt',
@@ -2397,18 +2397,18 @@ export const whyAIFailsPage = {
       title1: 'Echte KI-Limitierungen',
       title2: '(In unseren eigenen Worten)',
       card1: {
-        title: '„Ich bin unmöglich langsam"',
+        title: '„Ich bin hoffnungslos langsam"',
         text: '1000 Formeln? Das sind 2-15 Minuten, in denen ich Abhängigkeiten zu verstehen versuche. Excel? 1-2 Sekunden.',
         author: '- Jedes KI-Modell',
       },
       card2: {
         title: '„Ich kann keine Formeln ausführen"',
-        text: 'Wenn Sie Excel hochladen, sehe ich Ihre Formeln und gespeicherten Werte, aber ich kann sie nicht ausführen. Ich müsste alles nachbauen.',
+        text: 'Wenn Sie Excel hochladen, sehe ich Ihre Formeln und gespeicherten Werte, aber ausführen kann ich sie nicht. Ich müsste alles nachbauen.',
         author: '- Claude',
       },
       card3: {
-        title: '„Ich bin funktions-unkundig"',
-        text: 'Ich kenne nur 50-100 von 500+ Excel-Funktionen. XIRR? YIELD? Array-Formeln? Ich rate nur, was sie tun.',
+        title: '„Ich kenne kaum Funktionen"',
+        text: 'Ich kenne nur 50-100 von über 500 Excel-Funktionen. XINTZINSFUSS? RENDITE? Array-Formeln? Ich rate nur, was sie tun.',
         author: '- ChatGPT & Claude',
       },
     },
@@ -2423,11 +2423,11 @@ export const whyAIFailsPage = {
     bottomLine: {
       title: 'Das Fazit',
       subtitle: 'Die Wahrheit über KI + Excel',
-      text1: 'KI kann keine Excel-Formeln ausführen. Keine Funktionen berechnen. Braucht ewig.',
+      text1: 'KI kann keine Excel-Formeln ausführen. Keine Funktionen berechnen. Dauert ewig.',
       text2: 'Aber mit SpreadAPI? KI bekommt endlich echte Excel-Berechnungen.',
-      quote: '„Hören Sie auf, KI zum Rechnen zu bitten. Geben Sie ihr echtes Excel.\n100% Genauigkeit. Jedes Mal. In Millisekunden."',
-      cta: 'Kostenlose Testversion starten',
-      ctaNote: 'Keine Kreditkarte erforderlich • 1.000 kostenlose Berechnungen',
+      quote: '„Hören Sie auf, KI um Berechnungen zu bitten. Geben Sie ihr echtes Excel.\n100% Genauigkeit. Jedes Mal. In Millisekunden."',
+      cta: 'Kostenlos testen',
+      ctaNote: 'Keine Kreditkarte nötig • 1.000 kostenlose Berechnungen',
     },
   },
 } as const;
