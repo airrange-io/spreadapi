@@ -3,6 +3,7 @@ import '../product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getAutomationTranslations } from '@/lib/translations/marketing';
 
 export const metadata: Metadata = {
   title: 'When Your Automation Needs to Think | SpreadAPI',
@@ -43,6 +44,8 @@ interface AutomationCalculationsContentProps {
 }
 
 export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalculationsContentProps) {
+  const t = getAutomationTranslations(locale);
+
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
@@ -62,17 +65,16 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                           <div className="max-width-xlarge align-center">
                             <div className="margin-bottom margin-xsmall">
                               <div className="subheading">
-                                <div>For Automation Builders</div>
+                                <div>{t.hero.subheading}</div>
                               </div>
                             </div>
                             <div className="margin-bottom margin-small">
                               <h1>
-                                When Your Automation <span className="text-color-primary">Needs to Think</span>
+                                {t.hero.title1} <span className="text-color-primary">{t.hero.title2}</span>
                               </h1>
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
-                              Zapier moves data. Make triggers actions. But who does the math?
-                              Your Excel spreadsheets can now power the complex calculations your automations can't handle.
+                              {t.hero.description}
                             </p>
                             <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                               <a href="/app" className="button is-primary" style={{
@@ -84,7 +86,7 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                                 fontWeight: '600',
                                 fontSize: '16px'
                               }}>
-                                Get Started Free
+                                {t.hero.cta}
                               </a>
                               <a href="#how-it-works" style={{
                                 padding: '14px 28px',
@@ -95,7 +97,7 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                                 border: '2px solid #502D80',
                                 color: '#502D80'
                               }}>
-                                See How It Works
+                                {t.hero.ctaSecondary}
                               </a>
                             </div>
                           </div>

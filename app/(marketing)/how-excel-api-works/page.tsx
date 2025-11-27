@@ -4,6 +4,7 @@ import './how-excel-api-works.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getHowItWorksTranslations } from '@/lib/translations/marketing';
 
 export const metadata: Metadata = {
   title: 'How Excel API Works - SpreadAPI | Transform Spreadsheets to APIs',
@@ -44,6 +45,8 @@ interface HowItWorksContentProps {
 }
 
 export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
+  const t = getHowItWorksTranslations(locale);
+
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
@@ -65,17 +68,16 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                         <div className="max-width-xlarge align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Documentation</div>
+                              <div>{t.hero.subheading}</div>
                             </div>
                           </div>
                           <div className="margin-bottom margin-small">
                             <h1>
-                              How <span className="text-color-primary">SpreadAPI</span> Works
+                              {t.hero.title}
                             </h1>
                           </div>
                           <p className="text-size-medium" style={{ maxWidth: '680px', margin: '0 auto' }}>
-                            Transform your spreadsheets into powerful APIs that can be called by applications, 
-                            AI assistants, or integrated into any workflow. Your Excel expertise becomes instantly accessible.
+                            {t.hero.description}
                           </p>
                         </div>
                       </div>
@@ -96,11 +98,11 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <rect x="70" y="240" width="80" height="30" fill="#F8F6FE"/>
                           <rect x="160" y="240" width="80" height="30" fill="#F8F6FE"/>
                           <rect x="250" y="240" width="80" height="30" fill="#FFE4E1"/>
-                          
+
                           {/* Arrow */}
                           <path d="M370 200 L430 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
                           <path d="M420 190 L430 200 L420 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
-                          
+
                           {/* API on right */}
                           <rect x="450" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
                           <rect x="470" y="120" width="260" height="40" fill="#F8F6FE"/>
@@ -128,14 +130,12 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="feature-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          <span className="text-color-primary">Transform Spreadsheets</span> Into Intelligent APIs
+                          <span className="text-color-primary">{t.overview.title1}</span> {t.overview.title2}
                         </h2>
                       </div>
                       <div className="margin-bottom margin-medium">
                         <p className="text-size-medium">
-                          SpreadAPI bridges the gap between spreadsheet expertise and modern applications. 
-                          Your complex calculations, business logic, and data models become instantly accessible 
-                          through clean API endpoints that any developer or AI assistant can use.
+                          {t.overview.description}
                         </p>
                       </div>
                       <div className="feature-keypoint-list">
@@ -146,7 +146,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">No coding required - use your Excel skills</p>
+                          <p className="text-size-medium">{t.overview.point1}</p>
                         </div>
                         <div className="feature-keypoint-list-item">
                           <div className="check-icon-wrapper">
@@ -155,7 +155,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">Instant API generation from any spreadsheet</p>
+                          <p className="text-size-medium">{t.overview.point2}</p>
                         </div>
                         <div className="feature-keypoint-list-item">
                           <div className="check-icon-wrapper">
@@ -164,7 +164,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>
-                          <p className="text-size-medium">AI-ready with MCP integration</p>
+                          <p className="text-size-medium">{t.overview.point3}</p>
                         </div>
                       </div>
                     </div>
@@ -173,12 +173,12 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                         <svg viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <rect width="600" height="400" fill="#F8F6FE" rx="12"/>
                           <rect x="40" y="40" width="520" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-                          
+
                           {/* Upload area */}
                           <rect x="100" y="100" width="400" height="200" rx="8" fill="#F8F6FE" stroke="#E8E0FF" strokeWidth="2" strokeDasharray="8,4"/>
                           <circle cx="300" cy="180" r="30" fill="#9333EA" fillOpacity="0.2"/>
                           <path d="M300 165 L300 195 M285 180 L315 180" stroke="#9333EA" strokeWidth="3" strokeLinecap="round"/>
-                          <text x="300" y="240" textAnchor="middle" fill="#5a5a5a" fontSize="16">Upload Your Spreadsheet</text>
+                          <text x="300" y="240" textAnchor="middle" fill="#5a5a5a" fontSize="16">{t.overview.imageAlt}</text>
                         </svg>
                       </div>
                     </div>
@@ -198,16 +198,16 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                       <div className="max-width-large align-center">
                         <div className="margin-bottom margin-xsmall">
                           <div className="subheading">
-                            <div>Core Concepts</div>
+                            <div>{t.concepts.subheading}</div>
                           </div>
                         </div>
                         <h2>
-                          Three Simple <span className="text-color-primary">Building Blocks</span>
+                          {t.concepts.title1} <span className="text-color-primary">{t.concepts.title2}</span>
                         </h2>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="concepts-grid">
                     {/* Input Parameters */}
                     <div className="concept-card">
@@ -217,16 +217,15 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <path d="M20 30 L30 30 M30 30 L40 20 M30 30 L40 40" stroke="#1890ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <h3>Input Parameters</h3>
+                      <h3>{t.concepts.input.title}</h3>
                       <p className="text-size-medium">
-                        Define which cells receive values when your API is called. Like function arguments, 
-                        these are the values users provide to trigger calculations.
+                        {t.concepts.input.description}
                       </p>
                       <div className="concept-example">
                         <code>
-                          Cell B2: interest_rate<br/>
-                          Cell B3: loan_amount<br/>
-                          Cell B4: years
+                          {t.concepts.input.example.split('\n').map((line, i) => (
+                            <span key={i}>{line}<br/></span>
+                          ))}
                         </code>
                       </div>
                     </div>
@@ -239,16 +238,15 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <path d="M40 30 L30 30 M30 30 L20 20 M30 30 L20 40" stroke="#52c41a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <h3>Output Parameters</h3>
+                      <h3>{t.concepts.output.title}</h3>
                       <p className="text-size-medium">
-                        Specify which cells contain the results to return. These calculated values become 
-                        your API response, delivered as clean JSON data.
+                        {t.concepts.output.description}
                       </p>
                       <div className="concept-example">
                         <code>
-                          Cell E2: monthly_payment<br/>
-                          Cell E3: total_interest<br/>
-                          Cell E4: total_paid
+                          {t.concepts.output.example.split('\n').map((line, i) => (
+                            <span key={i}>{line}<br/></span>
+                          ))}
                         </code>
                       </div>
                     </div>
@@ -265,16 +263,15 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <rect x="32" y="32" width="8" height="8" fill="#fa8c16" fillOpacity="0.3"/>
                         </svg>
                       </div>
-                      <h3>Editable Areas (AI)</h3>
+                      <h3>{t.concepts.editable.title}</h3>
                       <p className="text-size-medium">
-                        Enable AI assistants to interact with cell ranges directly. Perfect for data analysis, 
-                        what-if scenarios, and formula generation.
+                        {t.concepts.editable.description}
                       </p>
                       <div className="concept-example">
                         <code>
-                          Range A1:D10<br/>
-                          Permissions: Read/Write<br/>
-                          AI can experiment freely
+                          {t.concepts.editable.example.split('\n').map((line, i) => (
+                            <span key={i}>{line}<br/></span>
+                          ))}
                         </code>
                       </div>
                     </div>
@@ -294,11 +291,11 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                       <div className="max-width-large align-center">
                         <div className="margin-bottom margin-xsmall">
                           <div className="subheading">
-                            <div>API Workflow</div>
+                            <div>{t.workflow.subheading}</div>
                           </div>
                         </div>
                         <h2>
-                          From <span className="text-color-primary">Spreadsheet to API</span> in Minutes
+                          {t.workflow.title1} <span className="text-color-primary">{t.workflow.title2}</span> {t.workflow.title3}
                         </h2>
                       </div>
                     </div>
@@ -308,38 +305,38 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="workflow-step">
                       <div className="workflow-step-number">1</div>
                       <div className="workflow-step-content">
-                        <h3>Upload & Configure</h3>
-                        <p>Upload your Excel file and select cells for inputs and outputs. No coding needed.</p>
+                        <h3>{t.workflow.step1.title}</h3>
+                        <p>{t.workflow.step1.description}</p>
                       </div>
                     </div>
-                    
+
                     <div className="workflow-connector"></div>
-                    
+
                     <div className="workflow-step">
                       <div className="workflow-step-number">2</div>
                       <div className="workflow-step-content">
-                        <h3>Test & Validate</h3>
-                        <p>Try your API with sample values. See results instantly. Refine as needed.</p>
+                        <h3>{t.workflow.step2.title}</h3>
+                        <p>{t.workflow.step2.description}</p>
                       </div>
                     </div>
-                    
+
                     <div className="workflow-connector"></div>
-                    
+
                     <div className="workflow-step">
                       <div className="workflow-step-number">3</div>
                       <div className="workflow-step-content">
-                        <h3>Publish & Share</h3>
-                        <p>Get your unique API endpoint. Share with developers or connect AI assistants.</p>
+                        <h3>{t.workflow.step3.title}</h3>
+                        <p>{t.workflow.step3.description}</p>
                       </div>
                     </div>
-                    
+
                     <div className="workflow-connector"></div>
-                    
+
                     <div className="workflow-step">
                       <div className="workflow-step-number">4</div>
                       <div className="workflow-step-content">
-                        <h3>Call & Calculate</h3>
-                        <p>Send inputs, receive outputs. Your spreadsheet logic runs in the cloud.</p>
+                        <h3>{t.workflow.step4.title}</h3>
+                        <p>{t.workflow.step4.description}</p>
                       </div>
                     </div>
                   </div>
@@ -347,7 +344,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                   {/* API Flow Diagram */}
                   <div className="margin-top margin-xlarge">
                     <div className="api-flow-card">
-                      <h3 className="text-align-center margin-bottom margin-medium">The API Flow</h3>
+                      <h3 className="text-align-center margin-bottom margin-medium">{t.workflow.flowTitle}</h3>
                       <div className="api-flow-diagram">
                         <div className="api-flow-item" data-step="1">
                           <div className="api-flow-icon">
@@ -357,8 +354,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <rect x="14" y="10" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
                             </svg>
                           </div>
-                          <h4>API Call Received</h4>
-                          <p>Your service receives a request with input values</p>
+                          <h4>{t.workflow.flow1.title}</h4>
+                          <p>{t.workflow.flow1.description}</p>
                         </div>
                         <div className="api-flow-item" data-step="2">
                           <div className="api-flow-icon">
@@ -369,8 +366,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <path d="M32 32L36 36" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
                           </div>
-                          <h4>Inputs Applied</h4>
-                          <p>Values placed into designated cells</p>
+                          <h4>{t.workflow.flow2.title}</h4>
+                          <p>{t.workflow.flow2.description}</p>
                         </div>
                         <div className="api-flow-item" data-step="3">
                           <div className="api-flow-icon">
@@ -380,8 +377,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <circle cx="24" cy="24" r="11" stroke="#9333EA" strokeWidth="2" strokeDasharray="3 3"/>
                             </svg>
                           </div>
-                          <h4>Calculation</h4>
-                          <p>Formulas automatically recalculate</p>
+                          <h4>{t.workflow.flow3.title}</h4>
+                          <p>{t.workflow.flow3.description}</p>
                         </div>
                         <div className="api-flow-item" data-step="4">
                           <div className="api-flow-icon">
@@ -391,8 +388,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                               <rect x="14" y="34" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
                             </svg>
                           </div>
-                          <h4>Response Sent</h4>
-                          <p>Results returned as JSON</p>
+                          <h4>{t.workflow.flow4.title}</h4>
+                          <p>{t.workflow.flow4.description}</p>
                         </div>
                       </div>
                     </div>
@@ -411,7 +408,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="feature-image-wrapper">
                       <div className="code-example-wrapper">
                         <div className="code-example-header">
-                          <span>API Request</span>
+                          <span>{t.example.requestLabel}</span>
                         </div>
                         <pre className="code-example">
 {`GET /api/v1/services/loan_calc/execute
@@ -420,7 +417,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
   &years=30`}
                         </pre>
                         <div className="code-example-header" style={{ marginTop: '20px' }}>
-                          <span>API Response</span>
+                          <span>{t.example.responseLabel}</span>
                         </div>
                         <pre className="code-example">
 {`{
@@ -447,14 +444,12 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="feature-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          <span className="text-color-primary">Real Example:</span> Loan Calculator
+                          <span className="text-color-primary">{t.example.title1}</span> {t.example.title2}
                         </h2>
                       </div>
                       <div className="margin-bottom margin-medium">
                         <p className="text-size-medium">
-                          See how a simple loan calculator spreadsheet becomes a powerful API. 
-                          Input parameters feed into Excel's PMT function, and the calculated 
-                          monthly payment is returned instantly.
+                          {t.example.description}
                         </p>
                       </div>
                       <div className="feature-list">
@@ -467,9 +462,9 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           </div>
                           <div className="feature-item-content-wrapper">
                             <div className="margin-bottom margin-xsmall">
-                              <h3 className="heading-style-h5">Input Cells</h3>
+                              <h3 className="heading-style-h5">{t.example.inputCells}</h3>
                             </div>
-                            <p className="text-size-medium">B2: loan_amount, B3: interest_rate, B4: years</p>
+                            <p className="text-size-medium">{t.example.inputCellsExample}</p>
                           </div>
                         </div>
                         <div className="feature-item">
@@ -481,7 +476,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           </div>
                           <div className="feature-item-content-wrapper">
                             <div className="margin-bottom margin-xsmall">
-                              <h3 className="heading-style-h5">Excel Formula</h3>
+                              <h3 className="heading-style-h5">{t.example.excelFormula}</h3>
                             </div>
                             <p className="text-size-medium">=PMT(B3/12, B4*12, -B2)</p>
                           </div>
@@ -504,15 +499,14 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                       <div className="max-width-large align-center">
                         <div className="margin-bottom margin-xsmall">
                           <div className="subheading">
-                            <div>AI Integration</div>
+                            <div>{t.aiIntegration.subheading}</div>
                           </div>
                         </div>
                         <h2>
-                          Built for <span className="text-color-primary">AI Assistants</span>
+                          {t.aiIntegration.title1} <span className="text-color-primary">{t.aiIntegration.title2}</span>
                         </h2>
                         <p className="text-size-medium margin-top margin-small">
-                          SpreadAPI supports MCP (Model Context Protocol), enabling AI assistants like Claude 
-                          to discover and use your spreadsheet services automatically.
+                          {t.aiIntegration.description}
                         </p>
                       </div>
                     </div>
@@ -528,8 +522,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <path d="M16 20H24M20 16V24" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
                         </svg>
                       </div>
-                      <h3>Auto-Discovery</h3>
-                      <p>AI assistants automatically find and understand your available services</p>
+                      <h3>{t.aiIntegration.feature1.title}</h3>
+                      <p>{t.aiIntegration.feature1.description}</p>
                     </div>
                     <div className="ai-feature-card">
                       <div className="ai-feature-icon">
@@ -542,8 +536,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <circle cx="30" cy="24" r="1.5" fill="#9333EA"/>
                         </svg>
                       </div>
-                      <h3>Natural Language</h3>
-                      <p>Users can request calculations in plain English - AI handles the rest</p>
+                      <h3>{t.aiIntegration.feature2.title}</h3>
+                      <p>{t.aiIntegration.feature2.description}</p>
                     </div>
                     <div className="ai-feature-card">
                       <div className="ai-feature-icon">
@@ -555,8 +549,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <path d="M10 10L10 38L38 38" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
                         </svg>
                       </div>
-                      <h3>Interactive Analysis</h3>
-                      <p>AI can work with editable areas to perform complex data analysis</p>
+                      <h3>{t.aiIntegration.feature3.title}</h3>
+                      <p>{t.aiIntegration.feature3.description}</p>
                     </div>
                     <div className="ai-feature-card">
                       <div className="ai-feature-icon">
@@ -567,26 +561,26 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                           <path d="M20 18L24 14L28 18M28 30L24 34L20 30" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <h3>Workflow Automation</h3>
-                      <p>Combine multiple services into sophisticated AI-powered workflows</p>
+                      <h3>{t.aiIntegration.feature4.title}</h3>
+                      <p>{t.aiIntegration.feature4.description}</p>
                     </div>
                   </div>
 
                   <div className="ai-example-card margin-top margin-xlarge">
-                    <h3>Example: AI Assistant Interaction</h3>
+                    <h3>{t.aiIntegration.exampleTitle}</h3>
                     <div className="ai-conversation">
                       <div className="ai-message user">
-                        <strong>User:</strong> "Calculate the monthly payment for a $300,000 loan at 4.5% for 30 years"
+                        <strong>{t.aiIntegration.exampleUser}</strong> {t.aiIntegration.exampleUserText}
                       </div>
                       <div className="ai-message assistant">
-                        <strong>Claude:</strong> "I'll calculate that for you using the loan calculator service..."
+                        <strong>{t.aiIntegration.exampleAssistant}</strong> {t.aiIntegration.exampleAssistantText}
                         <div className="ai-code">
-                          Calling: spreadapi_calc_loan_calculator<br/>
+                          {t.aiIntegration.exampleCalling}<br/>
                           → loan_amount: 300000<br/>
                           → interest_rate: 0.045<br/>
                           → years: 30
                         </div>
-                        <strong>Result:</strong> Your monthly payment would be $1,520.06
+                        <strong>{t.aiIntegration.exampleResult}</strong> {t.aiIntegration.exampleResultText}
                       </div>
                     </div>
                   </div>
@@ -604,7 +598,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="practices-content-wrapper">
                       <div className="margin-bottom margin-small">
                         <h2>
-                          <span className="text-color-primary">Best Practices</span> for Success
+                          <span className="text-color-primary">{t.bestPractices.title1}</span> {t.bestPractices.title2}
                         </h2>
                       </div>
                       <div className="practices-list">
@@ -615,7 +609,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>Clear Naming:</strong> Use descriptive names like "interest_rate" not "input1"
+                            <strong>{t.bestPractices.practice1.label}</strong> {t.bestPractices.practice1.text}
                           </div>
                         </div>
                         <div className="practice-item">
@@ -625,7 +619,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>Validation:</strong> Set min/max values to prevent calculation errors
+                            <strong>{t.bestPractices.practice2.label}</strong> {t.bestPractices.practice2.text}
                           </div>
                         </div>
                         <div className="practice-item">
@@ -635,7 +629,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>Documentation:</strong> Add descriptions to help users understand parameters
+                            <strong>{t.bestPractices.practice3.label}</strong> {t.bestPractices.practice3.text}
                           </div>
                         </div>
                         <div className="practice-item">
@@ -645,7 +639,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>Error Handling:</strong> Use IFERROR() in formulas for robustness
+                            <strong>{t.bestPractices.practice4.label}</strong> {t.bestPractices.practice4.text}
                           </div>
                         </div>
                         <div className="practice-item">
@@ -655,7 +649,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>Test First:</strong> Always test your API before publishing
+                            <strong>{t.bestPractices.practice5.label}</strong> {t.bestPractices.practice5.text}
                           </div>
                         </div>
                         <div className="practice-item">
@@ -665,7 +659,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                             </svg>
                           </div>
                           <div>
-                            <strong>AI Context:</strong> Provide clear descriptions for AI understanding
+                            <strong>{t.bestPractices.practice6.label}</strong> {t.bestPractices.practice6.text}
                           </div>
                         </div>
                       </div>
@@ -675,41 +669,8 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
               </div>
             </div>
           </section>
-
-          {/* CTA Section */}
-          {/* <section className="section-home-cta">
-            <div className="padding-global">
-              <div className="container-large">
-                <div className="padding-section-large">
-                  <div className="home-cta-component">
-                    <div className="text-align-center">
-                      <div className="max-width-xlarge">
-                        <div className="margin-bottom margin-small">
-                          <h2 className="text-color-white">Ready to Transform Your Spreadsheets?</h2>
-                        </div>
-                        <p className="text-size-medium text-color-white">
-                          Start creating powerful APIs from your Excel files today. No coding required.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="margin-top margin-medium text-align-center">
-                      <a href="/login" className="button button-white">Get Started Free</a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section> */}
         </main>
 
-        {/* Footer */}
-        {/* <footer className="footer">
-          <div className="padding-global">
-            <div className="container-large">
-            </div>
-          </div>
-        </footer> */}
-        
         {/* Footer */}
         <Footer locale={locale} currentPath="/how-excel-api-works" />
       </div>
@@ -721,4 +682,3 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
 export default function HowItWorksPage() {
   return <HowItWorksContent />;
 }
-

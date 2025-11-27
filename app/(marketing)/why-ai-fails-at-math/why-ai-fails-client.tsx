@@ -6,12 +6,15 @@ import Footer from '@/components/product/Footer';
 import ProductHeader from '@/components/product/ProductHeader';
 import '../product.css';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getWhyAIFailsTranslations } from '@/lib/translations/marketing';
 
 interface WhyAIFailsClientProps {
   locale?: SupportedLocale;
 }
 
 export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProps) {
+  const t = getWhyAIFailsTranslations(locale);
+
   return (
     <>
       <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
@@ -35,12 +38,12 @@ export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProp
           <main className="main-wrapper">
             {/* Hero Section */}
             <ProductHeader
-              subheading="AI Confessions"
-              title={<>🤖 "Why We Can't Do <span className="text-color-primary">Excel"</span></>}
-              description="An Honest Conversation with AI About Spreadsheets"
-              primaryButtonText="Try SpreadAPI Instead"
+              subheading={t.hero.subheading}
+              title={<>{t.hero.title}</>}
+              description={t.hero.description}
+              primaryButtonText={t.hero.cta}
               primaryButtonHref="/"
-              secondaryButtonText="← Back to Product"
+              secondaryButtonText={t.hero.ctaSecondary}
               secondaryButtonHref="/product"
             />
 
