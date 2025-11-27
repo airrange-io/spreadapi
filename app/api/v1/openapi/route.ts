@@ -13,8 +13,8 @@ export async function GET() {
       description: 'Convert spreadsheets into powerful APIs. Execute complex calculations, validations, and business logic through RESTful endpoints.',
       contact: {
         name: 'SpreadAPI Support',
-        email: 'support@spreadapi.io',
-        url: 'https://spreadapi.io/support'
+        email: 'info@airrange.io',
+        url: 'https://spreadapi.com/docs'
       },
       license: {
         name: 'Proprietary',

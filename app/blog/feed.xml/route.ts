@@ -26,7 +26,7 @@ export async function GET() {
       <link>${siteUrl}/blog/${post.slug}</link>
       <guid isPermaLink="true">${siteUrl}/blog/${post.slug}</guid>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <author>contact@spreadapi.io (${post.author})</author>
+      <author>info@airrange.io (${post.author})</author>
       ${post.tags.map(tag => `<category>${tag}</category>`).join('\n      ')}
       <content:encoded><![CDATA[${post.excerpt}]]></content:encoded>
     </item>`).join('')}

@@ -855,7 +855,7 @@ Claude: "Based on your Excel calculations:
                         </div>
 
                         <p style={{ fontSize: '16px', color: '#666', textAlign: 'center' }}>
-                          Need more? <a href="mailto:sales@spreadapi.com" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
+                          Need more? <a href="mailto:info@airrange.io" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
                         </p>
                       </section>
 
