@@ -6,27 +6,36 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+// Only German is actively translated for now
 export async function generateStaticParams() {
   return [
     { locale: 'de' },
-    { locale: 'fr' },
-    { locale: 'es' },
   ];
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale } = await params;
-
-  return {
+const localeMetadata = {
+  de: {
+    title: 'Wenn Ihre Automatisierung rechnen muss | SpreadAPI',
+    description: 'Zapier bewegt Daten. Make löst Aktionen aus. Aber wer rechnet? Fügen Sie Excel-Berechnungen zu Ihren Automatisierungen hinzu – ohne Code.',
+  },
+  en: {
     title: 'When Your Automation Needs to Think | SpreadAPI',
     description: 'Zapier moves data. Make triggers actions. But who does the math? Add Excel-powered calculations to your automations without code.',
+  },
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const meta = localeMetadata[locale as keyof typeof localeMetadata] || localeMetadata.en;
+
+  return {
+    title: meta.title,
+    description: meta.description,
     alternates: {
       canonical: `https://spreadapi.com/${locale}/automation-calculations`,
       languages: {
         'en': 'https://spreadapi.com/automation-calculations',
         'de': 'https://spreadapi.com/de/automation-calculations',
-        'fr': 'https://spreadapi.com/fr/automation-calculations',
-        'es': 'https://spreadapi.com/es/automation-calculations',
       },
     },
   };

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 interface LocaleLayoutProps {
@@ -6,11 +7,12 @@ interface LocaleLayoutProps {
 }
 
 // Generate static params for supported locales (excluding 'en' which is at root)
+// Only German is actively translated for now
 export function generateStaticParams() {
   return [
     { locale: 'de' },
-    { locale: 'fr' },
-    { locale: 'es' },
+    // { locale: 'fr' },  // Coming soon
+    // { locale: 'es' },  // Coming soon
   ];
 }
 
@@ -20,10 +22,14 @@ export default async function LocaleMarketingLayout({
 }: LocaleLayoutProps) {
   const { locale } = await params;
 
-  // Validate locale
-  const validLocales: SupportedLocale[] = ['de', 'fr', 'es'];
-  if (!validLocales.includes(locale as SupportedLocale)) {
-    // This shouldn't happen due to generateStaticParams, but just in case
+  // Redirect French and Spanish to English (root) - translations coming soon
+  if (locale === 'fr' || locale === 'es') {
+    redirect('/');
+  }
+
+  // Validate locale - only German is active
+  const activeLocales: SupportedLocale[] = ['de'];
+  if (!activeLocales.includes(locale as SupportedLocale)) {
     return null;
   }
 

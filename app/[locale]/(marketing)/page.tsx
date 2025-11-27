@@ -8,38 +8,61 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+// Only German is actively translated for now
 export async function generateStaticParams() {
   return [
     { locale: 'de' },
-    { locale: 'fr' },
-    { locale: 'es' },
+    // { locale: 'fr' },  // Coming soon
+    // { locale: 'es' },  // Coming soon
   ];
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale } = await params;
-
-  return {
+// Localized metadata for each language
+const localeMetadata = {
+  de: {
+    title: 'SpreadAPI - Excel-Tabellen in leistungsstarke APIs verwandeln',
+    description: 'Verwandeln Sie Excel-Dateien sofort in REST-APIs. Keine Programmierung nötig. Perfekt für KI-Integration mit ChatGPT, Claude und mehr.',
+    keywords: 'excel api, tabellenkalkulation api, excel zu api, excel webservice, excel rest api, excel berechnung api, mcp excel, ki excel integration',
+    ogTitle: 'SpreadAPI - Excel zur API in Sekunden',
+    ogDescription: 'Verwandeln Sie Ihre Excel-Tabellen in leistungsstarke REST-APIs. KI-bereit mit MCP-Unterstützung.',
+    ogAlt: 'SpreadAPI - Excel zu API Plattform',
+  },
+  en: {
     title: 'SpreadAPI - Transform Excel Spreadsheets into Powerful APIs',
     description: 'Turn your Excel files into REST APIs instantly. No coding required. Perfect for AI integration with ChatGPT, Claude, and more.',
     keywords: 'excel api, spreadsheet api, excel to api, spreadsheet web service, excel rest api, excel calculation api, mcp excel, ai excel integration',
+    ogTitle: 'SpreadAPI - Excel to API in Seconds',
+    ogDescription: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
+    ogAlt: 'SpreadAPI - Excel to API Platform',
+  },
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const meta = localeMetadata[locale as keyof typeof localeMetadata] || localeMetadata.en;
+
+  return {
+    title: meta.title,
+    description: meta.description,
+    keywords: meta.keywords,
     openGraph: {
-      title: 'SpreadAPI - Excel to API in Seconds',
-      description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
+      title: meta.ogTitle,
+      description: meta.ogDescription,
       type: 'website',
       url: `https://spreadapi.com/${locale}`,
       siteName: 'SpreadAPI',
+      locale: locale === 'de' ? 'de_DE' : 'en_US',
       images: [{
         url: 'https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
         width: 1200,
         height: 630,
-        alt: 'SpreadAPI - Excel to API Platform',
+        alt: meta.ogAlt,
       }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'SpreadAPI - Excel to API in Seconds',
-      description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
+      title: meta.ogTitle,
+      description: meta.ogDescription,
       site: '@spreadapi',
       images: ['https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
     },
@@ -48,8 +71,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       languages: {
         'en': 'https://spreadapi.com/',
         'de': 'https://spreadapi.com/de',
-        'fr': 'https://spreadapi.com/fr',
-        'es': 'https://spreadapi.com/es',
+        // fr and es removed until translations are ready
       },
     },
     robots: {
@@ -85,7 +107,7 @@ export default async function LocaleProductPage({ params }: PageProps) {
       "@type": "ContactPoint",
       "email": "team@airrange.io",
       "contactType": "customer support",
-      "availableLanguage": ["en", "de", "fr", "es"]
+      "availableLanguage": ["en", "de"]
     }
   };
 

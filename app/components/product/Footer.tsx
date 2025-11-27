@@ -7,11 +7,13 @@ interface FooterProps {
   currentPath?: string; // The current page path without locale prefix (e.g., '/how-excel-api-works')
 }
 
+// Currently only English and German are available for marketing pages
+// French and Spanish translations coming soon
 const languageOptions: { code: SupportedLocale; flag: string; label: string }[] = [
   { code: 'en', flag: '🇺🇸', label: 'EN' },
   { code: 'de', flag: '🇩🇪', label: 'DE' },
-  { code: 'fr', flag: '🇫🇷', label: 'FR' },
-  { code: 'es', flag: '🇪🇸', label: 'ES' },
+  // { code: 'fr', flag: '🇫🇷', label: 'FR' },
+  // { code: 'es', flag: '🇪🇸', label: 'ES' },
 ];
 
 const Footer: React.FC<FooterProps> = ({ locale = 'en', currentPath = '' }) => {
