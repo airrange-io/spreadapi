@@ -1,7 +1,15 @@
 // Client-safe publish service utilities
 // NOTE: This file must not import any server-side modules like Redis
 
+import { upload } from '@vercel/blob/client';
 import { extractRangeValues } from '@/lib/rangeValidation';
+
+// Payload size limits for publish operations
+// Vercel serverless functions have a 4.5MB request body limit
+// We use 3.5MB as threshold to have safety margin
+export const PAYLOAD_LIMITS = {
+  LARGE_FILE_THRESHOLD: 3.5 * 1024 * 1024,  // 3.5MB - use blob upload above this
+};
 
 // Helper function to get object size in bytes
 function getObjectSize(obj) {
@@ -84,6 +92,46 @@ function optimizeForService(fileData) {
     // Error optimizing for service
     return { data: fileData, dataSize: getObjectSize(fileData) };
   }
+}
+
+/**
+ * Estimate the payload size in bytes for publish data
+ * Returns both the size and the JSON string to avoid double serialization
+ * @returns {{ size: number, jsonString: string }}
+ */
+export function estimatePayloadSize(publishData) {
+  const jsonString = JSON.stringify(publishData);
+  return {
+    size: new Blob([jsonString]).size,
+    jsonString // Cache the string to reuse in uploadLargePublishData
+  };
+}
+
+/**
+ * Upload large publish data to Vercel Blob storage
+ * Returns the blob URL for the server to fetch
+ * @param {string} serviceId - The service ID
+ * @param {string} jsonString - Pre-serialized JSON string (to avoid double stringify)
+ * @param {function} onProgress - Progress callback (percent: number) => void
+ * @returns {Promise<string>} The blob URL
+ */
+async function uploadLargePublishData(serviceId, jsonString, onProgress) {
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const file = new File([blob], `${serviceId}-publish-data.json`, { type: 'application/json' });
+
+  const result = await upload(file.name, file, {
+    access: 'public',
+    handleUploadUrl: '/api/blob/publish-upload',
+    onUploadProgress: ({ loaded, total }) => {
+      if (onProgress && total > 0) {
+        const percent = Math.round((loaded / total) * 100);
+        // Scale to 0-80% (leave 20% for server processing)
+        onProgress(Math.round(percent * 0.8));
+      }
+    },
+  });
+
+  return result.url;
 }
 
 // Transform UI service data to manageapi format
@@ -250,20 +298,55 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
   return publishData;
 }
 
-// Call service management via API route (client-safe)
-export async function publishService(serviceId, publishData, tenant = null) {
+/**
+ * Publish a service via API route (client-safe)
+ * Automatically handles large payloads by uploading to blob storage first
+ * @param {string} serviceId - The service ID
+ * @param {object} publishData - The publish data { apiJson, fileJson }
+ * @param {string|null} tenant - Optional tenant ID
+ * @param {function|null} onProgress - Optional progress callback (percent: number) => void
+ * @returns {Promise<object>} The publish result
+ */
+export async function publishService(serviceId, publishData, tenant = null, onProgress = null) {
   try {
-    // Use API route instead of direct function call
+    // Estimate size and get cached JSON string (avoids double serialization)
+    const { size: payloadSize, jsonString } = estimatePayloadSize(publishData);
+    const isLargePayload = payloadSize >= PAYLOAD_LIMITS.LARGE_FILE_THRESHOLD;
+
+    let requestBody;
+
+    if (isLargePayload) {
+      // Large payload: upload to blob first, send URL to API
+      console.log(`[Publish] Large payload detected (${(payloadSize / 1024 / 1024).toFixed(2)}MB), using blob upload`);
+
+      onProgress?.(0);
+
+      // Use cached jsonString to avoid re-serializing
+      const blobUrl = await uploadLargePublishData(serviceId, jsonString, onProgress);
+
+      requestBody = {
+        serviceId,
+        publishDataUrl: blobUrl,  // URL instead of inline data
+        tenant
+      };
+    } else {
+      // Small payload: send inline (existing behavior)
+      requestBody = {
+        serviceId,
+        publishData,
+        tenant
+      };
+    }
+
+    onProgress?.(85);  // Processing on server
+
+    // Use API route to complete publish
     const response = await fetch('/api/services/publish', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        serviceId,
-        publishData,
-        tenant
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -272,6 +355,8 @@ export async function publishService(serviceId, publishData, tenant = null) {
     }
 
     const result = await response.json();
+
+    onProgress?.(100);
 
     return result;
   } catch (error) {

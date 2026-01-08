@@ -59,7 +59,7 @@ const TestPanel = dynamic(() => import('./components/TestPanel'), {
   ssr: false
 });
 
-import { prepareServiceForPublish, publishService } from '@/utils/publishService';
+import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_LIMITS } from '@/utils/publishService';
 import { appStore } from '../../../stores/AppStore';
 import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
@@ -163,6 +163,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     percent: 0,
     status: ''
   }); // Save progress for large files
+  const [publishProgress, setPublishProgress] = useState<{ visible: boolean; percent: number; status: string }>({
+    visible: false,
+    percent: 0,
+    status: ''
+  }); // Publish progress for large files
 
   // Tour refs
   const parametersPanelRef = useRef<HTMLDivElement>(null);
@@ -806,8 +811,29 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
       );
 
+      // Check if large payload - show progress modal
+      const { size: payloadSize } = estimatePayloadSize(publishData);
+      const isLargePayload = payloadSize >= PAYLOAD_LIMITS.LARGE_FILE_THRESHOLD;
+
+      // Progress callback for large payloads
+      const onProgress = isLargePayload ? (percent: number) => {
+        let status = 'Preparing upload...';
+        if (percent > 0 && percent < 80) status = 'Uploading workbook data...';
+        if (percent >= 80 && percent < 95) status = 'Processing on server...';
+        if (percent >= 95) status = 'Finalizing...';
+        setPublishProgress({ visible: true, percent, status });
+      } : null;
+
+      if (isLargePayload) {
+        message.destroy(); // Clear the "Preparing..." message
+        setPublishProgress({ visible: true, percent: 0, status: 'Preparing upload...' });
+      }
+
       // Publish the service
-      const result = await publishService(serviceId, publishData);
+      const result = await publishService(serviceId, publishData, null, onProgress);
+
+      // Hide progress modal
+      setPublishProgress({ visible: false, percent: 0, status: '' });
 
       if (result.error) {
         throw new Error(result.error);
@@ -835,6 +861,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } catch (error) {
       console.error('Failed to publish service:', error);
       message.error('Failed to publish service: ' + (error.message || 'Unknown error'));
+      setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
   };
@@ -893,8 +920,29 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }
       );
 
+      // Check if large payload - show progress modal
+      const { size: payloadSize } = estimatePayloadSize(publishData);
+      const isLargePayload = payloadSize >= PAYLOAD_LIMITS.LARGE_FILE_THRESHOLD;
+
+      // Progress callback for large payloads
+      const onProgress = isLargePayload ? (percent: number) => {
+        let status = 'Preparing upload...';
+        if (percent > 0 && percent < 80) status = 'Uploading workbook data...';
+        if (percent >= 80 && percent < 95) status = 'Processing on server...';
+        if (percent >= 95) status = 'Finalizing...';
+        setPublishProgress({ visible: true, percent, status });
+      } : null;
+
+      if (isLargePayload) {
+        message.destroy(); // Clear the "Republishing..." message
+        setPublishProgress({ visible: true, percent: 0, status: 'Preparing upload...' });
+      }
+
       // Publish the service (backend handles update)
-      const result = await publishService(serviceId, publishData);
+      const result = await publishService(serviceId, publishData, null, onProgress);
+
+      // Hide progress modal
+      setPublishProgress({ visible: false, percent: 0, status: '' });
 
       if (result.error) {
         throw new Error(result.error);
@@ -922,6 +970,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } catch (error) {
       console.error('Failed to republish service:', error);
       message.error('Failed to republish service: ' + (error.message || 'Unknown error'));
+      setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
   };
@@ -2515,6 +2564,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         visible={saveProgress.visible}
         percent={saveProgress.percent}
         status={saveProgress.status}
+      />
+
+      {/* Publish Progress Modal */}
+      <SaveProgressModal
+        visible={publishProgress.visible}
+        percent={publishProgress.percent}
+        status={publishProgress.status}
+        title="Publishing Service"
+        subtitle="Large workbooks may take a moment to upload..."
       />
 
       {/* API Definition Modal */}

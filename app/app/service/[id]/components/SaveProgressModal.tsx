@@ -5,12 +5,20 @@ interface SaveProgressModalProps {
   visible: boolean;
   percent: number;
   status: string;
+  title?: string;
+  subtitle?: string;
 }
 
-export default function SaveProgressModal({ visible, percent, status }: SaveProgressModalProps) {
+export default function SaveProgressModal({
+  visible,
+  percent,
+  status,
+  title = "Saving Large File",
+  subtitle = "Large files may take a moment to save..."
+}: SaveProgressModalProps) {
   return (
     <Modal
-      title="Saving Large File"
+      title={title}
       open={visible}
       footer={null}
       closable={false}
@@ -28,7 +36,7 @@ export default function SaveProgressModal({ visible, percent, status }: SaveProg
         />
         <p style={{ marginTop: 16, color: '#666' }}>{status}</p>
         <p style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-          Large files may take a moment to save...
+          {subtitle}
         </p>
       </div>
     </Modal>
