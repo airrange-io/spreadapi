@@ -67,7 +67,8 @@
       "Bash(for file in /Users/stephanmethner/AR/repos/spreadapi/app/app/service/[id]/AreaModal.tsx /Users/stephanmethner/AR/repos/spreadapi/app/app/service/[id]/HowItWorksModal.tsx /Users/stephanmethner/AR/repos/spreadapi/app/app/service/[id]/components/ParametersPanel.tsx)",
       "Bash(do echo \"=== FILE: $file ===\" head -30 \"$file\")",
       "Bash(npm view:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(npm outdated:*)"
     ],
     "deny": []
   }
