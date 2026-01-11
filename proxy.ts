@@ -59,6 +59,7 @@ export async function proxy(req: NextRequest) {
     '/analytics/',
     '/api/services',
     '/api/workbook',
+    '/api/blob',
     '/api/manageapi',
     '/api/cache-stats',
     '/api/cache/blob',
@@ -219,6 +220,7 @@ export const config = {
     // Protected API routes
     '/api/services/:path*',
     '/api/workbook/:path*',
+    '/api/blob/:path*',
     '/api/manageapi/:path*',
     '/api/cache-stats',
     '/api/cache/:path*',

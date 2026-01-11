@@ -185,6 +185,15 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     const fileJson = apiDefinition?.fileJson ?? {};
     if (!fileJson) return { error: "no service data" };
 
+    // Estimate fileJson size for cache size filtering (lazy - only stringified if needed later)
+    let fileJsonSizeBytes = 0;
+    try {
+      fileJsonSizeBytes = JSON.stringify(fileJson).length;
+    } catch (e) {
+      // If we can't stringify, assume it's large
+      fileJsonSizeBytes = 10 * 1024 * 1024; // 10MB default
+    }
+
     const apiJson = apiDefinition?.apiJson ?? {};
     const apiInputs = apiJson?.inputs || apiJson?.input || [];
     const apiOutputs = apiJson?.outputs || apiJson?.output || [];
@@ -352,7 +361,9 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
               });
             }
           }
-        }
+        },
+        false, // checkOnly
+        fileJsonSizeBytes // dataSizeBytes for cache size filtering
       );
       spread = cacheResult.workbook;
       fromProcessCache = cacheResult.fromCache;
