@@ -21,6 +21,8 @@ interface StatusBarProps {
   onTagRemove?: (tag: string) => void;
   changeCount?: number;
   onChangesClick?: () => void;
+  publishedSize?: number | null;  // Published service size in bytes
+  workbookSize?: number | null;   // Current workbook size in bytes
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -35,6 +37,8 @@ const StatusBar: React.FC<StatusBarProps> = ({
   onTagRemove,
   changeCount = 0,
   onChangesClick,
+  publishedSize,
+  workbookSize,
 }) => {
   // Create a lighter version of the primary color
   const lighterPrimary = '#6B4A99'; // Lighter shade of #4F2D7F
@@ -69,20 +73,27 @@ const StatusBar: React.FC<StatusBarProps> = ({
       }}
     >
       <Space size="middle" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-        {/* Record Count */}
+        {/* Grid Icon and Size Info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <TableOutlined style={{ fontSize: '14px', opacity: 0.9 }} />
-          {/* <span>
-            {filteredCount !== undefined && filteredCount !== recordCount ? (
-              <>
-                {filteredCount.toLocaleString()} of {recordCount.toLocaleString()} records
-              </>
-            ) : (
-              <>
-                {recordCount.toLocaleString()} record{recordCount !== 1 ? 's' : ''}
-              </>
-            )}
-          </span> */}
+          {workbookSize && (
+            <Tooltip title="Workbook file size">
+              <span style={{ opacity: 0.9, marginLeft: '8px' }}>
+                File: {workbookSize >= 1024 * 1024
+                  ? `${(workbookSize / 1024 / 1024).toFixed(1)} MB`
+                  : `${Math.round(workbookSize / 1024)} KB`}
+              </span>
+            </Tooltip>
+          )}
+          {publishedSize && (
+            <Tooltip title="Published service size (optimized)">
+              <span style={{ opacity: 0.9, marginLeft: '8px' }}>
+                Published: {publishedSize >= 1024 * 1024
+                  ? `${(publishedSize / 1024 / 1024).toFixed(1)} MB`
+                  : `${Math.round(publishedSize / 1024)} KB`}
+              </span>
+            </Tooltip>
+          )}
         </div>
         
         {/* Selected Count - Clickable with menu */}

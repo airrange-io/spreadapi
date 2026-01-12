@@ -97,6 +97,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
   const [loadingMessage, setLoadingMessage] = useState('Loading service...');
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
+  const [workbookSize, setWorkbookSize] = useState<number | null>(null);
   const [apiConfig, setApiConfig] = useState({
     name: '',
     description: '',
@@ -463,6 +464,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       loadWorkbookOnDemand();
     }
   }, [activeView, workbookLoaded, workbookLoading, configLoaded, importFileForEmptyState, loadWorkbookOnDemand]);
+
+  // Calculate workbook size once when workbook is first loaded
+  // This is intentionally not re-calculated on every change to avoid performance impact
+  const workbookSizeCalculated = useRef(false);
+  useEffect(() => {
+    if (spreadInstance && typeof spreadInstance.toJSON === 'function' && !workbookSizeCalculated.current) {
+      workbookSizeCalculated.current = true;
+      try {
+        const json = spreadInstance.toJSON();
+        const size = new Blob([JSON.stringify(json)]).size;
+        setWorkbookSize(size);
+      } catch (e) {
+        console.warn('Could not calculate workbook size:', e);
+      }
+    }
+  }, [spreadInstance]);
 
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
@@ -853,7 +870,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         status: 'published',
         publishedAt: new Date().toISOString(),
         useCaching: apiConfig.enableCaching,
-        needsToken: apiConfig.requireToken
+        needsToken: apiConfig.requireToken,
+        fileSize: result.fileSize
       }));
 
       setLoading(false);
@@ -962,7 +980,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         status: 'published',
         publishedAt: new Date().toISOString(),
         useCaching: apiConfig.enableCaching,
-        needsToken: apiConfig.requireToken
+        needsToken: apiConfig.requireToken,
+        fileSize: result.fileSize
       }));
 
       setLoading(false);
@@ -2543,6 +2562,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           selectedCount={0}
           zoomLevel={zoomLevel}
           onZoomChange={handleZoomChange}
+          workbookSize={workbookSize}
+          publishedSize={serviceStatus?.fileSize}
         />
       </div>
 
