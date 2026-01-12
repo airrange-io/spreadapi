@@ -42,6 +42,7 @@ interface WorkbookViewProps {
   onImportExcel?: (file: File) => void;
   onWorkbookChange?: () => void;
   onImportServicePackage?: (file: File) => void;
+  onWorkbookDataLoaded?: (spreadInstance: any) => void;
 }
 
 const WorkbookView = forwardRef<any, WorkbookViewProps>(({
@@ -57,7 +58,8 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   onEditableAreaRemove,
   onImportExcel,
   onWorkbookChange,
-  onImportServicePackage
+  onImportServicePackage,
+  onWorkbookDataLoaded
 }, ref) => {
   const [mounted, setMounted] = React.useState(false);
 
@@ -112,6 +114,8 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
           onWorkbookInit(data);
         } else if (action === 'designer-initialized' && data && typeof data.getWorkbook === 'function') {
           onWorkbookInit(data.getWorkbook());
+        } else if (action === 'workbook-loaded' || action === 'file-loaded') {
+          onWorkbookDataLoaded?.(data);
         } else if (action === 'zoom-handler') {
           onZoomHandlerReady?.(data);
         } else if (action === 'edit-ended' || action === 'cell-changed' || action === 'range-cleared') {

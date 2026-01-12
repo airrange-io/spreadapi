@@ -592,55 +592,106 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         }
       }
       
-      // Try to find a title from neighboring cells
+      // Try to find a title/label from neighboring cells
+      // Improved detection: skip empty cells, prioritize text labels over numbers
       const isSingleCell = currentSelection.rowCount === 1 && currentSelection.colCount === 1;
-      
-      if (isSingleCell) {
-        // Check cell to the left (same row, col-1)
-        if (currentSelection.col > 0) {
+      const MAX_CELLS_TO_CHECK = 4; // Look up to 4 cells away
+
+      // Helper function to check if a value is a usable text label (not a number)
+      const isTextLabel = (val: any): boolean => {
+        if (val === null || val === undefined) return false;
+        if (typeof val === 'number') return false;
+        if (typeof val === 'boolean') return false;
+        if (typeof val === 'string') {
+          const trimmed = val.trim();
+          if (!trimmed) return false;
+          // Check if it's a number-like string
+          const numVal = parseFloat(trimmed);
+          if (!isNaN(numVal) && trimmed === numVal.toString()) return false;
+          // Check if it looks like a formula result (just a number with formatting)
+          if (/^[\d.,\-+$€£¥%()]+$/.test(trimmed)) return false;
+          return true;
+        }
+        return false;
+      };
+
+      // Helper function to find text label in a direction
+      const findLabelInDirection = (
+        startRow: number,
+        startCol: number,
+        rowDelta: number,
+        colDelta: number,
+        maxSteps: number
+      ): string | null => {
+        for (let step = 1; step <= maxSteps; step++) {
+          const checkRow = startRow + (rowDelta * step);
+          const checkCol = startCol + (colDelta * step);
+
+          // Boundary check
+          if (checkRow < 0 || checkCol < 0) break;
+
           try {
-            const leftValue = sheet.getValue(currentSelection.row, currentSelection.col - 1);
-            if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
-              titleText = leftValue.trim();
+            const cellValue = sheet.getValue(checkRow, checkCol);
+
+            // Skip empty/null cells
+            if (cellValue === null || cellValue === undefined ||
+                (typeof cellValue === 'string' && !cellValue.trim())) {
+              continue;
+            }
+
+            // Found a non-empty cell
+            if (isTextLabel(cellValue)) {
+              return String(cellValue).trim();
+            } else {
+              // Found a number - stop looking in this direction
+              break;
             }
           } catch (e) {
-            console.log('Could not get left cell value');
+            break;
           }
         }
-        
-        // If no title found on left, check cell above (row-1, same col)
-        if (!titleText && currentSelection.row > 0) {
-          try {
-            const aboveValue = sheet.getValue(currentSelection.row - 1, currentSelection.col);
-            if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
-              titleText = aboveValue.trim();
-            }
-          } catch (e) {
-            console.log('Could not get above cell value');
+        return null;
+      };
+
+      if (isSingleCell) {
+        // Step 1: Look to the left, skipping empty cells
+        titleText = findLabelInDirection(
+          currentSelection.row,
+          currentSelection.col,
+          0, -1, // Move left
+          MAX_CELLS_TO_CHECK
+        ) || '';
+
+        // Step 2: If no text label found to the left, check above
+        if (!titleText) {
+          const aboveValue = findLabelInDirection(
+            currentSelection.row,
+            currentSelection.col,
+            -1, 0, // Move up
+            MAX_CELLS_TO_CHECK
+          );
+          if (aboveValue) {
+            titleText = aboveValue;
           }
         }
       } else {
-        // For ranges, check the cell to the left of the first cell in the range
-        if (currentSelection.col > 0) {
-          try {
-            const leftValue = sheet.getValue(currentSelection.row, currentSelection.col - 1);
-            if (leftValue && typeof leftValue === 'string' && leftValue.trim()) {
-              titleText = leftValue.trim();
-            }
-          } catch (e) {
-            console.log('Could not get left cell value');
-          }
-        }
-        
-        // If no title found, check above the first cell
-        if (!titleText && currentSelection.row > 0) {
-          try {
-            const aboveValue = sheet.getValue(currentSelection.row - 1, currentSelection.col);
-            if (aboveValue && typeof aboveValue === 'string' && aboveValue.trim()) {
-              titleText = aboveValue.trim();
-            }
-          } catch (e) {
-            console.log('Could not get above cell value');
+        // For ranges, use the same improved logic starting from first cell
+        titleText = findLabelInDirection(
+          currentSelection.row,
+          currentSelection.col,
+          0, -1, // Move left
+          MAX_CELLS_TO_CHECK
+        ) || '';
+
+        if (!titleText) {
+          const aboveValue = findLabelInDirection(
+            currentSelection.row,
+            currentSelection.col,
+            -1, 0, // Move up
+            MAX_CELLS_TO_CHECK
+          );
+          if (aboveValue) {
+            titleText = aboveValue;
           }
         }
       }
@@ -674,7 +725,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
     let suggestedName = '';
     if (titleText) {
       // Clean the title to create a URL parameter safe name
+      // First, replace German umlauts and special characters with ASCII equivalents
       suggestedName = titleText.toLowerCase()
+        .replace(/ä/g, 'ae')
+        .replace(/ö/g, 'oe')
+        .replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
         .replace(/[\s-]+/g, '_')
         .replace(/[^a-z0-9_]/g, '')
         .replace(/^_+|_+$/g, '')

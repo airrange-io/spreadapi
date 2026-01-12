@@ -1,6 +1,44 @@
 import { NextResponse } from 'next/server';
 import { del } from '@vercel/blob';
+import { gunzip } from 'zlib';
+import { promisify } from 'util';
 import { createOrUpdateService } from '@/lib/publishService';
+
+const gunzipAsync = promisify(gunzip);
+
+// Maximum decompressed size to prevent decompression bombs (500MB)
+const MAX_DECOMPRESSED_SIZE = 500 * 1024 * 1024;
+
+/**
+ * Decompress gzip data from base64 string (async to avoid blocking event loop)
+ * @param {string} base64Data - Base64 encoded gzip data
+ * @returns {Promise<object>} Parsed JSON object
+ */
+async function decompressBase64(base64Data) {
+  const compressed = Buffer.from(base64Data, 'base64');
+  const decompressed = await gunzipAsync(compressed);
+
+  if (decompressed.length > MAX_DECOMPRESSED_SIZE) {
+    throw new Error(`Decompressed data exceeds maximum size (${MAX_DECOMPRESSED_SIZE} bytes)`);
+  }
+
+  return JSON.parse(decompressed.toString('utf-8'));
+}
+
+/**
+ * Decompress gzip data from binary buffer (async to avoid blocking event loop)
+ * @param {Buffer} compressedBuffer - Gzip compressed data
+ * @returns {Promise<object>} Parsed JSON object
+ */
+async function decompressBuffer(compressedBuffer) {
+  const decompressed = await gunzipAsync(compressedBuffer);
+
+  if (decompressed.length > MAX_DECOMPRESSED_SIZE) {
+    throw new Error(`Decompressed data exceeds maximum size (${MAX_DECOMPRESSED_SIZE} bytes)`);
+  }
+
+  return JSON.parse(decompressed.toString('utf-8'));
+}
 
 /**
  * Validate that a URL is a legitimate Vercel Blob URL
@@ -61,7 +99,7 @@ export async function POST(request) {
 
     const body = await request.json();
     serviceId = body.serviceId;
-    const { publishData, publishDataUrl, tenant = userId } = body;
+    const { compressedData, publishData, publishDataUrl, isCompressed, tenant = userId } = body;
 
     console.log(`[Publish API] ${requestId} - Publishing service ${serviceId} for user ${userId.substring(0, 8)}...`);
 
@@ -73,18 +111,32 @@ export async function POST(request) {
       );
     }
 
-    if (!publishData && !publishDataUrl) {
+    if (!compressedData && !publishData && !publishDataUrl) {
       console.warn(`[Publish API] ${requestId} - Missing publishData`);
       return NextResponse.json(
-        { error: 'publishData or publishDataUrl is required' },
+        { error: 'compressedData, publishData, or publishDataUrl is required' },
         { status: 400 }
       );
     }
 
     let resolvedPublishData;
 
-    if (publishDataUrl) {
-      // Validate the URL is a legitimate Vercel Blob URL (prevent SSRF)
+    if (compressedData) {
+      // Most common: compressed data sent inline as base64
+      console.log(`[Publish API] ${requestId} - Decompressing inline data`);
+      try {
+        const decompressStart = Date.now();
+        resolvedPublishData = await decompressBase64(compressedData);
+        console.warn(`[Publish API] ${requestId} - Decompressed in ${Date.now() - decompressStart}ms`);
+      } catch (decompressError) {
+        console.error(`[Publish API] ${requestId} - Decompression failed:`, decompressError.message);
+        return NextResponse.json(
+          { error: 'Failed to decompress publish data' },
+          { status: 400 }
+        );
+      }
+    } else if (publishDataUrl) {
+      // Large file flow: fetch data from blob URL
       if (!isValidBlobUrl(publishDataUrl)) {
         console.error(`[Publish API] ${requestId} - Invalid blob URL rejected`);
         return NextResponse.json(
@@ -93,7 +145,6 @@ export async function POST(request) {
         );
       }
 
-      // Large file flow: fetch data from blob URL
       console.log(`[Publish API] ${requestId} - Fetching large payload from blob`);
       tempBlobUrl = publishDataUrl;
 
@@ -103,12 +154,22 @@ export async function POST(request) {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        const blobText = await response.text();
-        const blobSizeKB = (blobText.length / 1024).toFixed(1);
-        resolvedPublishData = JSON.parse(blobText);
-        console.warn(`[Publish API] ${requestId} - Blob fetched: ${blobSizeKB}KB in ${Date.now() - fetchStart}ms`);
+
+        if (isCompressed) {
+          // Compressed blob: fetch as binary and decompress
+          const blobBuffer = Buffer.from(await response.arrayBuffer());
+          const blobSizeKB = (blobBuffer.length / 1024).toFixed(1);
+          resolvedPublishData = await decompressBuffer(blobBuffer);
+          console.warn(`[Publish API] ${requestId} - Blob fetched and decompressed: ${blobSizeKB}KB in ${Date.now() - fetchStart}ms`);
+        } else {
+          // Legacy uncompressed blob (backwards compat)
+          const blobText = await response.text();
+          const blobSizeKB = (blobText.length / 1024).toFixed(1);
+          resolvedPublishData = JSON.parse(blobText);
+          console.warn(`[Publish API] ${requestId} - Blob fetched: ${blobSizeKB}KB in ${Date.now() - fetchStart}ms`);
+        }
       } catch (fetchError) {
-        console.error(`[Publish API] ${requestId} - Failed to fetch blob:`, fetchError.message);
+        console.error(`[Publish API] ${requestId} - Failed to fetch/decompress blob:`, fetchError.message);
         await cleanupTempBlob();
         return NextResponse.json(
           { error: 'Failed to retrieve publish data from temporary storage' },
@@ -116,9 +177,9 @@ export async function POST(request) {
         );
       }
     } else {
-      // Small file flow: use inline data (existing behavior)
+      // Legacy: uncompressed inline data (backwards compat)
       const inlineSizeKB = (JSON.stringify(publishData).length / 1024).toFixed(1);
-      console.warn(`[Publish API] ${requestId} - Inline data: ${inlineSizeKB}KB`);
+      console.warn(`[Publish API] ${requestId} - Inline data (uncompressed): ${inlineSizeKB}KB`);
       resolvedPublishData = publishData;
     }
 

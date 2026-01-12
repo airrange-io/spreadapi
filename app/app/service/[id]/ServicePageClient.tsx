@@ -9,6 +9,7 @@ import { COLORS } from '@/constants/theme';
 import ParametersPanel from './components/ParametersPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
+import pako from 'pako';
 
 // Lazy load views that are not immediately visible
 const ApiView = dynamic(() => import('./views/ApiView'), {
@@ -465,21 +466,40 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, [activeView, workbookLoaded, workbookLoading, configLoaded, importFileForEmptyState, loadWorkbookOnDemand]);
 
-  // Calculate workbook size once when workbook is first loaded
-  // This is intentionally not re-calculated on every change to avoid performance impact
+  // Calculate workbook size when workbook data is fully loaded into SpreadJS
+  // This is called from the workbook-loaded event, which fires AFTER fromJSON completes
   const workbookSizeCalculated = useRef(false);
-  useEffect(() => {
-    if (spreadInstance && typeof spreadInstance.toJSON === 'function' && !workbookSizeCalculated.current) {
-      workbookSizeCalculated.current = true;
-      try {
+  const handleWorkbookDataLoaded = useCallback((spreadInstance: any) => {
+    if (!spreadInstance || workbookSizeCalculated.current) return;
+
+    workbookSizeCalculated.current = true;
+    try {
+      if (typeof spreadInstance.toJSON === 'function') {
         const json = spreadInstance.toJSON();
-        const size = new Blob([JSON.stringify(json)]).size;
+        const jsonString = JSON.stringify(json);
+        const size = new Blob([jsonString]).size;
         setWorkbookSize(size);
-      } catch (e) {
-        console.warn('Could not calculate workbook size:', e);
+
+        // Calculate compressed size to show upload estimate
+        const compressed = pako.gzip(jsonString);
+        const compressedSize = compressed.length;
+        const ratio = ((1 - compressedSize / size) * 100).toFixed(1);
+
+        // Count sheets for logging
+        const sheetCount = spreadInstance.getSheetCount?.() || Object.keys(json.sheets || {}).length;
+
+        // Determine upload method
+        const INLINE_THRESHOLD = 2.5 * 1024 * 1024; // 2.5MB
+        const uploadMethod = compressedSize < INLINE_THRESHOLD ? 'inline' : 'blob upload';
+
+        console.log(`[Workbook Size] Raw: ${(size / 1024).toFixed(1)} KB (${(size / 1024 / 1024).toFixed(2)} MB)`);
+        console.log(`[Workbook Size] Compressed: ${(compressedSize / 1024).toFixed(1)} KB (${(compressedSize / 1024 / 1024).toFixed(2)} MB) - ${ratio}% reduction`);
+        console.log(`[Workbook Size] Sheets: ${sheetCount}, Upload method: ${uploadMethod}`);
       }
+    } catch (e) {
+      console.warn('Could not calculate workbook size:', e);
     }
-  }, [spreadInstance]);
+  }, []);
 
   // Load existing workbook or check for pre-uploaded file
   useEffect(() => {
@@ -834,16 +854,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Progress callback for large payloads
       const onProgress = isLargePayload ? (percent: number) => {
-        let status = 'Preparing upload...';
-        if (percent > 0 && percent < 80) status = 'Uploading workbook data...';
-        if (percent >= 80 && percent < 95) status = 'Processing on server...';
-        if (percent >= 95) status = 'Finalizing...';
+        let status = 'Preparing...';
+        if (percent >= 0 && percent < 5) status = 'Preparing data...';
+        if (percent >= 5 && percent < 20) status = 'Compressing workbook...';
+        if (percent >= 20 && percent < 50) status = 'Encoding data...';
+        if (percent >= 50 && percent < 85) status = 'Uploading to server...';
+        if (percent >= 85 && percent < 100) status = 'Processing on server...';
+        if (percent >= 100) status = 'Finalizing...';
         setPublishProgress({ visible: true, percent, status });
       } : null;
 
       if (isLargePayload) {
         message.destroy(); // Clear the "Preparing..." message
-        setPublishProgress({ visible: true, percent: 0, status: 'Preparing upload...' });
+        setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
       }
 
       // Publish the service
@@ -858,8 +881,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       message.success('Service published successfully!');
 
-      // Set a flag to refresh the service list
+      // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(`workbook-etag-${serviceId}`);
+        window.localStorage.removeItem(`workbook-data-${serviceId}`);
+        // Set a flag to refresh the service list
         window.localStorage.setItem('refreshServiceList', Date.now().toString());
       }
 
@@ -944,16 +970,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Progress callback for large payloads
       const onProgress = isLargePayload ? (percent: number) => {
-        let status = 'Preparing upload...';
-        if (percent > 0 && percent < 80) status = 'Uploading workbook data...';
-        if (percent >= 80 && percent < 95) status = 'Processing on server...';
-        if (percent >= 95) status = 'Finalizing...';
+        let status = 'Preparing...';
+        if (percent >= 0 && percent < 5) status = 'Preparing data...';
+        if (percent >= 5 && percent < 20) status = 'Compressing workbook...';
+        if (percent >= 20 && percent < 50) status = 'Encoding data...';
+        if (percent >= 50 && percent < 85) status = 'Uploading to server...';
+        if (percent >= 85 && percent < 100) status = 'Processing on server...';
+        if (percent >= 100) status = 'Finalizing...';
         setPublishProgress({ visible: true, percent, status });
       } : null;
 
       if (isLargePayload) {
         message.destroy(); // Clear the "Republishing..." message
-        setPublishProgress({ visible: true, percent: 0, status: 'Preparing upload...' });
+        setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
       }
 
       // Publish the service (backend handles update)
@@ -966,10 +995,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      message.success('Service republished successfully! Cache will update within 10 minutes.');
+      message.success('Service republished successfully!');
 
-      // Set a flag to refresh the service list
+      // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(`workbook-etag-${serviceId}`);
+        window.localStorage.removeItem(`workbook-data-${serviceId}`);
+        // Set a flag to refresh the service list
         window.localStorage.setItem('refreshServiceList', Date.now().toString());
       }
 
@@ -2260,6 +2292,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           isDemoMode={isDemoMode}
                           zoomLevel={zoomLevel}
                           onWorkbookInit={handleWorkbookInit}
+                          onWorkbookDataLoaded={handleWorkbookDataLoaded}
                           onEmptyStateAction={(action, file) => {
                             if (action === 'start') {
                               setShowEmptyState(false);
@@ -2414,6 +2447,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                       isDemoMode={isDemoMode}
                       zoomLevel={zoomLevel}
                       onWorkbookInit={handleWorkbookInit}
+                      onWorkbookDataLoaded={handleWorkbookDataLoaded}
                       onEmptyStateAction={(action, file) => {
                         if (action === 'start') {
                           setShowEmptyState(false);

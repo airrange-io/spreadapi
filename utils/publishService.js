@@ -3,12 +3,15 @@
 
 import { upload } from '@vercel/blob/client';
 import { extractRangeValues } from '@/lib/rangeValidation';
+import pako from 'pako';
 
 // Payload size limits for publish operations
 // Vercel serverless functions have a 4.5MB request body limit
-// We use 3.5MB as threshold to have safety margin
+// Compressed data is sent as base64 which adds ~33% overhead
+// So 2.5MB compressed becomes ~3.3MB base64, safely under limit
 export const PAYLOAD_LIMITS = {
-  LARGE_FILE_THRESHOLD: 3.5 * 1024 * 1024,  // 3.5MB - use blob upload above this
+  COMPRESSED_INLINE_THRESHOLD: 2.5 * 1024 * 1024,  // 2.5MB compressed - use blob above this
+  LARGE_FILE_THRESHOLD: 1 * 1024 * 1024,  // 1MB raw - show progress above this
 };
 
 // Helper function to get object size in bytes
@@ -108,18 +111,53 @@ export function estimatePayloadSize(publishData) {
 }
 
 /**
- * Upload large publish data to Vercel Blob storage
+ * Compress data using gzip
+ * @param {string} jsonString - JSON string to compress
+ * @returns {{ compressed: Uint8Array, originalSize: number, compressedSize: number, ratio: number }}
+ */
+function compressData(jsonString) {
+  const originalSize = new Blob([jsonString]).size;
+  const compressed = pako.gzip(jsonString);
+  const compressedSize = compressed.length;
+  const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+
+  console.log(`[Publish Client] Compression: ${(originalSize / 1024).toFixed(1)}KB → ${(compressedSize / 1024).toFixed(1)}KB (${ratio}% reduction)`);
+
+  return { compressed, originalSize, compressedSize, ratio: parseFloat(ratio) };
+}
+
+/**
+ * Convert Uint8Array to base64 string
+ * Uses chunked processing to avoid stack overflow on large arrays
+ * @param {Uint8Array} bytes
+ * @returns {string}
+ */
+function uint8ArrayToBase64(bytes) {
+  // Process in chunks to avoid "Maximum call stack size exceeded"
+  const CHUNK_SIZE = 8192;
+  const chunks = [];
+
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_SIZE, bytes.length));
+    chunks.push(String.fromCharCode.apply(null, chunk));
+  }
+
+  return btoa(chunks.join(''));
+}
+
+/**
+ * Upload large compressed data to Vercel Blob storage
  * Returns the blob URL for the server to fetch
  * @param {string} serviceId - The service ID
- * @param {string} jsonString - Pre-serialized JSON string (to avoid double stringify)
+ * @param {Uint8Array} compressedData - Gzip compressed data
  * @param {function} onProgress - Progress callback (percent: number) => void
  * @returns {Promise<string>} The blob URL
  */
-async function uploadLargePublishData(serviceId, jsonString, onProgress) {
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const file = new File([blob], `${serviceId}-publish-data.json`, { type: 'application/json' });
+async function uploadLargePublishData(serviceId, compressedData, onProgress) {
+  const blob = new Blob([compressedData], { type: 'application/gzip' });
+  const file = new File([blob], `${serviceId}-publish-data.json.gz`, { type: 'application/gzip' });
 
-  console.log(`[Publish Client] Starting blob upload for ${serviceId}, size: ${(jsonString.length / 1024).toFixed(1)}KB`);
+  console.log(`[Publish Client] Starting blob upload for ${serviceId}, compressed size: ${(compressedData.length / 1024).toFixed(1)}KB`);
 
   const result = await upload(file.name, file, {
     access: 'public',
@@ -309,7 +347,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
 
 /**
  * Publish a service via API route (client-safe)
- * Automatically handles large payloads by uploading to blob storage first
+ * Always compresses data, uses blob upload only for very large compressed payloads
+ * Works for both first publish and republish
  * @param {string} serviceId - The service ID
  * @param {object} publishData - The publish data { apiJson, fileJson }
  * @param {string|null} tenant - Optional tenant ID
@@ -318,40 +357,55 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
  */
 export async function publishService(serviceId, publishData, tenant = null, onProgress = null) {
   try {
-    // Estimate size and get cached JSON string (avoids double serialization)
-    const { size: payloadSize, jsonString } = estimatePayloadSize(publishData);
-    const isLargePayload = payloadSize >= PAYLOAD_LIMITS.LARGE_FILE_THRESHOLD;
+    // Step 1: Serialize (0-5%)
+    onProgress?.(0);
+    const jsonString = JSON.stringify(publishData);
+
+    // Step 2: Compress (5-20%)
+    onProgress?.(5);
+    const { compressed, originalSize, compressedSize } = compressData(jsonString);
+    onProgress?.(20);
+
+    // Check if compressed data fits inline (with base64 overhead)
+    const needsBlobUpload = compressedSize >= PAYLOAD_LIMITS.COMPRESSED_INLINE_THRESHOLD;
 
     let requestBody;
 
-    if (isLargePayload) {
-      // Large payload: upload to blob first, send URL to API
-      console.log(`[Publish Client] Large payload detected (${(payloadSize / 1024 / 1024).toFixed(2)}MB), using blob upload`);
+    if (needsBlobUpload) {
+      // Very large payload: upload compressed data to blob first (20-80%)
+      console.log(`[Publish Client] Large compressed payload (${(compressedSize / 1024 / 1024).toFixed(2)}MB), using blob upload`);
 
-      onProgress?.(0);
+      // Wrap progress to scale 0-100 to 20-80
+      const blobProgress = (percent) => {
+        onProgress?.(20 + Math.round(percent * 0.6));
+      };
 
-      // Use cached jsonString to avoid re-serializing
-      const blobUrl = await uploadLargePublishData(serviceId, jsonString, onProgress);
+      const blobUrl = await uploadLargePublishData(serviceId, compressed, blobProgress);
 
       console.log(`[Publish Client] Sending publish request with blobUrl`);
       requestBody = {
         serviceId,
-        publishDataUrl: blobUrl,  // URL instead of inline data
+        publishDataUrl: blobUrl,
+        isCompressed: true,  // Server knows to decompress after fetching
         tenant
       };
     } else {
-      // Small payload: send inline (existing behavior)
-      console.log(`[Publish Client] Small payload (${(payloadSize / 1024).toFixed(1)}KB), using inline data`);
+      // Normal case: send compressed data inline as base64 (20-40%)
+      console.log(`[Publish Client] Sending compressed data inline (${(compressedSize / 1024).toFixed(1)}KB)`);
+      onProgress?.(25);
+      const base64Data = uint8ArrayToBase64(compressed);
+      onProgress?.(40);
+
       requestBody = {
         serviceId,
-        publishData,
+        compressedData: base64Data,
         tenant
       };
     }
 
-    onProgress?.(85);  // Processing on server
+    // Step 3: Send to server (40-85%)
+    onProgress?.(50);
 
-    // Use API route to complete publish
     const response = await fetch('/api/services/publish', {
       method: 'POST',
       headers: {
@@ -360,13 +414,15 @@ export async function publishService(serviceId, publishData, tenant = null, onPr
       body: JSON.stringify(requestBody)
     });
 
+    onProgress?.(85);
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to publish service');
     }
 
+    // Step 4: Finalize (85-100%)
     const result = await response.json();
-
     onProgress?.(100);
 
     return result;

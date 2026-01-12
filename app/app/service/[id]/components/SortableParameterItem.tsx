@@ -3,7 +3,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Space, Tag, Button, Dropdown } from 'antd';
+import { Space, Tag, Button, Dropdown, Tooltip } from 'antd';
 import { HolderOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import type { InputDefinition, OutputDefinition } from './ParametersSection';
 
@@ -96,7 +96,7 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
 
           {/* Parameter Content */}
           <div
-            style={{ cursor: 'pointer', flex: 1 }}
+            style={{ cursor: 'pointer', flex: 1, minWidth: 0, overflow: 'hidden' }}
             onClick={onNavigate}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '0.8';
@@ -105,37 +105,57 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
               e.currentTarget.style.opacity = '1';
             }}
           >
-            <Space orientation="vertical" size={0}>
-              <Space orientation='horizontal' style={{ flexWrap: 'wrap', fontSize: '14px' }}>
-                <strong style={{ color: input?.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
-                  {parameter.name}
-                </strong>
-              </Space>
-              <Space orientation='horizontal' style={{ flexWrap: 'wrap' }}>
-                {useCompactLayout ? (
-                  <div style={{ color: '#888', fontSize: '11px' }}>{parameter.address}</div>
-                ) : (
-                  parameter.title && parameter.title !== parameter.name && (
-                    <div style={{ color: '#888', fontSize: '11px' }}>{parameter.title}</div>
-                  )
-                )}
-                {input && (input.min !== undefined || input.max !== undefined) && (
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                    {input.min !== undefined && `Min: ${input.min}`}
-                    {input.min !== undefined && input.max !== undefined && ' • '}
-                    {input.max !== undefined && `Max: ${input.max}`}
-                  </div>
-                )}
-              </Space>
-            </Space>
+            <div style={{
+              fontSize: '14px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              <strong style={{ color: input?.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
+                {parameter.name}
+              </strong>
+            </div>
+            <div style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {useCompactLayout ? (
+                <span style={{ color: '#888', fontSize: '11px' }}>{parameter.address}</span>
+              ) : (
+                parameter.title && parameter.title !== parameter.name && (
+                  <span style={{ color: '#888', fontSize: '11px' }}>{parameter.title}</span>
+                )
+              )}
+              {input && (input.min !== undefined || input.max !== undefined) && (
+                <span style={{ fontSize: '11px', color: '#999', marginLeft: '8px' }}>
+                  {input.min !== undefined && `Min: ${input.min}`}
+                  {input.min !== undefined && input.max !== undefined && ' • '}
+                  {input.max !== undefined && `Max: ${input.max}`}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Actions */}
-          <Space size={4}>
+          <Space size={4} style={{ flexShrink: 0 }}>
             {!useCompactLayout && (
-              <Tag color='purple' onClick={onNavigate} style={{ cursor: 'pointer', padding: '4px 8px' }}>
-                {parameter.address}
-              </Tag>
+              <Tooltip title={parameter.address} placement="top">
+                <Tag
+                  color='purple'
+                  onClick={onNavigate}
+                  style={{
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    maxWidth: '150px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {parameter.address}
+                </Tag>
+              </Tooltip>
             )}
             <Button
               size="small"

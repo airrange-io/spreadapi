@@ -1,5 +1,41 @@
 import { handleUpload } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { cookies } from 'next/headers';
+
+const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL;
+
+/**
+ * Verify Hanko JWT and extract user ID
+ * In Next.js 16, proxy.ts is for routing only, so auth must be done in route handlers
+ */
+async function verifyAuth(request) {
+  try {
+    // Try to get user ID from proxy header first (backwards compatibility)
+    const proxyUserId = request.headers.get('x-user-id');
+    if (proxyUserId) {
+      return proxyUserId;
+    }
+
+    // Otherwise, verify the Hanko cookie directly
+    const cookieStore = await cookies();
+    const hanko = cookieStore.get('hanko')?.value;
+
+    if (!hanko) {
+      return null;
+    }
+
+    const JWKS = createRemoteJWKSet(
+      new URL(`${hankoApiUrl}/.well-known/jwks.json`)
+    );
+
+    const verifiedJWT = await jwtVerify(hanko, JWKS);
+    return verifiedJWT.payload.sub;
+  } catch (error) {
+    console.warn('[Blob Upload] Auth verification failed:', error.message);
+    return null;
+  }
+}
 
 /**
  * API route for handling large publish data uploads via Vercel Blob client uploads.
@@ -14,20 +50,34 @@ export async function POST(request) {
   console.warn(`[Blob Upload] ${requestId} - Request received`);
 
   try {
-    // Get user ID from headers (set by middleware)
-    const userId = request.headers.get('x-user-id');
+    // Clone request to read body twice (once for type check, once for handleUpload)
+    const clonedRequest = request.clone();
+    const body = await clonedRequest.json();
 
-    if (!userId) {
-      console.warn(`[Blob Upload] ${requestId} - Unauthorized: no user ID`);
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Check if this is a Vercel Blob callback (upload completion)
+    // Callbacks don't have cookies - they're server-to-server from Vercel
+    // handleUpload validates callbacks cryptographically via token
+    const isCallback = body.type === 'blob.upload-completed';
+
+    let userId = null;
+
+    if (isCallback) {
+      // For callbacks, userId comes from the tokenPayload we set during token generation
+      console.warn(`[Blob Upload] ${requestId} - Callback from Vercel (no auth needed)`);
+    } else {
+      // For token generation requests, verify auth
+      userId = await verifyAuth(request);
+
+      if (!userId) {
+        console.warn(`[Blob Upload] ${requestId} - Unauthorized: no user ID`);
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+
+      console.warn(`[Blob Upload] ${requestId} - User: ${userId.substring(0, 8)}...`);
     }
-
-    console.warn(`[Blob Upload] ${requestId} - User: ${userId.substring(0, 8)}...`);
-
-    const body = await request.json();
 
     const jsonResponse = await handleUpload({
       body,
@@ -35,7 +85,7 @@ export async function POST(request) {
       onBeforeGenerateToken: async (pathname) => {
         console.warn(`[Blob Upload] ${requestId} - Generating token for: ${pathname}`);
         return {
-          allowedContentTypes: ['application/json'],
+          allowedContentTypes: ['application/json', 'application/gzip', 'application/octet-stream'],
           maximumSizeInBytes: 100 * 1024 * 1024, // 100MB max for publish data
           tokenPayload: JSON.stringify({
             userId,
