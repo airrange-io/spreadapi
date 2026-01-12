@@ -86,7 +86,7 @@ export async function POST(request) {
         console.warn(`[Blob Upload] ${requestId} - Generating token for: ${pathname}`);
         return {
           allowedContentTypes: ['application/json', 'application/gzip', 'application/octet-stream'],
-          maximumSizeInBytes: 100 * 1024 * 1024, // 100MB max for publish data
+          maximumSizeInBytes: 30 * 1024 * 1024, // 30MB max for compressed publish data
           tokenPayload: JSON.stringify({
             userId,
             type: 'publish-data',

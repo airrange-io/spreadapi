@@ -114,10 +114,19 @@ export function estimatePayloadSize(publishData) {
  * Compress data using gzip
  * @param {string} jsonString - JSON string to compress
  * @returns {{ compressed: Uint8Array, originalSize: number, compressedSize: number, ratio: number }}
+ * @throws {Error} If compression fails
  */
 function compressData(jsonString) {
   const originalSize = new Blob([jsonString]).size;
-  const compressed = pako.gzip(jsonString);
+
+  let compressed;
+  try {
+    compressed = pako.gzip(jsonString);
+  } catch (error) {
+    console.error('[Publish Client] Compression failed:', error.message);
+    throw new Error(`Failed to compress publish data: ${error.message}`);
+  }
+
   const compressedSize = compressed.length;
   const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
 
