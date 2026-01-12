@@ -150,6 +150,8 @@ npm run lint && npm run typecheck
 4. "Property is missing in type" - Add required props or make optional
 
 ## IMPORTANT REMINDERS
+- **NEVER commit changes on your own - ALWAYS ask the user first before committing**
+- **NEVER push to remote - let the user handle git push**
 - **Vercel's TypeScript checking is stricter than local development**
 - **ALWAYS run `npm run typecheck` before pushing**
 - **Fix types immediately when errors occur**
@@ -157,5 +159,5 @@ npm run lint && npm run typecheck
 - **Test the full build locally with `npm run build`**
 
 ---
-Last updated: 2025-08-04
-Context: Added TypeScript best practices after fixing multiple Vercel deployment failures due to type errors
+Last updated: 2026-01-12
+Context: Added git commit rules - never commit or push without user approval

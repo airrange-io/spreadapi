@@ -103,8 +103,10 @@ export async function POST(request) {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        resolvedPublishData = await response.json();
-        console.log(`[Publish API] ${requestId} - Blob fetched in ${Date.now() - fetchStart}ms`);
+        const blobText = await response.text();
+        const blobSizeKB = (blobText.length / 1024).toFixed(1);
+        resolvedPublishData = JSON.parse(blobText);
+        console.warn(`[Publish API] ${requestId} - Blob fetched: ${blobSizeKB}KB in ${Date.now() - fetchStart}ms`);
       } catch (fetchError) {
         console.error(`[Publish API] ${requestId} - Failed to fetch blob:`, fetchError.message);
         await cleanupTempBlob();
@@ -115,7 +117,8 @@ export async function POST(request) {
       }
     } else {
       // Small file flow: use inline data (existing behavior)
-      console.log(`[Publish API] ${requestId} - Using inline data`);
+      const inlineSizeKB = (JSON.stringify(publishData).length / 1024).toFixed(1);
+      console.warn(`[Publish API] ${requestId} - Inline data: ${inlineSizeKB}KB`);
       resolvedPublishData = publishData;
     }
 

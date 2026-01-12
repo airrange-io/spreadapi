@@ -119,6 +119,8 @@ async function uploadLargePublishData(serviceId, jsonString, onProgress) {
   const blob = new Blob([jsonString], { type: 'application/json' });
   const file = new File([blob], `${serviceId}-publish-data.json`, { type: 'application/json' });
 
+  console.log(`[Publish Client] Starting blob upload for ${serviceId}, size: ${(jsonString.length / 1024).toFixed(1)}KB`);
+
   const result = await upload(file.name, file, {
     access: 'public',
     handleUploadUrl: '/api/blob/publish-upload',
@@ -131,6 +133,13 @@ async function uploadLargePublishData(serviceId, jsonString, onProgress) {
     },
   });
 
+  // Validate we got a URL back
+  if (!result || !result.url) {
+    console.error('[Publish Client] Blob upload failed - no URL returned', result);
+    throw new Error('Blob upload failed - no URL returned');
+  }
+
+  console.log(`[Publish Client] Blob uploaded successfully: ${result.url.substring(0, 80)}...`);
   return result.url;
 }
 
@@ -317,13 +326,14 @@ export async function publishService(serviceId, publishData, tenant = null, onPr
 
     if (isLargePayload) {
       // Large payload: upload to blob first, send URL to API
-      console.log(`[Publish] Large payload detected (${(payloadSize / 1024 / 1024).toFixed(2)}MB), using blob upload`);
+      console.log(`[Publish Client] Large payload detected (${(payloadSize / 1024 / 1024).toFixed(2)}MB), using blob upload`);
 
       onProgress?.(0);
 
       // Use cached jsonString to avoid re-serializing
       const blobUrl = await uploadLargePublishData(serviceId, jsonString, onProgress);
 
+      console.log(`[Publish Client] Sending publish request with blobUrl`);
       requestBody = {
         serviceId,
         publishDataUrl: blobUrl,  // URL instead of inline data
@@ -331,6 +341,7 @@ export async function publishService(serviceId, publishData, tenant = null, onPr
       };
     } else {
       // Small payload: send inline (existing behavior)
+      console.log(`[Publish Client] Small payload (${(payloadSize / 1024).toFixed(1)}KB), using inline data`);
       requestBody = {
         serviceId,
         publishData,
