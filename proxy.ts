@@ -79,10 +79,14 @@ export async function proxy(req: NextRequest) {
   ];
   
   // Check if current path needs protection
-  const isProtectedRoute = protectedRoutes.some(route => 
+  const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
   );
-  
+
+  // Vercel Blob callbacks (security handled by handleUpload's token validation)
+  const isBlobCallback = pathname.startsWith('/api/blob/') &&
+    req.headers.get('user-agent')?.includes('node-fetch');
+
   // Execute endpoints might be public (if service doesn't require token)
   const isExecuteEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+\/execute/);
   
@@ -99,7 +103,7 @@ export async function proxy(req: NextRequest) {
   const isViewRoute = pathname.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+$/);
 
   // Skip auth for public routes
-  if (!isProtectedRoute || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
+  if (!isProtectedRoute || isBlobCallback || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
     // For web app requests, add header to indicate public access
     if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);
