@@ -3,6 +3,7 @@ import redis from '@/lib/redis';
 import { calculateDirect } from './calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
+import { parseAuthToken } from '@/utils/tokenUtils';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -31,8 +32,15 @@ export async function POST(request, { params}) {
       return NextResponse.json(errorBody, { status });
     }
 
+    // Get token from body or Authorization header
+    // Priority: body.token > Authorization: Bearer header
+    let token = body.token;
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      token = parseAuthToken(authHeader);
+    }
+
     // Validate webApp token and determine if this is a webApp request
-    const token = body.token;
     let isWebAppAuthenticated = false;
     if (token && !token.startsWith('svc_tk_')) {
       // Looks like a webApp token - validate it
@@ -79,7 +87,7 @@ export async function POST(request, { params}) {
 
     // Use direct calculation instead of HTTP call
     const calcStart = Date.now();
-    const result = await calculateDirect(serviceId, body.inputs, body.token, {
+    const result = await calculateDirect(serviceId, body.inputs, token, {
       nocdn: body.nocdn,
       nocache: body.nocache,
       isWebAppAuthenticated
