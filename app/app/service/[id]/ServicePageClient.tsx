@@ -844,7 +844,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           requireToken: apiConfig.requireToken,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
-          tokens: [] // Will add token management later
+          // Note: tokens are managed separately via the token:{id} Redis hashes
+          // Token validation is handled by validateServiceToken in calculateDirect.js
         }
       );
 
@@ -960,7 +961,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           requireToken: apiConfig.requireToken,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
-          tokens: [] // Will add token management later
+          // Note: tokens are managed separately via the token:{id} Redis hashes
+          // Token validation is handled by validateServiceToken in calculateDirect.js
         }
       );
 

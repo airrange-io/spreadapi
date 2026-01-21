@@ -29,14 +29,12 @@ export async function getApiDefinition(apiId, apiToken) {
       const perfEnd = Date.now();
       console.log(`[CACHE HIT] Process cache for ${apiId} - ${perfEnd - perfStart}ms`);
       
-      // Still need to validate token if required
+      // Early check for missing token (actual validation done by validateServiceToken)
       if (cached.data.needsToken && !apiToken) {
         return getError("Authentication required. Please provide a valid token using the 'token' parameter.");
       }
-      if (cached.data.needsToken && cached.data.tokens && !cached.data.tokens.includes(apiToken)) {
-        return getError("Invalid token. Please check your authentication token.");
-      }
-      
+      // Note: Token validation is handled by validateServiceToken in calculateDirect.js
+
       return cached.data;
     }
     console.log(`[CACHE MISS] Process cache for ${apiId}`);
@@ -112,10 +110,9 @@ export async function getApiDefinition(apiId, apiToken) {
       return getError("Authentication required. Please provide a valid token using the 'token' parameter.");
     }
 
-    if (needsToken && tokens && !tokens.includes(apiToken)) {
-      console.error(`Invalid token provided for service:${apiId}`);
-      return getError("Invalid token. Please check your authentication token.");
-    }
+    // Note: Token validation is handled by validateServiceToken in calculateDirect.js
+    // which uses the new hashed token system (token:{id} Redis hashes)
+    // The old plain-text tokens field in published data is deprecated and unused
 
     console.timeEnd("getRedisData");
 

@@ -328,7 +328,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       description: service.description || "",
       inputs: transformedInputs,  // Changed from 'input' to 'inputs'
       outputs: transformedOutputs,  // Changed from 'output' to 'outputs'
-      tokens: flags.tokens || [],
+      // Note: tokens field removed - token validation uses the new hashed token system
       flags: {
         useCaching: flags.enableCaching !== false ? "true" : "false",
         needsToken: flags.requireToken === true ? "true" : "false",
