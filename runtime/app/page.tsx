@@ -383,6 +383,123 @@ export default function Dashboard() {
                   )}
                 </div>
 
+                {/* API URLs */}
+                <div style={{ marginBottom: '15px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 500, marginBottom: '10px', color: '#555' }}>API URLS</div>
+
+                  {/* GET URL */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#888', marginBottom: '3px' }}>GET Request:</div>
+                    <div style={{
+                      padding: '8px 10px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                      wordBreak: 'break-all',
+                      position: 'relative',
+                    }}>
+                      <code>
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/api/execute/{selectedService}
+                        {Object.entries(testInputs).filter(([_, v]) => v !== '').length > 0 && '?'}
+                        {Object.entries(testInputs)
+                          .filter(([_, v]) => v !== '')
+                          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+                          .join('&')}
+                      </code>
+                      <button
+                        onClick={() => {
+                          const url = `${window.location.origin}/api/execute/${selectedService}${
+                            Object.entries(testInputs).filter(([_, v]) => v !== '').length > 0 ? '?' : ''
+                          }${Object.entries(testInputs)
+                            .filter(([_, v]) => v !== '')
+                            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+                            .join('&')}`;
+                          navigator.clipboard.writeText(url);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #ddd',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* POST URL & Body */}
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#888', marginBottom: '3px' }}>POST Request:</div>
+                    <div style={{
+                      padding: '8px 10px',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                      position: 'relative',
+                    }}>
+                      <div style={{ marginBottom: '6px' }}>
+                        <span style={{ color: '#059669', fontWeight: 500 }}>POST</span>{' '}
+                        <code>{typeof window !== 'undefined' ? window.location.origin : ''}/api/execute/{selectedService}</code>
+                      </div>
+                      <div style={{ color: '#888', fontSize: '10px', marginBottom: '4px' }}>Content-Type: application/json</div>
+                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+{JSON.stringify({
+  inputs: Object.fromEntries(
+    Object.entries(testInputs)
+      .filter(([_, v]) => v !== '')
+      .map(([k, v]) => {
+        const num = Number(v);
+        if (!isNaN(num)) return [k, num];
+        if (v === 'true') return [k, true];
+        if (v === 'false') return [k, false];
+        return [k, v];
+      })
+  )
+}, null, 2)}
+                      </pre>
+                      <button
+                        onClick={() => {
+                          const body = JSON.stringify({
+                            inputs: Object.fromEntries(
+                              Object.entries(testInputs)
+                                .filter(([_, v]) => v !== '')
+                                .map(([k, v]) => {
+                                  const num = Number(v);
+                                  if (!isNaN(num)) return [k, num];
+                                  if (v === 'true') return [k, true];
+                                  if (v === 'false') return [k, false];
+                                  return [k, v];
+                                })
+                            )
+                          }, null, 2);
+                          navigator.clipboard.writeText(body);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #ddd',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Copy Body
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Execute Button */}
                 <button
                   onClick={handleTest}
