@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mescius/spread-sheets": "^18.0.0",
+    "canvas": "^3.2.1",
+    "mock-browser": "^0.92.14",
     "next": "^14.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@mescius/spread-sheets": "^18.0.0",
-    "mock-browser": "^0.92.14",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
