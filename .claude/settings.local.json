@@ -68,7 +68,9 @@
       "Bash(do echo \"=== FILE: $file ===\" head -30 \"$file\")",
       "Bash(npm view:*)",
       "Bash(tail:*)",
-      "Bash(npm outdated:*)"
+      "Bash(npm outdated:*)",
+      "Bash(npx tsc:*)",
+      "Bash(PORT=3001 npm run dev:*)"
     ],
     "deny": []
   }

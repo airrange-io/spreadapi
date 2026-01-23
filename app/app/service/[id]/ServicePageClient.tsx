@@ -1172,6 +1172,87 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   };
 
+  const handleExportForRuntime = async () => {
+    try {
+      if (!spreadInstance) {
+        message.error('Spreadsheet not loaded');
+        return;
+      }
+
+      message.loading('Exporting for Runtime...', 0);
+
+      // Get workbook JSON (this is the fileJson for calculations)
+      const fileJson = spreadInstance.toJSON();
+
+      // Build apiJson with input/output definitions
+      const apiJson = {
+        name: (apiConfig.name || 'service').replace(/[^a-z0-9]/gi, '-').toLowerCase(),
+        title: apiConfig.name || 'Untitled Service',
+        description: apiConfig.description || '',
+        inputs: (apiConfig.inputs || []).map((inp: any) => ({
+          name: inp.name,
+          title: inp.title || inp.name,
+          address: inp.address,
+          row: inp.row,
+          col: inp.col,
+          type: inp.type || 'string',
+          mandatory: inp.mandatory !== false,
+          defaultValue: inp.defaultValue,
+          min: inp.min,
+          max: inp.max,
+          allowedValues: inp.allowedValues,
+          description: inp.description,
+          formatString: inp.formatString,
+        })),
+        outputs: (apiConfig.outputs || []).map((out: any) => ({
+          name: out.name,
+          title: out.title || out.name,
+          address: out.address,
+          row: out.row,
+          col: out.col,
+          rowCount: out.rowCount,
+          colCount: out.colCount,
+          type: out.type,
+          description: out.description,
+          formatString: out.formatString,
+        })),
+        flags: {
+          useCaching: apiConfig.enableCaching !== false,
+          needsToken: apiConfig.requireToken || false,
+        },
+      };
+
+      // Create runtime package
+      const runtimePackage = {
+        serviceId: (apiConfig.name || 'service').replace(/[^a-z0-9]/gi, '-').toLowerCase(),
+        name: apiJson.name,
+        title: apiJson.title,
+        description: apiJson.description,
+        apiJson,
+        fileJson,
+        exportedAt: new Date().toISOString(),
+        exportedFrom: 'SpreadAPI.io',
+      };
+
+      // Create and download JSON file
+      const blob = new Blob([JSON.stringify(runtimePackage, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${apiJson.name}_runtime.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      message.destroy();
+      message.success('Runtime package exported! Upload this file to your SpreadAPI Runtime.');
+    } catch (error: any) {
+      message.destroy();
+      message.error('Failed to export: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const isSavingRef = useRef(false);
 
   const handleSave = async () => {
@@ -2231,6 +2312,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   label: 'Export Service Package',
                   icon: <DownloadOutlined />,
                   onClick: () => handleExportServicePackage(),
+                  disabled: !spreadInstance
+                },
+                {
+                  key: 'export-runtime',
+                  label: 'Export for Runtime',
+                  icon: <DownloadOutlined />,
+                  onClick: () => handleExportForRuntime(),
                   disabled: !spreadInstance
                 }
               ]
