@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: 'SpreadAPI Documentation - Excel API Reference',
     description: 'Complete API documentation for integrating Excel calculations into your apps.',
     type: 'website',
-    url: 'https://spreadapi.com/docs',
+    url: 'https://spreadapi.io/docs',
   },
 };
 

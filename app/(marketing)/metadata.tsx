@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'SpreadAPI - Turn Excel Into APIs for AI',
     description: 'Transform Excel spreadsheets into secure APIs. Let AI work with your calculations.',
-    url: 'https://spreadapi.com/product',
+    url: 'https://spreadapi.io/product',
     siteName: 'SpreadAPI',
     images: [
       {
-        url: 'https://spreadapi.com/og-image.png',
+        url: 'https://spreadapi.io/og-image.png',
         width: 1200,
         height: 630,
         alt: 'SpreadAPI - Excel meets AI',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SpreadAPI - Turn Excel Into APIs for AI',
     description: 'Transform Excel spreadsheets into secure APIs that AI can use.',
-    images: ['https://spreadapi.com/twitter-image.png'],
+    images: ['https://spreadapi.io/twitter-image.png'],
   },
   robots: {
     index: true,
@@ -38,6 +38,6 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://spreadapi.com/product',
+    canonical: 'https://spreadapi.io/product',
   },
 };

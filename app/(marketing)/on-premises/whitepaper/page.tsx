@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: 'SpreadAPI Enterprise Technical Whitepaper',
     description: 'Complete technical documentation for on-premises deployment.',
     type: 'article',
-    url: 'https://spreadapi.com/on-premises/whitepaper',
+    url: 'https://spreadapi.io/on-premises/whitepaper',
   },
 };
 

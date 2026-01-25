@@ -49,11 +49,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: meta.ogTitle,
       description: meta.ogDescription,
       type: 'website',
-      url: `https://spreadapi.com/${locale}`,
+      url: `https://spreadapi.io/${locale}`,
       siteName: 'SpreadAPI',
       locale: locale === 'de' ? 'de_DE' : 'en_US',
       images: [{
-        url: 'https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
+        url: 'https://spreadapi.io/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
         width: 1200,
         height: 630,
         alt: meta.ogAlt,
@@ -64,13 +64,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: meta.ogTitle,
       description: meta.ogDescription,
       site: '@spreadapi',
-      images: ['https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
+      images: ['https://spreadapi.io/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
     },
     alternates: {
-      canonical: `https://spreadapi.com/${locale}`,
+      canonical: `https://spreadapi.io/${locale}`,
       languages: {
-        'en': 'https://spreadapi.com/',
-        'de': 'https://spreadapi.com/de',
+        'en': 'https://spreadapi.io/',
+        'de': 'https://spreadapi.io/de',
         // fr and es removed until translations are ready
       },
     },
@@ -97,8 +97,8 @@ export default async function LocaleProductPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "SpreadAPI",
-    "url": "https://spreadapi.com",
-    "logo": "https://spreadapi.com/icons/logo-full.svg",
+    "url": "https://spreadapi.io",
+    "logo": "https://spreadapi.io/icons/logo-full.svg",
     "sameAs": [
       "https://twitter.com/spreadapi",
       "https://github.com/spreadapi"
@@ -126,8 +126,8 @@ export default async function LocaleProductPage({ params }: PageProps) {
     "description": "Transform Excel spreadsheets into REST APIs instantly. Perfect for AI integration.",
     "softwareVersion": "1.0",
     "operatingSystem": "Web",
-    "url": `https://spreadapi.com/${locale}`,
-    "screenshot": "https://spreadapi.com/api/og?title=SpreadAPI%20Dashboard",
+    "url": `https://spreadapi.io/${locale}`,
+    "screenshot": "https://spreadapi.io/api/og?title=SpreadAPI%20Dashboard",
     "featureList": [
       "Excel to API conversion",
       "MCP Protocol support",

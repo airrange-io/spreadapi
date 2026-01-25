@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/why-ai-fails-at-math`,
+      canonical: `https://spreadapi.io/${locale}/why-ai-fails-at-math`,
       languages: {
-        'en': 'https://spreadapi.com/why-ai-fails-at-math',
-        'de': 'https://spreadapi.com/de/why-ai-fails-at-math',
+        'en': 'https://spreadapi.io/why-ai-fails-at-math',
+        'de': 'https://spreadapi.io/de/why-ai-fails-at-math',
       },
     },
   };

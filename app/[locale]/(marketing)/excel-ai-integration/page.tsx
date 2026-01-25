@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/excel-ai-integration`,
+      canonical: `https://spreadapi.io/${locale}/excel-ai-integration`,
       languages: {
-        'en': 'https://spreadapi.com/excel-ai-integration',
-        'de': 'https://spreadapi.com/de/excel-ai-integration',
+        'en': 'https://spreadapi.io/excel-ai-integration',
+        'de': 'https://spreadapi.io/de/excel-ai-integration',
       },
     },
   };

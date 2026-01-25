@@ -13,10 +13,10 @@ export const metadata: Metadata = {
     title: 'Stop Rewriting Excel in Code - SpreadAPI',
     description: 'Your spreadsheet already works. Turn it into an API in minutes — not months.',
     type: 'article',
-    url: 'https://spreadapi.com/stop-rewriting-excel-in-code',
+    url: 'https://spreadapi.io/stop-rewriting-excel-in-code',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=Stop%20Rewriting%20Excel%20in%20Code&description=Your%20spreadsheet%20already%20works.%20Turn%20it%20into%20an%20API.',
+      url: 'https://spreadapi.io/api/og?title=Stop%20Rewriting%20Excel%20in%20Code&description=Your%20spreadsheet%20already%20works.%20Turn%20it%20into%20an%20API.',
       width: 1200,
       height: 630,
       alt: 'Stop Rewriting Excel in Code',
@@ -28,13 +28,11 @@ export const metadata: Metadata = {
     description: 'Your spreadsheet already works. Turn it into an API in minutes — not months.',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/stop-rewriting-excel-in-code',
+    canonical: 'https://spreadapi.io/stop-rewriting-excel-in-code',
     languages: {
-      'en': 'https://spreadapi.com/stop-rewriting-excel-in-code',
-      'de': 'https://spreadapi.com/de/stop-rewriting-excel-in-code',
-      'fr': 'https://spreadapi.com/fr/stop-rewriting-excel-in-code',
-      'es': 'https://spreadapi.com/es/stop-rewriting-excel-in-code',
-      'x-default': 'https://spreadapi.com/stop-rewriting-excel-in-code',
+      'en': 'https://spreadapi.io/stop-rewriting-excel-in-code',
+      'de': 'https://spreadapi.io/de/stop-rewriting-excel-in-code',
+      'x-default': 'https://spreadapi.io/stop-rewriting-excel-in-code',
     },
   },
 };
@@ -420,7 +418,7 @@ class PricingCalculator {
                               <div style={{ fontSize: '12px', color: '#22c55e', fontWeight: '600', marginBottom: '8px' }}>{t.solution.afterLabel}</div>
                               <pre style={{ background: '#f0fdf4', padding: '12px', borderRadius: '6px', fontSize: '11px', overflow: 'auto', margin: 0, border: '1px solid #bbf7d0' }}>
 {`const price = await fetch(
-  'https://spreadapi.com/api/v1/services/pricing/execute',
+  'https://spreadapi.io/api/v1/services/pricing/execute',
   { body: JSON.stringify({ product, qty, region }) }
 ).then(r => r.json());`}
                               </pre>

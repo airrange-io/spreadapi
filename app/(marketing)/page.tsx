@@ -11,10 +11,10 @@ export const metadata: Metadata = {
     title: 'SpreadAPI - Excel to API in Seconds',
     description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
     type: 'website',
-    url: 'https://spreadapi.com/',
+    url: 'https://spreadapi.io/',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
+      url: 'https://spreadapi.io/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.',
       width: 1200,
       height: 630,
       alt: 'SpreadAPI - Excel to API Platform',
@@ -25,16 +25,14 @@ export const metadata: Metadata = {
     title: 'SpreadAPI - Excel to API in Seconds',
     description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',
     site: '@spreadapi',
-    images: ['https://spreadapi.com/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
+    images: ['https://spreadapi.io/api/og?title=Transform%20Excel%20into%20APIs&description=No%20coding%20required.%20AI-ready%20with%20MCP%20support.'],
   },
   alternates: {
-    canonical: 'https://spreadapi.com/',
+    canonical: 'https://spreadapi.io/',
     languages: {
-      'en': 'https://spreadapi.com/',
-      'de': 'https://spreadapi.com/de',
-      'fr': 'https://spreadapi.com/fr',
-      'es': 'https://spreadapi.com/es',
-      'x-default': 'https://spreadapi.com/',
+      'en': 'https://spreadapi.io/',
+      'de': 'https://spreadapi.io/de',
+      'x-default': 'https://spreadapi.io/',
     },
   },
   robots: {
@@ -56,8 +54,8 @@ export default function ProductPage() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "SpreadAPI",
-    "url": "https://spreadapi.com",
-    "logo": "https://spreadapi.com/icons/logo-full.svg",
+    "url": "https://spreadapi.io",
+    "logo": "https://spreadapi.io/icons/logo-full.svg",
     "sameAs": [
       "https://twitter.com/spreadapi",
       "https://github.com/spreadapi"
@@ -85,8 +83,8 @@ export default function ProductPage() {
     "description": "Transform Excel spreadsheets into REST APIs instantly. Perfect for AI integration.",
     "softwareVersion": "1.0",
     "operatingSystem": "Web",
-    "url": "https://spreadapi.com",
-    "screenshot": "https://spreadapi.com/api/og?title=SpreadAPI%20Dashboard",
+    "url": "https://spreadapi.io",
+    "screenshot": "https://spreadapi.io/api/og?title=SpreadAPI%20Dashboard",
     "featureList": [
       "Excel to API conversion",
       "MCP Protocol support",

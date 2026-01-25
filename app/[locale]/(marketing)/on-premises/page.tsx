@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/on-premises`,
+      canonical: `https://spreadapi.io/${locale}/on-premises`,
       languages: {
-        'en': 'https://spreadapi.com/on-premises',
-        'de': 'https://spreadapi.com/de/on-premises',
+        'en': 'https://spreadapi.io/on-premises',
+        'de': 'https://spreadapi.io/de/on-premises',
       },
     },
   };

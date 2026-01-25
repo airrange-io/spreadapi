@@ -175,7 +175,7 @@ export default function DocsPageClient() {
                         <div style={{ marginBottom: '40px' }}>
                           <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Step 1: Sign Up</h3>
                           <p style={{ fontSize: '16px', color: '#666', marginBottom: '16px' }}>
-                            Create your account at <a href="https://spreadapi.com" style={{ color: '#9333EA' }}>spreadapi.com</a>.
+                            Create your account at <a href="https://spreadapi.io" style={{ color: '#9333EA' }}>spreadapi.io</a>.
                             Start with the free tier (100 API calls/month).
                           </p>
                         </div>

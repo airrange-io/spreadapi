@@ -70,7 +70,9 @@
       "Bash(tail:*)",
       "Bash(npm outdated:*)",
       "Bash(npx tsc:*)",
-      "Bash(PORT=3001 npm run dev:*)"
+      "Bash(PORT=3001 npm run dev:*)",
+      "Bash(git show:*)",
+      "Bash(git diff:*)"
     ],
     "deny": []
   }

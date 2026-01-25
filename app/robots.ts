@@ -8,10 +8,12 @@ const marketingPages = [
   '/automation-calculations',
   '/excel-ai-integration',
   '/why-ai-fails-at-math',
+  '/on-premises',
 ];
 
 // Generate locale versions of marketing pages
-const localeMarketingPages = ['de', 'fr', 'es'].flatMap(locale =>
+// Only German is actively translated for now
+const localeMarketingPages = ['de'].flatMap(locale =>
   marketingPages.map(page => page === '/' ? `/${locale}` : `/${locale}${page}`)
 );
 
@@ -25,7 +27,7 @@ const allMarketingPages = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://spreadapi.com';
+  const baseUrl = 'https://spreadapi.io';
 
   return {
     rules: [

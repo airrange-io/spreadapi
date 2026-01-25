@@ -32,20 +32,20 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
     author: {
       '@type': 'Organization',
       name: post.author,
-      url: 'https://spreadapi.com'
+      url: 'https://spreadapi.io'
     },
     datePublished: post.date,
     dateModified: post.date,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://spreadapi.com/blog/${post.slug}`
+      '@id': `https://spreadapi.io/blog/${post.slug}`
     },
     publisher: {
       '@type': 'Organization',
       name: 'SpreadAPI',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://spreadapi.com/logo.png'
+        url: 'https://spreadapi.io/logo.png'
       }
     },
     keywords: post.tags.join(', '),
@@ -53,7 +53,7 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
     wordCount: post.content.split(' ').length,
     image: {
       '@type': 'ImageObject',
-      url: `https://spreadapi.com/api/og?title=${encodeURIComponent(post.title)}`,
+      url: `https://spreadapi.io/api/og?title=${encodeURIComponent(post.title)}`,
       width: 1200,
       height: 630
     }

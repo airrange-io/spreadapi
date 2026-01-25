@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/stop-rewriting-excel-in-code`,
+      canonical: `https://spreadapi.io/${locale}/stop-rewriting-excel-in-code`,
       languages: {
-        'en': 'https://spreadapi.com/stop-rewriting-excel-in-code',
-        'de': 'https://spreadapi.com/de/stop-rewriting-excel-in-code',
+        'en': 'https://spreadapi.io/stop-rewriting-excel-in-code',
+        'de': 'https://spreadapi.io/de/stop-rewriting-excel-in-code',
       },
     },
   };

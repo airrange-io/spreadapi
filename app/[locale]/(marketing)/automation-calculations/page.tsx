@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/automation-calculations`,
+      canonical: `https://spreadapi.io/${locale}/automation-calculations`,
       languages: {
-        'en': 'https://spreadapi.com/automation-calculations',
-        'de': 'https://spreadapi.com/de/automation-calculations',
+        'en': 'https://spreadapi.io/automation-calculations',
+        'de': 'https://spreadapi.io/de/automation-calculations',
       },
     },
   };

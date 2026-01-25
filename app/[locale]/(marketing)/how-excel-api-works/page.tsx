@@ -32,10 +32,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `https://spreadapi.com/${locale}/how-excel-api-works`,
+      canonical: `https://spreadapi.io/${locale}/how-excel-api-works`,
       languages: {
-        'en': 'https://spreadapi.com/how-excel-api-works',
-        'de': 'https://spreadapi.com/de/how-excel-api-works',
+        'en': 'https://spreadapi.io/how-excel-api-works',
+        'de': 'https://spreadapi.io/de/how-excel-api-works',
       },
     },
   };

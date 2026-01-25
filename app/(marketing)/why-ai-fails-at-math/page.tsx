@@ -9,16 +9,14 @@ export const metadata: Metadata = {
     title: 'Why AI Can\'t Do Your Excel Math',
     description: 'AI hallucinates. Excel calculates. See the difference and why it matters for your business.',
     type: 'website',
-    url: 'https://spreadapi.com/why-ai-fails-at-math',
+    url: 'https://spreadapi.io/why-ai-fails-at-math',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/why-ai-fails-at-math',
+    canonical: 'https://spreadapi.io/why-ai-fails-at-math',
     languages: {
-      'en': 'https://spreadapi.com/why-ai-fails-at-math',
-      'de': 'https://spreadapi.com/de/why-ai-fails-at-math',
-      'fr': 'https://spreadapi.com/fr/why-ai-fails-at-math',
-      'es': 'https://spreadapi.com/es/why-ai-fails-at-math',
-      'x-default': 'https://spreadapi.com/why-ai-fails-at-math',
+      'en': 'https://spreadapi.io/why-ai-fails-at-math',
+      'de': 'https://spreadapi.io/de/why-ai-fails-at-math',
+      'x-default': 'https://spreadapi.io/why-ai-fails-at-math',
     },
   },
 };

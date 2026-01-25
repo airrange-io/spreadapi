@@ -14,7 +14,7 @@ export async function GET() {
       contact: {
         name: 'SpreadAPI Support',
         email: 'info@airrange.io',
-        url: 'https://spreadapi.com/docs'
+        url: 'https://spreadapi.io/docs'
       },
       license: {
         name: 'Proprietary',

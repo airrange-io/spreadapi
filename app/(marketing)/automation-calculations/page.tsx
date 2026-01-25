@@ -13,10 +13,10 @@ export const metadata: Metadata = {
     title: 'When Your Automation Needs to Think - SpreadAPI',
     description: 'Add Excel-powered calculations to Zapier, Make, n8n, and Power Automate. Complex business logic without code.',
     type: 'article',
-    url: 'https://spreadapi.com/automation-calculations',
+    url: 'https://spreadapi.io/automation-calculations',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=When%20Your%20Automation%20Needs%20to%20Think&description=Add%20Excel-powered%20calculations%20to%20your%20automations',
+      url: 'https://spreadapi.io/api/og?title=When%20Your%20Automation%20Needs%20to%20Think&description=Add%20Excel-powered%20calculations%20to%20your%20automations',
       width: 1200,
       height: 630,
       alt: 'When Your Automation Needs to Think',
@@ -28,13 +28,11 @@ export const metadata: Metadata = {
     description: 'Add Excel-powered calculations to Zapier, Make, n8n, and Power Automate.',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/automation-calculations',
+    canonical: 'https://spreadapi.io/automation-calculations',
     languages: {
-      'en': 'https://spreadapi.com/automation-calculations',
-      'de': 'https://spreadapi.com/de/automation-calculations',
-      'fr': 'https://spreadapi.com/fr/automation-calculations',
-      'es': 'https://spreadapi.com/es/automation-calculations',
-      'x-default': 'https://spreadapi.com/automation-calculations',
+      'en': 'https://spreadapi.io/automation-calculations',
+      'de': 'https://spreadapi.io/de/automation-calculations',
+      'x-default': 'https://spreadapi.io/automation-calculations',
     },
   },
 };

@@ -14,10 +14,10 @@ export const metadata: Metadata = {
     title: 'How SpreadAPI Works - Excel to API in Minutes',
     description: 'Transform your Excel spreadsheets into REST APIs instantly. Learn the simple 3-step process.',
     type: 'article',
-    url: 'https://spreadapi.com/how-excel-api-works',
+    url: 'https://spreadapi.io/how-excel-api-works',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=How%20Excel%20API%20Works&description=Transform%20spreadsheets%20to%20APIs%20in%203%20simple%20steps',
+      url: 'https://spreadapi.io/api/og?title=How%20Excel%20API%20Works&description=Transform%20spreadsheets%20to%20APIs%20in%203%20simple%20steps',
       width: 1200,
       height: 630,
       alt: 'How SpreadAPI Works',
@@ -29,13 +29,11 @@ export const metadata: Metadata = {
     description: 'Transform Excel spreadsheets into REST APIs. No coding required.',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/how-excel-api-works',
+    canonical: 'https://spreadapi.io/how-excel-api-works',
     languages: {
-      'en': 'https://spreadapi.com/how-excel-api-works',
-      'de': 'https://spreadapi.com/de/how-excel-api-works',
-      'fr': 'https://spreadapi.com/fr/how-excel-api-works',
-      'es': 'https://spreadapi.com/es/how-excel-api-works',
-      'x-default': 'https://spreadapi.com/how-excel-api-works',
+      'en': 'https://spreadapi.io/how-excel-api-works',
+      'de': 'https://spreadapi.io/de/how-excel-api-works',
+      'x-default': 'https://spreadapi.io/how-excel-api-works',
     },
   },
 };

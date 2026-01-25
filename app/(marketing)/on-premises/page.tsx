@@ -13,10 +13,10 @@ export const metadata: Metadata = {
     title: 'On-Premises & Enterprise - SpreadAPI',
     description: 'Your Excel calculations. Your infrastructure. Zero data leaves your network.',
     type: 'article',
-    url: 'https://spreadapi.com/on-premises',
+    url: 'https://spreadapi.io/on-premises',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=On-Premises%20%26%20Enterprise&description=Your%20Excel%20calculations.%20Your%20infrastructure.',
+      url: 'https://spreadapi.io/api/og?title=On-Premises%20%26%20Enterprise&description=Your%20Excel%20calculations.%20Your%20infrastructure.',
       width: 1200,
       height: 630,
       alt: 'SpreadAPI On-Premises',
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     description: 'Your Excel calculations. Your infrastructure. Zero data leaves your network.',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/on-premises',
+    canonical: 'https://spreadapi.io/on-premises',
     languages: {
-      'en': 'https://spreadapi.com/on-premises',
-      'de': 'https://spreadapi.com/de/on-premises',
-      'x-default': 'https://spreadapi.com/on-premises',
+      'en': 'https://spreadapi.io/on-premises',
+      'de': 'https://spreadapi.io/de/on-premises',
+      'x-default': 'https://spreadapi.io/on-premises',
     },
   },
 };

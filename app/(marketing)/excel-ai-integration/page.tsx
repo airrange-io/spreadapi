@@ -14,10 +14,10 @@ export const metadata: Metadata = {
     title: 'Give AI Assistants Excel Superpowers - SpreadAPI',
     description: 'Connect ChatGPT and Claude to your Excel calculations. Enable accurate, reproducible results.',
     type: 'article',
-    url: 'https://spreadapi.com/excel-ai-integration',
+    url: 'https://spreadapi.io/excel-ai-integration',
     siteName: 'SpreadAPI',
     images: [{
-      url: 'https://spreadapi.com/api/og?title=Excel%20AI%20Integration&description=Give%20AI%20assistants%20Excel%20superpowers',
+      url: 'https://spreadapi.io/api/og?title=Excel%20AI%20Integration&description=Give%20AI%20assistants%20Excel%20superpowers',
       width: 1200,
       height: 630,
       alt: 'Excel AI Integration with SpreadAPI',
@@ -29,13 +29,11 @@ export const metadata: Metadata = {
     description: 'Connect AI assistants to Excel calculations. Accurate, reproducible results.',
   },
   alternates: {
-    canonical: 'https://spreadapi.com/excel-ai-integration',
+    canonical: 'https://spreadapi.io/excel-ai-integration',
     languages: {
-      'en': 'https://spreadapi.com/excel-ai-integration',
-      'de': 'https://spreadapi.com/de/excel-ai-integration',
-      'fr': 'https://spreadapi.com/fr/excel-ai-integration',
-      'es': 'https://spreadapi.com/es/excel-ai-integration',
-      'x-default': 'https://spreadapi.com/excel-ai-integration',
+      'en': 'https://spreadapi.io/excel-ai-integration',
+      'de': 'https://spreadapi.io/de/excel-ai-integration',
+      'x-default': 'https://spreadapi.io/excel-ai-integration',
     },
   },
 };

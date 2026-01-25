@@ -3,7 +3,8 @@ import { getSortedPostsData } from '@/lib/blog';
 import { supportedLocales } from '@/lib/translations/blog-helpers';
 
 // Marketing locales (separate from blog locales)
-const marketingLocales = ['de', 'fr', 'es'] as const;
+// Only German is actively translated for now
+const marketingLocales = ['de'] as const;
 
 // Marketing pages that have locale versions
 const localizedMarketingPages = [
@@ -13,10 +14,11 @@ const localizedMarketingPages = [
   'how-excel-api-works',
   'excel-ai-integration',
   'why-ai-fails-at-math',
+  'on-premises',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://spreadapi.com';
+  const baseUrl = 'https://spreadapi.io';
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   // Static marketing pages (English)
@@ -65,6 +67,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/pricing`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/on-premises`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/on-premises/whitepaper`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
