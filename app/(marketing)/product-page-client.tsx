@@ -1128,6 +1128,63 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               </div>
             </section>
 
+            {/* Enterprise / On-Premises Section */}
+            <section className="section-home-feature" style={{ background: '#f8f6fe' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '48px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                      <div style={{ flex: '1 1 400px', maxWidth: '560px' }}>
+                        <div className="margin-bottom margin-xsmall">
+                          {/* <div className="subheading">
+                            <div>Enterprise</div>
+                          </div> */}
+                        </div>
+                        <div className="margin-bottom margin-small">
+                          <h2>
+                            {t.enterprise.title1}<br /><span className="text-color-primary">{t.enterprise.title2}</span>
+                          </h2>
+                        </div>
+                        <p className="text-size-medium" style={{ color: '#555', lineHeight: '1.7' }}>
+                          {t.enterprise.description}
+                        </p>
+                        <div style={{ marginTop: '24px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                          <a href={locale === 'en' ? '/on-premises' : `/${locale}/on-premises`} className="button" style={{
+                            background: '#502D80',
+                            color: 'white',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            textDecoration: 'none',
+                            fontWeight: '600',
+                            fontSize: '15px'
+                          }}>
+                            {t.enterprise.cta}
+                          </a>
+                        </div>
+                      </div>
+                      <div style={{ flex: '0 0 auto' }}>
+                        <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="200" height="200" rx="20" fill="#f0e6ff" />
+                          <rect x="50" y="70" width="100" height="70" rx="6" stroke="#9333EA" strokeWidth="2" fill="white" />
+                          <rect x="60" y="82" width="80" height="6" rx="2" fill="#e9d5ff" />
+                          <rect x="60" y="94" width="80" height="6" rx="2" fill="#e9d5ff" />
+                          <rect x="60" y="106" width="60" height="6" rx="2" fill="#e9d5ff" />
+                          <circle cx="100" cy="55" r="18" stroke="#9333EA" strokeWidth="2" fill="white" />
+                          <path d="M93 55L98 60L108 50" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M70 140L70 155" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" />
+                          <path d="M100 140L100 155" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" />
+                          <path d="M130 140L130 155" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" />
+                          <rect x="60" y="155" width="80" height="12" rx="3" stroke="#9333EA" strokeWidth="2" fill="white" />
+                          <circle cx="75" cy="161" r="2.5" fill="#9333EA" />
+                          <circle cx="85" cy="161" r="2.5" fill="#9333EA" />
+                          <circle cx="95" cy="161" r="2.5" fill="#22c55e" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* CTA Section */}
             {/* <section id="cta" className="section-home-cta">
