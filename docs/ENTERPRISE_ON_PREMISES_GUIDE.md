@@ -88,7 +88,7 @@ SpreadAPI consists of two deployment models:
 
 ### Core Technology
 
-SpreadAPI uses **SpreadJS**, an enterprise-grade spreadsheet calculation engine that:
+SpreadAPI is powered by **our enterprise-grade Excel engine** that:
 
 - Supports **500+ Excel functions** including modern array functions (XLOOKUP, FILTER, SORT, UNIQUE, SEQUENCE, LET, LAMBDA)
 - Handles complex dependencies, circular references, and iterative calculations
@@ -113,7 +113,7 @@ SpreadAPI Runtime is a **lightweight, self-contained calculation server** design
 │   │  • Web Apps      │  REST  │  ┌─────────────┐    ┌─────────────────┐  │  │
 │   │  • ERP/SAP       │◄──────►│  │  API Layer  │───►│ Calculation     │  │  │
 │   │  • CRM           │  API   │  │  (Node.js)  │    │ Engine          │  │  │
-│   │  • Automation    │        │  └─────────────┘    │ (SpreadJS)      │  │  │
+│   │  • Automation    │        │  └─────────────┘    │ (Excel Engine)  │  │  │
 │   │  • AI Agents     │        │         │           └─────────────────┘  │  │
 │   │                  │        │         ▼                                │  │
 │   └──────────────────┘        │  ┌─────────────────────────────────────┐ │  │

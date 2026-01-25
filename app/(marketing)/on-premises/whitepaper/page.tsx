@@ -165,9 +165,9 @@ export default function WhitepaperPage() {
                       <div style={{ background: '#f8f6fe', borderRadius: '12px', padding: '24px' }}>
                         <h4 style={{ fontSize: '16px', marginBottom: '12px', color: '#5b21b6' }}>Core Technology</h4>
                         <p style={{ color: '#666', lineHeight: '1.8', margin: 0 }}>
-                          SpreadAPI uses <strong>SpreadJS</strong>, an enterprise-grade spreadsheet calculation engine that
-                          supports <strong>500+ Excel functions</strong> including modern array functions (XLOOKUP, FILTER,
-                          SORT, UNIQUE, SEQUENCE, LET, LAMBDA), handles complex dependencies, and processes
+                          SpreadAPI is powered by <strong>an enterprise-grade Excel engine</strong>, supporting
+                          <strong> 500+ Excel functions</strong> including modern array functions (XLOOKUP, FILTER,
+                          SORT, UNIQUE, SEQUENCE, LET, LAMBDA). It handles complex dependencies and processes
                           calculations in milliseconds.
                         </p>
                       </div>
