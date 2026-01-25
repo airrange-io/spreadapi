@@ -55,7 +55,7 @@ export default function OnPremisesPage() {
                             </div>
                             <div className="margin-bottom margin-small">
                               <h1>
-                                Your Data. <span className="text-color-primary">Your Servers.</span>
+                                Your Data.<br /><span className="text-color-primary">Your Servers.</span>
                               </h1>
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
@@ -146,7 +146,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            Excel Powers Your Business. <span className="text-color-primary">But It Doesn&apos;t Scale.</span>
+                            Excel Powers Your Business.<br /><span className="text-color-primary">But It Doesn&apos;t Scale.</span>
                           </h2>
                           <p className="text-size-medium margin-top margin-small">
                             Your tax models, pricing engines, and compliance calculations live in Excel.
@@ -211,7 +211,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            SpreadAPI Runtime: <span className="text-color-primary">100% On-Premises</span>
+                            SpreadAPI Runtime:<br /><span className="text-color-primary">100% On-Premises</span>
                           </h2>
                           <p className="text-size-medium margin-top margin-small">
                             Build your Excel services in the browser. Deploy them on your servers.
@@ -346,7 +346,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            Zero Data Leaves <span className="text-color-primary">Your Network</span>
+                            Zero Data Leaves<br /><span className="text-color-primary">Your Network</span>
                           </h2>
                         </div>
                       </div>
@@ -457,7 +457,7 @@ export default function OnPremisesPage() {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            Enterprise Mode: <span className="text-color-primary">Disabled Cloud Save</span>
+                            Enterprise Mode:<br /><span className="text-color-primary">Disabled Cloud Save</span>
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
@@ -559,7 +559,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            Built for <span className="text-color-primary">Enterprise IT</span>
+                            Built for<br /><span className="text-color-primary">Enterprise IT</span>
                           </h2>
                         </div>
                       </div>
@@ -683,7 +683,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            Built for <span className="text-color-primary">Regulated Industries</span>
+                            Built for<br /><span className="text-color-primary">Regulated Industries</span>
                           </h2>
                         </div>
                       </div>
