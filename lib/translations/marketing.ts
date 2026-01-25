@@ -499,6 +499,7 @@ export const marketing = {
       automations: 'Automations',
       ai: 'AI',
       blog: 'Blog',
+      enterprise: 'Enterprise',
       getStarted: 'Get Started',
       home: 'Home',
     },
@@ -539,6 +540,7 @@ export const marketing = {
       automations: 'Automation',
       ai: 'KI',
       blog: 'Blog',
+      enterprise: 'Enterprise',
       getStarted: 'Loslegen',
       home: 'Start',
     },
@@ -577,6 +579,7 @@ export const marketing = {
       automations: 'Automations',
       ai: 'IA',
       blog: 'Blog',
+      enterprise: 'Enterprise',
       getStarted: 'Commencer',
       home: 'Accueil',
     },
@@ -615,6 +618,7 @@ export const marketing = {
       automations: 'Automatización',
       ai: 'IA',
       blog: 'Blog',
+      enterprise: 'Enterprise',
       getStarted: 'Empezar',
       home: 'Inicio',
     },
@@ -655,6 +659,7 @@ export type MarketingTranslations = {
     automations: string;
     ai: string;
     blog: string;
+    enterprise: string;
     getStarted: string;
     home: string;
   };
