@@ -45,6 +45,7 @@ const Footer: React.FC<FooterProps> = ({ locale = 'en', currentPath = '' }) => {
                       <a href={`${prefix}/stop-rewriting-excel-in-code`} className="footer-link">{t.footer.forDevelopers}</a>
                       <a href={`${prefix}/automation-calculations`} className="footer-link">{t.footer.forAutomations}</a>
                       <a href={`${prefix}/excel-ai-integration`} className="footer-link">{t.footer.aiIntegration}</a>
+                      <a href={`${prefix}/on-premises`} className="footer-link">{t.footer.enterprise || 'Enterprise'}</a>
                       <a href="/docs" className="footer-link">{t.footer.documentation}</a>
                       <a href="/pricing" className="footer-link">{t.footer.pricing}</a>
                     </div>

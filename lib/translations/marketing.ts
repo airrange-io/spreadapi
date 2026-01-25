@@ -511,6 +511,7 @@ export const marketing = {
       forDevelopers: 'For Developers',
       forAutomations: 'For Automations',
       aiIntegration: 'AI Integration',
+      enterprise: 'Enterprise',
       documentation: 'Documentation',
       pricing: 'Pricing',
       company: 'Company',
@@ -551,6 +552,7 @@ export const marketing = {
       forDevelopers: 'Für Entwickler',
       forAutomations: 'Für Automation',
       aiIntegration: 'KI-Integration',
+      enterprise: 'Enterprise',
       documentation: 'Dokumentation',
       pricing: 'Preise',
       company: 'Unternehmen',
@@ -590,6 +592,7 @@ export const marketing = {
       forDevelopers: 'Pour Développeurs',
       forAutomations: 'Pour Automations',
       aiIntegration: 'Intégration IA',
+      enterprise: 'Enterprise',
       documentation: 'Documentation',
       pricing: 'Tarifs',
       company: 'Entreprise',
@@ -639,6 +642,7 @@ export const marketing = {
       copyright: '© {year} Airrange.io. Todos los derechos reservados.',
       privacyPolicy: 'Privacidad',
       termsOfService: 'Términos',
+      enterprise: 'Enterprise',
     },
     common: {
       getStartedFree: 'Empezar gratis',
@@ -680,6 +684,7 @@ export type MarketingTranslations = {
     copyright: string;
     privacyPolicy: string;
     termsOfService: string;
+    enterprise?: string;
   };
   common: {
     getStartedFree: string;

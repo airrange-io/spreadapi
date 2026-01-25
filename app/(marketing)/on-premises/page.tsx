@@ -683,7 +683,7 @@ export default function OnPremisesPage() {
                             </div>
                           </div>
                           <h2>
-                            Trusted by <span className="text-color-primary">Regulated Industries</span>
+                            Built for <span className="text-color-primary">Regulated Industries</span>
                           </h2>
                         </div>
                       </div>
