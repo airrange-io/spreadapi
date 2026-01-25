@@ -47,7 +47,6 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
 
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
 
       <div className="page-wrapper">

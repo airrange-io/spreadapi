@@ -46,7 +46,6 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
 
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <div className="page-wrapper">
           <Navigation currentPage="stop-rewriting-excel-in-code" locale={locale} />

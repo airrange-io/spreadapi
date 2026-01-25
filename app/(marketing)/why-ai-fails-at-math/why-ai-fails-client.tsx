@@ -17,15 +17,8 @@ export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProp
 
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <style jsx global>{`
-          .product-page,
-          .product-page * {
-            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
           /* Fix navigation padding */
           .navigation-container {
             padding: 1rem 2rem !important;

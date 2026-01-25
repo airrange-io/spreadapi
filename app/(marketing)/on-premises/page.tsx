@@ -47,7 +47,6 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
 
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <div className="page-wrapper">
           <Navigation currentPage="on-premises" locale={locale} />

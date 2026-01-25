@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ProductPageClient from '@/(marketing)/product-page-client';
+import ProductPageContent from '@/(marketing)/product-page-content';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { productFAQs } from '@/data/faq';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
@@ -153,7 +153,7 @@ export default async function LocaleProductPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
       <FAQSchema faqs={productFAQs} />
-      <ProductPageClient locale={typedLocale} />
+      <ProductPageContent locale={typedLocale} />
     </>
   );
 }

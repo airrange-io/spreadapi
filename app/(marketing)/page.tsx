@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ProductPageClient from './product-page-client';
+import ProductPageContent from './product-page-content';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { productFAQs } from '@/data/faq';
 
@@ -110,7 +110,7 @@ export default function ProductPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
       <FAQSchema faqs={productFAQs} />
-      <ProductPageClient />
+      <ProductPageContent />
     </>
   );
 }

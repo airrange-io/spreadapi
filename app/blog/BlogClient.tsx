@@ -31,13 +31,6 @@ export default function BlogClient({ posts, categories, locale = 'en', categoryM
   return (
     <div className="blog-layout">
       <style jsx global>{`
-        .blog-layout,
-        .blog-layout * {
-          font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        
         @media (max-width: 768px) {
           .blog-hero h1 {
             font-size: 2.5rem !important;

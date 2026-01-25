@@ -1,123 +1,24 @@
-'use client';
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import './product.css';
 import Footer from '@/components/product/Footer';
 import { developerFAQs } from '@/data/developer-faq';
 import ProductHeader from '@/components/product/ProductHeader';
-import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 import { getHomepageTranslations } from '@/lib/translations/marketing';
+import TourWrapper from './tour-wrapper';
 
 interface ProductPageProps {
   locale?: SupportedLocale;
 }
 
-const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
-  // Get translations for the current locale
+const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
   const t = getHomepageTranslations(locale);
 
-  // Tour ref for header "Get Started" button
-  const getStartedRef = useRef<HTMLAnchorElement>(null);
-
-  // Lazy load tour only when needed
-  const [tourState, setTourState] = useState<{
-    open: boolean;
-    steps: any[];
-    TourComponent: any;
-  } | null>(null);
-
-  // Load tour dynamically only when user hasn't seen it and button is visible
-  useEffect(() => {
-    // Check localStorage first (zero cost for returning users)
-    const tourCompleted = typeof window !== 'undefined' &&
-      localStorage.getItem('spreadapi_tour_completed_marketing-welcome-tour') === 'true';
-
-    if (tourCompleted) return;
-
-    // Check if button is visible (viewport width >= 840px)
-    const isButtonVisible = typeof window !== 'undefined' && window.innerWidth >= 840;
-    if (!isButtonVisible) return;
-
-    // Only load tour code AFTER initial page load is complete (6s delay)
-    const timer = setTimeout(async () => {
-      // Double-check button is still visible
-      if (window.innerWidth < 840) return;
-
-      try {
-        // Dynamic imports - only loaded when needed
-        const [{ marketingTour }, { Tour }] = await Promise.all([
-          import('@/tours/marketingTour'),
-          import('antd')
-        ]);
-
-        // Create tour steps with refs
-        const steps = [
-          {
-            ...marketingTour.steps[0],
-            target: () => getStartedRef.current,
-          },
-        ];
-
-        setTourState({
-          open: true,
-          steps,
-          TourComponent: Tour
-        });
-      } catch (error) {
-        console.error('Failed to load tour:', error);
-      }
-    }, 6000); // 6s delay to not impact landing page performance
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Close tour if window is resized below 840px
-  useEffect(() => {
-    if (!tourState) return;
-
-    const handleResize = () => {
-      if (window.innerWidth < 840) {
-        setTourState(null);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [tourState]);
-
-  // Handle tour close
-  const handleTourClose = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('spreadapi_tour_completed_marketing-welcome-tour', 'true');
-    }
-    setTourState(null);
-  }, []);
-
-  // Handle tour step change
-  const handleTourChange = useCallback((current: number) => {
-    // Track step changes if needed
-  }, []);
-
-
-
   return (
-    <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
-      <div className="product-page">
-        <style jsx global>{`
-          .product-page,
-          .product-page * {
-            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
-        `}</style>
-
-        <div className="page-wrapper">
-          {/* Navigation */}
-          <Navigation currentPage="product" locale={locale} getStartedRef={getStartedRef} />
+    <div className="product-page">
+      <div className="page-wrapper">
+        <TourWrapper locale={locale}>
 
           <main className="main-wrapper">
             {/* Hero Section */}
@@ -1311,27 +1212,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
 
           {/* Footer */}
           <Footer locale={locale} currentPath="" />
-        </div>
+        </TourWrapper>
       </div>
-
-      {/* Marketing Tour - Lazy Loaded */}
-      {tourState && tourState.TourComponent && (
-        <>
-          <style jsx global>{`
-            .ant-tour .ant-tour-content {
-              max-width: 400px !important;
-            }
-          `}</style>
-          <tourState.TourComponent
-            open={tourState.open}
-            onClose={handleTourClose}
-            steps={tourState.steps}
-            onChange={handleTourChange}
-          />
-        </>
-      )}
-    </>
+    </div>
   );
 };
 
-export default ProductPage;
+export default ProductPageContent;

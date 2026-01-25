@@ -24,12 +24,5 @@ export default function BlogPage() {
   const posts = getSortedPostsData();
   const categories = ['All', ...Array.from(new Set(posts.map(post => post.category)))];
 
-  return (
-    <>
-      <link rel="preload" href="/fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-      <link rel="preload" href="/fonts/Satoshi-Medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
-      <BlogClient posts={posts} categories={categories} />
-    </>
-  );
+  return <BlogClient posts={posts} categories={categories} />;
 }

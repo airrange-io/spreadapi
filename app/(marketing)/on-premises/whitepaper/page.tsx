@@ -18,7 +18,6 @@ export const metadata: Metadata = {
 export default function WhitepaperPage() {
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
         <div className="page-wrapper">
           <Navigation currentPage="on-premises" />

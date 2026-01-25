@@ -61,14 +61,11 @@ export default function FrenchBlogPage() {
   });
 
   return (
-    <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
-      <BlogClient 
-        posts={posts} 
-        categories={translatedCategories}
-        categoryMapping={reverseCategoryMapping}
-        locale="fr" 
-      />
-    </>
+    <BlogClient
+      posts={posts}
+      categories={translatedCategories}
+      categoryMapping={reverseCategoryMapping}
+      locale="fr"
+    />
   );
 }

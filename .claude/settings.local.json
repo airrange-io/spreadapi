@@ -72,7 +72,8 @@
       "Bash(npx tsc:*)",
       "Bash(PORT=3001 npm run dev:*)",
       "Bash(git show:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(head:*)"
     ],
     "deny": []
   }

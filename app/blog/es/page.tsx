@@ -61,14 +61,11 @@ export default function SpanishBlogPage() {
   });
 
   return (
-    <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
-      <BlogClient 
-        posts={posts} 
-        categories={translatedCategories}
-        categoryMapping={reverseCategoryMapping}
-        locale="es" 
-      />
-    </>
+    <BlogClient
+      posts={posts}
+      categories={translatedCategories}
+      categoryMapping={reverseCategoryMapping}
+      locale="es"
+    />
   );
 }

@@ -141,13 +141,6 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <style jsx global>{`
-        .product-page,
-        .product-page * {
-          font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        
         @media (max-width: 1024px) {
           .blog-post-container {
             grid-template-columns: 1fr !important;

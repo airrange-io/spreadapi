@@ -2,6 +2,13 @@
 .blog-layout {
   background-color: #ffffff;
   min-height: 100vh;
+  font-family: var(--font-satoshi), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.blog-layout * {
+  font-family: var(--font-satoshi), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 /* Ensure product-page class doesn't break blog styling */

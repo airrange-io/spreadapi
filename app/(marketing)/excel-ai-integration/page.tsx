@@ -47,7 +47,6 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
 
   return (
     <>
-      <link rel="stylesheet" href="/fonts/satoshi-fixed.css" />
       <div className="product-page">
 
         <div className="page-wrapper">
