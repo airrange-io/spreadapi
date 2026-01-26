@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -36,6 +36,7 @@ const IntercomScript = dynamic(() => import('../components/IntercomScript').then
 
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
+import { templates } from '@/lib/templates';
 import { useAuth } from '@/components/auth/AuthContext';
 
 const { Content } = Layout;
@@ -55,6 +56,7 @@ const ListsPage: React.FC = observer(() => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
   const [isGerman, setIsGerman] = useState(false);
 
@@ -591,7 +593,7 @@ const ListsPage: React.FC = observer(() => {
                     marginTop: isContentScrollable ? '48px' : '0',
                     paddingBottom: isContentScrollable ? '24px' : '0',
                     width: isContentScrollable ? 'auto' : '100%',
-                    maxWidth: '600px',
+                    maxWidth: '700px',
                     transition: 'all 0.3s ease',
                     zIndex: 1
                   }}>
@@ -622,6 +624,7 @@ const ListsPage: React.FC = observer(() => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '12px',
+                          flex: '1 1 0',
                           minWidth: '140px',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
@@ -679,6 +682,61 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                       </div>
 
+                      {/* Use a Sample Card */}
+                      <div
+                        onClick={() => setIsTemplateModalOpen(true)}
+                        style={{
+                          background: 'white',
+                          border: '1px solid #e8e8e8',
+                          borderRadius: '8px',
+                          padding: '16px 20px',
+                          cursor: 'pointer',
+                          color: '#262626',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          flex: '1 1 0',
+                          minWidth: '140px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(80, 45, 128, 0.15)';
+                          e.currentTarget.style.borderColor = '#502D80';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.04)';
+                          e.currentTarget.style.borderColor = '#e8e8e8';
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          background: '#f9f0ff',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="#722ed1" strokeWidth="2" fill="none"/>
+                            <line x1="3" y1="12" x2="21" y2="12" stroke="#722ed1" strokeWidth="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21" stroke="#722ed1" strokeWidth="2"/>
+                          </svg>
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
+                            {isGerman ? 'Beispiel nutzen' : 'Use a Sample'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            {isGerman ? 'Demo-Modelle testen' : 'Various demo models'}
+                          </div>
+                        </div>
+                      </div>
+
                       {/* How it Works Card */}
                       <a
                         href="/how-excel-api-works"
@@ -692,6 +750,7 @@ const ListsPage: React.FC = observer(() => {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '12px',
+                          flex: '1 1 0',
                           minWidth: '140px',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
@@ -853,6 +912,84 @@ const ListsPage: React.FC = observer(() => {
               &nbsp;
             </div>
           </div>
+        </div>
+      </Modal>
+
+      {/* Template Sample Modal */}
+      <Modal
+        open={isTemplateModalOpen}
+        onCancel={() => setIsTemplateModalOpen(false)}
+        footer={null}
+        width={640}
+        centered
+        title={isGerman ? 'Beispiel-Arbeitsmappe wählen' : 'Choose a sample workbook'}
+      >
+        <p style={{ color: '#8c8c8c', margin: '4px 0 20px' }}>
+          {isGerman
+            ? 'Wählen Sie eine Vorlage, um sofort loszulegen.'
+            : 'Pick a template to get started right away.'}
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {templates.map((template) => (
+            <div
+              key={template.id}
+              onClick={() => {
+                // TODO: create service from template
+                setIsTemplateModalOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '16px',
+                borderRadius: '10px',
+                border: '1px solid #f0f0f0',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                background: '#fff',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#faf5ff';
+                e.currentTarget.style.borderColor = '#d3adf7';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 45, 127, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.borderColor = '#f0f0f0';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '10px',
+                background: '#f9f0ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <FileExcelOutlined style={{ fontSize: '22px', color: '#722ed1' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px', color: '#262626' }}>
+                  {isGerman ? template.name.de : template.name.en}
+                </div>
+                <div style={{
+                  fontSize: '13px',
+                  color: '#8c8c8c',
+                  lineHeight: '1.4',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical' as const,
+                  overflow: 'hidden',
+                }}>
+                  {isGerman ? template.description.de : template.description.en}
+                </div>
+              </div>
+              <ArrowRightOutlined style={{ fontSize: '14px', color: '#d9d9d9', flexShrink: 0 }} />
+            </div>
+          ))}
         </div>
       </Modal>
     </>
