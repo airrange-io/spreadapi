@@ -4337,3 +4337,165 @@ export function getOnPremisesTranslations(locale: SupportedLocale) {
   }
   return onPremisesPage.en;
 }
+
+// Pricing page translations
+export const pricingPage = {
+  en: {
+    header: {
+      subheading: 'Simple, Transparent Pricing',
+      title: 'Choose the Plan That',
+      titleHighlight: 'Fits Your Needs',
+      description: 'Start free and scale as you grow. No hidden fees, no surprises. Cancel anytime.',
+    },
+    perMonth: '/month',
+    perMo: '/mo',
+    free: {
+      name: 'FREE',
+      price: '€0',
+      description: 'Perfect for testing and personal projects',
+      features: [
+        '1 Excel API',
+        '100 API calls/month',
+        'Max file size: 1 MB',
+        'Basic support',
+        'Community access',
+      ],
+      cta: 'Start Building Now',
+    },
+    pro: {
+      name: 'PRO',
+      badge: 'Most Popular',
+      price: '€99',
+      description: 'For teams and growing projects',
+      features: [
+        '10 Excel APIs',
+        '1,000 API calls/month included',
+        'Max file size: 3 MB',
+        'Priority support',
+        'AI Integration (MCP)',
+      ],
+      cta: 'Get Started',
+    },
+    premium: {
+      name: 'PREMIUM',
+      price: '€299',
+      description: 'For businesses with advanced needs',
+      features: [
+        'Unlimited Excel APIs',
+        '10,000 API calls/month included',
+        'Max file size: 25 MB',
+        'Priority support',
+        'AI Integration (MCP)',
+        'Advanced analytics',
+        'SLA guarantee',
+      ],
+      cta: 'Get Started',
+    },
+    addons: {
+      title: 'Add-ons',
+      extra10k: {
+        title: 'Extra 10K calls/month',
+        description: 'Add more API calls to any paid plan',
+        price: '€79',
+      },
+      million: {
+        title: '1M calls/month',
+        description: 'High-volume package for heavy usage',
+      },
+      onPremises: {
+        title: 'On-Premises Service Runtime',
+        description: 'Host on your own infrastructure.',
+        learnMore: 'Learn more',
+      },
+      contactSales: 'Contact Sales',
+    },
+    enterprise: {
+      title: "Need more? Let\u2019s talk Enterprise",
+      description: 'Custom pricing for large organizations with specific requirements, dedicated support, and unlimited usage.',
+      cta: 'Contact Sales',
+    },
+  },
+  de: {
+    header: {
+      subheading: 'Einfache, transparente Preise',
+      title: 'Wählen Sie den Plan, der',
+      titleHighlight: 'zu Ihnen passt',
+      description: 'Starten Sie kostenlos und skalieren Sie nach Bedarf. Keine versteckten Gebühren, keine Überraschungen. Jederzeit kündbar.',
+    },
+    perMonth: '/Monat',
+    perMo: '/Mo.',
+    free: {
+      name: 'FREE',
+      price: '€0',
+      description: 'Perfekt zum Testen und für persönliche Projekte',
+      features: [
+        '1 Excel-API',
+        '100 API-Aufrufe/Monat',
+        'Max. Dateigröße: 1 MB',
+        'Basis-Support',
+        'Community-Zugang',
+      ],
+      cta: 'Jetzt loslegen',
+    },
+    pro: {
+      name: 'PRO',
+      badge: 'Am beliebtesten',
+      price: '€99',
+      description: 'Für Teams und wachsende Projekte',
+      features: [
+        '10 Excel-APIs',
+        '1.000 API-Aufrufe/Monat inklusive',
+        'Max. Dateigröße: 3 MB',
+        'Prioritäts-Support',
+        'KI-Integration (MCP)',
+      ],
+      cta: 'Jetzt starten',
+    },
+    premium: {
+      name: 'PREMIUM',
+      price: '€299',
+      description: 'Für Unternehmen mit erweiterten Anforderungen',
+      features: [
+        'Unbegrenzte Excel-APIs',
+        '10.000 API-Aufrufe/Monat inklusive',
+        'Max. Dateigröße: 25 MB',
+        'Prioritäts-Support',
+        'KI-Integration (MCP)',
+        'Erweiterte Analysen',
+        'SLA-Garantie',
+      ],
+      cta: 'Jetzt starten',
+    },
+    addons: {
+      title: 'Zusatzoptionen',
+      extra10k: {
+        title: 'Extra 10K Aufrufe/Monat',
+        description: 'Mehr API-Aufrufe für jeden bezahlten Plan',
+        price: '€79',
+      },
+      million: {
+        title: '1M Aufrufe/Monat',
+        description: 'Hochvolumen-Paket für intensive Nutzung',
+      },
+      onPremises: {
+        title: 'On-Premises Service Runtime',
+        description: 'Betrieb auf Ihrer eigenen Infrastruktur.',
+        learnMore: 'Mehr erfahren',
+      },
+      contactSales: 'Vertrieb kontaktieren',
+    },
+    enterprise: {
+      title: 'Mehr benötigt? Sprechen wir über Enterprise',
+      description: 'Individuelle Preise für große Organisationen mit spezifischen Anforderungen, dediziertem Support und unbegrenzter Nutzung.',
+      cta: 'Vertrieb kontaktieren',
+    },
+  },
+} as const;
+
+// Helper function to get Pricing translations
+export function getPricingTranslations(locale: SupportedLocale) {
+  if (locale === 'de') {
+    return pricingPage.de;
+  }
+  return pricingPage.en;
+}

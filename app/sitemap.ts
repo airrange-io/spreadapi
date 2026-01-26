@@ -15,6 +15,7 @@ const localizedMarketingPages = [
   'excel-ai-integration',
   'why-ai-fails-at-math',
   'on-premises',
+  'pricing',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -11,6 +11,13 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://spreadapi.io/pricing',
   },
+  alternates: {
+    canonical: 'https://spreadapi.io/pricing',
+    languages: {
+      'en': 'https://spreadapi.io/pricing',
+      'de': 'https://spreadapi.io/de/pricing',
+    },
+  },
 };
 
 export default function PricingPage() {
