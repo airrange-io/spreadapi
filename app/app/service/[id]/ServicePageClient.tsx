@@ -837,9 +837,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     onChange: handleFileUpload,
   };
 
-  const handleBack = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleBack = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    if (hasAnyChanges) {
+      modal.confirm({
+        title: 'Unsaved Changes',
+        content: 'You have unsaved changes that will be lost if you leave. Do you want to continue?',
+        okText: 'Leave without saving',
+        cancelText: 'Stay',
+        okButtonProps: { danger: true },
+        onOk: () => {
+          router.push('/app');
+        },
+      });
+      return;
+    }
+
     router.push('/app');
   };
 
@@ -2000,7 +2017,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     };
   }, []);
 
-  // Warn before leaving with unsaved changes
+  // Warn before leaving with unsaved changes (tab close / refresh)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasAnyChanges) {
@@ -2012,6 +2029,42 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasAnyChanges]);
+
+  // Warn on browser back/forward button with unsaved changes
+  const backGuardPushed = useRef(false);
+  useEffect(() => {
+    if (!hasAnyChanges) {
+      backGuardPushed.current = false;
+      return;
+    }
+
+    // Push a guard entry so the first back press triggers popstate without leaving
+    if (!backGuardPushed.current) {
+      window.history.pushState({ unsavedGuard: true }, '');
+      backGuardPushed.current = true;
+    }
+
+    const handlePopState = () => {
+      backGuardPushed.current = false;
+      modal.confirm({
+        title: 'Unsaved Changes',
+        content: 'You have unsaved changes that will be lost if you leave. Do you want to continue?',
+        okText: 'Leave without saving',
+        cancelText: 'Stay',
+        okButtonProps: { danger: true },
+        onOk: () => {
+          window.history.back();
+        },
+        onCancel: () => {
+          window.history.pushState({ unsavedGuard: true }, '');
+          backGuardPushed.current = true;
+        },
+      });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [hasAnyChanges, modal]);
 
   const parametersPanel = (
     <div ref={parametersPanelRef} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -2114,7 +2167,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             <Breadcrumb
               items={[
                 {
-                  title: <a onClick={() => router.push('/app')}>Services</a>,
+                  title: <a onClick={handleBack}>Services</a>,
                 },
                 {
                   title: configLoaded ? (
