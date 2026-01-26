@@ -72,7 +72,7 @@ const Sidebar = dynamic(() => import('@/components/Sidebar'), {
   loading: () => null
 });
 
-const { Content, Sider } = Layout;
+
 const { Text } = Typography;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
@@ -2373,25 +2373,25 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       </div>
 
       {/* Main Layout */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
-        {!isMobile ? (
-          sizesLoaded ? (
+      <div className={isMobile ? 'splitter-mobile' : ''} style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
+        {isMobile && <style>{`.splitter-mobile .ant-splitter-bar { display: none !important; }`}</style>}
+        {sizesLoaded ? (
             <Splitter
               style={{ height: '100%' }}
-              onResize={handlePanelResize}
+              onResize={!isMobile ? handlePanelResize : undefined}
             >
-              <Splitter.Panel collapsible defaultSize={panelSizes[0] + '%'} min="20%" max="50%" style={{ backgroundColor: '#ffffff' }}>
+              <Splitter.Panel collapsible size={isMobile ? '0%' : panelSizes[0] + '%'} min={isMobile ? '0%' : '20%'} max={isMobile ? '0%' : '50%'} resizable={!isMobile} style={{ backgroundColor: '#ffffff', ...(isMobile ? { overflow: 'hidden', padding: 0 } : {}) }}>
                 <div style={{
                   height: '100%',
                   background: 'white',
                   overflow: 'hidden',
-                  display: 'flex',
+                  display: isMobile ? 'none' : 'flex',
                   flexDirection: 'column'
                 }}>
                   {parametersPanel}
                 </div>
               </Splitter.Panel>
-              <Splitter.Panel collapsible style={{ paddingLeft: 10, backgroundColor: '#ffffff' }} defaultSize={panelSizes[1] + '%'} min="50%" max="80%">
+              <Splitter.Panel collapsible style={{ paddingLeft: isMobile ? 0 : 10, backgroundColor: '#ffffff' }} size={isMobile ? '100%' : panelSizes[1] + '%'} min={isMobile ? '100%' : '50%'} max={isMobile ? '100%' : '80%'}>
                 <ErrorBoundary>
                   <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
                     {/* Workbook View */}
@@ -2543,151 +2543,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 <Spin spinning={true} style={{ marginTop: 100 }} />
               </div>
             </div>
-          )
-        ) : (
-          <Layout style={{ height: '100%', overflow: 'auto', backgroundColor: '#ffffff' }}>
-            <Content style={{ overflow: 'auto', position: 'relative', backgroundColor: '#ffffff' }}>
-              {/* Mobile View Switching */}
-              <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
-                {/* Workbook View */}
-                <div style={{
-                  display: activeView === 'Workbook' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  {workbookLoading ? (
-                    <div style={{
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#ffffff'
-                    }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <Spin size="default" />
-                        <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <WorkbookView
-                      ref={workbookRef}
-                      spreadsheetData={memoizedSpreadsheetData}
-                      showEmptyState={showEmptyState}
-                      isDemoMode={isDemoMode}
-                      zoomLevel={zoomLevel}
-                      onWorkbookInit={handleWorkbookInit}
-                      onWorkbookDataLoaded={handleWorkbookDataLoaded}
-                      onEmptyStateAction={(action, file) => {
-                        if (action === 'start') {
-                          setShowEmptyState(false);
-                          setDefaultSpreadsheetData();
-                        } else if (action === 'import' && file) {
-                          setShowEmptyState(false);
-                          handleEmptyStateImport(file);
-                        }
-                      }}
-                      onZoomHandlerReady={setZoomHandlerRef}
-                      onEditableAreaAdd={handleEditableAreaAdd}
-                      onEditableAreaUpdate={handleEditableAreaUpdate}
-                      onEditableAreaRemove={handleEditableAreaRemove}
-                      onImportExcel={handleImportExcel}
-                      onWorkbookChange={handleWorkbookChange}
-                      onImportServicePackage={handleImportServicePackage}
-                    />
-                  )}
-                </div>
-
-                {/* API View */}
-                <div style={{
-                  display: activeView === 'API' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  <ApiView
-                    serviceId={serviceId}
-                    apiConfig={apiConfig}
-                    serviceStatus={serviceStatus}
-                    availableTokens={availableTokens}
-                    isDemoMode={isDemoMode}
-                    configLoaded={configLoaded}
-                    isLoading={!configLoaded}
-                    hasUnsavedChanges={configHasChanges}
-                    onRequireTokenChange={(value) => {
-                      handleConfigChange({ requireToken: value });
-                    }}
-                    onTokenCountChange={setTokenCount}
-                    onTokensChange={setAvailableTokens}
-                    onConfigChange={handleConfigChange}
-                  />
-                </div>
-
-                {/* Apps View */}
-                <div style={{
-                  display: activeView === 'Apps' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  <AppsView
-                    serviceId={serviceId}
-                    apiConfig={apiConfig}
-                    serviceStatus={serviceStatus}
-                    isDemoMode={isDemoMode}
-                    configLoaded={configLoaded}
-                    isLoading={!configLoaded}
-                    hasUnsavedChanges={configHasChanges}
-                    onConfigChange={handleConfigChange}
-                  />
-                </div>
-
-                {/* Agents View */}
-                <div style={{
-                  display: activeView === 'Agents' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  <AgentsView
-                    serviceId={serviceId}
-                    apiConfig={apiConfig}
-                    serviceStatus={serviceStatus}
-                    isDemoMode={isDemoMode}
-                    configLoaded={configLoaded}
-                    isLoading={!configLoaded}
-                    hasUnsavedChanges={configHasChanges}
-                    onConfigChange={handleConfigChange}
-                  />
-                </div>
-
-                {/* Settings View */}
-                <div style={{
-                  display: activeView === 'Settings' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  <SettingsView
-                    apiConfig={apiConfig}
-                    spreadsheetData={spreadsheetData}
-                    workbookLoaded={workbookLoaded}
-                    serviceId={serviceId}
-                    serviceStatus={serviceStatus}
-                    availableTokens={availableTokens}
-                    isDemoMode={isDemoMode}
-                    isLoading={!configLoaded}
-                    onConfigChange={handleConfigChange}
-                    onTokensChange={setAvailableTokens}
-                    onTokenCountChange={setTokenCount}
-                  />
-                </div>
-
-                {/* Usage View */}
-                <div style={{
-                  display: activeView === 'Usage' ? 'block' : 'none',
-                  height: '100%'
-                }}>
-                  <UsageView
-                    serviceId={serviceId}
-                    serviceStatus={serviceStatus}
-                    configLoaded={configLoaded}
-                  />
-                </div>
-              </div>
-            </Content>
-          </Layout>
-        )}
+          )}
       </div>
 
       {/* Mobile Drawer */}
