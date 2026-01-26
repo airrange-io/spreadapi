@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { putBlob, delBlob } from '../../../../lib/blob-client';
 import redis from '../../../../lib/redis';
-import { isDemoService } from '@/lib/constants';
+
 
 // Optimized PUT /api/workbook/[id] - Save workbook with better performance
 export async function PUT(request, { params }) {
@@ -86,8 +86,8 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    // Verify ownership (allow any authenticated user to access demo services)
-    if (service.userId !== userId && !isDemoService(id)) {
+    // Verify ownership
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

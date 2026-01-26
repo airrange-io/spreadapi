@@ -2,13 +2,11 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
-import { EditOutlined, DeleteOutlined, PlayCircleOutlined, CalendarOutlined, BarChartOutlined, LineChartOutlined, MoreOutlined, CopyOutlined, ExportOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
-import { DEMO_SERVICE_ID, DEMO_SERVICE_IDS, isDemoService } from '@/lib/constants';
-import { DEMO_SERVICES } from '@/lib/demoServices';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface Service {
   id: string;
@@ -36,10 +34,8 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [loading, setLoading] = useState(isAuthenticated === null);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
-  const [hideDemoService, setHideDemoService] = useState(false);
   const loadingRef = useRef(false);
   const searchQueryRef = useRef(searchQuery);
-  const hideDemoServiceRef = useRef(hideDemoService);
 
   // Keep refs updated
   useEffect(() => {
@@ -47,14 +43,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }, [searchQuery]);
 
   useEffect(() => {
-    hideDemoServiceRef.current = hideDemoService;
-  }, [hideDemoService]);
-
-  useEffect(() => {
-    // Check if demo service should be hidden
-    const shouldHideDemo = localStorage.getItem('hideDemoService') === 'true';
-    setHideDemoService(shouldHideDemo);
-
     // Only load services once when auth state is determined
     if (isAuthenticated !== null) {
       loadServices();
@@ -104,8 +92,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
-  const loadServices = async (forceHideDemo?: boolean) => {
-    const shouldHideDemo = forceHideDemo !== undefined ? forceHideDemo : hideDemoServiceRef.current;
+  const loadServices = async () => {
     // Prevent duplicate calls
     if (loadingRef.current) {
       return;
@@ -115,38 +102,10 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       loadingRef.current = true;
       setLoading(true);
 
-      // If not authenticated, show demo services
+      // If not authenticated, show empty state
       if (isAuthenticated === false) {
-        const demoServices: Service[] = DEMO_SERVICES.map(demo => ({
-          id: demo.id,
-          name: demo.name,
-          description: demo.description,
-          status: 'published' as const,
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: new Date().toISOString(),
-          calls: 0,
-          lastUsed: null
-        }));
-
-        // Fetch actual analytics for demo services
-        try {
-          const analyticsResponse = await fetch(`/api/getanalytics?serviceIds=${DEMO_SERVICE_IDS.join(',')}`);
-          if (analyticsResponse.ok) {
-            const analyticsData = await analyticsResponse.json();
-            // Update demo services with actual call counts
-            demoServices.forEach((service) => {
-              const analytics = analyticsData.services?.[service.id];
-              if (analytics?.summary?.totalCalls) {
-                service.calls = analytics.summary.totalCalls;
-              }
-            });
-          }
-        } catch (error) {
-          // Error fetching demo service analytics
-        }
-
-        setServices(demoServices);
-        setFilteredServices(demoServices);
+        setServices([]);
+        setFilteredServices([]);
         setLoading(false);
         loadingRef.current = false;
         return;
@@ -176,40 +135,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       if (response.ok) {
         const data = await response.json();
         const loadedServices = data.services || [];
-
-        // Add demo services for users with 0 or 1 service (unless hidden)
-        if (loadedServices.length <= 1 && !shouldHideDemo) {
-          const demoServices: Service[] = DEMO_SERVICES.map(demo => ({
-            id: demo.id,
-            name: demo.name,
-            description: demo.description,
-            status: 'published' as const,
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: new Date().toISOString(),
-            calls: 0,
-            lastUsed: null
-          }));
-
-          // Fetch actual analytics for demo services
-          try {
-            const analyticsResponse = await fetch(`/api/getanalytics?serviceIds=${DEMO_SERVICE_IDS.join(',')}`);
-            if (analyticsResponse.ok) {
-              const analyticsData = await analyticsResponse.json();
-              // Update demo services with actual call counts
-              demoServices.forEach((service) => {
-                const analytics = analyticsData.services?.[service.id];
-                if (analytics?.summary?.totalCalls) {
-                  service.calls = analytics.summary.totalCalls;
-                }
-              });
-            }
-          } catch (error) {
-            // Error fetching demo service analytics
-          }
-
-          // Add demo services to the list
-          loadedServices.push(...demoServices);
-        }
 
         setServices(loadedServices);
         // Initialize filtered services with all services if no search query
@@ -279,7 +204,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     router.push(`/app/service/${serviceId}`);
   }, [router]);
 
-
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -298,7 +222,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'name',
       render: (text: string, record: Service) => (
         <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
-          {record.id === DEMO_SERVICE_ID ? `${text}` : text}
+          {text}
           {clickedServiceId === record.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
         </Button>
       ),
@@ -382,7 +306,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   disabled: record.status === 'draft',
                 },
                 { type: 'divider' },
-                ...(record.id !== DEMO_SERVICE_ID ? [{
+                {
                   key: 'delete',
                   icon: <DeleteOutlined />,
                   label: (
@@ -401,17 +325,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     </Popconfirm>
                   ),
                   danger: true,
-                }] : [{
-                  key: 'remove-demo',
-                  icon: <DeleteOutlined />,
-                  label: 'Remove this demo service',
-                  onClick: () => {
-                    localStorage.setItem('hideDemoService', 'true');
-                    setHideDemoService(true);
-                    loadServices(true);
-                    message.success('Demo service removed from your list');
-                  },
-                }]),
+                },
               ],
             }}
             trigger={['click']}
@@ -453,7 +367,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       );
     }
 
-    // This empty state should only show if authenticated but no services (including demo)
     if (isAuthenticated === true) {
       return (
         <Empty
@@ -461,28 +374,16 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           description="No APIs created yet"
           style={{ marginTop: 180 }}
         >
-          <Space orientation="vertical" align="center">
-            <Button type="primary" onClick={() => {
-              const newId = generateServiceId(userId);
-              router.push(`/app/service/${newId}`);
-            }}>
-              Create Your First Service
-            </Button>
-            {hideDemoService && (
-              <Button type="link" onClick={() => {
-                localStorage.removeItem('hideDemoService');
-                setHideDemoService(false);
-                loadServices(false);
-              }}>
-                Show demo service
-              </Button>
-            )}
-          </Space>
+          <Button type="primary" onClick={() => {
+            const newId = generateServiceId(userId);
+            router.push(`/app/service/${newId}`);
+          }}>
+            Create Your First Service
+          </Button>
         </Empty>
       );
     }
 
-    // For unauthenticated users, we should have the demo service
     return null;
   }
 
@@ -587,25 +488,23 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                         </Text>
                       </Space>
 
-                      {service.id !== DEMO_SERVICE_ID && (
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Popconfirm
-                            title="Delete this service?"
-                            description="This action cannot be undone."
-                            onConfirm={() => handleDelete(service.id, service.name)}
-                            okText="Yes"
-                            cancelText="No"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <Button
-                              type="text"
-                              danger
-                              icon={<DeleteOutlined />}
-                              size="small"
-                            />
-                          </Popconfirm>
-                        </div>
-                      )}
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Popconfirm
+                          title="Delete this service?"
+                          description="This action cannot be undone."
+                          onConfirm={() => handleDelete(service.id, service.name)}
+                          okText="Yes"
+                          cancelText="No"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            size="small"
+                          />
+                        </Popconfirm>
+                      </div>
                     </div>
 
                     {service.calls > 0 && (

@@ -73,7 +73,8 @@
       "Bash(PORT=3001 npm run dev:*)",
       "Bash(git show:*)",
       "Bash(git diff:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }

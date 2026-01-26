@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -59,7 +59,7 @@ const ListsPage: React.FC = observer(() => {
   const [isGerman, setIsGerman] = useState(false);
 
   // Tour refs
-  const demoServicesRef = useRef<HTMLDivElement>(null);
+  const serviceListRef = useRef<HTMLDivElement>(null);
   const newServiceButtonRef = useRef<HTMLButtonElement>(null);
   const chatButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -94,7 +94,7 @@ const ListsPage: React.FC = observer(() => {
         const steps = [
           {
             ...appTour.steps[0],
-            target: () => demoServicesRef.current,
+            target: () => serviceListRef.current,
           },
           {
             ...appTour.steps[1],
@@ -573,7 +573,7 @@ const ListsPage: React.FC = observer(() => {
                   />
                 </div>
                 {/* Service List */}
-                <div ref={demoServicesRef}>
+                <div ref={serviceListRef}>
                   {isClient ? (
                     <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
                   ) : (

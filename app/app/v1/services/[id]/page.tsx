@@ -4,8 +4,6 @@ import { headers } from 'next/headers';
 import redis from '@/lib/redis';
 import WebAppClient from './WebAppClient';
 import { VIEW_THEMES, applyThemeOverrides, type ViewTheme, generateWebAppThemeCSS, DEFAULT_WEBAPP_CSS } from '@/lib/viewThemes';
-import { isDemoService } from '@/lib/constants';
-
 interface PageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ token?: string; theme?: string; [key: string]: string | string[] | undefined }>;
@@ -47,11 +45,8 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
   const acceptLanguage = headersList.get('accept-language');
   const t = getTranslations(acceptLanguage);
 
-  // Check if this is a demo service (demo services allow public access without token)
-  const isDemo = isDemoService(serviceId);
-
-  // Require token for non-demo services
-  if (!token && !isDemo) {
+  // Require token
+  if (!token) {
     return (
       <div style={{
         display: 'flex',
@@ -84,59 +79,56 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       notFound();
     }
 
-    // Validate token for non-demo services
-    if (!isDemo) {
-      // Check if web app is enabled (has a token configured)
-      if (!serviceData.webAppToken) {
-        return (
+    // Check if web app is enabled (has a token configured)
+    if (!serviceData.webAppToken) {
+      return (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          padding: '16px'
+        }}>
           <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            backgroundColor: '#f5f5f5',
-            padding: '16px'
+            maxWidth: '600px',
+            width: '100%',
+            padding: '24px 32px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{
-              maxWidth: '600px',
-              width: '100%',
-              padding: '24px 32px',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.notEnabled}</div>
-              <div style={{ color: '#666' }}>{t.enableInSettings}</div>
-            </div>
+            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.notEnabled}</div>
+            <div style={{ color: '#666' }}>{t.enableInSettings}</div>
           </div>
-        );
-      }
+        </div>
+      );
+    }
 
-      // Validate token matches
-      if (serviceData.webAppToken !== token) {
-        return (
+    // Validate token matches
+    if (serviceData.webAppToken !== token) {
+      return (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5',
+          padding: '16px'
+        }}>
           <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            backgroundColor: '#f5f5f5',
-            padding: '16px'
+            maxWidth: '600px',
+            width: '100%',
+            padding: '24px 32px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{
-              maxWidth: '600px',
-              width: '100%',
-              padding: '24px 32px',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.invalidToken}</div>
-              <div style={{ color: '#666' }}>{t.checkUrl}</div>
-            </div>
+            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.invalidToken}</div>
+            <div style={{ color: '#666' }}>{t.checkUrl}</div>
           </div>
-        );
-      }
+        </div>
+      );
     }
 
     // Parse inputs and outputs

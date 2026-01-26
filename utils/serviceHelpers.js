@@ -54,11 +54,7 @@ export async function getServiceDetails(serviceId, userId = null) {
     
     // Verify ownership if userId is provided
     if (userId && serviceData.userId !== userId) {
-      // Check for demo service access
-      const isDemoService = serviceId.startsWith('demoservice_');
-      if (!isDemoService) {
-        return null; // Unauthorized
-      }
+      return null; // Unauthorized
     }
     
     // Parse JSON fields safely

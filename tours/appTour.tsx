@@ -17,10 +17,10 @@ export const appTour: TourDefinition = {
       description: (
         <div>
           <p style={{ marginBottom: 12 }}>
-            These are <strong>example services</strong> showing how SpreadAPI works.
+            This is your <strong>service dashboard</strong> where all your Excel APIs will appear.
           </p>
           <p style={{ margin: 0 }}>
-            Click any service to explore its parameters, workbook, API endpoints, and web apps in action.
+            Each service lets you expose Excel workbook calculations as API endpoints.
           </p>
         </div>
       ),

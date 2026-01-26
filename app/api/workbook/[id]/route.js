@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { putBlob, delBlob } from '../../../../lib/blob-client';
 import redis from '../../../../lib/redis';
-import { isDemoService } from '@/lib/constants';
+
 
 // GET /api/workbook/[id] - Retrieve workbook from blob storage
 export async function GET(request, { params }) {
@@ -33,8 +33,8 @@ export async function GET(request, { params }) {
     }
     
     
-    // Verify ownership (allow any authenticated user to access demo services)
-    if (service.userId !== userId && !isDemoService(id)) {
+    // Verify ownership
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -193,8 +193,8 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
     
-    // Verify ownership (allow any authenticated user to access demo services)
-    if (service.userId !== userId && !isDemoService(id)) {
+    // Verify ownership
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
@@ -307,8 +307,8 @@ export async function DELETE(request, { params }) {
       }, { status: 400 });
     }
     
-    // Verify ownership (allow any authenticated user to access demo services)
-    if (service.userId !== userId && !isDemoService(id)) {
+    // Verify ownership
+    if (service.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

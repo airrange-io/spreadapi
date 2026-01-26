@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { generateToken, generateTokenId, hashToken } from '@/utils/tokenUtils';
-import { isDemoService } from '@/lib/constants';
+
 
 // GET /api/services/[id]/tokens - List all tokens for a service
 export async function GET(request, { params }) {
@@ -36,8 +36,8 @@ export async function GET(request, { params }) {
     
     console.log(`[TOKENS] Service owner: ${serviceUserId}, Current user: ${currentUserId}`);
     
-    // Allow any authenticated user to access demo service tokens
-    if (serviceUserId !== currentUserId && !isDemoService(id)) {
+    // Verify ownership
+    if (serviceUserId !== currentUserId) {
       console.log(`[TOKENS] Access denied. Owner: ${serviceUserId}, User: ${currentUserId}`);
       console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });

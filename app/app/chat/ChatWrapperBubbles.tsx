@@ -9,7 +9,6 @@ import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useAppStore } from '@/shared/hooks/useAppStore';
-import { DEMO_SERVICES } from '@/lib/demoServices';
 import dynamic from 'next/dynamic';
 import markdownit from 'markdown-it';
 import './chat.css';
@@ -176,37 +175,19 @@ export default function ChatWrapperBubbles() {
               description: s.description || 'Spreadsheet calculation service'
             }));
           
-          if (loadedServices.length === 0) {
-            loadedServices = DEMO_SERVICES;
-          }
-          
           setUserServices(loadedServices);
-          
+
           // Auto-select if only one service available
           if (loadedServices.length === 1) {
             setSelectedService(loadedServices[0].id);
-            // Fetch details for auto-selected service
             fetchServiceDetails(loadedServices[0].id);
-            
           }
         } else {
-          // If API fails, use demo services
-          setUserServices(DEMO_SERVICES);
-          // Auto-select if only one demo service
-          if (DEMO_SERVICES.length === 1) {
-            setSelectedService(DEMO_SERVICES[0].id);
-            
-            // No auto-greeting
-          }
+          setUserServices([]);
         }
       } catch (error) {
         console.error('Failed to load services:', error);
-        // On error, use demo services as fallback
-        setUserServices(DEMO_SERVICES);
-        // Auto-select if only one demo service
-        if (DEMO_SERVICES.length === 1) {
-          setSelectedService(DEMO_SERVICES[0].id);
-        }
+        setUserServices([]);
       } finally {
         setLoadingServices(false);
       }
@@ -421,16 +402,13 @@ export default function ChatWrapperBubbles() {
               options={availableServices.map(service => ({
                 value: service.id,
                 label: (
-                  <span style={{ fontSize: 14 }}>{service.icon} {service.name}</span>
+                  <span style={{ fontSize: 14 }}>{service.name}</span>
                 ),
                 children: (
-                  <Space>
-                    <span>{service.icon}</span>
-                    <div>
-                      <div style={{ fontWeight: 500, fontSize: 14 }}>{service.name}</div>
-                      <div style={{ fontSize: 12, color: '#8c8c8c' }}>{service.description}</div>
-                    </div>
-                  </Space>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>{service.name}</div>
+                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>{service.description}</div>
+                  </div>
                 )
               }))}
             />

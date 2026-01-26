@@ -62,7 +62,6 @@ const TestPanel = dynamic(() => import('./components/TestPanel'), {
 
 import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_LIMITS } from '@/utils/publishService';
 import { appStore } from '../../../stores/AppStore';
-import { isDemoService } from '@/lib/constants';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 
@@ -149,7 +148,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [testPanelOpen, setTestPanelOpen] = useState(false); // Test panel state
   const [workbookLoading, setWorkbookLoading] = useState(false); // Track workbook loading state
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
-  const [isDemoMode, setIsDemoMode] = useState(false); // Track if this is the demo service
+  const isDemoMode = false; // TODO: Re-wire for template onboarding
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
@@ -537,10 +536,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Process combined service data
         if (fullDataResponse.ok && fullDataResponse.status !== 204) {
           const data = await fullDataResponse.json();
-
-          // Check if this is a demo service
-          const isDemo = isDemoService(serviceId);
-          setIsDemoMode(isDemo);
 
           // Check if this is the full endpoint response or regular endpoint
           const isFullEndpoint = data.service && data.status;
@@ -2227,17 +2222,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             )
           )}
 
-          {/* Demo Mode Tag - Hidden on mobile */}
-          {isDemoMode && !isMobile && (
-            <Tag color='geekblue' style={{
-              cursor: 'default',
-              fontSize: '12px',
-              padding: '4px 12px',
-              marginRight: 0
-            }}>
-              Demo Mode
-            </Tag>
-          )}
           <Dropdown
             menu={{
               items: [
