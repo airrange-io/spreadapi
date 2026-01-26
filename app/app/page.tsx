@@ -36,7 +36,7 @@ const IntercomScript = dynamic(() => import('../components/IntercomScript').then
 
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
-import { templates } from '@/lib/templates';
+import { templates, type Template } from '@/lib/templates';
 import { useAuth } from '@/components/auth/AuthContext';
 
 const { Content } = Layout;
@@ -401,6 +401,68 @@ const ListsPage: React.FC = observer(() => {
       setIsCreatingService(false);
     }
   }, [isAuthenticated, router, user?.id, messageApi]);
+
+  // Template selection handler
+  const handleTemplateSelect = useCallback(async (template: Template) => {
+    if (!isAuthenticated) {
+      messageApi.warning(isGerman ? 'Bitte melden Sie sich an' : 'Please sign in to use templates');
+      router.push('/login?returnTo=/app');
+      return;
+    }
+
+    setIsTemplateModalOpen(false);
+    setIsCreatingService(true);
+
+    try {
+      // Download workbook from Vercel Blob
+      const response = await fetch(template.fileUrl);
+      if (!response.ok) throw new Error('Failed to download template');
+      const blob = await response.blob();
+
+      // Create a File object matching the drag-and-drop flow
+      const urlPath = template.fileUrl.split('/').pop() || 'template.xlsx';
+      const fileName = decodeURIComponent(urlPath);
+      const file = new File([blob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      // Store file globally (same as drag-and-drop)
+      (window as any).__draggedFile = file;
+      sessionStorage.setItem('draggedFileData', JSON.stringify({
+        fileName: file.name,
+        fileType: 'excel',
+        fileSize: file.size,
+        timestamp: Date.now(),
+      }));
+
+      // Generate service ID and name
+      const newId = generateServiceId(user?.id);
+      const templateName = isGerman ? template.name.de : template.name.en;
+      const date = new Date();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const serviceName = `${templateName} - ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+      // Create service in backend
+      const createResponse = await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newId,
+          name: serviceName,
+          description: isGerman ? template.description.de : template.description.en,
+        }),
+      });
+
+      if (createResponse.ok || createResponse.status === 409) {
+        router.push(`/app/service/${newId}?fileDropped=true`);
+      } else {
+        throw new Error('Failed to create service');
+      }
+    } catch (error) {
+      console.error('Error creating service from template:', error);
+      messageApi.error(isGerman ? 'Fehler beim Erstellen des Service' : 'Failed to create service from template');
+      delete (window as any).__draggedFile;
+      setIsCreatingService(false);
+    }
+  }, [isAuthenticated, isGerman, messageApi, router, user?.id]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
@@ -933,10 +995,7 @@ const ListsPage: React.FC = observer(() => {
           {templates.map((template) => (
             <div
               key={template.id}
-              onClick={() => {
-                // TODO: create service from template
-                setIsTemplateModalOpen(false);
-              }}
+              onClick={() => handleTemplateSelect(template)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
