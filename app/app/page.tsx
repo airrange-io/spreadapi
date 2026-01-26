@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal } from 'antd';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin } from 'antd';
 import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
@@ -36,7 +36,7 @@ const IntercomScript = dynamic(() => import('../components/IntercomScript').then
 
 import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
-import { templates, type Template } from '@/lib/templates';
+import type { Template } from '@/lib/templates';
 import { useAuth } from '@/components/auth/AuthContext';
 
 const { Content } = Layout;
@@ -57,11 +57,13 @@ const ListsPage: React.FC = observer(() => {
   const [isCreatingService, setIsCreatingService] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [loadedTemplates, setLoadedTemplates] = useState<Template[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
   const [isGerman, setIsGerman] = useState(false);
 
   // Tour refs
   const serviceListRef = useRef<HTMLDivElement>(null);
+  const onboardingCardsRef = useRef<HTMLDivElement>(null);
   const newServiceButtonRef = useRef<HTMLButtonElement>(null);
   const chatButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -96,7 +98,7 @@ const ListsPage: React.FC = observer(() => {
         const steps = [
           {
             ...appTour.steps[0],
-            target: () => serviceListRef.current,
+            target: () => onboardingCardsRef.current,
           },
           {
             ...appTour.steps[1],
@@ -159,6 +161,14 @@ const ListsPage: React.FC = observer(() => {
       setSelectedVideoId(german ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
     }
   }, []);
+
+  // Lazy-load template data only when the modal opens
+  useEffect(() => {
+    if (!isTemplateModalOpen || loadedTemplates.length > 0) return;
+    import('@/lib/templates').then(({ templates }) => {
+      setLoadedTemplates(templates);
+    });
+  }, [isTemplateModalOpen, loadedTemplates.length]);
 
   // Load Wistia script when video modal opens
   useEffect(() => {
@@ -452,7 +462,7 @@ const ListsPage: React.FC = observer(() => {
       });
 
       if (createResponse.ok || createResponse.status === 409) {
-        router.push(`/app/service/${newId}?fileDropped=true`);
+        router.push(`/app/service/${newId}?templateId=${template.id}`);
       } else {
         throw new Error('Failed to create service');
       }
@@ -537,17 +547,19 @@ const ListsPage: React.FC = observer(() => {
 
               {/* Right side - Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
-                {/* Chat Button */}
-                <Button
-                  ref={chatButtonRef}
-                  variant='filled'
-                  color="default"
-                  icon={<MessageOutlined />}
-                  onClick={() => router.push('/app/chat')}
-                  title="Chat with services"
-                >
-                  <span className="desktop-text">Chat</span>
-                </Button>
+                {/* Chat Button - hidden when no services exist */}
+                {appStore.list.length > 0 && (
+                  <Button
+                    ref={chatButtonRef}
+                    variant='filled'
+                    color="default"
+                    icon={<MessageOutlined />}
+                    onClick={() => router.push('/app/chat')}
+                    title="Chat with services"
+                  >
+                    <span className="desktop-text">Chat</span>
+                  </Button>
+                )}
 
                 {/* MCP Settings Button removed - now per-service in API tab */}
 
@@ -667,7 +679,7 @@ const ListsPage: React.FC = observer(() => {
                     }}>
                       New to SpreadAPI? Get started here:
                     </p> */}
-                    <div style={{
+                    <div ref={onboardingCardsRef} style={{
                       display: 'flex',
                       gap: '12px',
                       justifyContent: 'center',
@@ -992,7 +1004,12 @@ const ListsPage: React.FC = observer(() => {
             : 'Pick a template to get started right away.'}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {templates.map((template) => (
+          {loadedTemplates.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <Spin size="small" />
+            </div>
+          )}
+          {loadedTemplates.map((template) => (
             <div
               key={template.id}
               onClick={() => handleTemplateSelect(template)}

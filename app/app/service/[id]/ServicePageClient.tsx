@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
+import type { Template } from '@/lib/templates';
 import ParametersPanel from './components/ParametersPanel';
 import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
@@ -76,6 +77,7 @@ const { Text } = Typography;
 
 export default function ServicePageClient({ serviceId }: { serviceId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const workbookRef = useRef<any>(null);
   const { message, modal } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
@@ -148,7 +150,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [testPanelOpen, setTestPanelOpen] = useState(false); // Test panel state
   const [workbookLoading, setWorkbookLoading] = useState(false); // Track workbook loading state
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
-  const isDemoMode = false; // TODO: Re-wire for template onboarding
+  const templateId = searchParams.get('templateId');
+  const [template, setTemplate] = useState<Template | null>(null);
+  const isDemoMode = false; // Keep false — template services are fully editable
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
@@ -184,9 +188,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     TourComponent: any;
   } | null>(null);
 
+  // Lazy-load template config only when templateId is present (rare — only on template creation)
+  useEffect(() => {
+    if (!templateId) return;
+    import('@/lib/templates').then(({ templates }) => {
+      setTemplate(templates.find(t => t.id === templateId) || null);
+    });
+  }, [templateId]);
+
   // Load tour dynamically only when conditions are met and tour hasn't been completed
   useEffect(() => {
-    const shouldShowTour = isDemoMode && activeView === 'Workbook' && workbookLoaded && !isMobile;
+    const shouldShowTour = !!template && activeView === 'Workbook' && workbookLoaded && !isMobile;
 
     if (!shouldShowTour) return;
 
@@ -237,15 +249,57 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [isDemoMode, activeView, workbookLoaded]);
+  }, [template, activeView, workbookLoaded, isMobile]);
 
-  // Handle tour close
+  // Handle tour close — offer parameter auto-config for templates
   const handleTourClose = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('spreadapi_tour_completed_service-detail-tour', 'true');
     }
     setTourState(null);
-  }, []);
+
+    // If template has parameters defined, offer to set them up
+    if (template && (template.inputs.length > 0 || template.outputs.length > 0)) {
+      const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
+      modal.confirm({
+        title: isGerman ? 'Parameter einrichten?' : 'Set up parameters?',
+        content: isGerman
+          ? `Diese Vorlage enthält ${template.inputs.length} Eingabe- und ${template.outputs.length} Ausgabeparameter. Möchten Sie diese automatisch konfigurieren?`
+          : `This template includes ${template.inputs.length} input and ${template.outputs.length} output parameters. Would you like to configure them automatically?`,
+        okText: isGerman ? 'Ja, einrichten' : 'Yes, set them up',
+        cancelText: isGerman ? 'Nein, danke' : 'No thanks',
+        onOk: () => {
+          // Map template parameters to the apiConfig format
+          const inputs = template.inputs.map((inp, i) => ({
+            id: `template-input-${i}`,
+            address: inp.address,
+            name: inp.name,
+            row: inp.row,
+            col: inp.col,
+            type: inp.dataType,
+            direction: 'input' as const,
+            mandatory: true,
+            description: inp.description || '',
+            ...(inp.defaultValue !== undefined && { defaultValue: inp.defaultValue }),
+          }));
+          const outputs = template.outputs.map((out, i) => ({
+            id: `template-output-${i}`,
+            address: out.address,
+            name: out.name,
+            row: out.row,
+            col: out.col,
+            type: 'string' as const,
+            direction: 'output' as const,
+            description: out.description || '',
+            ...(out.rowCount && { rowCount: out.rowCount }),
+            ...(out.colCount && { colCount: out.colCount }),
+          }));
+          handleConfigChange({ inputs, outputs });
+          message.success(isGerman ? 'Parameter wurden konfiguriert' : 'Parameters configured successfully');
+        },
+      });
+    }
+  }, [template, modal, message]);
 
   // Handle tour step change
   const handleTourChange = useCallback((current: number) => {
