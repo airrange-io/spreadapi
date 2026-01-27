@@ -5,6 +5,8 @@ import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col
 import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
+import { deleteLocalService } from '@/lib/localServiceStorage';
+import type { LocalService } from '@/lib/localServiceStorage';
 
 const { Text, Paragraph } = Typography;
 
@@ -12,7 +14,7 @@ interface Service {
   id: string;
   name: string;
   description: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'private';
   createdAt: string;
   updatedAt: string;
   calls: number;
@@ -25,9 +27,11 @@ interface ServiceListProps {
   isAuthenticated?: boolean | null;
   onServiceCount?: (count: number) => void;
   onUseSample?: () => void;
+  localServices?: LocalService[];
+  onLocalServicesChange?: () => void;
 }
 
-export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, onServiceCount, onUseSample }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, onServiceCount, onUseSample, localServices, onLocalServicesChange }: ServiceListProps) {
   const router = useRouter();
   const { notification } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
@@ -76,26 +80,41 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     };
   }, []);
 
+  // Merge cloud services with local (private) services
+  const mergedServices = useMemo(() => {
+    const localList: Service[] = (localServices || []).map(ls => ({
+      id: ls.id,
+      name: ls.name || (ls.config as any)?.name || 'Untitled',
+      description: ls.description || (ls.config as any)?.description || '',
+      status: 'private' as const,
+      createdAt: ls.createdAt,
+      updatedAt: ls.savedAt,
+      calls: 0,
+      lastUsed: null,
+    }));
+    return [...localList, ...services];
+  }, [services, localServices]);
+
   // Filter services based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setFilteredServices(services);
+      setFilteredServices(mergedServices);
       return;
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = services.filter(service =>
+    const filtered = mergedServices.filter(service =>
       service.name.toLowerCase().includes(query) ||
       service.description.toLowerCase().includes(query) ||
       service.id.toLowerCase().includes(query)
     );
 
     setFilteredServices(filtered);
-  }, [searchQuery, services]);
+  }, [searchQuery, mergedServices]);
 
   useEffect(() => {
-    onServiceCount?.(services.length);
-  }, [services.length, onServiceCount]);
+    onServiceCount?.(mergedServices.length);
+  }, [mergedServices.length, onServiceCount]);
 
   const loadServices = async () => {
     // Prevent duplicate calls
@@ -107,10 +126,9 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       loadingRef.current = true;
       setLoading(true);
 
-      // If not authenticated, show empty state
+      // If not authenticated, clear cloud services (local services still show via mergedServices)
       if (isAuthenticated === false) {
         setServices([]);
-        setFilteredServices([]);
         setLoading(false);
         loadingRef.current = false;
         return;
@@ -127,7 +145,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       const hankoCookie = document.cookie.split('; ').find(row => row.startsWith('hanko='));
       if (!hankoCookie) {
         setServices([]);
-        setFilteredServices([]);
         setLoading(false);
         loadingRef.current = false;
         return;
@@ -142,15 +159,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         const loadedServices = data.services || [];
 
         setServices(loadedServices);
-        // Initialize filtered services with all services if no search query
-        if (!searchQueryRef.current.trim()) {
-          setFilteredServices(loadedServices);
-        }
+        // filteredServices will update via mergedServices effect
       } else {
         // Handle 401 errors
         if (response.status === 401) {
           setServices([]);
-          setFilteredServices([]);
+          // filteredServices will update via mergedServices effect
           // If we thought we were authenticated but got 401, update state
           if (isAuthenticated) {
             window.location.href = '/login';
@@ -172,6 +186,21 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   };
 
   const handleDelete = useCallback(async (serviceId: string, serviceName: string) => {
+    // Check if this is a private (local) service
+    const isPrivate = (localServices || []).some(ls => ls.id === serviceId);
+
+    if (isPrivate) {
+      try {
+        await deleteLocalService(serviceId);
+        notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
+        setFilteredServices(prev => prev.filter(s => s.id !== serviceId));
+        onLocalServicesChange?.();
+      } catch {
+        notification.error({ message: t('serviceList.deleteFailed') });
+      }
+      return;
+    }
+
     try {
       const response = await fetch(`/api/services?id=${serviceId}`, {
         method: 'DELETE',
@@ -204,7 +233,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       // Error deleting service
       notification.error({ message: t('serviceList.deleteFailed') });
     }
-  }, [notification, t, locale]);
+  }, [notification, t, locale, localServices, onLocalServicesChange]);
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
@@ -250,13 +279,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       align: 'center' as const,
       width: 100,
       render: (status: string) => (
-        <Tag color={status === 'published' ? 'green' : 'orange'}>
-          {status === 'published' ? t('serviceList.statusActive') : t('serviceList.statusDraft')}
+        <Tag color={status === 'published' ? 'green' : status === 'private' ? 'blue' : 'orange'}>
+          {status === 'published' ? t('serviceList.statusActive') : status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
         </Tag>
       ),
       filters: [
         { text: t('serviceList.filterPublished'), value: 'published' },
         { text: t('serviceList.filterDraft'), value: 'draft' },
+        { text: t('serviceList.filterPrivate'), value: 'private' },
       ],
       onFilter: (value: string, record: Service) => record.status === value,
     },
@@ -310,7 +340,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     navigator.clipboard.writeText(endpoint);
                     notification.success({ message: t('serviceList.endpointCopied') });
                   },
-                  disabled: record.status === 'draft',
+                  disabled: record.status === 'draft' || record.status === 'private',
                 },
                 { type: 'divider' },
                 {
@@ -358,7 +388,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     );
   }
 
-  if (services.length === 0 && !searchQuery) {
+  if (mergedServices.length === 0 && !searchQuery) {
     return (
         <div style={{
           display: 'flex',
@@ -505,8 +535,8 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       <Text strong>{service.name}</Text>
                       {clickedServiceId === service.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
                     </div>
-                    <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4 }}>
-                      {service.status === 'published' ? t('serviceList.statusActive') : t('serviceList.statusDraft')}
+                    <Tag color={service.status === 'published' ? 'green' : service.status === 'private' ? 'blue' : 'orange'} style={{ marginInlineEnd: 4 }}>
+                      {service.status === 'published' ? t('serviceList.statusActive') : service.status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
                     </Tag>
                   </div>
                 }

@@ -13,6 +13,8 @@ import dynamic from 'next/dynamic';
 import ServiceListSkeleton from '@/components/ServiceListSkeleton';
 import { useTranslation } from '@/lib/i18n';
 import { useEnterpriseMode } from '@/lib/useEnterpriseMode';
+import { createLocalService, listLocalServices } from '@/lib/localServiceStorage';
+import type { LocalService } from '@/lib/localServiceStorage';
 
 // Dynamically import heavy components
 const ServiceList = dynamic(() => import('@/components/ServiceList'), {
@@ -59,6 +61,16 @@ const ListsPage: React.FC = observer(() => {
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
   const { t, locale, setLocale } = useTranslation();
   const { isEnterpriseMode, setEnterpriseMode } = useEnterpriseMode();
+  const [localServices, setLocalServices] = useState<LocalService[]>([]);
+
+  // Load local services from IndexedDB
+  const refreshLocalServices = useCallback(() => {
+    listLocalServices().then(setLocalServices);
+  }, []);
+
+  useEffect(() => {
+    refreshLocalServices();
+  }, [refreshLocalServices]);
 
   // Tour refs
   const serviceListRef = useRef<HTMLDivElement>(null);
@@ -237,8 +249,8 @@ const ListsPage: React.FC = observer(() => {
     e.stopPropagation();
     setIsDragging(false);
 
-    // Check authentication
-    if (!isAuthenticated) {
+    // In cloud mode, check authentication
+    if (!isEnterpriseMode && !isAuthenticated) {
       notification.warning({ message: t('app.pleaseSignIn') });
       router.push('/login?returnTo=/app');
       return;
@@ -289,13 +301,21 @@ const ListsPage: React.FC = observer(() => {
         (window as any).__draggedFile = file;
 
         // Generate a new service ID
-        const newId = generateServiceId(user?.id);
-        
+        const newId = generateServiceId(user?.id || (isEnterpriseMode ? 'local' : 'anonymous'));
+
         // Generate automatic name based on file name
         const date = new Date();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const baseFileName = file.name.replace(/\.[^/.]+$/, ''); // Remove file extension
         const automaticName = `${baseFileName} - ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        const description = t('app.importedFrom', { fileName: file.name });
+
+        // Private mode: create locally
+        if (isEnterpriseMode) {
+          await createLocalService(newId, automaticName, description);
+          router.push(`/app/service/${newId}?fileDropped=true`);
+          return;
+        }
 
         // Create the service in the backend first
         const createResponse = await fetch('/api/services', {
@@ -306,7 +326,7 @@ const ListsPage: React.FC = observer(() => {
           body: JSON.stringify({
             id: newId,
             name: automaticName,
-            description: t('app.importedFrom', { fileName: file.name })
+            description
           })
         });
 
@@ -328,7 +348,7 @@ const ListsPage: React.FC = observer(() => {
     };
 
     reader.readAsArrayBuffer(file);
-  }, [isAuthenticated, notification, router, user?.id, t]);
+  }, [isAuthenticated, notification, router, user?.id, t, isEnterpriseMode]);
 
   // Memoized dropdown menu items
   const dropdownMenuItems = useMemo(() => {
@@ -396,6 +416,24 @@ const ListsPage: React.FC = observer(() => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Private mode: create locally without authentication
+    if (isEnterpriseMode) {
+      setIsCreatingService(true);
+      try {
+        const newId = generateServiceId(user?.id || 'local');
+        const date = new Date();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const automaticName = `Service ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        await createLocalService(newId, automaticName, '');
+        router.push(`/app/service/${newId}`);
+      } catch (error) {
+        console.error('Error creating private service:', error);
+        notification.error({ message: t('app.failedToCreateService') });
+        setIsCreatingService(false);
+      }
+      return;
+    }
+
     // Check authentication
     if (!isAuthenticated) {
       router.push('/login?returnTo=/app');
@@ -407,7 +445,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Generate a new service ID
     const newId = generateServiceId(user?.id);
-    
+
     // Generate automatic name for new service
     const date = new Date();
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -445,11 +483,12 @@ const ListsPage: React.FC = observer(() => {
       notification.error({ message: t('app.failedToCreateService') });
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, router, user?.id, notification, t]);
+  }, [isAuthenticated, router, user?.id, notification, t, isEnterpriseMode]);
 
   // Template selection handler
   const handleTemplateSelect = useCallback(async (template: Template) => {
-    if (!isAuthenticated) {
+    // In cloud mode, check authentication
+    if (!isEnterpriseMode && !isAuthenticated) {
       notification.warning({ message: t('app.pleaseSignInTemplates') });
       router.push('/login?returnTo=/app');
       return;
@@ -479,11 +518,19 @@ const ListsPage: React.FC = observer(() => {
       }));
 
       // Generate service ID and name
-      const newId = generateServiceId(user?.id);
+      const newId = generateServiceId(user?.id || (isEnterpriseMode ? 'local' : 'anonymous'));
       const templateName = (template.name as Record<string, string>)[locale] ?? template.name.en;
       const date = new Date();
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const serviceName = `${templateName} - ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+      const serviceDescription = (template.description as Record<string, string>)[locale] ?? template.description.en;
+
+      // Private mode: create locally
+      if (isEnterpriseMode) {
+        await createLocalService(newId, serviceName, serviceDescription);
+        router.push(`/app/service/${newId}?templateId=${template.id}`);
+        return;
+      }
 
       // Create service in backend
       const createResponse = await fetch('/api/services', {
@@ -492,7 +539,7 @@ const ListsPage: React.FC = observer(() => {
         body: JSON.stringify({
           id: newId,
           name: serviceName,
-          description: (template.description as Record<string, string>)[locale] ?? template.description.en,
+          description: serviceDescription,
         }),
       });
 
@@ -507,7 +554,7 @@ const ListsPage: React.FC = observer(() => {
       delete (window as any).__draggedFile;
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, locale, t, notification, router, user?.id]);
+  }, [isAuthenticated, locale, t, notification, router, user?.id, isEnterpriseMode]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
@@ -685,7 +732,7 @@ const ListsPage: React.FC = observer(() => {
                 {/* Service List */}
                 <div ref={serviceListRef}>
                   {isClient ? (
-                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} />
+                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} localServices={localServices} onLocalServicesChange={refreshLocalServices} />
                   ) : (
                     <ServiceListSkeleton viewMode={viewMode} />
                   )}

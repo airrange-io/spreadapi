@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
 import type { Template } from '@/lib/templates';
 import ParametersPanel from './components/ParametersPanel';
+import PrivateHeaderActions from './components/PrivateHeaderActions';
 import ErrorBoundary from './components/ErrorBoundary';
 import WorkbookView from './views/WorkbookView';
 import pako from 'pako';
@@ -66,7 +67,7 @@ import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 import { useTranslation } from '@/lib/i18n';
-import { useEnterpriseMode } from '@/lib/useEnterpriseMode';
+import { loadLocalService } from '@/lib/localServiceStorage';
 
 const { Text } = Typography;
 
@@ -76,7 +77,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const workbookRef = useRef<any>(null);
   const { notification, modal } = App.useApp();
   const { t, locale } = useTranslation();
-  const { isEnterpriseMode } = useEnterpriseMode();
+  const [serviceMode, setServiceMode] = useState<'cloud' | 'private' | null>(null);
+  const ENTERPRISE_HIDDEN_VIEWS = ['Agents', 'Apps', 'Usage'];
   const [isMobile, setIsMobile] = useState(false);
   const [isCompactNav, setIsCompactNav] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -188,6 +190,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     steps: any[];
     TourComponent: any;
   } | null>(null);
+
+  // Redirect to Workbook if private mode hides the active view
+  useEffect(() => {
+    if (serviceMode === 'private' && ENTERPRISE_HIDDEN_VIEWS.includes(activeView)) {
+      setActiveView('Workbook');
+    }
+  }, [serviceMode, activeView]);
 
   // Lazy-load template config only when templateId is present (rare — only on template creation)
   useEffect(() => {
@@ -888,6 +897,57 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
+      // Detect per-service mode: check IndexedDB for local service
+      setLoadingMessage(t('service.loadingServiceData'));
+      try {
+        const localService = await loadLocalService(serviceId);
+        if (localService && localService.config) {
+          // Service exists in IndexedDB → private mode
+          setServiceMode('private');
+          const data = localService.config as any;
+          const loadedConfig = {
+            name: data.name || '',
+            description: data.description || '',
+            inputs: data.inputs || [],
+            outputs: data.outputs || [],
+            areas: data.areas || [],
+            enableCaching: data.enableCaching !== false,
+            requireToken: data.requireToken === true,
+            cacheTableSheetData: data.cacheTableSheetData !== false,
+            tableSheetCacheTTL: data.tableSheetCacheTTL || 300,
+            aiDescription: data.aiDescription || '',
+            aiUsageGuidance: data.aiUsageGuidance || '',
+            aiUsageExamples: data.aiUsageExamples || [],
+            aiTags: data.aiTags || [],
+            category: data.category || '',
+            webAppToken: data.webAppToken || '',
+            webAppConfig: data.webAppConfig || '',
+            webAppTheme: data.webAppTheme || 'default',
+            customThemeParams: data.customThemeParams || ''
+          };
+          setApiConfig(loadedConfig);
+          setSavedConfig(loadedConfig);
+          setConfigLoaded(true);
+
+          // Load workbook from local storage if available
+          if (localService.workbookJSON) {
+            setSpreadsheetData(localService.workbookJSON);
+            setWorkbookLoaded(true);
+          } else {
+            setShowEmptyState(true);
+          }
+
+          setInitialLoading(false);
+          setLoadingMessage('');
+          return;
+        }
+        // No local data found → cloud mode
+        setServiceMode('cloud');
+      } catch {
+        // IndexedDB failed → assume cloud mode
+        setServiceMode('cloud');
+      }
+
       // Parallel load all data for optimal performance
       setLoadingMessage(t('service.loadingServiceData'));
 
@@ -1558,6 +1618,29 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       notification.destroy('export-package');
       notification.error({ message: t('service.packageExportFailed', { error: error.message || t('service.unknownError') }) });
     }
+  };
+
+  const handleExportForRuntimeModal = () => {
+    modal.info({
+      title: t('enterprise.publishModalTitle'),
+      closable: true,
+      maskClosable: true,
+      content: (
+        <div>
+          <p>{t('enterprise.publishModalDescription')}</p>
+          <p style={{ color: '#666', fontSize: 13, marginBottom: 12 }}>{t('enterprise.publishModalPrivacy')}</p>
+          <ol style={{ paddingLeft: 20 }}>
+            <li>{t('enterprise.publishStep1')}</li>
+            <li>{t('enterprise.publishStep2')}</li>
+            <li>{t('enterprise.publishStep3')}</li>
+          </ol>
+          <p style={{ color: '#666', fontSize: 13 }}>{t('enterprise.publishModalNote')}</p>
+        </div>
+      ),
+      okText: t('enterprise.exportRuntimePackage'),
+      okButtonProps: { disabled: !spreadInstance, icon: <DownloadOutlined /> },
+      onOk: () => handleExportForRuntime(),
+    });
   };
 
   const handleExportForRuntime = async () => {
@@ -2513,7 +2596,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 // Save view preference using helper
                 saveViewPreference(serviceId, newView);
               }}
-              options={isCompactNav ? [
+              options={(isCompactNav ? [
               {
                 value: 'Settings',
                 icon: <Tooltip title={t('service.settings')}><SettingOutlined /></Tooltip>
@@ -2545,7 +2628,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               { value: 'Agents', label: t('service.agents') },
               { value: 'Apps', label: t('service.apps') },
               { value: 'Usage', label: t('service.usage') }
-            ]}
+            ]).filter(opt => serviceMode !== 'private' || !ENTERPRISE_HIDDEN_VIEWS.includes(opt.value as string))}
             style={{ marginLeft: 'auto', marginRight: 'auto' }}
           />
           </div>
@@ -2565,179 +2648,206 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           )}
         </Space>
 
-        <Space>
-          {hasAnyChanges && !isDemoMode && (
-            <Tooltip title={
-              isEnterpriseMode
-                ? t('enterprise.cloudDisabled')
-                : configHasChanges && workbookChangeCount > 0
+        {serviceMode === 'private' ? (
+          <PrivateHeaderActions
+            serviceId={serviceId}
+            spreadInstance={spreadInstance}
+            workbookRef={workbookRef}
+            apiConfig={apiConfig}
+            hasAnyChanges={hasAnyChanges}
+            configHasChanges={configHasChanges}
+            workbookChangeCount={workbookChangeCount}
+            loading={loading}
+            setLoading={setLoading}
+            isMobile={isMobile}
+            activeView={activeView}
+            handleExportForRuntime={handleExportForRuntime}
+            handleExportToExcel={handleExportToExcel}
+            handleExportServicePackage={handleExportServicePackage}
+            handleImportExcelUpdate={handleImportExcelUpdate}
+            onSaveSuccess={(config) => {
+              setSavedConfig({ ...config });
+              setConfigHasChanges(false);
+            }}
+            onWorkbookSaveReset={() => {
+              if (workbookRef.current) {
+                workbookRef.current.resetChangeCount();
+              }
+              setWorkbookChangeCount(0);
+            }}
+          />
+        ) : (
+          <Space>
+            {hasAnyChanges && !isDemoMode && (
+              <Tooltip title={
+                configHasChanges && workbookChangeCount > 0
                   ? t('service.saveConfigAndWorkbookTooltip')
                   : configHasChanges
                     ? t('service.saveConfigTooltip')
                     : t('service.saveWorkbookTooltip')
-            }>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                loading={loading}
-                disabled={isEnterpriseMode}
-              >
-                {t('common.save')}
-              </Button>
-            </Tooltip>
-          )}
+              }>
+                <Button
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={handleSave}
+                  loading={loading}
+                >
+                  {t('common.save')}
+                </Button>
+              </Tooltip>
+            )}
 
-          {/* Desktop Publish Button - Only visible on desktop */}
-          {!isMobile && !isDemoMode && !isEnterpriseMode && (
-            serviceStatus?.published ? (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
+            {/* Desktop Publish Button - Only visible on desktop */}
+            {!isMobile && !isDemoMode && (
+              serviceStatus?.published ? (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: 'republish',
+                        label: t('service.republish'),
+                        icon: <CheckCircleOutlined />,
+                        onClick: handleRepublish,
+                        disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      },
+                      {
+                        type: 'divider' as const
+                      },
+                      {
+                        key: 'unpublish',
+                        label: t('service.unpublish'),
+                        icon: <CloseCircleOutlined />,
+                        danger: true,
+                        onClick: handleUnpublish,
+                        disabled: hasAnyChanges
+                      }
+                    ]
+                  }}
+                  trigger={['click']}
+                >
+                  <Button
+                    icon={<CheckCircleOutlined />}
+                    style={{ color: '#52c41a', borderColor: '#52c41a' }}
+                  >
+                    {t('service.published')} <DownOutlined />
+                  </Button>
+                </Dropdown>
+              ) : (
+                <Tooltip
+                  title={
+                    hasAnyChanges
+                      ? t('service.saveBeforePublishing')
+                      : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      ? t('service.defineParamsToPublish')
+                      : ''
+                  }
+                >
+                  <Button
+                    icon={<CheckCircleOutlined />}
+                    onClick={handlePublish}
+                    disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
+                  >
+                    {t('service.publish')}
+                  </Button>
+                </Tooltip>
+              )
+            )}
+
+            <Dropdown
+              menu={{
+                items: [
+                  // Publish/Draft options (only for mobile and non-demo services)
+                  ...(isMobile && !isDemoMode ? [
+                    serviceStatus?.published ? {
                       key: 'republish',
-                      label: t('service.republish'),
+                      label: t('service.republishThisService'),
                       icon: <CheckCircleOutlined />,
                       onClick: handleRepublish,
-                      disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
+                      title: hasAnyChanges
+                        ? t('service.saveBeforeRepublishing')
+                        : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                        ? t('service.defineAtLeastOneParam')
+                        : undefined
+                    } : {
+                      key: 'publish',
+                      label: t('service.publishThisService'),
+                      icon: <CheckCircleOutlined />,
+                      onClick: handlePublish,
+                      disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
+                      title: hasAnyChanges
+                        ? t('service.saveBeforePublishing')
+                        : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                        ? t('service.defineAtLeastOneParam')
+                        : undefined
                     },
-                    {
-                      type: 'divider' as const
-                    },
-                    {
+                    ...(serviceStatus?.published ? [{
                       key: 'unpublish',
-                      label: t('service.unpublish'),
+                      label: t('service.unpublishThisService'),
                       icon: <CloseCircleOutlined />,
                       danger: true,
                       onClick: handleUnpublish,
                       disabled: hasAnyChanges
+                    }] : []),
+                    {
+                      type: 'divider' as const
                     }
-                  ]
-                }}
-                trigger={['click']}
-              >
-                <Button
-                  icon={<CheckCircleOutlined />}
-                  style={{ color: '#52c41a', borderColor: '#52c41a' }}
-                >
-                  {t('service.published')} <DownOutlined />
-                </Button>
-              </Dropdown>
-            ) : (
-              <Tooltip
-                title={
-                  hasAnyChanges
-                    ? t('service.saveBeforePublishing')
-                    : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                    ? t('service.defineParamsToPublish')
-                    : ''
-                }
-              >
-                <Button
-                  icon={<CheckCircleOutlined />}
-                  onClick={handlePublish}
-                  disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
-                >
-                  {t('service.publish')}
-                </Button>
-              </Tooltip>
-            )
-          )}
-
-          <Dropdown
-            menu={{
-              items: [
-                // Publish/Draft options (only for mobile and non-demo/non-enterprise services)
-                ...(isMobile && !isDemoMode && !isEnterpriseMode ? [
-                  serviceStatus?.published ? {
-                    key: 'republish',
-                    label: t('service.republishThisService'),
-                    icon: <CheckCircleOutlined />,
-                    onClick: handleRepublish,
-                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
-                    title: hasAnyChanges
-                      ? t('service.saveBeforeRepublishing')
-                      : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                      ? t('service.defineAtLeastOneParam')
-                      : undefined
-                  } : {
-                    key: 'publish',
-                    label: t('service.publishThisService'),
-                    icon: <CheckCircleOutlined />,
-                    onClick: handlePublish,
-                    disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
-                    title: hasAnyChanges
-                      ? t('service.saveBeforePublishing')
-                      : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                      ? t('service.defineAtLeastOneParam')
-                      : undefined
+                  ] : []),
+                  {
+                    key: 'view-definition',
+                    label: t('service.viewApiDefinition'),
+                    icon: <FileExcelOutlined />,
+                    onClick: handleViewApiDefinition,
+                    disabled: !serviceStatus?.published
                   },
-                  ...(serviceStatus?.published ? [{
-                    key: 'unpublish',
-                    label: t('service.unpublishThisService'),
-                    icon: <CloseCircleOutlined />,
-                    danger: true,
-                    onClick: handleUnpublish,
-                    disabled: hasAnyChanges
-                  }] : []),
                   {
                     type: 'divider' as const
+                  },
+                  {
+                    key: 'import-excel',
+                    label: t('service.importFromExcel'),
+                    icon: <FileExcelOutlined />,
+                    onClick: () => handleImportExcelUpdate(),
+                    disabled: !spreadInstance || activeView !== 'Workbook'
+                  },
+                  {
+                    type: 'divider' as const
+                  },
+                  {
+                    key: 'export-excel',
+                    label: t('service.exportToExcel'),
+                    icon: <FileExcelOutlined />,
+                    onClick: () => handleExportToExcel()
+                  },
+                  {
+                    type: 'divider' as const
+                  },
+                  {
+                    key: 'export-package',
+                    label: t('service.exportServicePackage'),
+                    icon: <DownloadOutlined />,
+                    onClick: () => handleExportServicePackage(),
+                    disabled: !spreadInstance
+                  },
+                  {
+                    key: 'export-runtime',
+                    label: t('service.exportForRuntime'),
+                    icon: <DownloadOutlined />,
+                    onClick: () => handleExportForRuntimeModal(),
+                    disabled: !spreadInstance
                   }
-                ] : []),
-                {
-                  key: 'view-definition',
-                  label: t('service.viewApiDefinition'),
-                  icon: <FileExcelOutlined />,
-                  onClick: handleViewApiDefinition,
-                  disabled: !serviceStatus?.published
-                },
-                {
-                  type: 'divider' as const
-                },
-                {
-                  key: 'import-excel',
-                  label: t('service.importFromExcel'),
-                  icon: <FileExcelOutlined />,
-                  onClick: () => handleImportExcelUpdate(),
-                  disabled: !spreadInstance || activeView !== 'Workbook'
-                },
-                {
-                  type: 'divider' as const
-                },
-                {
-                  key: 'export-excel',
-                  label: t('service.exportToExcel'),
-                  icon: <FileExcelOutlined />,
-                  onClick: () => handleExportToExcel()
-                },
-                {
-                  type: 'divider' as const
-                },
-                {
-                  key: 'export-package',
-                  label: t('service.exportServicePackage'),
-                  icon: <DownloadOutlined />,
-                  onClick: () => handleExportServicePackage(),
-                  disabled: !spreadInstance
-                },
-                {
-                  key: 'export-runtime',
-                  label: t('service.exportForRuntime'),
-                  icon: <DownloadOutlined />,
-                  onClick: () => handleExportForRuntime(),
-                  disabled: !spreadInstance
-                }
-              ]
-            }}
-            trigger={['click']}
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              icon={<MoreOutlined />}
-            />
-          </Dropdown>
-        </Space>
+                ]
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button
+                type="text"
+                icon={<MoreOutlined />}
+              />
+            </Dropdown>
+          </Space>
+        )}
       </div>
 
       {/* Main Layout */}
