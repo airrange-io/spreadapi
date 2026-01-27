@@ -315,6 +315,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       return null;
     };
 
+    // Extract a clean format string from complex Excel formats
+    // e.g. \€#,##0.0"m";\(\€#,##0.0"m"\);"–"_) → €#,##0.0
+    const simplifyFormat = (fmt: string): string | null => {
+      // Take first section only (positive numbers)
+      let s = fmt.split(';')[0];
+      // Remove quoted text ("m", "kg", etc.)
+      s = s.replace(/"[^"]*"/g, '');
+      // Unescape currency symbols (\€ → €, \$ → $)
+      s = s.replace(/\\([€$£¥₹])/g, '$1');
+      // Remove remaining escape sequences
+      s = s.replace(/\\./g, '');
+      // Remove spacing (_X) and fill (*X) characters
+      s = s.replace(/_./g, '').replace(/\*./g, '');
+      // Remove parentheses (negative number wrapping)
+      s = s.replace(/[()]/g, '');
+      s = s.trim();
+      // Only return if it still has a number pattern
+      return /[#0]/.test(s) ? s : null;
+    };
+
     for (const cellAddr of cells) {
       try {
         const bangIndex = cellAddr.indexOf('!');
@@ -490,9 +510,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             param.type = 'string';
           }
 
-          if (cellFormat?.formatter) {
-            param.formatString = cellFormat.formatter;
-          }
+          const simplifiedFmt = cellFormat?.formatter ? simplifyFormat(cellFormat.formatter) : null;
+          if (simplifiedFmt) param.formatString = simplifiedFmt;
 
           inputs.push(param);
         } else {
@@ -511,9 +530,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             description: '',
           };
 
-          if (cellFormat?.formatter) {
-            param.formatString = cellFormat.formatter;
-          }
+          const simplifiedFmt = cellFormat?.formatter ? simplifyFormat(cellFormat.formatter) : null;
+          if (simplifiedFmt) param.formatString = simplifiedFmt;
 
           outputs.push(param);
         }

@@ -46,6 +46,6 @@ export const templates: Template[] = [
     name: { en: 'VC Reverse Valuation Model', de: 'VC Reverse-Bewertungsmodell' },
     description: { en: 'This Excel file is a venture capital valuation model designed to "backsolve" pre-money and post-money valuations for SaaS companies at Series A stage and beyond. Instead of setting a valuation directly, it calculates what the implied valuation should be based on key operating metrics.', de: 'Diese Excel-Datei ist ein Venture-Capital-Bewertungsmodell, das Pre-Money- und Post-Money-Bewertungen für SaaS-Unternehmen in der Series-A-Phase und darüber hinaus „rückrechnet". Anstatt eine Bewertung direkt festzulegen, berechnet es die implizite Bewertung basierend auf wichtigen operativen Kennzahlen.' },
     fileUrl: 'https://ug526ez8nuob7cr7.public.blob.vercel-storage.com/samples/Sample%20Valuation%20Reverse.xlsx',
-    cells: ["model!C4","model!C5","model!C6","model!c7","model!F4","model!F5","model!F6","model!F7","model!F8","model!J41:O50"],
+    cells: ["model!C4","model!C5","model!C6","model!c7","model!F4","model!F5","model!F6","model!J41:O50"],
   },
 ];
