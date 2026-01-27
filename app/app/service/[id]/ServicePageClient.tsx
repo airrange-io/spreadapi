@@ -1084,11 +1084,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     // Initial loading will be handled in a separate effect
 
-    // Show drawer on mobile after initial load
-    if (isMobile) {
-      setDrawerVisible(true);
-    }
-
     // Always load workbook to get service config (needed for ParametersPanel)
     // This only loads config, not spreadsheet data
     loadWorkbook();
@@ -1097,7 +1092,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       mounted = false;
       controller.abort();
     };
-  }, [serviceId, isMobile, isImporting]);
+  }, [serviceId, isImporting]);
+
+  // Show drawer on mobile after initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setDrawerVisible(true);
+    }
+  }, []);
 
   // Handle initial loading state based on spreadsheet data
   useEffect(() => {

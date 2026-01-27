@@ -134,25 +134,21 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
              r1EndCol < r2StartCol || r2EndCol < r1StartCol);
   };
 
+  // Track last synced config to detect real changes
+  const lastSyncedConfigRef = useRef<string>('');
+
   // Update initial data when loading completes OR when config changes
   useEffect(() => {
     if (!isLoading && initialConfig) {
-      // Check if config has changed significantly (compare lengths and first item IDs)
-      const inputsChanged =
-        initialConfig.inputs.length !== inputs.length ||
-        (initialConfig.inputs.length > 0 && inputs.length > 0 && initialConfig.inputs[0].id !== inputs[0].id) ||
-        (initialConfig.inputs.length > 0 && inputs.length === 0);
+      const serialized = JSON.stringify({
+        inputs: initialConfig.inputs,
+        outputs: initialConfig.outputs,
+        areas: initialConfig.areas
+      });
 
-      const outputsChanged =
-        initialConfig.outputs.length !== outputs.length ||
-        (initialConfig.outputs.length > 0 && outputs.length > 0 && initialConfig.outputs[0].id !== outputs[0].id) ||
-        (initialConfig.outputs.length > 0 && outputs.length === 0);
-
-      const areasChanged =
-        initialConfig.areas && initialConfig.areas.length !== areas.length;
-
-      // Initialize or re-initialize if config has changed
-      if (!hasInitialized || inputsChanged || outputsChanged || areasChanged) {
+      // Sync when config actually changed (deep comparison) or on first init
+      if (!hasInitialized || serialized !== lastSyncedConfigRef.current) {
+        lastSyncedConfigRef.current = serialized;
         setInputs(initialConfig.inputs || []);
         setOutputs(initialConfig.outputs || []);
         setAreas(initialConfig.areas || []);
