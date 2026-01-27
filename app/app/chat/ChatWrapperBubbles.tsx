@@ -11,6 +11,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { useAppStore } from '@/shared/hooks/useAppStore';
 import dynamic from 'next/dynamic';
 import markdownit from 'markdown-it';
+import { useTranslation } from '@/lib/i18n';
 import './chat.css';
 
 const Sidebar = dynamic(() => import('@/components/Sidebar'), {
@@ -97,6 +98,7 @@ const renderMarkdown: BubbleProps['messageRender'] = (content) => {
 };
 
 export default function ChatWrapperBubbles() {
+  const { t } = useTranslation();
   const router = useRouter();
   const appStore = useAppStore();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -172,7 +174,7 @@ export default function ChatWrapperBubbles() {
             .map(s => ({
               id: s.id,
               name: s.name,
-              description: s.description || 'Spreadsheet calculation service'
+              description: s.description || t('chat.defaultServiceDesc')
             }));
           
           setUserServices(loadedServices);
@@ -223,8 +225,8 @@ export default function ChatWrapperBubbles() {
 
   const generalAIOption = {
     id: 'general',
-    name: 'Select a Service',
-    description: 'Choose a calculation service to start'
+    name: t('chat.selectService'),
+    description: t('chat.selectServiceDesc')
   };
   
   const availableServices = [
@@ -302,8 +304,8 @@ export default function ChatWrapperBubbles() {
             />
             <Breadcrumb
               items={[
-                { title: <a onClick={() => router.push('/app')}>Services</a> },
-                { title: 'Chat' }
+                { title: <a onClick={() => router.push('/app')}>{t('chat.breadcrumbServices')}</a> },
+                { title: t('chat.breadcrumbChat') }
               ]}
             />
           </div>
@@ -314,14 +316,14 @@ export default function ChatWrapperBubbles() {
                 {
                   key: 'profile',
                   icon: <SettingOutlined />,
-                  label: 'Profile Settings',
+                  label: t('chat.profileSettings'),
                   onClick: () => router.push('/app/profile'),
                 },
                 { type: 'divider' as const },
                 {
                   key: 'logout',
                   icon: <LogoutOutlined />,
-                  label: 'Logout',
+                  label: t('chat.logout'),
                   onClick: () => {
                     document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                     router.push('/');
@@ -330,7 +332,7 @@ export default function ChatWrapperBubbles() {
               ] : [
                 {
                   key: 'login',
-                  label: 'Login',
+                  label: t('chat.login'),
                   onClick: () => router.push('/login?returnTo=/app/chat'),
                 },
               ]
@@ -417,7 +419,7 @@ export default function ChatWrapperBubbles() {
           {/* AI Model Selector */}
           <div style={{ marginBottom: 16 }}>
             <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
-              AI Model
+              {t('chat.aiModel')}
             </Text>
             <Select
               value={selectedModel}
@@ -465,10 +467,10 @@ export default function ChatWrapperBubbles() {
                   description={
                     <Space orientation="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
                       <Typography.Text strong style={{ fontSize: '16px' }}>
-                        Start a Conversation
+                        {t('chat.startConversation')}
                       </Typography.Text>
                       <Typography.Text type="secondary" style={{ fontSize: '13px', textAlign: 'center' }}>
-                        Ask questions to see how the AI assistant helps you
+                        {t('chat.startConversationDesc')}
                       </Typography.Text>
                       <Button
                         type="primary"
@@ -485,7 +487,7 @@ export default function ChatWrapperBubbles() {
                         }}
                         style={{ marginTop: 8 }}
                       >
-                        Get AI Examples
+                        {t('chat.getAiExamples')}
                       </Button>
                     </Space>
                   }
@@ -498,9 +500,9 @@ export default function ChatWrapperBubbles() {
                   image={<MessageOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
                   description={
                     <Space orientation="vertical" size={4}>
-                      <Typography.Text>Select a service to start chatting</Typography.Text>
+                      <Typography.Text>{t('chat.selectServicePrompt')}</Typography.Text>
                       <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                        Choose a calculation service from the dropdown above
+                        {t('chat.selectServicePromptDesc')}
                       </Typography.Text>
                     </Space>
                   }
@@ -627,7 +629,7 @@ export default function ChatWrapperBubbles() {
               <Sender
                 value={inputValue}
                 onChange={setInputValue}
-                placeholder={selectedService === 'general' ? 'Select a service to start' : 'Type or speak your calculation request...'}
+                placeholder={selectedService === 'general' ? t('chat.selectServiceToStart') : t('chat.inputPlaceholder')}
                 onSubmit={handleSend}
                 loading={isLoading}
                 onCancel={isLoading ? stop : undefined}

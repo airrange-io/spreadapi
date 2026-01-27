@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '@/lib/i18n';
 
 interface ServiceMCPSettingsProps {
   serviceId: string;
@@ -23,6 +24,7 @@ export default function ServiceMCPSettings({
   serviceName,
   needsToken
 }: ServiceMCPSettingsProps) {
+  const { t } = useTranslation();
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
 
   // Generate URLs
@@ -69,14 +71,14 @@ export default function ServiceMCPSettings({
           fontWeight: 600,
           color: '#1f1f1f'
         }}>
-          MCP Integration
+          {t('mcp.heading')}
         </h3>
         <p style={{
           margin: 0,
           fontSize: '14px',
           color: '#666'
         }}>
-          Connect this service to AI assistants via the Model Context Protocol
+          {t('mcp.headingDescription')}
         </p>
       </div>
 
@@ -89,7 +91,7 @@ export default function ServiceMCPSettings({
           fontWeight: 500,
           color: '#1f1f1f'
         }}>
-          MCP Endpoint URL
+          {t('mcp.endpointUrlLabel')}
         </label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
@@ -121,7 +123,7 @@ export default function ServiceMCPSettings({
               transition: 'all 0.2s'
             }}
           >
-            {copiedItem === 'url' ? '✓ Copied' : 'Copy'}
+            {copiedItem === 'url' ? t('mcp.copied') : t('mcp.copy')}
           </button>
         </div>
         <p style={{
@@ -129,7 +131,7 @@ export default function ServiceMCPSettings({
           fontSize: '12px',
           color: '#999'
         }}>
-          This is your service-specific MCP endpoint. Use this URL to connect ChatGPT or Claude Desktop to this service.
+          {t('mcp.endpointUrlHint')}
         </p>
       </div>
 
@@ -141,7 +143,7 @@ export default function ServiceMCPSettings({
           fontWeight: 600,
           color: '#1f1f1f'
         }}>
-          For ChatGPT
+          {t('mcp.forChatGPT')}
         </h4>
 
         <div style={{
@@ -158,16 +160,16 @@ export default function ServiceMCPSettings({
             lineHeight: '1.6'
           }}>
             <li style={{ marginBottom: '8px' }}>
-              Open ChatGPT Settings (click your profile icon)
+              {t('mcp.chatGptStep1')}
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Navigate to <strong>Apps and Connectors</strong> (or "Apps und Konnektoren")
+              {t('mcp.chatGptStep2')}
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Click <strong>Create</strong> button to add a new connector
+              {t('mcp.chatGptStep3')}
             </li>
             <li style={{ marginBottom: '8px' }}>
-              In the "MCP Server URL" field, paste:
+              {t('mcp.chatGptStep4')}
               <div style={{
                 marginTop: '8px',
                 padding: '8px',
@@ -182,18 +184,18 @@ export default function ServiceMCPSettings({
               </div>
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Select <strong>OAuth</strong> as authentication method
+              {t('mcp.chatGptStep5')}
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Click <strong>Create</strong> - ChatGPT will initiate the OAuth flow
+              {t('mcp.chatGptStep6')}
             </li>
             {needsToken && (
               <li style={{ marginBottom: '8px' }}>
-                When prompted during OAuth, enter your service token from the "API Tokens" section above
+                {t('mcp.chatGptStepToken')}
               </li>
             )}
             <li>
-              Your service will appear in the connectors list - start using it in any chat!
+              {t('mcp.chatGptStepDone')}
             </li>
           </ol>
 
@@ -207,7 +209,7 @@ export default function ServiceMCPSettings({
               fontSize: '12px',
               color: '#0050b3'
             }}>
-              ℹ️ This is a public service - no token required for ChatGPT integration
+              {t('mcp.publicServiceNote')}
             </div>
           )}
         </div>
@@ -221,7 +223,7 @@ export default function ServiceMCPSettings({
           fontWeight: 600,
           color: '#1f1f1f'
         }}>
-          For Claude Desktop
+          {t('mcp.forClaudeDesktop')}
         </h4>
 
         <div style={{
@@ -238,10 +240,10 @@ export default function ServiceMCPSettings({
             lineHeight: '1.6'
           }}>
             <li style={{ marginBottom: '8px' }}>
-              Open Claude Desktop settings
+              {t('mcp.claudeStep1')}
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Navigate to the MCP configuration file:
+              {t('mcp.claudeStep2')}
               <ul style={{ marginTop: '4px', paddingLeft: '20px', fontSize: '12px' }}>
                 <li>macOS: <code style={{
                   backgroundColor: '#fff',
@@ -258,7 +260,7 @@ export default function ServiceMCPSettings({
               </ul>
             </li>
             <li style={{ marginBottom: '8px' }}>
-              Add this configuration:
+              {t('mcp.claudeStep3')}
             </li>
           </ol>
 
@@ -291,7 +293,7 @@ export default function ServiceMCPSettings({
                 transition: 'all 0.2s'
               }}
             >
-              {copiedItem === 'claude-config' ? '✓ Copied Configuration' : 'Copy Configuration'}
+              {copiedItem === 'claude-config' ? t('mcp.copiedConfig') : t('mcp.copyConfig')}
             </button>
           </div>
 
@@ -305,12 +307,7 @@ export default function ServiceMCPSettings({
               fontSize: '12px',
               color: '#ad6800'
             }}>
-              ⚠️ Replace <code style={{
-                backgroundColor: '#fff',
-                padding: '2px 4px',
-                borderRadius: '6px',
-                fontFamily: 'monospace'
-              }}>your_service_token_here</code> with your actual service token from the "API Tokens" section above
+              {t('mcp.replaceTokenWarning')}
             </div>
           )}
 
@@ -322,10 +319,10 @@ export default function ServiceMCPSettings({
             lineHeight: '1.6'
           }}>
             <li style={{ marginBottom: '8px' }}>
-              Restart Claude Desktop
+              {t('mcp.claudeStep4')}
             </li>
             <li>
-              Your service will appear in the MCP menu
+              {t('mcp.claudeStep5')}
             </li>
           </ol>
         </div>
@@ -345,14 +342,14 @@ export default function ServiceMCPSettings({
           fontWeight: 600,
           color: '#1f1f1f'
         }}>
-          💡 Example Prompts
+          {t('mcp.examplePromptsTitle')}
         </h5>
         <p style={{
           margin: '0 0 8px 0',
           fontSize: '13px',
           color: '#666'
         }}>
-          Once connected, try asking your AI assistant:
+          {t('mcp.examplePromptsDescription')}
         </p>
         <ul style={{
           margin: 0,
@@ -361,9 +358,9 @@ export default function ServiceMCPSettings({
           color: '#1f1f1f',
           lineHeight: '1.6'
         }}>
-          <li>"What parameters does {serviceName} need?"</li>
-          <li>"Calculate with {serviceName} using [your values]"</li>
-          <li>"Compare 3 scenarios using {serviceName}"</li>
+          <li>{t('mcp.examplePrompt1', { serviceName })}</li>
+          <li>{t('mcp.examplePrompt2', { serviceName })}</li>
+          <li>{t('mcp.examplePrompt3', { serviceName })}</li>
         </ul>
       </div>
     </div>

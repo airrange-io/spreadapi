@@ -7,6 +7,7 @@ import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { SYSTEM_TEMPLATES } from '@/lib/systemTemplates';
 import { VIEW_THEMES } from '@/lib/viewThemes';
 import FullScreenPreview from '@/components/FullScreenPreview';
+import { useTranslation } from '@/lib/i18n';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -63,6 +64,8 @@ const AppsView: React.FC<AppsViewProps> = ({
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const [appRulesCollapsed, setAppRulesCollapsed] = useState(true);
 
+  const { t } = useTranslation();
+
   // Track fade-in effect separately
   useLayoutEffect(() => {
     setMounted(true);
@@ -105,7 +108,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
       // Validate structure
       if (!parsed.rules || !Array.isArray(parsed.rules)) {
-        setConfigError('Config must have a "rules" array');
+        setConfigError(t('apps.configMustHaveRules'));
         return;
       }
 
@@ -113,24 +116,24 @@ const AppsView: React.FC<AppsViewProps> = ({
       for (let i = 0; i < parsed.rules.length; i++) {
         const rule = parsed.rules[i];
         if (!rule.output && !rule.input) {
-          setConfigError(`Rule ${i + 1}: Must have either "output" or "input" field`);
+          setConfigError(t('apps.ruleMustHaveField', { index: i + 1 }));
           return;
         }
         if (rule.output && rule.input) {
-          setConfigError(`Rule ${i + 1}: Cannot have both "output" and "input" fields`);
+          setConfigError(t('apps.ruleCannotHaveBoth', { index: i + 1 }));
           return;
         }
         if (!rule.visible) {
-          setConfigError(`Rule ${i + 1}: Missing "visible" field`);
+          setConfigError(t('apps.ruleMissingVisible', { index: i + 1 }));
           return;
         }
       }
 
       setConfigError(null);
     } catch (e) {
-      setConfigError(e instanceof Error ? e.message : 'Invalid JSON');
+      setConfigError(e instanceof Error ? e.message : t('apps.invalidJson'));
     }
-  }, []);
+  }, [t]);
 
   // Handler for config change with debounced validation
   const handleConfigChange = useCallback((value: string) => {
@@ -195,11 +198,11 @@ const AppsView: React.FC<AppsViewProps> = ({
   // Handler for token deletion
   const handleDeleteToken = () => {
     Modal.confirm({
-      title: 'Disable Web App',
-      content: 'This will disable the web app and invalidate the current link. Are you sure?',
-      okText: 'Disable',
+      title: t('apps.disableWebApp'),
+      content: t('apps.disableWebAppConfirm'),
+      okText: t('apps.disable'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('apps.cancel'),
       onOk: () => {
         onConfigChange?.({ webAppToken: '' });
       }
@@ -275,23 +278,23 @@ const AppsView: React.FC<AppsViewProps> = ({
     if (selectedKey === 'intro') {
       return (
         <div>
-          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Token Management</h3>
+          <h3 style={{ marginTop: 0, marginBottom: 16 }}>{t('apps.tokenManagement')}</h3>
 
           {!webAppToken ? (
             <div>
               <p style={{ color: '#666', marginBottom: 16 }}>
-                Generate a token to enable your web app. This token will be used to authenticate access to your web application.
+                {t('apps.generateTokenDescription')}
               </p>
               <Button
                 type="primary"
                 onClick={handleGenerateToken}
                 disabled={isLoading || isDemoMode}
               >
-                Generate Token & Enable Web App
+                {t('apps.generateTokenButton')}
               </Button>
               {isDemoMode && (
                 <div style={{ marginTop: 12, color: '#666', fontSize: 12 }}>
-                  Token generation is disabled in demo mode. You can still view the Web App features.
+                  {t('apps.demoModeTokenDisabled')}
                 </div>
               )}
             </div>
@@ -299,7 +302,7 @@ const AppsView: React.FC<AppsViewProps> = ({
             <Space orientation="vertical" style={{ width: '100%' }} size={16}>
               <div>
                 <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                  Web App Token
+                  {t('apps.webAppToken')}
                 </div>
                 <Space.Compact style={{ width: '100%' }}>
                   <Input
@@ -307,14 +310,14 @@ const AppsView: React.FC<AppsViewProps> = ({
                     readOnly
                     style={{ flex: 1 }}
                   />
-                  <Tooltip title={isDemoMode ? "Disabled in demo mode" : "Regenerate token"}>
+                  <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleGenerateToken}
                       disabled={isDemoMode}
                     />
                   </Tooltip>
-                  <Tooltip title={isDemoMode ? "Disabled in demo mode" : "Disable web app"}>
+                  <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.disableWebAppTooltip')}>
                     <Button
                       danger
                       icon={<DeleteOutlined />}
@@ -324,11 +327,11 @@ const AppsView: React.FC<AppsViewProps> = ({
                   </Tooltip>
                 </Space.Compact>
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  Regenerate to revoke access to old links
+                  {t('apps.regenerateHint')}
                 </div>
                 <Alert
-                  title="Build Web Applications & Embeddable Snippets"
-                  description="Create shareable web applications and lightweight HTML snippets that display your API results. Perfect for embedding in websites, blogs, and documentation. All requests are rate limited to 1,000 requests per minute per service."
+                  title={t('apps.buildWebAppsTitle')}
+                  description={t('apps.buildWebAppsDescription')}
                   type="info"
                   style={{ marginTop: 24, marginBottom: 24, padding: '10px 10px 10px 15px' }}
                 />
@@ -345,13 +348,13 @@ const AppsView: React.FC<AppsViewProps> = ({
 
       return (
         <div>
-          <h3 style={{ marginTop: 0, marginBottom: 16 }}>Visual Theme</h3>
+          <h3 style={{ marginTop: 0, marginBottom: 16 }}>{t('apps.visualTheme')}</h3>
           <p style={{ color: '#666', fontSize: 13, marginBottom: 24 }}>
-            Choose a visual theme for your embeddable snippets and web app. The theme will be applied to all views.
+            {t('apps.themeDescription')}
           </p>
 
           <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-            Select Theme
+            {t('apps.selectTheme')}
           </div>
           <Select
             value={selectedTheme}
@@ -381,12 +384,12 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           <div style={{ marginBottom: 24 }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-              Custom Theme Parameters (Optional)
+              {t('apps.customThemeParams')}
               <Tooltip title={
                 <div style={{ fontSize: 11 }}>
-                  Override individual theme properties using URL parameter format.
+                  {t('apps.customThemeParamsTooltip')}
                   <br /><br />
-                  <strong>Example:</strong><br />
+                  <strong>{t('apps.example')}:</strong><br />
                   primaryColor=%23FF0000&resultValueFontSize=18px
                 </div>
               }>
@@ -405,13 +408,13 @@ const AppsView: React.FC<AppsViewProps> = ({
               disabled={isLoading || isDemoMode}
             />
             <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-              Enter parameters in URL format (without leading ? or &). See available parameters below.
+              {t('apps.customThemeParamsHint')}
             </div>
           </div>
 
           {hasUnsavedChanges && (
             <Alert
-              title="Remember to click the Save button at the top to save your theme settings"
+              title={t('apps.saveThemeReminder')}
               type="info"
               showIcon={false}
               style={{ fontSize: 12, padding: '8px 12px', marginBottom: 24 }}
@@ -420,10 +423,10 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           <div style={{ marginBottom: 16 }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-              Theme Preview
+              {t('apps.themePreview')}
             </div>
             <Row gutter={16}>
-              {Object.values(VIEW_THEMES).filter(t => t.id === selectedTheme).map((theme) => (
+              {Object.values(VIEW_THEMES).filter(th => th.id === selectedTheme).map((theme) => (
                 <Col span={24} key={theme.id}>
                   <Card
                     styles={{
@@ -454,11 +457,11 @@ const AppsView: React.FC<AppsViewProps> = ({
                         {theme.name} Theme
                       </div>
                       <div style={{ color: theme.styles.labelColor, fontSize: 12, marginBottom: 8 }}>
-                        Example Input
+                        {t('apps.exampleInput')}
                       </div>
                       <input
                         type="text"
-                        placeholder="Sample input field"
+                        placeholder={t('apps.sampleInputField')}
                         readOnly
                         style={{
                           width: '100%',
@@ -483,7 +486,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                           fontWeight: 500
                         }}
                       >
-                        Sample Button
+                        {t('apps.sampleButton')}
                       </button>
                     </div>
                   </Card>
@@ -494,17 +497,17 @@ const AppsView: React.FC<AppsViewProps> = ({
 
           <div style={{ marginTop: 24, padding: '16px', background: '#f9f9f9', borderRadius: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#666' }}>
-              Advanced Customization
+              {t('apps.advancedCustomization')}
             </div>
             <div style={{ fontSize: 11, color: '#999', lineHeight: '1.6' }}>
-              You can override individual theme properties by adding URL parameters:
+              {t('apps.advancedCustomizationDescription')}
               <br />
               <code style={{ fontSize: 10, background: 'white', padding: '2px 6px', borderRadius: 3, marginTop: 4, display: 'inline-block' }}>
                 &primaryColor=%23502D80&contentBorderRadius=12px
               </code>
               <br />
               <div style={{ marginTop: 8, marginBottom: 4, fontWeight: 500, color: '#666' }}>
-                Available parameters:
+                {t('apps.availableParameters')}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: 10, fontFamily: 'monospace' }}>
                 <div><strong>Container:</strong> containerBg, containerPadding</div>
@@ -524,17 +527,17 @@ const AppsView: React.FC<AppsViewProps> = ({
                 <div><strong>Spacing:</strong> sectionSpacing, inputGroupSpacing, resultItemSpacing, headerPadding</div>
               </div>
               <div style={{ marginTop: 8, fontSize: 10, color: '#999' }}>
-                Total: 65 customizable properties
+                {t('apps.totalCustomizableProperties')}
               </div>
             </div>
           </div>
 
           <div style={{ marginTop: 24, padding: '16px', background: '#f9f9f9', borderRadius: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, color: '#666' }}>
-              Custom CSS
+              {t('apps.customCss')}
             </div>
             <div style={{ fontSize: 11, color: '#999', marginBottom: 12, lineHeight: '1.6' }}>
-              Add custom CSS to further style your web app. Use the CSS classes added to all elements:
+              {t('apps.customCssDescription')}
             </div>
             <div style={{ fontSize: 10, color: '#666', marginBottom: 12, fontFamily: 'monospace', lineHeight: '1.8' }}>
               <div><strong>Main Structure:</strong> .spreadapi-page, .spreadapi-container, .spreadapi-card</div>
@@ -557,7 +560,7 @@ const AppsView: React.FC<AppsViewProps> = ({
               disabled={isLoading || isDemoMode}
             />
             <div style={{ fontSize: 10, color: '#999', marginTop: 8, fontStyle: 'italic' }}>
-              Tip: Use <code>!important</code> to override default styles. Changes are saved automatically.
+              {t('apps.customCssTip')}
             </div>
           </div>
         </div>
@@ -569,8 +572,8 @@ const AppsView: React.FC<AppsViewProps> = ({
       if (!webAppToken && !isDemoMode) {
         return (
           <Alert
-            title="No Web App Token"
-            description="Please generate a token in 'Intro & Token Management' to enable your web app."
+            title={t('apps.noWebAppToken')}
+            description={t('apps.noWebAppTokenDescription')}
             type="warning"
             showIcon
           />
@@ -587,7 +590,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           {isDemoMode && (
             <Alert
               // title="Demo Mode - Web App Preview"
-              description="You're viewing the web app in demo mode. This service is publicly accessible."
+              description={t('apps.demoModePreview')}
               // type="info"
               style={{ marginBottom: 0, padding: '10px 10px 10px 15px' }}
             />
@@ -596,7 +599,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           {/* Configuration Section */}
           <div>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-              Web App URL
+              {t('apps.webAppUrl')}
             </div>
             <Space.Compact style={{ width: '100%' }}>
               <Input
@@ -606,20 +609,20 @@ const AppsView: React.FC<AppsViewProps> = ({
               <Button
                 icon={<CopyOutlined />}
                 onClick={() => handleCopyLink(webAppUrl)}
-                title="Copy to clipboard"
+                title={t('apps.copyToClipboard')}
               />
             </Space.Compact>
             <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-              Share this{' '}
+              {t('apps.shareLinkPrefix')}{' '}
               <a
                 href={webAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
               >
-                link
+                {t('apps.link')}
               </a>
-              {' '}with users to access your web application
+              {' '}{t('apps.shareLinkSuffix')}
             </div>
             <Button
               type="link"
@@ -628,13 +631,13 @@ const AppsView: React.FC<AppsViewProps> = ({
               onClick={() => handleShowQrCode(webAppUrl)}
               style={{ padding: '4px 0', height: 'auto', fontSize: 11, color: '#502D80' }}
             >
-              Show Barcode
+              {t('apps.showBarcode')}
             </Button>
           </div>
 
           {hasUnsavedChanges && (
             <Alert
-              title="Remember to click the Save button at the top to activate your web app settings"
+              title={t('apps.saveWebAppReminder')}
               type="info"
               showIcon={false}
               style={{ fontSize: 12, padding: '8px 12px' }}
@@ -657,10 +660,10 @@ const AppsView: React.FC<AppsViewProps> = ({
               onClick={() => setAppRulesCollapsed(!appRulesCollapsed)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                App Rules (Advanced)
+                {t('apps.appRulesAdvanced')}
                 <Tooltip title={
                   <div>
-                    <div style={{ marginBottom: 8 }}>Control which inputs/outputs are visible based on input values.</div>
+                    <div style={{ marginBottom: 8 }}>{t('apps.appRulesTooltip')}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: 11, whiteSpace: 'pre' }}>
                       {`{
   "rules": [
@@ -701,7 +704,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                   </div>
                 )}
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  Leave empty for default behavior (show all outputs)
+                  {t('apps.appRulesHint')}
                 </div>
               </>
             )}
@@ -710,12 +713,12 @@ const AppsView: React.FC<AppsViewProps> = ({
           {/* Preview Section */}
           <div style={{ flex: 1, minHeight: 400 }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>Live Preview</span>
+              <span>{t('apps.livePreview')}</span>
               <Button
                 type="text"
                 size="small"
                 icon={<FullscreenOutlined />}
-                onClick={() => handleOpenFullScreen(webAppUrl, 'Web App Preview')}
+                onClick={() => handleOpenFullScreen(webAppUrl, t('apps.webAppPreview'))}
                 style={{ fontSize: 14 }}
               />
             </div>
@@ -749,8 +752,8 @@ const AppsView: React.FC<AppsViewProps> = ({
         return (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Alert
-              title="Token Required"
-              description="Web Snippets require a token to be configured. Please set up a token in the Web App section first."
+              title={t('apps.tokenRequired')}
+              description={t('apps.tokenRequiredDescription')}
               type="warning"
               showIcon
             />
@@ -774,7 +777,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           {/* Embed URL */}
           <div>
             <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-              Embed URL:
+              {t('apps.embedUrl')}
             </div>
             <div style={{
               background: '#f5f5f5',
@@ -795,14 +798,14 @@ const AppsView: React.FC<AppsViewProps> = ({
               onClick={() => handleShowQrCode(interactiveUrl)}
               style={{ padding: '4px 0', height: 'auto', fontSize: 11, color: '#502D80' }}
             >
-              Show Barcode
+              {t('apps.showBarcode')}
             </Button>
           </div>
 
           {/* iFrame Code */}
           <div>
             <div style={{ marginBottom: 4, fontSize: 11, color: '#888', fontWeight: 500 }}>
-              iFrame Code:
+              {t('apps.iframeCode')}
             </div>
             <div style={{
               background: '#f5f5f5',
@@ -822,15 +825,15 @@ const AppsView: React.FC<AppsViewProps> = ({
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span>Live Preview</span>
+                <span>{t('apps.livePreview')}</span>
                 <Segmented
                   value={viewMode}
                   onChange={(value) => setViewMode(value as 'all' | 'results' | 'inputs')}
                   size="small"
                   options={[
-                    { label: 'All', value: 'all' },
-                    { label: 'Results', value: 'results' },
-                    { label: 'Inputs', value: 'inputs' }
+                    { label: t('apps.viewAll'), value: 'all' },
+                    { label: t('apps.viewResults'), value: 'results' },
+                    { label: t('apps.viewInputs'), value: 'inputs' }
                   ]}
                 />
                 <Segmented
@@ -838,8 +841,8 @@ const AppsView: React.FC<AppsViewProps> = ({
                   onChange={(value) => setShowCaption(value === 'caption')}
                   size="small"
                   options={[
-                    { label: 'Caption', value: 'caption' },
-                    { label: 'No Caption', value: 'nocaption' }
+                    { label: t('apps.caption'), value: 'caption' },
+                    { label: t('apps.noCaption'), value: 'nocaption' }
                   ]}
                 />
               </div>
@@ -882,29 +885,29 @@ const AppsView: React.FC<AppsViewProps> = ({
     {
       key: 'intro',
       icon: <FileTextOutlined />,
-      label: 'Intro'
+      label: t('apps.menuIntro')
     },
     {
       key: 'theme',
       icon: <BgColorsOutlined />,
-      label: 'Theme'
+      label: t('apps.menuTheme')
     },
     ...(webAppToken || isDemoMode ? [
       {
         key: 'webapp-folder',
         icon: <AppstoreOutlined />,
-        label: 'Web App',
+        label: t('apps.menuWebApp'),
         children: [
           {
             key: 'webapp',
-            label: 'Default App'
+            label: t('apps.menuDefaultApp')
           }
         ]
       },
       {
         key: 'templates-folder',
         icon: <FolderOutlined />,
-        label: 'Web Snippets',
+        label: t('apps.menuWebSnippets'),
         children: Object.values(SYSTEM_TEMPLATES).map(template => ({
           key: template.id,
           label: template.name
@@ -969,7 +972,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
       {/* QR Code Modal */}
       <Modal
-        title="QR Code"
+        title={t('apps.qrCode')}
         open={qrModalVisible}
         onCancel={() => setQrModalVisible(false)}
         footer={null}
@@ -1020,7 +1023,7 @@ const AppsView: React.FC<AppsViewProps> = ({
               }
             }}
           >
-            Download QR Code
+            {t('apps.downloadQrCode')}
           </Button>
         </div>
       </Modal>

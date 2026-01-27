@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useTranslation } from '@/lib/i18n';
 
 dayjs.extend(relativeTime);
 
@@ -55,6 +56,7 @@ interface TokenManagementProps {
 
 const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> }, TokenManagementProps>(function TokenManagement({ serviceId, requireToken, isDemoMode, onRequireTokenChange, onTokenCountChange, onTokensChange }, ref) {
   const { notification } = App.useApp();
+  const { t, locale } = useTranslation();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -119,7 +121,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Handle 403 for demo mode as expected
         // Handle 404 for new services that don't exist yet
         if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
-          notification.error({ message: 'Failed to load tokens' });
+          notification.error({ message: t('tokens.failedToLoad') });
         }
         // Still update count to 0 on error
         if (onTokenCountChange) {
@@ -129,7 +131,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
     } catch (error: any) {
       // Only log unexpected errors (not 401/unauthorized)
       if (error?.status !== 401 && error?.code !== 'unauthorized') {
-        notification.error({ message: 'Error loading tokens' });
+        notification.error({ message: t('tokens.errorLoading') });
       }
       if (onTokenCountChange) {
         onTokenCountChange(0);
@@ -163,14 +165,14 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Auto-enable token requirement when first token is created
         if (tokens.length === 0 && !requireToken) {
           onRequireTokenChange(true);
-          notification.info({ message: 'Token authentication has been automatically enabled' });
+          notification.info({ message: t('tokens.authAutoEnabled') });
         }
       } else {
         const error = await response.json();
-        notification.error({ message: error.error || 'Failed to create token' });
+        notification.error({ message: error.error || t('tokens.failedToCreate') });
       }
     } catch (error) {
-      notification.error({ message: 'Failed to create token' });
+      notification.error({ message: t('tokens.failedToCreate') });
     } finally {
       setCreating(false);
     }
@@ -183,31 +185,31 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       });
 
       if (response.ok) {
-        notification.success({ message: 'Token revoked successfully' });
+        notification.success({ message: t('tokens.revokedSuccess') });
         await loadTokens();
 
         // Auto-disable token requirement when last token is deleted
         if (tokens.length === 1 && requireToken) {
           onRequireTokenChange(false);
-          notification.info({ message: 'Token authentication has been automatically disabled as no tokens remain' });
+          notification.info({ message: t('tokens.authAutoDisabled') });
         }
       } else {
         const error = await response.json();
-        notification.error({ message: error.error || 'Failed to revoke token' });
+        notification.error({ message: error.error || t('tokens.failedToRevoke') });
       }
     } catch (error) {
-      notification.error({ message: 'Failed to revoke token' });
+      notification.error({ message: t('tokens.failedToRevoke') });
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    notification.success({ message: 'Copied to clipboard' });
+    notification.success({ message: t('tokens.copiedToClipboard') });
   };
 
   const columns = [
     {
-      title: 'Name',
+      title: t('tokens.name'),
       dataIndex: 'name',
       key: 'name',
       width: '35%',
@@ -219,32 +221,32 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       )
     },
     {
-      title: 'Usage',
+      title: t('tokens.usage'),
       dataIndex: 'usageCount',
       key: 'usageCount',
       render: (count: number, record: Token) => {
         const lastUsedText = record.lastUsedAt
-          ? `Last used: ${dayjs(record.lastUsedAt).format('YYYY-MM-DD HH:mm:ss')} (${dayjs(record.lastUsedAt).fromNow()})`
-          : 'Never used';
+          ? t('tokens.lastUsed', { date: dayjs(record.lastUsedAt).format('YYYY-MM-DD HH:mm:ss'), ago: dayjs(record.lastUsedAt).fromNow() })
+          : t('tokens.neverUsed');
 
         return (
           <Tooltip title={lastUsedText}>
-            <Text>{count.toLocaleString()} calls</Text>
+            <Text>{t('tokens.callCount', { count: count.toLocaleString() })}</Text>
           </Tooltip>
         );
       }
     },
     {
-      title: 'Expires',
+      title: t('tokens.expires'),
       dataIndex: 'expiresAt',
       key: 'expiresAt',
       render: (date: string) => {
-        if (!date) return <Text type="secondary">Never</Text>;
+        if (!date) return <Text type="secondary">{t('tokens.never')}</Text>;
         const isExpired = dayjs(date).isBefore(dayjs());
         return (
           <Tooltip title={dayjs(date).format('YYYY-MM-DD HH:mm:ss')}>
             <Text type={isExpired ? 'danger' : 'warning'}>
-              {isExpired ? 'Expired' : dayjs(date).fromNow()}
+              {isExpired ? t('tokens.expired') : dayjs(date).fromNow()}
             </Text>
           </Tooltip>
         );
@@ -258,10 +260,10 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       render: (_: any, record: Token) => (
         isDemoMode ? null : (
           <Popconfirm
-            title="Revoke this token?"
-            description="This action cannot be undone."
+            title={t('tokens.revokeConfirmTitle')}
+            description={t('tokens.revokeConfirmDesc')}
             onConfirm={() => handleDeleteToken(record.id)}
-            okText="Revoke"
+            okText={t('tokens.revoke')}
             okButtonProps={{ danger: true }}
           >
             <Button
@@ -286,8 +288,8 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           alignItems: 'center',
           marginBottom: 16
         }}>
-          <Typography.Title level={4} style={{ margin: 0 }}>API Tokens</Typography.Title>
-          <Tooltip title={isDemoMode ? "Token creation is disabled in demo mode" : "Create new API token"}>
+          <Typography.Title level={4} style={{ margin: 0 }}>{t('tokens.apiTokens')}</Typography.Title>
+          <Tooltip title={isDemoMode ? t('tokens.creationDisabledDemo') : t('tokens.createNewToken')}>
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -298,7 +300,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
               }}
               disabled={isDemoMode}
             >
-              Create Token
+              {t('tokens.createToken')}
             </Button>
           </Tooltip>
         </div>
@@ -311,7 +313,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             </div>
           ) : tokens.length === 0 ? (
             <Empty
-              description="No tokens created yet"
+              description={t('tokens.noTokensYet')}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               style={{ padding: '20px 0' }}
             />
@@ -343,12 +345,22 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             <Text type="secondary" style={{ fontSize: 13 }}>
               <InfoCircleOutlined style={{ marginRight: 8 }} />
               {tokens.length > 0 ? (
-                <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
-                  Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
-                  The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
+                ({ en: <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
+                    Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
+                    The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>,
+                  de: <>Um die API mit Authentifizierung zu nutzen, fügen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzu.
+                    Ersetzen Sie YOUR_TOKEN_VALUE durch den tatsächlichen Token, den Sie beim Erstellen kopiert haben.
+                    Die Test-URL enthält einen Platzhalter-<Text code>token</Text>-Parameter, den Sie mit Ihrem Token aktualisieren müssen.</>
+                } as Record<string, React.ReactNode>)[locale] ?? <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
+                    Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
+                    The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
               ) : (
-                <>When you create API tokens, you'll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
-                  to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
+                ({ en: <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
+                    to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>,
+                  de: <>Wenn Sie API-Tokens erstellen, müssen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzufügen,
+                    um Ihre API-Aufrufe zu authentifizieren. Der Test wird automatisch den Token-Parameter-Platzhalter enthalten. Alle Service-Anfragen sind auf 1.000 Anfragen pro Minute begrenzt.</>
+                } as Record<string, React.ReactNode>)[locale] ?? <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
+                    to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
               )}
             </Text>
           </div>
@@ -357,7 +369,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
 
       {/* Create token modal */}
       <Modal
-        title="Create API Token"
+        title={t('tokens.createApiToken')}
         open={showCreateModal}
         onCancel={() => {
           setShowCreateModal(false);
@@ -373,27 +385,27 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         >
           <Form.Item
             name="name"
-            label="Token Name"
-            rules={[{ required: true, message: 'Please enter a token name' }]}
+            label={t('tokens.tokenName')}
+            rules={[{ required: true, message: t('tokens.enterTokenName') }]}
           >
             <Input
-              placeholder="e.g., Production API Key"
+              placeholder={t('tokens.tokenNamePlaceholder')}
             />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="Description"
+            label={t('tokens.description')}
           >
             <Input.TextArea
-              placeholder="Optional description for this token"
+              placeholder={t('tokens.descriptionPlaceholder')}
               rows={2}
             />
           </Form.Item>
 
           <Form.Item
             name="expiresAt"
-            label="Expiration (Optional)"
+            label={t('tokens.expirationOptional')}
           >
             <DatePicker
               showTime
@@ -409,7 +421,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
               loading={creating}
               block
             >
-              Create Token
+              {t('tokens.createToken')}
             </Button>
           </Form.Item>
         </Form>
@@ -417,7 +429,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
 
       {/* New token display modal */}
       <Modal
-        title="Token Created Successfully"
+        title={t('tokens.tokenCreatedSuccess')}
         open={showTokenModal}
         onCancel={() => {
           setShowTokenModal(false);
@@ -433,15 +445,15 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
               setNewToken(null);
             }}
           >
-            Done
+            {t('tokens.done')}
           </Button>
         ]}
       >
         {newToken && (
           <Space orientation="vertical" style={{ width: '100%' }}>
             <Alert
-              title="Save this token securely"
-              description="This token will not be shown again. Copy it now and store it in a safe place."
+              title={t('tokens.saveTokenSecurely')}
+              description={t('tokens.tokenNotShownAgain')}
               type="warning"
               showIcon
             />
@@ -460,7 +472,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
 
             <div>
               <Text type="secondary">
-                <InfoCircleOutlined /> Use this token in your API requests:
+                <InfoCircleOutlined /> {t('tokens.useTokenInRequests')}
               </Text>
               <Paragraph
                 code

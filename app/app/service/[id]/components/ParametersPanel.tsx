@@ -9,6 +9,7 @@ import * as GC from '@mescius/spread-sheets';
 // Import types and constants from ParametersSection
 import type { InputDefinition, OutputDefinition, AreaParameter, AreaPermissions } from './ParametersSection';
 import { COMPACT_LAYOUT_BREAKPOINT_PX } from './ParametersSection';
+import { useTranslation } from '@/lib/i18n';
 
 // Lazy load components
 const ParametersSection = lazy(() => import('./ParametersSection'));
@@ -89,6 +90,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef
 }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const buttonAreaRef = useRef<HTMLDivElement>(null);
   const [buttonAreaHeight, setButtonAreaHeight] = useState(0);
   const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
@@ -417,7 +419,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   // Add parameter from selection
   const handleAddParameterFromSelection = useCallback(async () => {
     if (!currentSelection || !spreadInstance) {
-      notification.warning({ message: 'Please select a cell or range in the spreadsheet first' });
+      notification.warning({ message: t('paramsPanel.selectCellFirst') });
       return;
     }
 
@@ -773,7 +775,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       };
       
       if (checkRangeOverlap(newRange, paramRange)) {
-        notification.warning({ message: `This selection overlaps with existing parameter "${param.name}". Please select a different range.` });
+        notification.warning({ message: t('paramsPanel.overlapWarning', { name: param.name }) });
         return;
       }
     }
@@ -805,12 +807,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   // Add area from selection
   const handleAddAreaFromSelection = useCallback(async () => {
     if (!currentSelection || !spreadInstance) {
-      notification.warning({ message: 'Please select a range in the spreadsheet first' });
+      notification.warning({ message: t('paramsPanel.selectRangeFirst') });
       return;
     }
 
     if (currentSelection.rowCount === 1 && currentSelection.colCount === 1) {
-      notification.warning({ message: 'Please select a range with multiple cells for an area' });
+      notification.warning({ message: t('paramsPanel.selectMultipleCells') });
       return;
     }
 

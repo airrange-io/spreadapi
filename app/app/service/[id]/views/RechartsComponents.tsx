@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { 
-  Card, 
-  Row, 
-  Col, 
-  Space, 
-  Typography, 
+import { useTranslation } from '@/lib/i18n';
+import {
+  Card,
+  Row,
+  Col,
+  Space,
+  Typography,
   Empty,
   Tag
 } from 'antd';
@@ -53,6 +54,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
   cacheBreakdown,
   totalCalls
 }) => {
+  const { t } = useTranslation();
   // Colors matching your brand
   const PURPLE = '#4F2D7F';  // Primary color
   const GREEN = '#389E0E';
@@ -64,9 +66,9 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
 
   // Prepare pie chart data
   const pieData = cacheBreakdown ? [
-    { name: 'Process Cache', value: cacheBreakdown.process, color: CACHE_COLORS.process },
-    { name: 'Redis Cache', value: cacheBreakdown.redis, color: CACHE_COLORS.redis },
-    { name: 'Blob Storage', value: cacheBreakdown.blob, color: CACHE_COLORS.blob }
+    { name: t('charts.processCache'), value: cacheBreakdown.process, color: CACHE_COLORS.process },
+    { name: t('charts.redisCache'), value: cacheBreakdown.redis, color: CACHE_COLORS.redis },
+    { name: t('charts.blobStorage'), value: cacheBreakdown.blob, color: CACHE_COLORS.blob }
   ] : [];
 
   return (
@@ -80,7 +82,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
             title={
               <Space style={{ fontSize: '14px', fontWeight: 'normal', color: 'rgba(0, 0, 0, 0.45)' }}>
                 <LineChartOutlined />
-                <span>API Calls (Last 7 Days)</span>
+                <span>{t('charts.apiCallsLast7Days')}</span>
               </Space>
             }
           >
@@ -102,7 +104,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No data" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('charts.noData')} />
             )}
           </Card>
         </Col>
@@ -114,7 +116,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
             title={
               <Space style={{ fontSize: '14px', fontWeight: 'normal', color: 'rgba(0, 0, 0, 0.45)' }}>
                 <ClockCircleOutlined />
-                <span>Today's Hourly Distribution</span>
+                <span>{t('charts.todaysHourlyDistribution')}</span>
               </Space>
             }
           >
@@ -133,7 +135,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No data for today" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('charts.noDataToday')} />
             )}
           </Card>
         </Col>
@@ -148,7 +150,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
             title={
               <Space style={{ fontSize: '14px', fontWeight: 'normal', color: 'rgba(0, 0, 0, 0.45)' }}>
                 <BarChartOutlined />
-                <span>Response Time Distribution</span>
+                <span>{t('charts.responseTimeDistribution')}</span>
               </Space>
             }
           >
@@ -164,7 +166,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                     style={{ fontSize: 11 }}
                   />
                   <YAxis />
-                  <Tooltip formatter={(value) => `${value} calls`} />
+                  <Tooltip formatter={(value) => t('charts.valueCalls', { value: String(value) })} />
                   <Bar 
                     dataKey="count" 
                     fill={PURPLE} 
@@ -173,7 +175,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No distribution data available" />
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('charts.noDistributionData')} />
             )}
           </Card>
         </Col>
@@ -188,7 +190,7 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
               title={
                 <Space style={{ fontSize: '14px', fontWeight: 'normal', color: 'rgba(0, 0, 0, 0.45)' }}>
                   <DatabaseOutlined />
-                  <span>Cache Performance</span>
+                  <span>{t('charts.cachePerformance')}</span>
                 </Space>
               }
             >
@@ -219,29 +221,29 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
                 <Col xs={24} md={12}>
                   <Space orientation="vertical" style={{ width: '100%', padding: '20px' }}>
                     <div>
-                      <Text type="secondary">Process Cache: </Text>
+                      <Text type="secondary">{t('charts.processCache')}: </Text>
                       <Text strong>
                         {((cacheBreakdown.process / totalCalls) * 100).toFixed(1)}%
                       </Text>
-                      <Tag color={GREEN} style={{ marginLeft: 8 }}>Fastest</Tag>
+                      <Tag color={GREEN} style={{ marginLeft: 8 }}>{t('charts.fastest')}</Tag>
                     </div>
                     <div>
-                      <Text type="secondary">Redis Cache: </Text>
+                      <Text type="secondary">{t('charts.redisCache')}: </Text>
                       <Text strong>
                         {((cacheBreakdown.redis / totalCalls) * 100).toFixed(1)}%
                       </Text>
-                      <Tag style={{ marginLeft: 8, backgroundColor: PURPLE, color: 'white' }}>Fast</Tag>
+                      <Tag style={{ marginLeft: 8, backgroundColor: PURPLE, color: 'white' }}>{t('charts.fast')}</Tag>
                     </div>
                     <div>
-                      <Text type="secondary">Blob Storage: </Text>
+                      <Text type="secondary">{t('charts.blobStorage')}: </Text>
                       <Text strong>
                         {((cacheBreakdown.blob / totalCalls) * 100).toFixed(1)}%
                       </Text>
-                      <Tag color="orange" style={{ marginLeft: 8 }}>Slower</Tag>
+                      <Tag color="orange" style={{ marginLeft: 8 }}>{t('charts.slower')}</Tag>
                     </div>
                     <div style={{ marginTop: 16 }}>
                       <Text type="secondary" style={{ fontSize: 12 }}>
-                        Cache hit rate indicates how often requests are served from cache
+                        {t('charts.cacheHitRateExplain')}
                       </Text>
                     </div>
                   </Space>

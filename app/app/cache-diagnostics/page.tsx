@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Card, Space, Typography, Alert, Table, Tag, Timeline, Spin } from 'antd';
 import { SubPageLayout } from '@/components/SubPageLayout';
 import { SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -37,6 +38,7 @@ interface DiagnosticResult {
 }
 
 export default function CacheDiagnosticsPage() {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiagnosticResult | null>(null);
@@ -86,27 +88,27 @@ export default function CacheDiagnosticsPage() {
 
   const renderLayerStatus = (layer: any, name: string) => {
     if (!layer.checked) {
-      return <Tag color="default">Not Checked</Tag>;
+      return <Tag color="default">{t('cacheDiag.notChecked')}</Tag>;
     }
     if (layer.found) {
-      return <Tag color="success" icon={<CheckCircleOutlined />}>Hit ({layer.responseTime}ms)</Tag>;
+      return <Tag color="success" icon={<CheckCircleOutlined />}>{t('cacheDiag.hitWithTime', { time: layer.responseTime })}</Tag>;
     }
-    return <Tag color="warning" icon={<CloseCircleOutlined />}>Miss ({layer.responseTime}ms)</Tag>;
+    return <Tag color="warning" icon={<CloseCircleOutlined />}>{t('cacheDiag.missWithTime', { time: layer.responseTime })}</Tag>;
   };
 
   const columns = [
     {
-      title: 'Cache Layer',
+      title: t('cacheDiag.cacheLayer'),
       dataIndex: 'layer',
       key: 'layer',
     },
     {
-      title: 'Status',
+      title: t('cacheDiag.status'),
       dataIndex: 'status',
       key: 'status',
     },
     {
-      title: 'Response Time',
+      title: t('cacheDiag.responseTime'),
       dataIndex: 'responseTime',
       key: 'responseTime',
       render: (time: number) => `${time}ms`,
@@ -114,12 +116,12 @@ export default function CacheDiagnosticsPage() {
   ];
 
   return (
-    <SubPageLayout title="Cache Diagnostics">
+    <SubPageLayout title={t('cacheDiag.title')}>
       <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <Card>
-          <Title level={4}>Diagnose Cache Lookup</Title>
+          <Title level={4}>{t('cacheDiag.diagnoseLookup')}</Title>
           <Paragraph type="secondary">
-            Test how a specific API request flows through the cache layers
+            {t('cacheDiag.diagnoseLookupDesc')}
           </Paragraph>
 
           <Form
@@ -128,19 +130,19 @@ export default function CacheDiagnosticsPage() {
             onFinish={handleDiagnose}
           >
             <Form.Item
-              label="API Token"
+              label={t('cacheDiag.apiToken')}
               name="token"
-              rules={[{ required: true, message: 'Please enter an API token' }]}
+              rules={[{ required: true, message: t('cacheDiag.apiTokenRequired') }]}
             >
-              <Input placeholder="Enter API token to diagnose" />
+              <Input placeholder={t('cacheDiag.apiTokenPlaceholder')} />
             </Form.Item>
 
             <Form.Item
-              label="Cell Reference"
+              label={t('cacheDiag.cellReference')}
               name="cell"
-              rules={[{ required: true, message: 'Please enter a cell reference' }]}
+              rules={[{ required: true, message: t('cacheDiag.cellReferenceRequired') }]}
             >
-              <Input placeholder="e.g., A1, B2, Sheet1!C3" />
+              <Input placeholder={t('cacheDiag.cellReferencePlaceholder')} />
             </Form.Item>
 
             <Form.Item>
@@ -151,7 +153,7 @@ export default function CacheDiagnosticsPage() {
                 icon={<SearchOutlined />}
                 size="large"
               >
-                Run Diagnosis
+                {t('cacheDiag.runDiagnosis')}
               </Button>
             </Form.Item>
           </Form>
@@ -168,7 +170,7 @@ export default function CacheDiagnosticsPage() {
               padding: '40px'
             }}>
               <Spin size="default" />
-              <Paragraph style={{ marginTop: 16 }}>Running cache diagnosis...</Paragraph>
+              <Paragraph style={{ marginTop: 16 }}>{t('cacheDiag.running')}</Paragraph>
             </div>
           </Card>
         )}
@@ -177,24 +179,24 @@ export default function CacheDiagnosticsPage() {
           <>
             {result.error ? (
               <Alert
-                title="Diagnosis Error"
+                title={t('cacheDiag.diagnosisError')}
                 description={result.error}
                 type="error"
                 showIcon
               />
             ) : (
-              <Card title="Diagnosis Results">
+              <Card title={t('cacheDiag.diagnosisResults')}>
                 <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
                   <div>
-                    <Text strong>Token: </Text>
+                    <Text strong>{t('cacheDiag.tokenLabel')} </Text>
                     <Text code>{result.token}</Text>
                   </div>
                   <div>
-                    <Text strong>Cell: </Text>
+                    <Text strong>{t('cacheDiag.cellLabel')} </Text>
                     <Text code>{result.cell}</Text>
                   </div>
                   <div>
-                    <Text strong>Total Time: </Text>
+                    <Text strong>{t('cacheDiag.totalTime')} </Text>
                     <Text>{result.totalTime}ms</Text>
                   </div>
 
@@ -204,7 +206,7 @@ export default function CacheDiagnosticsPage() {
                         color: result.layers.processCache.found ? 'green' : 'gray',
                         children: (
                           <div>
-                            <Text strong>Process Cache</Text>
+                            <Text strong>{t('cacheDiag.processCache')}</Text>
                             {renderLayerStatus(result.layers.processCache, 'Process Cache')}
                           </div>
                         ),
@@ -213,7 +215,7 @@ export default function CacheDiagnosticsPage() {
                         color: result.layers.redisCache.found ? 'green' : 'gray',
                         children: (
                           <div>
-                            <Text strong>Redis Cache</Text>
+                            <Text strong>{t('cacheDiag.redisCache')}</Text>
                             {renderLayerStatus(result.layers.redisCache, 'Redis Cache')}
                           </div>
                         ),
@@ -222,7 +224,7 @@ export default function CacheDiagnosticsPage() {
                         color: result.layers.blobStorage.found ? 'green' : 'gray',
                         children: (
                           <div>
-                            <Text strong>Blob Storage</Text>
+                            <Text strong>{t('cacheDiag.blobStorage')}</Text>
                             {renderLayerStatus(result.layers.blobStorage, 'Blob Storage')}
                           </div>
                         ),
@@ -231,7 +233,7 @@ export default function CacheDiagnosticsPage() {
                   />
 
                   {result.result && (
-                    <Card type="inner" title="Result">
+                    <Card type="inner" title={t('cacheDiag.result')}>
                       <pre style={{
                         backgroundColor: '#f5f5f5',
                         padding: '12px',
@@ -250,7 +252,7 @@ export default function CacheDiagnosticsPage() {
         )}
 
         {history.length > 0 && (
-          <Card title="Recent Diagnoses">
+          <Card title={t('cacheDiag.recentDiagnoses')}>
             <Table
               dataSource={history.map((item, index) => ({
                 key: index,
@@ -264,46 +266,46 @@ export default function CacheDiagnosticsPage() {
               }))}
               columns={[
                 {
-                  title: 'Time',
+                  title: t('cacheDiag.colTime'),
                   dataIndex: 'timestamp',
                   key: 'timestamp',
                 },
                 {
-                  title: 'Token',
+                  title: t('cacheDiag.colToken'),
                   dataIndex: 'token',
                   key: 'token',
                 },
                 {
-                  title: 'Cell',
+                  title: t('cacheDiag.colCell'),
                   dataIndex: 'cell',
                   key: 'cell',
                 },
                 {
-                  title: 'Process',
+                  title: t('cacheDiag.colProcess'),
                   dataIndex: 'processCache',
                   key: 'processCache',
-                  render: (found: boolean) => found ? 
-                    <Tag color="success">Hit</Tag> : 
-                    <Tag color="default">Miss</Tag>,
+                  render: (found: boolean) => found ?
+                    <Tag color="success">{t('cacheDiag.hit')}</Tag> :
+                    <Tag color="default">{t('cacheDiag.miss')}</Tag>,
                 },
                 {
-                  title: 'Redis',
+                  title: t('cacheDiag.colRedis'),
                   dataIndex: 'redisCache',
                   key: 'redisCache',
-                  render: (found: boolean) => found ? 
-                    <Tag color="success">Hit</Tag> : 
-                    <Tag color="default">Miss</Tag>,
+                  render: (found: boolean) => found ?
+                    <Tag color="success">{t('cacheDiag.hit')}</Tag> :
+                    <Tag color="default">{t('cacheDiag.miss')}</Tag>,
                 },
                 {
-                  title: 'Blob',
+                  title: t('cacheDiag.colBlob'),
                   dataIndex: 'blobStorage',
                   key: 'blobStorage',
-                  render: (found: boolean) => found ? 
-                    <Tag color="success">Hit</Tag> : 
-                    <Tag color="default">Miss</Tag>,
+                  render: (found: boolean) => found ?
+                    <Tag color="success">{t('cacheDiag.hit')}</Tag> :
+                    <Tag color="default">{t('cacheDiag.miss')}</Tag>,
                 },
                 {
-                  title: 'Total (ms)',
+                  title: t('cacheDiag.colTotalMs'),
                   dataIndex: 'totalTime',
                   key: 'totalTime',
                 },

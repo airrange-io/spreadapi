@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Button, Spin, Typography, Tag, App } from 'antd';
 import { FileExcelOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 interface ApiDefinitionModalProps {
   visible: boolean;
@@ -11,20 +12,21 @@ interface ApiDefinitionModalProps {
 
 export default function ApiDefinitionModal({ visible, onClose, data, loading }: ApiDefinitionModalProps) {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    notification.success({ message: 'API definition copied to clipboard!' });
+    notification.success({ message: t('apiDef.definitionCopied') });
   };
 
   return (
     <Modal
-      title="API Definition"
+      title={t('apiDef.apiDefinition')}
       open={visible}
       onCancel={onClose}
       footer={[
         <Button key="close" onClick={onClose}>
-          Close
+          {t('common.close')}
         </Button>,
         <Button
           key="copy"
@@ -33,7 +35,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
           onClick={handleCopyJson}
           disabled={!data}
         >
-          Copy JSON
+          {t('apiDef.copyJson')}
         </Button>
       ]}
       width={800}
@@ -44,7 +46,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <Spin size="default" />
-          <p style={{ marginTop: 16, color: '#666' }}>Loading API definition...</p>
+          <p style={{ marginTop: 16, color: '#666' }}>{t('apiDef.loading')}</p>
         </div>
       ) : data ? (
         <div>
@@ -58,7 +60,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
             )}
             <div style={{ marginTop: 12 }}>
               <Tag color={data.metadata?.requiresToken ? 'orange' : 'green'}>
-                {data.metadata?.requiresToken ? 'Token Required' : 'Public'}
+                {data.metadata?.requiresToken ? t('apiDef.tokenRequired') : t('apiDef.public')}
               </Tag>
               <Tag>{data.metadata?.category || 'General'}</Tag>
               {data.metadata?.totalCalls > 0 && (
@@ -70,14 +72,14 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
           {/* Inputs */}
           {data.api?.inputs && data.api.inputs.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>Inputs ({data.api.inputs.length})</Typography.Title>
+              <Typography.Title level={5}>{t('apiDef.inputs')} ({data.api.inputs.length})</Typography.Title>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {data.api.inputs.map((input: any, idx: number) => (
                   <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <Typography.Text strong>{input.name}</Typography.Text>
                       <Tag color="blue" style={{ margin: 0 }}>{input.type}</Tag>
-                      {input.mandatory && <Tag color="red" style={{ margin: 0 }}>Required</Tag>}
+                      {input.mandatory && <Tag color="red" style={{ margin: 0 }}>{t('apiDef.required')}</Tag>}
                     </div>
                     {input.description && (
                       <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12, marginBottom: 8 }}>
@@ -125,7 +127,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
           {/* Outputs */}
           {data.api?.outputs && data.api.outputs.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <Typography.Title level={5}>Outputs ({data.api.outputs.length})</Typography.Title>
+              <Typography.Title level={5}>{t('apiDef.outputs')} ({data.api.outputs.length})</Typography.Title>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {data.api.outputs.map((output: any, idx: number) => (
                   <div key={idx} style={{ padding: 12, border: '1px solid #e8e8e8', borderRadius: 6 }}>
@@ -151,14 +153,14 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
 
           {/* Endpoint Info */}
           <div style={{ padding: 12, background: '#f5f5f5', borderRadius: 6 }}>
-            <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>Execute Endpoint:</Typography.Text>
+            <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>{t('apiDef.executeEndpoint')}</Typography.Text>
             <Typography.Text code copyable style={{ fontSize: 12 }}>
               {data.endpoint?.execute}
             </Typography.Text>
           </div>
         </div>
       ) : (
-        <Typography.Text type="secondary">No data available</Typography.Text>
+        <Typography.Text type="secondary">{t('apiDef.noData')}</Typography.Text>
       )}
     </Modal>
   );

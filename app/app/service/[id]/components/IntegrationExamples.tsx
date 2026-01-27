@@ -5,6 +5,7 @@ import { Tabs, Button, Typography, App, Space } from 'antd';
 import { CopyOutlined, CaretRightOutlined } from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text } = Typography;
 
@@ -26,9 +27,10 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
   outputs = []
 }) => {
   const { notification } = App.useApp();
+  const { t, locale } = useTranslation();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    notification.success({ message: 'Copied to clipboard' });
+    notification.success({ message: t('integration.copiedToClipboard') });
   };
 
   // Build V1 API URL
@@ -695,7 +697,7 @@ function SPREADAPI(serviceId, ...args) {
           onClick={() => copyToClipboard(code)}
           style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
         >
-          Copy
+          {t('integration.copy')}
         </Button>
         <SyntaxHighlighter
           language={highlighterLanguage}
@@ -726,7 +728,7 @@ function SPREADAPI(serviceId, ...args) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    notification.success({ message: 'HTML file downloaded!' });
+    notification.success({ message: t('integration.htmlDownloaded') });
   };
 
   const openHtmlInNewTab = () => {
@@ -736,11 +738,11 @@ function SPREADAPI(serviceId, ...args) {
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      notification.success({ message: 'Calculator opened in new tab!' });
+      notification.success({ message: t('integration.calculatorOpened') });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      notification.error({ message: 'Please allow popups to open the calculator' });
+      notification.error({ message: t('integration.allowPopups') });
     }
   };
 
@@ -748,11 +750,10 @@ function SPREADAPI(serviceId, ...args) {
     <div>
       <div style={{ marginBottom: 16, padding: '16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
         <Text strong style={{ display: 'block', marginBottom: 8, color: '#0369a1' }}>
-          📦 Ready-to-Use Calculator UI
+          {t('integration.readyToUseUi')}
         </Text>
         <Text style={{ fontSize: 13, color: '#075985', display: 'block', marginBottom: 12 }}>
-          A complete, standalone HTML file with a beautiful UI for your service.
-          Open it instantly or download for offline use!
+          {t('integration.standaloneDescription')}
         </Text>
         <Space>
           <Button
@@ -761,14 +762,14 @@ function SPREADAPI(serviceId, ...args) {
             onClick={openHtmlInNewTab}
             size="large"
           >
-            Open in New Tab
+            {t('integration.openInNewTab')}
           </Button>
           <Button
             icon={<CopyOutlined />}
             onClick={downloadHtml}
             size="large"
           >
-            Download HTML
+            {t('integration.downloadHtml')}
           </Button>
         </Space>
       </div>
@@ -819,7 +820,7 @@ function SPREADAPI(serviceId, ...args) {
     },
     {
       key: 'standalone-ui',
-      label: '🎨 Standalone UI',
+      label: t('integration.standaloneUiTab'),
       children: <StandaloneUI />
     }
   ];
@@ -828,15 +829,28 @@ function SPREADAPI(serviceId, ...args) {
     <div>
       <div style={{ marginBottom: 12 }}>
         <Text type="secondary" style={{ fontSize: 13 }}>
-          Integration examples for this service. Start with the <strong>Standalone UI</strong> for a ready-to-use calculator,
-          or choose from code examples in various languages.
-          {requireToken && ' Remember to replace YOUR_TOKEN_HERE with your actual API token.'}
+          {({ en: <>Integration examples for this service. Start with the <strong>Standalone UI</strong> for a ready-to-use calculator, or choose from code examples in various languages.</>,
+            de: <>Integrationsbeispiele für diesen Service. Starten Sie mit dem <strong>Eigenständigen UI</strong> für einen fertigen Rechner oder wählen Sie Codebeispiele in verschiedenen Sprachen.</>
+          } as Record<string, React.ReactNode>)[locale] ?? <>Integration examples for this service. Start with the <strong>Standalone UI</strong> for a ready-to-use calculator, or choose from code examples in various languages.</>}
+          {requireToken && (' ' + t('integration.replaceTokenReminder'))}
         </Text>
         <div style={{ marginTop: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            <strong>Standalone UI:</strong> Download a complete HTML calculator - works offline!<br/>
-            <strong>GET method:</strong> Best for Excel, browser testing, and simple integrations<br/>
-            <strong>POST method:</strong> Recommended for applications, supports complex data and better error handling
+            {({ en: <>
+                <strong>Standalone UI:</strong> Download a complete HTML calculator - works offline!<br/>
+                <strong>GET method:</strong> Best for Excel, browser testing, and simple integrations<br/>
+                <strong>POST method:</strong> Recommended for applications, supports complex data and better error handling
+              </>,
+              de: <>
+                <strong>Eigenständiges UI:</strong> Laden Sie einen vollständigen HTML-Rechner herunter - funktioniert offline!<br/>
+                <strong>GET-Methode:</strong> Ideal für Excel, Browser-Tests und einfache Integrationen<br/>
+                <strong>POST-Methode:</strong> Empfohlen für Anwendungen, unterstützt komplexe Daten und bessere Fehlerbehandlung
+              </>
+            } as Record<string, React.ReactNode>)[locale] ?? <>
+                <strong>Standalone UI:</strong> Download a complete HTML calculator - works offline!<br/>
+                <strong>GET method:</strong> Best for Excel, browser testing, and simple integrations<br/>
+                <strong>POST method:</strong> Recommended for applications, supports complex data and better error handling
+              </>}
           </Text>
         </div>
       </div>

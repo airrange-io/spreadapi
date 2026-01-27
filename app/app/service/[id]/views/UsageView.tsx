@@ -36,6 +36,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
+import { useTranslation } from '@/lib/i18n';
 
 // Lazy load Recharts components
 const RechartsComponents = dynamic(
@@ -104,6 +105,7 @@ const UsageView: React.FC<UsageViewProps> = ({
   serviceStatus,
   configLoaded = false
 }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -165,8 +167,8 @@ const UsageView: React.FC<UsageViewProps> = ({
         transition: 'opacity 0.3s ease-in-out'
       }}>
         <Alert
-          title="Usage Analytics Not Available"
-          description="Analytics are only available for published services. Please publish your service to start tracking usage metrics."
+          title={t('usage.notAvailableTitle')}
+          description={t('usage.notAvailableDesc')}
           type="info"
           showIcon
           style={{ maxWidth: 600, margin: '0 auto', marginTop: 50 }}
@@ -185,7 +187,7 @@ const UsageView: React.FC<UsageViewProps> = ({
       }}>
         <Empty 
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No analytics data available yet" 
+          description={t('usage.noDataYet')} 
         />
       </div>
     );
@@ -225,7 +227,7 @@ const UsageView: React.FC<UsageViewProps> = ({
         <Col xs={24} sm={12} lg={6}>
           <Card size="small">
             <Statistic
-              title="Total API Calls"
+              title={t('usage.totalApiCalls')}
               value={analytics.summary.totalCalls}
               prefix={<ApiOutlined />}
               styles={{ content: { color: COLORS.primary, fontSize: '20px' } }}
@@ -236,7 +238,7 @@ const UsageView: React.FC<UsageViewProps> = ({
         <Col xs={24} sm={12} lg={6}>
           <Card size="small">
             <Statistic
-              title="Today's Calls"
+              title={t('usage.todaysCalls')}
               value={analytics.summary.todayCalls}
               prefix={<CalendarOutlined />}
               styles={{ content: { fontSize: '20px' } }}
@@ -255,7 +257,7 @@ const UsageView: React.FC<UsageViewProps> = ({
         <Col xs={24} sm={12} lg={6}>
           <Card size="small">
             <Statistic
-              title="Success Rate"
+              title={t('usage.successRate')}
               value={analytics.summary.successRate}
               suffix="%"
               prefix={<CheckCircleOutlined />}
@@ -267,7 +269,7 @@ const UsageView: React.FC<UsageViewProps> = ({
         <Col xs={24} sm={12} lg={6}>
           <Card size="small">
             <Statistic
-              title="Avg Response"
+              title={t('usage.avgResponse')}
               value={analytics.summary.avgResponseTime}
               suffix="ms"
               prefix={<ThunderboltOutlined />}
@@ -291,7 +293,7 @@ const UsageView: React.FC<UsageViewProps> = ({
           title={
             <span>
               <SendOutlined style={{ marginRight: 8 }} />
-              Webhook Deliveries
+              {t('usage.webhookDeliveries')}
             </span>
           }
           size="small"
@@ -300,28 +302,28 @@ const UsageView: React.FC<UsageViewProps> = ({
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Total Attempts"
+                title={t('usage.totalAttempts')}
                 value={analytics.webhooks.total}
                 styles={{ content: { fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Successful"
+                title={t('usage.successful')}
                 value={analytics.webhooks.success}
                 styles={{ content: { color: '#52c41a', fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Failed"
+                title={t('usage.failed')}
                 value={analytics.webhooks.failed}
                 styles={{ content: { color: analytics.webhooks.failed > 0 ? '#ff4d4f' : undefined, fontSize: '18px' } }}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Success Rate"
+                title={t('usage.successRate')}
                 value={analytics.webhooks.successRate}
                 suffix="%"
                 styles={{ content: {
@@ -335,8 +337,8 @@ const UsageView: React.FC<UsageViewProps> = ({
           <div style={{ marginTop: 16 }}>
             {analytics.webhooks.circuitBreakerOpen && (
               <Alert
-                title="Circuit Breaker Open"
-                description={`Webhooks are temporarily disabled due to ${analytics.webhooks.consecutiveFailures} consecutive failures. Check your webhook endpoint and test it in the API section.`}
+                title={t('usage.circuitBreakerOpen')}
+                description={t('usage.circuitBreakerDesc', { failures: analytics.webhooks.consecutiveFailures })}
                 type="error"
                 icon={<WarningOutlined />}
                 showIcon
@@ -348,14 +350,14 @@ const UsageView: React.FC<UsageViewProps> = ({
               {analytics.webhooks.lastSuccess && (
                 <Col xs={24} sm={12}>
                   <Text type="secondary" style={{ fontSize: 13 }}>
-                    Last Success: {dayjs(analytics.webhooks.lastSuccess).format('MMM D, YYYY h:mm A')}
+                    {t('usage.lastSuccess')}: {dayjs(analytics.webhooks.lastSuccess).format('MMM D, YYYY h:mm A')}
                   </Text>
                 </Col>
               )}
               {analytics.webhooks.lastFailure && (
                 <Col xs={24} sm={12}>
                   <Text type="secondary" style={{ fontSize: 13 }}>
-                    Last Failure: {dayjs(analytics.webhooks.lastFailure).format('MMM D, YYYY h:mm A')}
+                    {t('usage.lastFailure')}: {dayjs(analytics.webhooks.lastFailure).format('MMM D, YYYY h:mm A')}
                   </Text>
                 </Col>
               )}
@@ -363,7 +365,7 @@ const UsageView: React.FC<UsageViewProps> = ({
 
             {analytics.webhooks.consecutiveFailures > 0 && !analytics.webhooks.circuitBreakerOpen && (
               <Alert
-                title={`${analytics.webhooks.consecutiveFailures} consecutive failures (${10 - analytics.webhooks.consecutiveFailures} remaining before circuit breaker opens)`}
+                title={t('usage.consecutiveFailures', { failures: analytics.webhooks.consecutiveFailures, remaining: 10 - analytics.webhooks.consecutiveFailures })}
                 type="warning"
                 showIcon
                 style={{ marginTop: 12 }}
@@ -388,54 +390,54 @@ const UsageView: React.FC<UsageViewProps> = ({
           title={
             <span>
               <DatabaseOutlined style={{ marginRight: 8 }} />
-              Cache Efficiency
+              {t('usage.cacheEfficiency')}
             </span>
           }
           size="small"
           style={{ marginBottom: 16 }}
           extra={
             <Tag color={analytics.cache.hitRate >= 70 ? 'success' : analytics.cache.hitRate >= 40 ? 'warning' : 'default'}>
-              {analytics.cache.hitRate.toFixed(1)}% Hit Rate
+              {t('usage.hitRate', { rate: analytics.cache.hitRate.toFixed(1) })}
             </Tag>
           }
         >
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Total Requests"
+                title={t('usage.totalRequests')}
                 value={analytics.cache.hits + analytics.cache.misses}
                 prefix={<ApiOutlined />}
                 styles={{ content: { fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                All API calls (cached + calculated)
+                {t('usage.allApiCalls')}
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Cache Hits"
+                title={t('usage.cacheHits')}
                 value={analytics.cache.hits}
                 prefix={<ThunderboltOutlined />}
                 styles={{ content: { color: '#52c41a', fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                Instant responses (~5ms)
+                {t('usage.instantResponses')}
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <Statistic
-                title="Calculations"
+                title={t('usage.calculations')}
                 value={analytics.cache.misses}
                 prefix={<CloudOutlined />}
                 styles={{ content: { color: COLORS.primary, fontSize: '18px' } }}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                Full spreadsheet computations
+                {t('usage.fullComputations')}
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div style={{ marginBottom: 8 }}>
-                <Text strong>Computation Saved</Text>
+                <Text strong>{t('usage.computationSaved')}</Text>
               </div>
               <Progress
                 percent={analytics.cache.hitRate}
@@ -444,7 +446,7 @@ const UsageView: React.FC<UsageViewProps> = ({
                 strokeColor={analytics.cache.hitRate >= 70 ? '#52c41a' : analytics.cache.hitRate >= 40 ? '#faad14' : undefined}
               />
               <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
-                {analytics.cache.hits} requests served from cache
+                {t('usage.requestsFromCache', { count: analytics.cache.hits })}
               </div>
             </Col>
           </Row>
@@ -452,26 +454,26 @@ const UsageView: React.FC<UsageViewProps> = ({
           {analytics.cache.breakdown && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
               <Text type="secondary" style={{ fontSize: 13 }}>
-                <strong>Cache Breakdown:</strong>
-                {' '}Process Cache: {analytics.cache.breakdown.process || 0}
-                {' '} • Redis Cache: {analytics.cache.breakdown.redis || 0}
-                {' '} • Blob Cache: {analytics.cache.breakdown.blob || 0}
+                <strong>{t('usage.cacheBreakdown')}:</strong>
+                {' '}{t('usage.processCache')}: {analytics.cache.breakdown.process || 0}
+                {' '} • {t('usage.redisCache')}: {analytics.cache.breakdown.redis || 0}
+                {' '} • {t('usage.blobCache')}: {analytics.cache.breakdown.blob || 0}
               </Text>
             </div>
           )}
 
           <Alert
-            title="Understanding Cache Metrics"
+            title={t('usage.understandingCacheTitle')}
             description={
               <div style={{ fontSize: 13 }}>
                 <p style={{ marginBottom: 8 }}>
-                  <strong>Total Requests:</strong> Every API call, whether cached or not, counts toward usage tracking.
+                  <strong>{t('usage.totalRequests')}:</strong> {t('usage.totalRequestsExplain')}
                 </p>
                 <p style={{ marginBottom: 8 }}>
-                  <strong>Cache Hits:</strong> Identical calculations served instantly from cache without re-computation.
+                  <strong>{t('usage.cacheHits')}:</strong> {t('usage.cacheHitsExplain')}
                 </p>
                 <p style={{ marginBottom: 0 }}>
-                  <strong>Actual Calculations:</strong> New or unique parameter combinations requiring full spreadsheet execution.
+                  <strong>{t('usage.actualCalculations')}:</strong> {t('usage.actualCalculationsExplain')}
                 </p>
               </div>
             }
@@ -484,7 +486,7 @@ const UsageView: React.FC<UsageViewProps> = ({
       {/* Last Updated and Refresh */}
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <Text type="secondary" style={{ fontSize: 12, color: '#888' }}>
-          Last updated: {dayjs(analytics.lastUpdated).format('MMM D, YYYY h:mm A')}
+          {t('usage.lastUpdated')}: {dayjs(analytics.lastUpdated).format('MMM D, YYYY h:mm A')}
         </Text>
         <div style={{ marginTop: 12 }}>
           <Button 
@@ -493,7 +495,7 @@ const UsageView: React.FC<UsageViewProps> = ({
             loading={refreshing}
             size="small"
           >
-            Refresh
+            {t('usage.refresh')}
           </Button>
         </div>
       </div>

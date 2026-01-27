@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 import HankoProfile from '@/components/auth/HankoProfile';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useTranslation } from '@/lib/i18n';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { logout } = useAuth();
 
@@ -34,14 +36,14 @@ export default function ProfilePage() {
               icon={<ArrowLeftOutlined />}
               onClick={() => router.back()}
             >
-              Back
+              {t('profile.back')}
             </Button>
             <Button
               type="primary"
               danger
               onClick={handleLogout}
             >
-              Logout
+              {t('profile.logout')}
             </Button>
           </div>
 
@@ -52,7 +54,7 @@ export default function ProfilePage() {
             variant="borderless"
           >
             <Title level={2} style={{ marginBottom: 24 }}>
-              Account Settings
+              {t('profile.accountSettings')}
             </Title>
             
             <div style={{ 

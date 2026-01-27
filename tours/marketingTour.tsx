@@ -3,25 +3,25 @@
  * Shows first-time visitors that they can explore without logging in
  */
 
-import type { TourDefinition } from '@/lib/tourManager';
+import type { TourStep } from '@/lib/tourManager';
+import { getTranslation, type Locale } from '@/lib/i18n';
 
 export const MARKETING_TOUR_ID = 'marketing-welcome-tour';
 
-export const marketingTour: TourDefinition = {
-  id: MARKETING_TOUR_ID,
-  name: 'Welcome to SpreadAPI',
-  route: '/',
-  steps: [
+export const getMarketingTourSteps = (locale: Locale): TourStep[] => {
+  const t = getTranslation(locale);
+
+  return [
     {
-      title: "Try SpreadAPI - It's Free to Get Started!",
+      title: t('tours.marketing.step1Title'),
       description: (
         <div>
           <p style={{ margin: 0 }}>
-            Create your free SpreadAPI account to explore demo services, test APIs, and use the workbook editor — no credit card required!
+            {t('tours.marketing.step1Desc')}
           </p>
         </div>
       ),
       placement: 'bottom',
     },
-  ],
+  ];
 };

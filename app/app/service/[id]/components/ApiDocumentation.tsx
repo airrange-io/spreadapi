@@ -5,6 +5,7 @@ import { Tabs, Spin, Alert, Button, Space, Typography, App } from 'antd';
 import { DownloadOutlined, CopyOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import 'swagger-ui-react/swagger-ui.css';
+import { useTranslation } from '@/lib/i18n';
 
 // Dynamically import Swagger UI to avoid SSR issues
 const SwaggerUI = dynamic<any>(() => import('swagger-ui-react'), {
@@ -21,6 +22,7 @@ interface ApiDocumentationProps {
 
 const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublished }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [spec, setSpec] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,20 +63,20 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
     link.href = url;
     link.download = `${serviceId}-openapi.${format}`;
     link.click();
-    notification.success({ message: `Downloaded OpenAPI spec as ${format.toUpperCase()}` });
+    notification.success({ message: t('apiDocs.downloadedSpec', { format: format.toUpperCase() }) });
   };
 
   const copySpecUrl = (format: 'json' | 'yaml') => {
     const url = `${window.location.origin}/api/v1/services/${serviceId}/openapi?format=${format}`;
     navigator.clipboard.writeText(url);
-    notification.success({ message: 'Copied OpenAPI URL to clipboard' });
+    notification.success({ message: t('apiDocs.copiedSpecUrl') });
   };
 
   if (!isPublished) {
     return (
       <Alert
-        title="Service Not Published"
-        description="API documentation is only available for published services. Publish your service first to view the interactive documentation."
+        title={t('apiDocs.serviceNotPublished')}
+        description={t('apiDocs.publishFirst')}
         type="info"
         showIcon
       />
@@ -86,7 +88,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
       <div style={{ padding: 40, textAlign: 'center' }}>
         <Spin size="default" />
         <div style={{ marginTop: 16 }}>
-          <Text type="secondary">Loading API documentation...</Text>
+          <Text type="secondary">{t('apiDocs.loadingDocs')}</Text>
         </div>
       </div>
     );
@@ -95,13 +97,13 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
   if (error) {
     return (
       <Alert
-        title="Error Loading Documentation"
+        title={t('apiDocs.errorLoading')}
         description={error}
         type="error"
         showIcon
         action={
           <Button size="small" onClick={fetchOpenAPISpec}>
-            Retry
+            {t('apiDocs.retry')}
           </Button>
         }
       />
@@ -118,7 +120,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
       }}>
         <Space orientation="vertical" size={8} style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text strong style={{ fontSize: 15 }}>Interactive API Documentation</Text>
+            <Text strong style={{ fontSize: 15 }}>{t('apiDocs.interactiveDocs')}</Text>
             <Space>
               <Button
                 size="small"
@@ -139,13 +141,12 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
                 icon={<CopyOutlined />}
                 onClick={() => copySpecUrl('json')}
               >
-                Copy Spec URL
+                {t('apiDocs.copySpecUrl')}
               </Button>
             </Space>
           </div>
           <Paragraph type="secondary" style={{ margin: 0, fontSize: 13 }}>
-            Use this OpenAPI specification to generate client SDKs, import into Postman/Insomnia,
-            or integrate with API testing tools.
+            {t('apiDocs.specDescription')}
           </Paragraph>
         </Space>
       </div>
@@ -161,7 +162,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
         items={[
           {
             key: 'interactive',
-            label: 'Interactive Docs',
+            label: t('apiDocs.interactiveDocsTab'),
             children: spec && swaggerLoaded ? (
               <div className="swagger-wrapper" style={{ padding: 0 }}>
                 <style jsx global>{`
@@ -191,13 +192,13 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
               </div>
             ) : (
               <div style={{ padding: 40, textAlign: 'center' }}>
-                <Text type="secondary">Click to load interactive API documentation</Text>
+                <Text type="secondary">{t('apiDocs.clickToLoad')}</Text>
               </div>
             )
           },
           {
             key: 'quickstart',
-            label: 'Quick Start',
+            label: t('apiDocs.quickStart'),
             children: (
               <div style={{ padding: 24 }}>
                 <QuickStartGuide serviceId={serviceId} spec={spec} />
@@ -206,7 +207,7 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
           },
           {
             key: 'errors',
-            label: 'Error Codes',
+            label: t('apiDocs.errorCodes'),
             children: (
               <div style={{ padding: 24 }}>
                 <ErrorCodesReference />

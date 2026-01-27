@@ -4,6 +4,7 @@ import React from 'react';
 import { Button, Slider, Space, Divider, Dropdown, Tooltip } from 'antd';
 import { TableOutlined, ZoomInOutlined, ZoomOutOutlined, CloseCircleOutlined, TagOutlined, CloseOutlined, HistoryOutlined } from '@ant-design/icons';
 import { COLORS } from '@/constants/theme';
+import { useTranslation } from '@/lib/i18n';
 
 interface StatusBarProps {
   recordCount: number;
@@ -40,6 +41,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   publishedSize,
   workbookSize,
 }) => {
+  const { t } = useTranslation();
   // Create a lighter version of the primary color
   const lighterPrimary = '#6B4A99'; // Lighter shade of #4F2D7F
   
@@ -77,18 +79,18 @@ const StatusBar: React.FC<StatusBarProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <TableOutlined style={{ fontSize: '14px', opacity: 0.9 }} />
           {workbookSize && (
-            <Tooltip title="Workbook file size">
+            <Tooltip title={t('statusBar.workbookFileSize')}>
               <span style={{ opacity: 0.9, marginLeft: '8px' }}>
-                File: {workbookSize >= 1024 * 1024
+                {t('statusBar.file')}: {workbookSize >= 1024 * 1024
                   ? `${(workbookSize / 1024 / 1024).toFixed(1)} MB`
                   : `${Math.round(workbookSize / 1024)} KB`}
               </span>
             </Tooltip>
           )}
           {publishedSize && (
-            <Tooltip title="Published service size (optimized)">
+            <Tooltip title={t('statusBar.publishedSize')}>
               <span style={{ opacity: 0.9, marginLeft: '8px' }}>
-                Published: {publishedSize >= 1024 * 1024
+                {t('statusBar.published')}: {publishedSize >= 1024 * 1024
                   ? `${(publishedSize / 1024 / 1024).toFixed(1)} MB`
                   : `${Math.round(publishedSize / 1024)} KB`}
               </span>
@@ -113,7 +115,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
                   {
                     key: 'clear',
                     icon: <CloseCircleOutlined />,
-                    label: 'Clear selection',
+                    label: t('statusBar.clearSelection'),
                     onClick: onClearSelection
                   }
                 ].filter(Boolean)
@@ -127,9 +129,9 @@ const StatusBar: React.FC<StatusBarProps> = ({
                   textDecoration: 'underline',
                   opacity: 0.9
                 }}
-                title="Click for options"
+                title={t('statusBar.clickForOptions')}
               >
-                {selectedCount} selected {selectedCount === 1 ? 'entry' : 'entries'}
+                {selectedCount} {selectedCount === 1 ? t('statusBar.selectedEntry') : t('statusBar.selectedEntries')}
               </span>
             </Dropdown>
             <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} />
@@ -186,10 +188,10 @@ const StatusBar: React.FC<StatusBarProps> = ({
                   alignItems: 'center',
                   gap: '4px'
                 }}
-                title="Click for tag options"
+                title={t('statusBar.clickForTagOptions')}
               >
                 <TagOutlined style={{ fontSize: '14px' }} />
-                {tagInfo.uniqueTags.length} {tagInfo.uniqueTags.length === 1 ? 'Tag' : 'Tags'}
+                {tagInfo.uniqueTags.length} {tagInfo.uniqueTags.length === 1 ? t('statusBar.tag') : t('statusBar.tags')}
               </span>
             </Dropdown>
             <Divider type="vertical" style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)', margin: 0 }} />
@@ -200,7 +202,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
       {/* Change History */}
       {changeCount > 0 && (
         <Space size={8} style={{ display: 'flex', alignItems: 'center', marginRight: '16px' }}>
-          <Tooltip title="View change history">
+          <Tooltip title={t('statusBar.viewChangeHistory')}>
             <span
               style={{
                 cursor: 'pointer',
@@ -266,7 +268,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
               opacity: 0.9
             }}
             onClick={handleZoomReset}
-            title="Click to reset zoom"
+            title={t('statusBar.resetZoom')}
           >
             {zoomLevel}%
           </span>

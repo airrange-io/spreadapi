@@ -6,6 +6,7 @@ import { EditOutlined, DeleteOutlined, LineChartOutlined, CalendarOutlined, BarC
 import { useRouter } from 'next/navigation';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text, Paragraph } = Typography;
 
@@ -34,6 +35,7 @@ export default function ServiceListClient({
   const router = useRouter();
   const { notification } = App.useApp();
   const { user } = useAuth();
+  const { t, locale } = useTranslation();
   const [services, setServices] = useState<Service[]>(allServices);
   const [filteredServices, setFilteredServices] = useState<Service[]>(initialServices);
   const [isPending, startTransition] = useTransition();
@@ -66,7 +68,7 @@ export default function ServiceListClient({
         throw new Error('Failed to delete service');
       }
 
-      notification.success({ message: `Service "${serviceName}" deleted` });
+      notification.success({ message: t('serviceListClient.serviceDeleted', { name: serviceName }) });
       
       // Trigger server revalidation
       router.refresh();
@@ -74,7 +76,7 @@ export default function ServiceListClient({
       // Revert on error
       console.error('Error deleting service:', error);
       setServices(previousServices);
-      notification.error({ message: 'Failed to delete service' });
+      notification.error({ message: t('serviceListClient.deleteFailed') });
     } finally {
       setDeletingIds(prev => {
         const next = new Set(prev);
@@ -82,7 +84,7 @@ export default function ServiceListClient({
         return next;
       });
     }
-  }, [services, notification, router]);
+  }, [services, notification, router, t]);
 
   const handleEdit = useCallback((serviceId: string) => {
     router.push(`/app/service/${serviceId}`);
@@ -94,14 +96,14 @@ export default function ServiceListClient({
 
   const formatDate = useMemo(() => (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-  }, []);
+  }, [locale]);
 
   // Memoize the service cards to prevent unnecessary re-renders
   const serviceCards = useMemo(() => (
@@ -127,7 +129,7 @@ export default function ServiceListClient({
                   onClick={() => handleEdit(service.id)}
                   disabled={isDeleting}
                 >
-                  Edit
+                  {t('common.edit')}
                 </Button>
               </div>,
               <div onClick={(e) => e.stopPropagation()} key="usage">
@@ -137,7 +139,7 @@ export default function ServiceListClient({
                   onClick={() => handleUsage(service.id)}
                   disabled={service.status === 'draft' || isDeleting}
                 >
-                  Usage
+                  {t('serviceListClient.usage')}
                 </Button>
               </div>
             ]}
@@ -147,7 +149,7 @@ export default function ServiceListClient({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text strong>{service.name}</Text>
                   <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4}}>
-                    {service.status}
+                    {service.status === 'published' ? t('serviceListClient.statusActive') : t('serviceListClient.statusDraft')}
                   </Tag>
                 </div>
               }
@@ -157,7 +159,7 @@ export default function ServiceListClient({
                     ellipsis={{ rows: 2 }}
                     style={{ marginBottom: 8 }}
                   >
-                    {service.description || 'No description'}
+                    {service.description || t('serviceListClient.noDescription')}
                   </Paragraph>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -170,11 +172,11 @@ export default function ServiceListClient({
 
                     <div onClick={(e) => e.stopPropagation()}>
                       <Popconfirm
-                        title="Delete this service?"
-                        description="This action cannot be undone."
+                        title={t('serviceListClient.deleteConfirmTitle')}
+                        description={t('serviceListClient.deleteConfirmDescription')}
                         onConfirm={() => handleDelete(service.id, service.name)}
-                        okText="Yes"
-                        cancelText="No"
+                        okText={t('common.yes')}
+                        cancelText={t('common.no')}
                         okButtonProps={{ danger: true }}
                         disabled={isDeleting}
                       >
@@ -194,7 +196,7 @@ export default function ServiceListClient({
                     <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
                       <BarChartOutlined />
                       <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {service.calls} calls
+                        {t('serviceListClient.callCount', { count: String(service.calls) })}
                       </Text>
                     </Space>
                   )}
@@ -205,13 +207,13 @@ export default function ServiceListClient({
         </Col>
       );
     })
-  ), [filteredServices, deletingIds, handleEdit, handleDelete, handleUsage, formatDate]);
+  ), [filteredServices, deletingIds, handleEdit, handleDelete, handleUsage, formatDate, t, locale]);
 
   if (services.length === 0 && !initialSearchQuery) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="No APIs created yet"
+        description={t('serviceListClient.noApisCreated')}
         style={{ marginTop: 180 }}
       >
         <Button type="primary" onClick={() => {
@@ -219,7 +221,7 @@ export default function ServiceListClient({
           console.log('[ServiceList] Generated service ID:', newId);
           router.push(`/app/service/${newId}`);
         }}>
-          Create Your First Service
+          {t('serviceListClient.createFirstService')}
         </Button>
       </Empty>
     );
@@ -228,7 +230,7 @@ export default function ServiceListClient({
   if (filteredServices.length === 0 && initialSearchQuery) {
     return (
       <Empty
-        description={`No APIs found matching "${initialSearchQuery}"`}
+        description={t('serviceListClient.noApisFound', { query: initialSearchQuery })}
         style={{ marginTop: 100 }}
       />
     );

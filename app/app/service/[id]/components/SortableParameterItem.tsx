@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Space, Tag, Button, Dropdown, Tooltip } from 'antd';
 import { HolderOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
 import type { InputDefinition, OutputDefinition } from './ParametersSection';
+import { useTranslation } from '@/lib/i18n';
 
 interface SortableParameterItemProps {
   parameter: InputDefinition | OutputDefinition;
@@ -26,6 +27,7 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -63,7 +65,7 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
             {...attributes}
             {...listeners}
             role="button"
-            aria-label={`Drag to reorder ${parameter.name}`}
+            aria-label={t('sortable.dragToReorder', { name: parameter.name })}
             aria-describedby={`drag-hint-${parameter.id}`}
             tabIndex={0}
             style={{
@@ -90,7 +92,7 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
             <HolderOutlined />
             {/* Hidden hint for screen readers */}
             <span id={`drag-hint-${parameter.id}`} style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}>
-              Press space to start dragging. Use arrow keys to reorder. Press space again to drop.
+              {t('sortable.dragHint')}
             </span>
           </div>
 
@@ -169,7 +171,7 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
                   items: [
                     {
                       key: 'delete',
-                      label: 'Delete',
+                      label: t('sortable.delete'),
                       icon: <DeleteOutlined />,
                       danger: true,
                       onClick: onDelete,

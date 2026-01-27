@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import type { Locale } from '@/lib/i18n';
 
 interface TourWrapperProps {
   locale: SupportedLocale;
@@ -39,15 +40,16 @@ export default function TourWrapper({ locale, children }: TourWrapperProps) {
 
       try {
         // Dynamic imports - only loaded when needed
-        const [{ marketingTour }, { Tour }] = await Promise.all([
+        const [{ getMarketingTourSteps }, { Tour }] = await Promise.all([
           import('@/tours/marketingTour'),
           import('antd')
         ]);
 
         // Create tour steps with refs
+        const tourSteps = getMarketingTourSteps(locale as Locale);
         const steps = [
           {
-            ...marketingTour.steps[0],
+            ...tourSteps[0],
             target: () => getStartedRef.current,
           },
         ];
@@ -63,7 +65,7 @@ export default function TourWrapper({ locale, children }: TourWrapperProps) {
     }, 6000); // 6s delay to not impact landing page performance
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [locale]);
 
   // Close tour if window is resized below 840px
   useEffect(() => {

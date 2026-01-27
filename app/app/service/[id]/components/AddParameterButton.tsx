@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from 'antd';
 import { PlusOutlined, TableOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 interface AddParameterButtonProps {
   currentSelection: any;
@@ -27,6 +28,8 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   onAddAsEditableArea,
   buttonRef,
 }) => {
+  const { t } = useTranslation();
+
   const getCellAddress = (row: number, col: number) => {
     let columnLetter = '';
     let tempCol = col;
@@ -41,18 +44,20 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
 
   const getAddButtonInfo = () => {
     if (!spreadInstance) {
-      return { 
-        text: isCompact ? 'Switch to Workbook' : 'Switch to Workbook view to add parameters', 
-        disabled: true 
+      return {
+        text: isCompact
+          ? t('params.switchToWorkbookShort')
+          : t('params.switchToWorkbook'),
+        disabled: true
       };
     }
-    
+
     if (!spreadsheetReady) {
-      return { text: 'Loading spreadsheet...', disabled: true };
+      return { text: t('params.loadingSpreadsheet'), disabled: true };
     }
 
     if (!currentSelection) {
-      return { text: 'Add Selection as Parameter', disabled: true };
+      return { text: t('params.addSelectionAsParameter'), disabled: true };
     }
 
     const { isSingleCell, hasFormula, isRange, row, col, rowCount, colCount } = currentSelection;
@@ -75,20 +80,27 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
 
     if (isRange) {
       const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
+      const rangeRef = `${cellRef}:${endCellRef}`;
       return {
-        text: alreadyExists ? `${cellRef}:${endCellRef} already added` : `Add ${cellRef}:${endCellRef} as Output`,
+        text: alreadyExists
+          ? t('params.rangeAlreadyAdded', { range: rangeRef })
+          : t('params.addRangeAsOutput', { range: rangeRef }),
         type: 'output' as const,
         disabled: alreadyExists
       };
     } else if (hasFormula) {
       return {
-        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Output`,
+        text: alreadyExists
+          ? t('params.cellAlreadyAdded', { cell: cellRef })
+          : t('params.addCellAsOutput', { cell: cellRef }),
         type: 'output' as const,
         disabled: alreadyExists
       };
     } else {
       return {
-        text: alreadyExists ? `${cellRef} already added` : `Add ${cellRef} as Input`,
+        text: alreadyExists
+          ? t('params.cellAlreadyAdded', { cell: cellRef })
+          : t('params.addCellAsInput', { cell: cellRef }),
         type: 'input' as const,
         disabled: alreadyExists
       };
@@ -126,7 +138,7 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
             onClick={onAddAsEditableArea}
             disabled={!spreadInstance || !spreadsheetReady || process.env.NODE_ENV !== 'development'}
           >
-            Add Selection as Editable Area (for AI){process.env.NODE_ENV !== 'development' ? ' - Coming Soon' : ''}
+            {`${t('params.addAsEditableArea')}${process.env.NODE_ENV !== 'development' ? ` - ${t('params.comingSoon')}` : ''}`}
           </Button>
         )}
       </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Space, Input, Select, Button, Modal, Typography, Divider } from 'antd';
 import { BulbOutlined, LoadingOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 // Debounced Input component
 interface DebouncedInputProps {
@@ -144,6 +145,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
   onAiTagsChange,
   onCategoryChange,
 }) => {
+  const { t } = useTranslation();
   const [generating, setGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -202,8 +204,8 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
     } catch (error) {
       console.error('Error generating suggestions:', error);
       Modal.error({
-        title: 'Generation Failed',
-        content: 'Failed to generate suggestions. Please try again.',
+        title: t('aiAssistant.generationFailedTitle'),
+        content: t('aiAssistant.generationFailedContent'),
       });
     } finally {
       setGenerating(false);
@@ -214,8 +216,8 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
     // Check if all questions are answered
     if (userAnswers.some(a => !a || a.trim() === '')) {
       Modal.warning({
-        title: 'Incomplete Answers',
-        content: 'Please answer all questions to continue.',
+        title: t('aiAssistant.incompleteAnswersTitle'),
+        content: t('aiAssistant.incompleteAnswersContent'),
       });
       return;
     }
@@ -236,8 +238,8 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
     setShowPreview(false);
     Modal.success({
-      title: 'Applied Successfully',
-      content: 'AI suggestions have been applied to your service configuration.',
+      title: t('aiAssistant.appliedSuccessTitle'),
+      content: t('aiAssistant.appliedSuccessContent'),
     });
   };
 
@@ -246,13 +248,13 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
-            AI Description
+            {t('aiAssistant.aiDescriptionLabel')}
           </div>
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-            Detailed explanation for AI assistants about what this service does and when to use it
+            {t('aiAssistant.aiDescriptionHint')}
           </div>
           <DebouncedTextArea
-            placeholder="e.g., This service calculates mortgage payments based on loan amount, interest rate, and term..."
+            placeholder={t('aiAssistant.aiDescriptionPlaceholder')}
             defaultValue={aiDescription}
             onChange={onAiDescriptionChange}
             rows={4}
@@ -263,13 +265,13 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
-            Usage Guidance
+            {t('aiAssistant.usageGuidanceLabel')}
           </div>
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-            When should AI use this service?
+            {t('aiAssistant.usageGuidanceHint')}
           </div>
           <DebouncedTextArea
-            placeholder="e.g., Use when user wants to calculate mortgage payments or compare loan terms"
+            placeholder={t('aiAssistant.usageGuidancePlaceholder')}
             defaultValue={aiUsageGuidance || ''}
             onChange={onAiUsageGuidanceChange}
             rows={3}
@@ -280,15 +282,15 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
-            Usage Examples
+            {t('aiAssistant.usageExamplesLabel')}
           </div>
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-            Add example questions or use cases (press Enter to add)
+            {t('aiAssistant.usageExamplesHint')}
           </div>
           <Select
             mode="tags"
             style={{ width: '100%' }}
-            placeholder="e.g., What's my monthly payment for a $300k loan at 4%?"
+            placeholder={t('aiAssistant.usageExamplesPlaceholder')}
             value={aiUsageExamples}
             onChange={onAiUsageExamplesChange}
             tokenSeparators={[',']}
@@ -298,15 +300,15 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
-            Tags
+            {t('aiAssistant.tagsLabel')}
           </div>
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-            Searchable keywords for AI discovery
+            {t('aiAssistant.tagsHint')}
           </div>
           <Select
             mode="tags"
             style={{ width: '100%' }}
-            placeholder="e.g., finance, mortgage, loan, calculator"
+            placeholder={t('aiAssistant.tagsPlaceholder')}
             value={aiTags}
             onChange={onAiTagsChange}
             tokenSeparators={[',']}
@@ -316,25 +318,25 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
 
         <div>
           <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#262626' }}>
-            Category
+            {t('aiAssistant.categoryLabel')}
           </div>
           <div style={{ marginBottom: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-            Main category for this service
+            {t('aiAssistant.categoryHint')}
           </div>
           <Select
             style={{ width: '100%' }}
-            placeholder="Select a category"
+            placeholder={t('aiAssistant.categoryPlaceholder')}
             value={category}
             onChange={onCategoryChange}
             disabled={isLoading}
           >
-            <Select.Option value="finance">Finance</Select.Option>
-            <Select.Option value="math">Mathematics</Select.Option>
-            <Select.Option value="statistics">Statistics</Select.Option>
-            <Select.Option value="business">Business</Select.Option>
-            <Select.Option value="science">Science</Select.Option>
-            <Select.Option value="engineering">Engineering</Select.Option>
-            <Select.Option value="other">Other</Select.Option>
+            <Select.Option value="finance">{t('aiAssistant.catFinance')}</Select.Option>
+            <Select.Option value="math">{t('aiAssistant.catMathematics')}</Select.Option>
+            <Select.Option value="statistics">{t('aiAssistant.catStatistics')}</Select.Option>
+            <Select.Option value="business">{t('aiAssistant.catBusiness')}</Select.Option>
+            <Select.Option value="science">{t('aiAssistant.catScience')}</Select.Option>
+            <Select.Option value="engineering">{t('aiAssistant.catEngineering')}</Select.Option>
+            <Select.Option value="other">{t('aiAssistant.catOther')}</Select.Option>
           </Select>
         </div>
 
@@ -349,11 +351,11 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
             disabled={isLoading || generating}
             size="large"
           >
-            {generating ? 'Generating AI Suggestions...' : 'Generate AI Suggestions'}
+            {generating ? t('aiAssistant.generatingBtn') : t('aiAssistant.generateBtn')}
           </Button>
         </div>
         <div style={{ textAlign: 'center', fontSize: '12px', color: '#8c8c8c', marginTop: '8px' }}>
-          AI will analyze your service parameters and suggest descriptions
+          {t('aiAssistant.generateHint')}
         </div>
       </Space>
 
@@ -362,14 +364,14 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
         title={
           <Space>
             <BulbOutlined style={{ color: '#502D80' }} />
-            <span>AI-Generated Suggestions</span>
+            <span>{t('aiAssistant.previewModalTitle')}</span>
           </Space>
         }
         open={showPreview}
         onCancel={() => setShowPreview(false)}
         onOk={handleApplySuggestions}
-        okText="Apply All Suggestions"
-        cancelText="Cancel"
+        okText={t('aiAssistant.applyAllBtn')}
+        cancelText={t('aiAssistant.cancelBtn')}
         width={700}
         centered
         okButtonProps={{ type: 'primary' }}
@@ -383,21 +385,21 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
         {suggestions && (
           <Space orientation="vertical" style={{ width: '100%' }} size={16}>
             <div>
-              <Typography.Title level={5} style={{ marginBottom: 8 }}>AI Description</Typography.Title>
+              <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.aiDescriptionLabel')}</Typography.Title>
               <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiDescription}
               </Typography.Paragraph>
             </div>
 
             <div>
-              <Typography.Title level={5} style={{ marginBottom: 8 }}>Usage Guidance</Typography.Title>
+              <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.usageGuidanceLabel')}</Typography.Title>
               <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiUsageGuidance}
               </Typography.Paragraph>
             </div>
 
             <div>
-              <Typography.Title level={5} style={{ marginBottom: 8 }}>Usage Examples</Typography.Title>
+              <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.usageExamplesLabel')}</Typography.Title>
               <ul style={{ background: '#f5f5f5', padding: '12px 12px 12px 32px', borderRadius: 6, margin: 0 }}>
                 {suggestions.aiUsageExamples.map((example: string, index: number) => (
                   <li key={index} style={{ marginBottom: 4 }}>{example}</li>
@@ -406,7 +408,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
             </div>
 
             <div>
-              <Typography.Title level={5} style={{ marginBottom: 8 }}>Tags</Typography.Title>
+              <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.tagsLabel')}</Typography.Title>
               <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.aiTags.map((tag: string, index: number) => (
                   <span key={index} style={{
@@ -425,7 +427,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
             </div>
 
             <div>
-              <Typography.Title level={5} style={{ marginBottom: 8 }}>Category</Typography.Title>
+              <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.categoryLabel')}</Typography.Title>
               <Typography.Paragraph style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
                 {suggestions.category}
               </Typography.Paragraph>
@@ -434,7 +436,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
             {suggestions.reasoning && (
               <div style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 6, border: '1px solid #adc6ff' }}>
                 <Typography.Text style={{ fontSize: 12, color: '#002766' }}>
-                  <strong>AI Reasoning:</strong> {suggestions.reasoning}
+                  <strong>{t('aiAssistant.aiReasoning')}</strong> {suggestions.reasoning}
                 </Typography.Text>
               </div>
             )}
@@ -447,7 +449,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
         title={
           <Space>
             <BulbOutlined style={{ color: '#502D80' }} />
-            <span>Help AI Understand Your Service</span>
+            <span>{t('aiAssistant.questionsModalTitle')}</span>
           </Space>
         }
         open={showQuestions}
@@ -457,8 +459,8 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
           setUserAnswers([]);
         }}
         onOk={handleAnswerQuestions}
-        okText="Continue"
-        cancelText="Cancel"
+        okText={t('aiAssistant.continueBtn')}
+        cancelText={t('aiAssistant.cancelBtn')}
         width={600}
         centered
         okButtonProps={{ type: 'primary', loading: generating }}
@@ -471,7 +473,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
       >
         <div style={{ marginBottom: 16 }}>
           <Typography.Text style={{ color: '#8c8c8c' }}>
-            Please answer these questions to help generate better AI suggestions:
+            {t('aiAssistant.questionsIntro')}
           </Typography.Text>
         </div>
         <Space orientation="vertical" style={{ width: '100%' }} size={16}>
@@ -487,7 +489,7 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
                   newAnswers[index] = e.target.value;
                   setUserAnswers(newAnswers);
                 }}
-                placeholder="Your answer..."
+                placeholder={t('aiAssistant.yourAnswerPlaceholder')}
                 rows={3}
                 autoFocus={index === 0}
               />

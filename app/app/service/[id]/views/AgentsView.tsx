@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Skeleton, Spin } from 'antd';
 import dynamic from 'next/dynamic';
+import { useTranslation } from '@/lib/i18n';
 import AgentsNavigationMenu, { AgentsMenuSection } from '../components/AgentsNavigationMenu';
 import AIAssistantSection from '../components/AIAssistantSection';
 
 const { Sider, Content } = Layout;
 
-// Lazy load chat component with AI libraries only when needed
-const ServiceChatSection = dynamic(() => import('../components/ServiceChatSection'), {
-  loading: () => (
+// Loading indicator for lazy-loaded chat component
+const ChatLoadingFallback: React.FC = () => {
+  const { t } = useTranslation();
+  return (
     <div style={{
       height: '100%',
       display: 'flex',
@@ -20,9 +22,14 @@ const ServiceChatSection = dynamic(() => import('../components/ServiceChatSectio
       gap: '12px'
     }}>
       <Spin size="default" />
-      <div style={{ color: '#999', fontSize: '14px' }}>Loading chat...</div>
+      <div style={{ color: '#999', fontSize: '14px' }}>{t('agentsView.loadingChat')}</div>
     </div>
-  ),
+  );
+};
+
+// Lazy load chat component with AI libraries only when needed
+const ServiceChatSection = dynamic(() => import('../components/ServiceChatSection'), {
+  loading: () => <ChatLoadingFallback />,
   ssr: false
 });
 

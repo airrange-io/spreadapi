@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button, Space, Typography, Upload } from 'antd';
 import { FileAddOutlined, UploadOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 const { Title, Text } = Typography;
 
@@ -19,6 +20,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
   onImportServicePackage,
   isLoading = false
 }) => {
+  const { t } = useTranslation();
   const handleUpload = (file: File) => {
     // Validate file type
     const validTypes = [
@@ -73,7 +75,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               justifyContent: 'center'
             }}
           >
-            Create a new spreadsheet
+            {t('workbook.createNew')}
           </Button>
 
           <div style={{
@@ -96,7 +98,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               color: '#bfbfbf',
               fontSize: 14
             }}>
-              or
+              {t('workbook.or')}
             </Text>
           </div>
 
@@ -130,14 +132,14 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
                 marginBottom: 4,
                 fontWeight: 500
               }}>
-                Import an existing spreadsheet
+                {t('workbook.importSpreadsheet')}
               </p>
-              <p style={{ 
+              <p style={{
                 fontSize: 14,
                 color: '#8c8c8c',
                 margin: 0
               }}>
-                Drop an Excel file here or click to browse
+                {t('workbook.dropOrBrowse')}
               </p>
             </div>
           </Upload.Dragger>
@@ -161,7 +163,7 @@ const EmptyWorkbookState: React.FC<EmptyWorkbookStateProps> = ({
               }}
               style={{ padding: 0, height: 'auto', fontSize: 12, color: '#502D80' }}
             >
-              Import an existing Service Package
+              {t('workbook.importServicePackage')}
             </Button>
             <Text style={{
               fontSize: 12,

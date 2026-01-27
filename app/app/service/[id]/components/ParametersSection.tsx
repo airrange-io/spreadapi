@@ -4,6 +4,7 @@ import React from 'react';
 import { Space, Tag, Button, Skeleton, Tooltip, Dropdown, Modal } from 'antd';
 import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+import { useTranslation } from '@/lib/i18n';
 import {
   DndContext,
   closestCenter,
@@ -133,6 +134,8 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   onReorderInputs,
   onReorderOutputs,
 }) => {
+  const { t } = useTranslation();
+
   // Check if we can interact with parameters (requires workbook to be loaded)
   const canInteract = !!onNavigateToParameter;
 
@@ -178,9 +181,9 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   };
   const getModeLabel = (mode: string) => {
     switch (mode) {
-      case 'readonly': return 'Read Only';
-      case 'editable': return 'Values Editable';
-      case 'interactive': return 'Fully Interactive';
+      case 'readonly': return t('params.modeReadonly');
+      case 'editable': return t('params.modeEditable');
+      case 'interactive': return t('params.modeInteractive');
       default: return mode;
     }
   };
@@ -194,11 +197,11 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
     }}>
       <Space orientation="vertical" size={12} style={{ width: '100%' }}>
         {/* Input Parameters */}
-        <CollapsibleSection title="Input Parameters" defaultOpen={true}>
+        <CollapsibleSection title={t('params.inputParameters')} defaultOpen={true}>
         {isLoading || !hasInitialized ? (
           <Skeleton active paragraph={{ rows: 2 }} />
         ) : inputs.length === 0 ? (
-          <div style={{ color: '#999' }}>Select a spreadsheet cell and click "Add as Input Parameter"</div>
+          <div style={{ color: '#999' }}>{t('params.emptyInputHint')}</div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -221,10 +224,10 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     onEdit={() => onEditParameter('input', input)}
                     onDelete={() => {
                       Modal.confirm({
-                        title: 'Delete this parameter?',
-                        content: 'This action cannot be undone.',
-                        okText: 'Yes',
-                        cancelText: 'No',
+                        title: t('params.deleteParameter'),
+                        content: t('params.cannotUndo'),
+                        okText: t('common.yes'),
+                        cancelText: t('common.no'),
                         okButtonProps: { danger: true },
                         onOk: () => onDeleteParameter('input', input.id),
                       });
@@ -238,11 +241,11 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
       </CollapsibleSection>
 
       {/* Output Parameters */}
-      <CollapsibleSection title="Output Parameters" defaultOpen={true}>
+      <CollapsibleSection title={t('params.outputParameters')} defaultOpen={true}>
         {isLoading || !hasInitialized ? (
           <Skeleton active paragraph={{ rows: 2 }} />
         ) : outputs.length === 0 ? (
-          <div style={{ color: '#999' }}>Select a spreadsheet cell or area and click "Add as Output Parameter"</div>
+          <div style={{ color: '#999' }}>{t('params.emptyOutputHint')}</div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -265,10 +268,10 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                     onEdit={() => onEditParameter('output', output)}
                     onDelete={() => {
                       Modal.confirm({
-                        title: 'Delete this parameter?',
-                        content: 'This action cannot be undone.',
-                        okText: 'Yes',
-                        cancelText: 'No',
+                        title: t('params.deleteParameter'),
+                        content: t('params.cannotUndo'),
+                        okText: t('common.yes'),
+                        cancelText: t('common.no'),
                         okButtonProps: { danger: true },
                         onOk: () => onDeleteParameter('output', output.id),
                       });
@@ -283,10 +286,10 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
 
       {/* Editable Areas for AI */}
       <CollapsibleSection
-        title={`Editable Areas for AI${process.env.NODE_ENV !== 'development' ? ' - Coming Soon' : ''}`}
+        title={`${t('params.editableAreas')}${process.env.NODE_ENV !== 'development' ? ` - ${t('params.comingSoon')}` : ''}`}
         defaultOpen={false}
         extra={
-          <Tooltip title="Areas that AI assistants can read and optionally modify">
+          <Tooltip title={t('params.editableAreasTooltip')}>
             <InfoCircleOutlined style={{ fontSize: 12 }} />
           </Tooltip>
         }
@@ -295,7 +298,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
           <Skeleton active paragraph={{ rows: 2 }} />
         ) : areas.length === 0 ? (
           <div style={{ color: '#999' }}>
-            Select a range and click "Add as Editable Area"
+            {t('params.emptyAreaHint')}
           </div>
         ) : (
           <Space orientation="vertical" style={{ width: '100%' }}>
@@ -363,16 +366,16 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                         items: [
                           {
                             key: 'delete',
-                            label: 'Delete',
+                            label: t('common.delete'),
                             icon: <DeleteOutlined />,
                             danger: true,
                             disabled: process.env.NODE_ENV !== 'development',
                             onClick: () => {
                               Modal.confirm({
-                                title: 'Delete this area?',
-                                content: 'This action cannot be undone.',
-                                okText: 'Yes',
-                                cancelText: 'No',
+                                title: t('params.deleteArea'),
+                                content: t('params.cannotUndo'),
+                                okText: t('common.yes'),
+                                cancelText: t('common.no'),
                                 okButtonProps: { danger: true },
                                 onOk: () => onRemoveArea(index),
                               });
@@ -408,7 +411,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
           onClick={onShowHowItWorks}
           style={{ padding: 0, fontSize: '12px', color: '#4F2D7F' }}
         >
-          How it works
+          {t('params.howItWorks')}
         </Button>
       </div>
     </div>

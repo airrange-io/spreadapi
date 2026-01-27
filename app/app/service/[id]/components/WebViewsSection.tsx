@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Space, Button, Card, Typography, Tag, Tooltip, Alert, Empty } from 'antd';
 import { PlusOutlined, EyeOutlined, CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text, Paragraph } = Typography;
 
@@ -128,6 +129,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
   hasUnsavedChanges = false,
   onConfigChange
 }) => {
+  const { t } = useTranslation();
   const [views, setViews] = useState<WebView[]>([]);
 
   // Initialize with default templates
@@ -175,18 +177,18 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
   };
 
   return (
-    <CollapsibleSection title="Create Web Views for Your API" defaultOpen={false}>
+    <CollapsibleSection title={t('webViews.sectionTitle')} defaultOpen={false}>
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {/* Description */}
         <Alert
-          title="Embeddable Result Views"
+          title={t('webViews.alertTitle')}
           description={
             <>
-              Create customizable HTML views that display API results. Perfect for embedding in websites, blogs, and documentation.
+              {t('webViews.alertDescription')}
               {requireToken && (
                 <>
                   <br /><br />
-                  <strong>⚠️ Authentication Required:</strong> This service requires a token. Replace <Text code>YOUR_TOKEN_HERE</Text> in the embed URL with your actual API token.
+                  <strong>{t('webViews.authRequired')}:</strong> {t('webViews.authDescription')}
                 </>
               )}
             </>
@@ -203,13 +205,13 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
             style={{ width: '100%' }}
             disabled
           >
-            Create Custom View (Coming Soon)
+            {t('webViews.createCustomView')}
           </Button>
         </div>
 
         {/* Views List */}
         {views.length === 0 ? (
-          <Empty description="No views created yet" />
+          <Empty description={t('webViews.noViews')} />
         ) : (
           <Space orientation="vertical" style={{ width: '100%' }} size={12}>
             {views.map((view) => (
@@ -219,12 +221,12 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                 title={
                   <Space>
                     <Text strong>{view.name}</Text>
-                    {view.isDefault && <Tag color="blue">Default</Tag>}
+                    {view.isDefault && <Tag color="blue">{t('webViews.default')}</Tag>}
                   </Space>
                 }
                 extra={
                   <Space>
-                    <Tooltip title="Preview">
+                    <Tooltip title={t('webViews.preview')}>
                       <Button
                         type="text"
                         icon={<EyeOutlined />}
@@ -232,7 +234,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                         disabled
                       />
                     </Tooltip>
-                    <Tooltip title="Duplicate & Customize">
+                    <Tooltip title={t('webViews.duplicate')}>
                       <Button
                         type="text"
                         icon={<CopyOutlined />}
@@ -242,7 +244,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                     </Tooltip>
                     {!view.isDefault && (
                       <>
-                        <Tooltip title="Edit">
+                        <Tooltip title={t('webViews.edit')}>
                           <Button
                             type="text"
                             icon={<EditOutlined />}
@@ -250,7 +252,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                             disabled
                           />
                         </Tooltip>
-                        <Tooltip title="Delete">
+                        <Tooltip title={t('webViews.delete')}>
                           <Button
                             type="text"
                             danger
@@ -272,12 +274,12 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
                   {/* Embed URL */}
                   <div>
                     <Text strong style={{ fontSize: 11, color: '#888' }}>
-                      Embed URL:
+                      {t('webViews.embedUrl')}:
                     </Text>
                     {requireToken && (
                       <div style={{ marginTop: 4, marginBottom: 4 }}>
                         <Text type="warning" style={{ fontSize: 11 }}>
-                          ⚠️ Remember to replace YOUR_TOKEN_HERE with your actual token
+                          {t('webViews.tokenReminder')}
                         </Text>
                       </div>
                     )}
@@ -301,7 +303,7 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
 
                   {/* iFrame Code */}
                   <div>
-                    <Text strong style={{ fontSize: 11, color: '#888' }}>iFrame Code:</Text>
+                    <Text strong style={{ fontSize: 11, color: '#888' }}>{t('webViews.iframeCode')}:</Text>
                     <div style={{
                       background: '#f5f5f5',
                       padding: '8px 12px',
@@ -328,17 +330,17 @@ const WebViewsSection: React.FC<WebViewsSectionProps> = ({
 
         {/* Help Text */}
         <Alert
-          title="How to Use"
+          title={t('webViews.howToUseTitle')}
           description={
             <div>
               <p style={{ marginBottom: 8 }}>
-                1. Choose a template or create a custom view<br />
-                2. Copy the iFrame code<br />
-                3. Paste it into your website, blog, or documentation<br />
-                4. Add your API parameters to the URL
+                1. {t('webViews.step1')}<br />
+                2. {t('webViews.step2')}<br />
+                3. {t('webViews.step3')}<br />
+                4. {t('webViews.step4')}
               </p>
               <Text type="secondary" style={{ fontSize: 11 }}>
-                Example: <Text code style={{ fontSize: 11 }}>?revenue=1000&costs=500&token=xxx</Text>
+                {t('webViews.example')}: <Text code style={{ fontSize: 11 }}>?revenue=1000&costs=500&token=xxx</Text>
               </Text>
             </div>
           }

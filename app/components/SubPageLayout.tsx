@@ -5,6 +5,7 @@ import { Layout, Button, Typography, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
+import { useTranslation } from '@/lib/i18n';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -22,6 +23,7 @@ export const SubPageLayout: React.FC<SubPageLayoutProps> = ({
   backPath = '/',
   extra
 }) => {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleBack = () => {
@@ -58,7 +60,7 @@ export const SubPageLayout: React.FC<SubPageLayoutProps> = ({
                 transition: TRANSITIONS.default,
               }}
             >
-              Back
+              {t('subPage.back')}
             </Button>
             <Title level={3} style={{ margin: 0 }}>
               {title}

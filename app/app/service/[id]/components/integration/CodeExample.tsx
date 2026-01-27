@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { getCodeExample, getLanguageDescription } from '@/lib/codeExamples';
 import type { CodeExampleParams } from '@/lib/codeExamples';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { useTranslation } from '@/lib/i18n';
 
 // Lazy load syntax highlighter only when this component mounts
 const SyntaxHighlighter = dynamic(
@@ -41,6 +42,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
   outputs = []
 }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [code, setCode] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -61,7 +63,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
-    notification.success({ message: 'Copied to clipboard' });
+    notification.success({ message: t('codeExample.copiedToClipboard') });
   };
 
   // Map language names to syntax highlighter language identifiers
@@ -80,11 +82,11 @@ const CodeExample: React.FC<CodeExampleProps> = ({
     <div>
       <div style={{ marginBottom: 16 }}>
         <Title level={4}>
-          {language.charAt(0).toUpperCase() + language.slice(1)} Integration
+          {language.charAt(0).toUpperCase() + language.slice(1)} {t('codeExample.integration')}
         </Title>
         <Paragraph type="secondary">
           {description}
-          {requireToken && ' Remember to replace YOUR_TOKEN_HERE with your actual API token.'}
+          {requireToken && (' ' + t('codeExample.replaceTokenReminder'))}
         </Paragraph>
       </div>
 
@@ -95,7 +97,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
           onClick={copyToClipboard}
           style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
         >
-          Copy
+          {t('codeExample.copy')}
         </Button>
         {mounted ? (
           <SyntaxHighlighter

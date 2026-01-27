@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { appStore } from '@/stores/AppStore';
 import { runInAction } from 'mobx';
 import { useIsClient } from '@/shared/hooks/useIsClient';
+import { useTranslation } from '@/lib/i18n';
 import { COLORS, TRANSITIONS } from '@/constants/theme';
 import { generateServiceId } from '@/lib/generateServiceId';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -41,6 +42,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
   const { user } = useAuth();
   const { sidebarCollapsed, loading } = appStore;
   const isClient = useIsClient();
+  const { t, locale } = useTranslation();
   const isCollapsed = sidebarCollapsed && !isMobile;
 
 
@@ -107,14 +109,14 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
   const handleDeleteList = async (listId: string, listName: string) => {
     try {
       // await appStore.deleteList(listId);
-      notification.error({ message: 'Delete functionality not yet implemented' });
+      notification.error({ message: t('sidebar.deleteNotImplemented') });
 
       // If we were viewing this list, navigate away
       // if (appStore.activeList === listId) {
       //   router.push('/');
       // }
     } catch (error) {
-      notification.error({ message: 'Error deleting the list' });
+      notification.error({ message: t('sidebar.errorDeleting') });
     }
   };
 
@@ -124,14 +126,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       icon: <DeleteOutlined />,
       label: (
         <Popconfirm
-          title="Delete list"
-          description={(
-            <>
-              Are you sure you want to delete "{list.name}"?
-              <br />
-              This action cannot be undone.
-            </>
-          )}
+          title={t('sidebar.deleteList')}
+          description={({ en: (<>Are you sure you want to delete &quot;{list.name}&quot;?<br />This action cannot be undone.</>), de: (<>Sind Sie sicher, dass Sie &quot;{list.name}&quot; löschen möchten?<br />Dies kann nicht rückgängig gemacht werden.</>) } as Record<string, React.ReactNode>)[locale] ?? (<>Are you sure you want to delete &quot;{list.name}&quot;?<br />This action cannot be undone.</>)}
           onConfirm={(e) => {
             e?.stopPropagation();
             handleDeleteList(list.id, list.name);
@@ -139,11 +135,11 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
           onCancel={(e) => {
             e?.stopPropagation();
           }}
-          okText="Yes, delete"
-          cancelText="Cancel"
+          okText={t('sidebar.yesDelete')}
+          cancelText={t('common.cancel')}
           okButtonProps={{ danger: true }}
         >
-          <div onClick={(e) => e.stopPropagation()}>Delete list</div>
+          <div onClick={(e) => e.stopPropagation()}>{t('sidebar.deleteList')}</div>
         </Popconfirm>
       ),
       danger: true,
@@ -178,7 +174,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
       }}>
         {isMobile ? (
           <>
-            <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Spreadsheet APIs</Text>
+            <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('sidebar.spreadsheetApis')}</Text>
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: '16px', color: "#4F2D7F" }} />}
@@ -187,7 +183,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
             />
           </>
         ) : isCollapsed ? (
-          <Tooltip title="Show APIs" placement="right">
+          <Tooltip title={t('sidebar.showApis')} placement="right">
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: '16px', color: "#4F2D7F" }} />}
@@ -204,8 +200,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               onClick={appStore.toggleSidebar}
               style={{ width: '32px', height: '32px', minWidth: '32px', flexShrink: 0 }}
             />
-            <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>Spreadsheet APIs</Text>
-            <Tooltip title="Collapse sidebar" placement="top">
+            <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{t('sidebar.spreadsheetApis')}</Text>
+            <Tooltip title={t('sidebar.collapseSidebar')} placement="top">
               <Button
                 type="text"
                 icon={<LeftOutlined />}
@@ -236,7 +232,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         boxSizing: 'border-box'
       }}>
         {isCollapsed ? (
-          <Tooltip title="New Service" placement="right">
+          <Tooltip title={t('sidebar.newService')} placement="right">
             <Button
               type="primary"
               shape="circle"
@@ -287,7 +283,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               borderColor: COLORS.primary,
             }}
           >
-            New Service
+            {t('sidebar.newService')}
           </Button>
         )}
       </div>
@@ -305,7 +301,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
               style={{ width: '100%' }}
               onClick={handleSearchClick}
             >
-              All APIs
+              {t('sidebar.allApis')}
             </Button>
           </div>
         )}
@@ -316,7 +312,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         {isCollapsed ? (
           <div>
             {/* Lists button in collapsed mode */}
-            <Tooltip title="Show APIs" placement="right">
+            <Tooltip title={t('sidebar.showApis')} placement="right">
               <Button
                 type="text"
                 icon={<AppstoreOutlined style={{ fontSize: '20px', color: "#8c8c8c" }} />}
@@ -372,7 +368,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
         <Divider style={{ margin: isCollapsed ? '8px 0' : '0 0 16px 0' }} />
         {isCollapsed ? (
           <>
-            <Tooltip title="Product" placement="right">
+            <Tooltip title={t('sidebar.product')} placement="right">
               <Link href="/">
                 <Button
                   type="text"
@@ -394,7 +390,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 />
               </Link>
             </Tooltip>
-            <Tooltip title="How it works" placement="right">
+            <Tooltip title={t('sidebar.howItWorks')} placement="right">
               <Link href="/how-excel-api-works">
                 <Button
                   type="text"
@@ -416,7 +412,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 />
               </Link>
             </Tooltip>
-            <Tooltip title="AI Integration" placement="right">
+            <Tooltip title={t('sidebar.aiIntegration')} placement="right">
               <Link href="/excel-ai-integration">
                 <Button
                   type="text"
@@ -460,7 +456,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                 />
               </Link>
             </Tooltip>
-            <Tooltip title="Pricing" placement="right">
+            <Tooltip title={t('sidebar.pricing')} placement="right">
               <Link href="/pricing">
                 <Button
                   type="text"
@@ -501,7 +497,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                   }
                 }}
               >
-                Product
+                {t('sidebar.product')}
               </Button>
             </Link>
             <Link href="/how-excel-api-works" style={{ textDecoration: 'none' }}>
@@ -520,7 +516,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                   }
                 }}
               >
-                How it works
+                {t('sidebar.howItWorks')}
               </Button>
             </Link>
             <Link href="/excel-ai-integration" style={{ textDecoration: 'none' }}>
@@ -539,7 +535,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                   }
                 }}
               >
-                AI Integration
+                {t('sidebar.aiIntegration')}
               </Button>
             </Link>
             <Link href="/blog" style={{ textDecoration: 'none' }}>
@@ -577,7 +573,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = observer(({ isMobil
                   }
                 }}
               >
-                Pricing
+                {t('sidebar.pricing')}
               </Button>
             </Link>
           </div>

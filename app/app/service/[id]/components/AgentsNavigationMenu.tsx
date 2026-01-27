@@ -8,6 +8,7 @@ import {
   ApiOutlined,
   MessageOutlined
 } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 export type AgentsMenuSection =
   | 'ai-info'
@@ -23,6 +24,7 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
   selectedKey,
   onSelect
 }) => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -43,17 +45,17 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
     {
       key: 'ai-info',
       icon: <InfoCircleOutlined />,
-      label: 'AI Assistant Info'
+      label: t('agentsNav.aiInfo')
     },
     {
       key: 'chat-test',
       icon: <MessageOutlined />,
-      label: 'AI Chat Testing'
+      label: t('agentsNav.chatTesting')
     },
     {
       key: 'mcp',
       icon: <ApiOutlined />,
-      label: 'MCP Integration'
+      label: t('agentsNav.mcpIntegration')
     }
   ];
 

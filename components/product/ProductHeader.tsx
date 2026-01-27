@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslation } from '@/lib/i18n';
 
 interface ProductHeaderProps {
   subheading?: string;
@@ -39,9 +40,10 @@ export default function ProductHeader({
   locale = 'en',
   primaryButtonRef
 }: ProductHeaderProps) {
+  const { t } = useTranslation();
+
   // Use German video only for 'de' locale, English for all others (en, fr, es)
-  const isGerman = locale === 'de';
-  const selectedVideoId = isGerman ? germanVideoId : englishVideoId;
+  const selectedVideoId = locale === 'de' ? germanVideoId : englishVideoId;
 
   useEffect(() => {
     if (showVideo) {
@@ -92,8 +94,8 @@ export default function ProductHeader({
                             </Link>
                           )}
                           {secondaryButtonText && (
-                            <Link href={secondaryButtonHref || '/docs'} className="button" style={{ 
-                              width: 'auto', 
+                            <Link href={secondaryButtonHref || '/docs'} className="button" style={{
+                              width: 'auto',
                               padding: '14px 28px',
                               background: 'transparent',
                               border: '2px solid #9333EA',
@@ -169,7 +171,7 @@ export default function ProductHeader({
                     <div className="margin-top margin-small" style={{ textAlign: 'center' }}>
                       <div className="subheading">
                         <div>
-                          {isGerman ? germanVideoSubheading : videoSubheading}
+                          {t('product.videoSubheading')}
                         </div>
                       </div>
                     </div>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Input, Button, Space, Alert, Typography, App } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text } = Typography;
 
@@ -22,12 +23,13 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
   onConfigChange
 }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
   const handleTest = async () => {
     if (!webhookUrl) {
-      notification.error({ message: 'Please enter a webhook URL' });
+      notification.error({ message: t('webhook.enterUrl') });
       return;
     }
 
@@ -48,16 +50,16 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
       setTestResult(result);
 
       if (result.success) {
-        notification.success({ message: 'Webhook test successful!' });
+        notification.success({ message: t('webhook.testSuccess') });
       } else {
-        notification.error({ message: `Webhook test failed: ${result.error}` });
+        notification.error({ message: t('webhook.testFailed', { error: result.error }) });
       }
     } catch (error: any) {
       setTestResult({
         success: false,
-        error: error.message || 'Failed to test webhook'
+        error: error.message || t('webhook.testError')
       });
-      notification.error({ message: 'Failed to test webhook' });
+      notification.error({ message: t('webhook.testError') });
     } finally {
       setTesting(false);
     }
@@ -65,15 +67,15 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
   return (
     <div style={{ width: '100%' }}>
-      <Typography.Title level={4} style={{ marginBottom: 8 }}>Webhook Automation</Typography.Title>
+      <Typography.Title level={4} style={{ marginBottom: 8 }}>{t('webhook.title')}</Typography.Title>
       <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 16 }}>
-        Automatically trigger webhooks after each calculation. Enter a URL to enable.
+        {t('webhook.description')}
       </Text>
 
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         {/* Webhook URL */}
         <div>
-          <div style={{ fontWeight: 500, marginBottom: 8 }}>Webhook URL</div>
+          <div style={{ fontWeight: 500, marginBottom: 8 }}>{t('webhook.urlLabel')}</div>
           <Input
             placeholder="https://your-domain.com/webhook"
             value={webhookUrl}
@@ -86,17 +88,17 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
             style={{ fontFamily: 'monospace' }}
           />
           <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
-            The URL to POST calculation results to. Must be a valid HTTPS endpoint. Leave empty to disable webhooks.
+            {t('webhook.urlHint')}
           </Text>
         </div>
 
         {/* Webhook Secret (Optional) */}
         <div>
           <div style={{ fontWeight: 500, marginBottom: 8 }}>
-            Webhook Secret <Text type="secondary">(optional)</Text>
+            {t('webhook.secretLabel')} <Text type="secondary">({t('webhook.optional')})</Text>
           </div>
           <Input.Password
-            placeholder="Your secret key for authentication"
+            placeholder={t('webhook.secretPlaceholder')}
             value={webhookSecret}
             onChange={(e) => {
               if (onConfigChange) {
@@ -107,7 +109,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
             style={{ fontFamily: 'monospace' }}
           />
           <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
-            Sent as <code>X-Webhook-Secret</code> header for authentication
+            {t('webhook.secretHint')}
           </Text>
         </div>
 
@@ -119,26 +121,26 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
             loading={testing}
             disabled={!webhookUrl || isDemoMode}
           >
-            {testing ? 'Testing...' : 'Test Webhook'}
+            {testing ? t('webhook.testing') : t('webhook.testButton')}
           </Button>
           <Text type="secondary" style={{ fontSize: 12, marginLeft: 12 }}>
-            Send a test payload to verify your webhook endpoint
+            {t('webhook.testHint')}
           </Text>
         </div>
 
         {/* Test Result */}
         {testResult && (
           <Alert
-            title={testResult.success ? 'Test Successful' : 'Test Failed'}
+            title={testResult.success ? t('webhook.testSuccessTitle') : t('webhook.testFailedTitle')}
             description={
               <div style={{ fontSize: 13 }}>
                 {testResult.success ? (
                   <>
-                    <div><strong>Status:</strong> {testResult.status} {testResult.statusText}</div>
-                    <div><strong>Response Time:</strong> {testResult.responseTime}ms</div>
+                    <div><strong>{t('webhook.status')}:</strong> {testResult.status} {testResult.statusText}</div>
+                    <div><strong>{t('webhook.responseTime')}:</strong> {testResult.responseTime}ms</div>
                     {testResult.body && (
                       <div style={{ marginTop: 8 }}>
-                        <strong>Response:</strong>
+                        <strong>{t('webhook.response')}:</strong>
                         <pre style={{
                           marginTop: 4,
                           padding: 8,
@@ -154,7 +156,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
                     )}
                   </>
                 ) : (
-                  <div><strong>Error:</strong> {testResult.error}</div>
+                  <div><strong>{t('webhook.error')}:</strong> {testResult.error}</div>
                 )}
               </div>
             }
@@ -168,19 +170,19 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
         {/* Info Alert */}
         <Alert
-          title="How Webhooks Work"
+          title={t('webhook.howItWorksTitle')}
           description={
             <div style={{ fontSize: 13 }}>
               <ul style={{ paddingLeft: 20, margin: 0 }}>
-                <li>Webhooks are triggered after every calculation (API, web app, snippets, MCP, chat)</li>
-                <li>Payload includes inputs, outputs, and execution metadata</li>
-                <li>Non-blocking: webhooks fire after the response is sent (zero latency impact)</li>
-                <li>Rate limited: max 100 webhooks per minute per service</li>
-                <li>Circuit breaker: auto-disables after 10 consecutive failures</li>
-                <li>Security: SSRF protection blocks private IPs and localhost</li>
+                <li>{t('webhook.infoTriggered')}</li>
+                <li>{t('webhook.infoPayload')}</li>
+                <li>{t('webhook.infoNonBlocking')}</li>
+                <li>{t('webhook.infoRateLimit')}</li>
+                <li>{t('webhook.infoCircuitBreaker')}</li>
+                <li>{t('webhook.infoSecurity')}</li>
               </ul>
               <div style={{ marginTop: 8 }}>
-                View webhook statistics in the <strong>Usage</strong> tab.
+                {t('webhook.viewStats')}
               </div>
             </div>
           }
@@ -189,7 +191,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
         {isDemoMode && (
           <Alert
-            title="Webhook configuration is disabled in demo mode"
+            title={t('webhook.demoDisabled')}
             type="warning"
             showIcon
           />

@@ -8,6 +8,7 @@ import { SendOutlined, RobotOutlined, UserOutlined, ReloadOutlined, MessageOutli
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import markdownit from 'markdown-it';
+import { useTranslation } from '@/lib/i18n';
 import '@/app/chat/chat.css';
 
 const { Text, Title } = Typography;
@@ -59,6 +60,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
   isLoading: parentLoading = false,
   apiConfig
 }) => {
+  const { t } = useTranslation();
   const hasGreetedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState('');
@@ -198,7 +200,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
       }}>
         <Space orientation="vertical" size={0}>
           <Title level={5} style={{ margin: 0 }}>
-            Chat Test
+            {t('serviceChat.title')}
           </Title>
           {/* <Text type="secondary" style={{ fontSize: '12px' }}>
             Test your AI descriptions and see how the assistant responds
@@ -222,7 +224,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
               title: model.description
             }))}
           />
-          <Tooltip title="Reset Chat">
+          <Tooltip title={t('serviceChat.resetChat')}>
             <Button
               icon={<ReloadOutlined />}
               onClick={handleReset}
@@ -248,10 +250,10 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
             description={
               <Space orientation="vertical" size={8} style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}>
                 <Text strong style={{ fontSize: '16px' }}>
-                  Test Your AI Configuration
+                  {t('serviceChat.testAiConfig')}
                 </Text>
                 <Text type="secondary" style={{ fontSize: '13px', textAlign: 'center' }}>
-                  Ask questions about your service to see how the AI responds based on your descriptions and usage guidance
+                  {t('serviceChat.testAiConfigDesc')}
                 </Text>
                 <Button
                   type="primary"
@@ -264,7 +266,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
                   }}
                   style={{ marginTop: 8 }}
                 >
-                  Get AI Examples
+                  {t('serviceChat.getAiExamples')}
                 </Button>
               </Space>
             }
@@ -379,7 +381,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
               setInputValue('');
             }
           }}
-          placeholder="Test your AI descriptions and see how the assistant responds"
+          placeholder={t('serviceChat.inputPlaceholder')}
           loading={isLoading}
           disabled={isLoading}
           styles={{

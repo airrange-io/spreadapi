@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Space, Input, Tooltip, Button, App, Alert, Modal } from 'antd';
 import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+import { useTranslation } from '@/lib/i18n';
 
 const { TextArea } = Input;
 
@@ -27,24 +28,25 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   onWebAppConfigChange,
 }) => {
   const { notification } = App.useApp();
+  const { t, locale } = useTranslation();
   const [configError, setConfigError] = useState<string | null>(null);
   const handleGenerateToken = () => {
     // Generate a URL-safe random token
     const token = crypto.randomUUID().replace(/-/g, '');
     onWebAppTokenChange(token);
-    notification.success({ message: 'Web app token generated!' });
+    notification.success({ message: t('webApp.tokenGenerated') });
   };
 
   const handleDeleteToken = () => {
     Modal.confirm({
-      title: 'Disable Web App',
-      content: 'This will disable the web app and invalidate the current link. Are you sure?',
-      okText: 'Disable',
+      title: t('webApp.disableWebApp'),
+      content: t('webApp.disableConfirm'),
+      okText: t('webApp.disable'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('common.cancel'),
       onOk: () => {
         onWebAppTokenChange('');
-        notification.success({ message: 'Web app disabled' });
+        notification.success({ message: t('webApp.webAppDisabled') });
       }
     });
   };
@@ -52,7 +54,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   const handleCopyLink = () => {
     const appUrl = `${window.location.origin}/app/v1/services/${serviceId}?token=${webAppToken}`;
     navigator.clipboard.writeText(appUrl);
-    notification.success({ message: 'Link copied to clipboard!' });
+    notification.success({ message: t('webApp.linkCopied') });
   };
 
   const handleConfigChange = (value: string) => {
@@ -96,11 +98,11 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   };
 
   return (
-    <CollapsibleSection title="Create a Web Frontend for Your API" defaultOpen={false}>
+    <CollapsibleSection title={t('webApp.createWebFrontend')} defaultOpen={false}>
       <Space orientation="vertical" style={{ width: '100%' }} size={16}>
         <Alert
-          title="Web Frontend"
-          description="Create a shareable web application that users can access directly without API knowledge. Generate a token to enable."
+          title={t('webApp.webFrontend')}
+          description={t('webApp.webFrontendDesc')}
           type="info"
           showIcon
         />
@@ -112,14 +114,14 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
               onClick={handleGenerateToken}
               disabled={isLoading}
             >
-              Generate Token & Enable Web App
+              {t('webApp.generateTokenEnable')}
             </Button>
           </div>
         ) : (
           <>
             <div>
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
-                Access Token
+                {t('webApp.accessToken')}
               </div>
               <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                 <Space.Compact style={{ width: '100%' }}>
@@ -128,13 +130,13 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
                     readOnly
                     style={{ flex: 1 }}
                   />
-                  <Tooltip title="Regenerate token">
+                  <Tooltip title={t('webApp.regenerateToken')}>
                     <Button
                       icon={<ReloadOutlined />}
                       onClick={handleGenerateToken}
                     />
                   </Tooltip>
-                  <Tooltip title="Disable web app">
+                  <Tooltip title={t('webApp.disableWebApp')}>
                     <Button
                       danger
                       icon={<DeleteOutlined />}
@@ -143,14 +145,14 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
                   </Tooltip>
                 </Space.Compact>
                 <div style={{ fontSize: '11px', color: '#999' }}>
-                  Regenerate to revoke access to old links
+                  {t('webApp.regenerateToRevoke')}
                 </div>
               </Space>
             </div>
 
             <div>
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500 }}>
-                Web App URL
+                {t('webApp.webAppUrl')}
               </div>
               <Space.Compact style={{ width: '100%' }}>
                 <Input
@@ -160,26 +162,52 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
                 <Button
                   icon={<CopyOutlined />}
                   onClick={handleCopyLink}
-                  title="Copy to clipboard"
+                  title={t('webApp.copyToClipboard')}
                 />
               </Space.Compact>
               <div style={{ fontSize: '12px', color: '#666', marginTop: 4 }}>
-                Share this{' '}
-                <a
-                  href={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
-                >
-                  link
-                </a>
-                {' '}with users to access your web application
+                {({ en: <>
+                    Share this{' '}
+                    <a
+                      href={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      link
+                    </a>
+                    {' '}with users to access your web application
+                  </>,
+                  de: <>
+                    Teilen Sie diesen{' '}
+                    <a
+                      href={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      Link
+                    </a>
+                    {' '}mit Benutzern, um auf Ihre Webanwendung zuzugreifen
+                  </>
+                } as Record<string, React.ReactNode>)[locale] ?? <>
+                    Share this{' '}
+                    <a
+                      href={`${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#4F2D7F', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      link
+                    </a>
+                    {' '}with users to access your web application
+                  </>}
               </div>
             </div>
 
             {hasUnsavedChanges && (
               <Alert
-                title="Remember to click the Save button at the top to activate your web app settings"
+                title={t('webApp.rememberToSave')}
                 type="info"
                 showIcon={false}
                 style={{ fontSize: '12px', padding: '8px 12px' }}
@@ -188,10 +216,10 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
 
             <div>
               <div style={{ marginBottom: '8px', fontSize: '12px', color: '#666', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                App Rules (Advanced)
+                {t('webApp.appRulesAdvanced')}
                 <Tooltip title={
                   <div>
-                    <div style={{ marginBottom: 8 }}>Control which inputs/outputs are visible based on input values.</div>
+                    <div style={{ marginBottom: 8 }}>{t('webApp.controlVisibility')}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: '11px', whiteSpace: 'pre' }}>
 {`{
   "rules": [
@@ -235,7 +263,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
                 </div>
               )}
               <div style={{ fontSize: '11px', color: '#999', marginTop: 4 }}>
-                Leave empty for default behavior (show all outputs)
+                {t('webApp.leaveEmptyDefault')}
               </div>
             </div>
           </>

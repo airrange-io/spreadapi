@@ -5,6 +5,7 @@ import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App }
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -33,6 +34,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   onTestComplete
 }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [parameterValues, setParameterValues] = useState<Record<string, any>>({});
   const [wizardTesting, setWizardTesting] = useState(false);
@@ -80,7 +82,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     try {
       await form.validateFields();
     } catch (error) {
-      setWizardError('Please fill in all required fields');
+      setWizardError(t('tester.fillRequiredFields'));
       setWizardTesting(false);
       return;
     }
@@ -240,7 +242,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               padding: '14px 14px 6px 14px',
             }}>
               <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
-                Input Parameters
+                {t('tester.inputParameters')}
               </div>
               <Form
                 form={form}
@@ -285,8 +287,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               color: '#595959'
             }}>
               <Tooltip title={isPublished ?
-                'This endpoint is active and ready to receive requests' :
-                'This endpoint is in draft mode. Publish the service to make it available.'
+                t('tester.endpointActive') :
+                t('tester.endpointDraft')
               }>
                 <span style={{
                   background: isPublished ? '#52c41a' : '#faad14',
@@ -298,23 +300,23 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   cursor: 'help'
                 }}>GET</span>
               </Tooltip>
-              <span style={{ flex: 1 }}>Test URL</span>
+              <span style={{ flex: 1 }}>{t('tester.testUrl')}</span>
               {requireToken && (
                 <>
                   <span style={{ color: '#d9d9d9' }}>|</span>
                   <span style={{ color: '#faad14', fontSize: 12 }}>
-                    Replace REPLACE_WITH_YOUR_TOKEN with your actual token
+                    {t('tester.replaceToken')}
                   </span>
                 </>
               )}
-              <Tooltip title="Copy URL to clipboard">
+              <Tooltip title={t('tester.copyUrlToClipboard')}>
                 <Button
                   type="text"
                   size="small"
                   icon={<CopyOutlined />}
                   onClick={() => {
                     navigator.clipboard.writeText(wizardUrl);
-                    notification.success({ message: 'URL copied to clipboard' });
+                    notification.success({ message: t('tester.urlCopied') });
                   }}
                   style={{ color: '#8c8c8c' }}
                 />
@@ -344,9 +346,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               disabled={!isPublished}
               style={{ boxShadow: 'none', flex: 1 }}
             >
-              Run Test
+              {t('tester.runTest')}
             </Button>
-            <Tooltip title="Open URL in new tab">
+            <Tooltip title={t('tester.openInNewTab')}>
               <Button
                 icon={<ExportOutlined />}
                 onClick={handleOpenUrl}
@@ -448,11 +450,11 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               }}>
                 {wizardError ? (
                   <span style={{ color: '#ff4d4f', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <InfoCircleOutlined /> Error
+                    <InfoCircleOutlined /> {t('tester.error')}
                   </span>
                 ) : (
                   <span style={{ color: '#52c41a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircleOutlined /> Success
+                    <CheckCircleOutlined /> {t('tester.success')}
                   </span>
                 )}
                 <span style={{ color: '#d9d9d9' }}>|</span>
@@ -464,12 +466,12 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   <>
                     <span style={{ color: '#d9d9d9' }}>|</span>
                     <span style={{ color: '#8c8c8c' }}>
-                      {wizardResult.metadata.fromProcessCache && "process cache"}
-                      {wizardResult.metadata.fromRedisCache && "redis cache"}
-                      {wizardResult.metadata.fromResultCache && "result cache"}
+                      {wizardResult.metadata.fromProcessCache && t('tester.processCache')}
+                      {wizardResult.metadata.fromRedisCache && t('tester.redisCache')}
+                      {wizardResult.metadata.fromResultCache && t('tester.resultCache')}
                       {!(wizardResult.metadata.fromProcessCache ||
                          wizardResult.metadata.fromRedisCache ||
-                         wizardResult.metadata.fromResultCache) && "fresh calculation"}
+                         wizardResult.metadata.fromResultCache) && t('tester.freshCalculation')}
                     </span>
                   </>
                 )}
@@ -489,7 +491,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               {wizardResult && (
                 <details style={{ marginTop: 8 }}>
                   <summary style={{ cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
-                    View raw response
+                    {t('tester.viewRawResponse')}
                   </summary>
                   <div
                     ref={responseBoxRef}

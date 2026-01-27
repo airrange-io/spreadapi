@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { validateRangeFormat } from '@/lib/rangeValidation';
+import { useTranslation } from '@/lib/i18n';
 
 interface InputDefinition {
   id: string;
@@ -198,6 +199,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [addressError, setAddressError] = useState<string>('');
   const [parsedAddress, setParsedAddress] = useState<any>(null);
@@ -274,7 +276,9 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
 
   return (
     <Modal
-      title={`${editingParameter ? 'Edit' : 'Add'} ${parameterType === 'input' ? 'Input' : 'Output'} Parameter`}
+      title={editingParameter
+        ? t('paramModal.editParameter', { type: parameterType === 'input' ? t('paramModal.input') : t('paramModal.output') })
+        : t('paramModal.addParameter', { type: parameterType === 'input' ? t('paramModal.input') : t('paramModal.output') })}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -434,9 +438,9 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         {/* View Switcher */}
         <div style={{ marginBottom: 24 }}>
           <Segmented
-            options={['Parameter Info', '🤖 AI Info']}
-            value={activeView === 'parameter' ? 'Parameter Info' : '🤖 AI Info'}
-            onChange={(value) => setActiveView(value === 'Parameter Info' ? 'parameter' : 'ai')}
+            options={[t('paramModal.parameterInfo'), t('paramModal.aiInfo')]}
+            value={activeView === 'parameter' ? t('paramModal.parameterInfo') : t('paramModal.aiInfo')}
+            onChange={(value) => setActiveView(value === t('paramModal.parameterInfo') ? 'parameter' : 'ai')}
             block
             style={{
               backgroundColor: '#f5f5f5',
@@ -450,22 +454,22 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           <>
             <div style={{ display: 'flex', gap: '16px' }}>
               <Form.Item
-                label="Parameter Name"
+                label={t('paramModal.parameterName')}
                 name="name"
-                rules={[{ required: true, message: 'Please enter a parameter name' }]}
+                rules={[{ required: true, message: t('paramModal.parameterNameRequired') }]}
                 style={{ flex: 1 }}
               >
-                <Input placeholder="e.g., amount, rate, result" />
+                <Input placeholder={t('paramModal.parameterNamePlaceholder')} />
               </Form.Item>
 
               <Form.Item
-                label="Data Type"
+                label={t('paramModal.dataType')}
                 name="dataType"
                 style={{ width: '150px' }}
-                tooltip={isRange ? "Range selections are automatically treated as arrays" : undefined}
+                tooltip={isRange ? t('paramModal.rangeAutoArray') : undefined}
               >
                 <Select disabled={isRange}>
-                  {isRange && <Select.Option value="array">Array (Range)</Select.Option>}
+                  {isRange && <Select.Option value="array">{t('paramModal.arrayRange')}</Select.Option>}
                   <Select.Option value="string">String</Select.Option>
                   <Select.Option value="number">Number</Select.Option>
                   <Select.Option value="boolean">Boolean</Select.Option>
@@ -474,35 +478,35 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             </div>
 
             <Form.Item
-              label="Original Title"
+              label={t('paramModal.originalTitle')}
               name="title"
             >
-              <Input placeholder="e.g., Interest Rate, Total Amount" />
+              <Input placeholder={t('paramModal.originalTitlePlaceholder')} />
             </Form.Item>
 
             <Form.Item
               label={
                 <Space>
-                  Cell Address
+                  {t('paramModal.cellAddress')}
                   <InfoCircleOutlined
                     style={{ color: '#8c8c8c', fontSize: '12px' }}
-                    title="Enter the cell or range address (e.g., Sheet1!A1 or Sheet1!A1:B10)"
+                    title={t('paramModal.cellAddressTooltip')}
                   />
                   {selectedCellInfo?.value !== null && selectedCellInfo?.value !== undefined && !selectedCellInfo?.hasFormula && (
                     <span style={{ color: '#8c8c8c', fontSize: '12px', fontWeight: 'normal' }}>
-                      (Current: {selectedCellInfo.value})
+                      ({t('paramModal.current')}: {selectedCellInfo.value})
                     </span>
                   )}
                   {selectedCellInfo?.hasFormula && (
                     <span style={{ color: '#52c41a', fontSize: '12px', fontWeight: 'normal' }}>
-                      (✓ Formula)
+                      ({t('paramModal.formula')})
                     </span>
                   )}
                 </Space>
               }
               name="address"
               rules={[
-                { required: true, message: 'Cell address is required' },
+                { required: true, message: t('paramModal.cellAddressRequired') },
                 {
                   validator: (_, value) => {
                     if (!value) return Promise.resolve();
@@ -518,7 +522,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
               help={addressError}
             >
               <Input
-                placeholder="e.g., Sheet1!A1 or Sheet1!A1:B10"
+                placeholder={t('paramModal.cellAddressPlaceholder')}
                 onChange={handleAddressChange}
                 onBlur={(e) => {
                   // Normalize address on blur
@@ -532,8 +536,8 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
 
             {parsedAddress && parsedAddress.rowCount > 1 && (
               <Alert
-                title="Range Selection"
-                description={`This is a range of ${parsedAddress.rowCount} rows × ${parsedAddress.colCount} columns. The entire range will be returned as an array of values.`}
+                title={t('paramModal.rangeSelection')}
+                description={t('paramModal.rangeSelectionDesc', { rows: String(parsedAddress.rowCount), cols: String(parsedAddress.colCount) })}
                 type="info"
                 style={{ marginBottom: 16, padding: '10px 10px 10px 15px' }}
               />
@@ -541,8 +545,8 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
 
             {isRange && !parsedAddress && (
               <Alert
-                title="Range Selection"
-                description={`This is a range selection (${selectedCellInfo?.address}). The entire range will be returned as an array of values.`}
+                title={t('paramModal.rangeSelection')}
+                description={t('paramModal.rangeSelectionAddress', { address: selectedCellInfo?.address || '' })}
                 type="info"
                 style={{ marginBottom: 16, padding: '10px 10px 10px 15px' }}
               />
@@ -559,15 +563,15 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                     <Form.Item
                       label={
                         <Space>
-                          Display Format (Optional)
-                          <Tooltip title="How this input appears in web apps. Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%">
+                          {t('paramModal.displayFormat')}
+                          <Tooltip title={t('paramModal.displayFormatTooltip')}>
                             <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
                           </Tooltip>
                         </Space>
                       }
                       name="formatString"
                     >
-                      <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
+                      <Input placeholder={t('paramModal.displayFormatPlaceholder')} />
                     </Form.Item>
                   ) : null
                 }
@@ -576,15 +580,15 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
               <Form.Item
                 label={
                   <Space>
-                    Format String (Optional)
-                    <Tooltip title="Examples: €#,##0.00, $#,##0.00, #,##0.0 kg, 0.00%, date">
+                    {t('paramModal.formatString')}
+                    <Tooltip title={t('paramModal.formatStringTooltip')}>
                       <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
                     </Tooltip>
                   </Space>
                 }
                 name="formatString"
               >
-                <Input placeholder="e.g., €#,##0.00 or #,##0.0 kg or 0.00%" />
+                <Input placeholder={t('paramModal.displayFormatPlaceholder')} />
               </Form.Item>
             )}
 
@@ -598,14 +602,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                     getFieldValue('dataType') === 'number' ? (
                       <div style={{ display: 'flex', gap: '16px' }}>
                         <Form.Item
-                          label="Min Value"
+                          label={t('paramModal.minValue')}
                           name="min"
                           style={{ flex: 1 }}
                         >
                           <Input type="number" placeholder="Optional" />
                         </Form.Item>
                         <Form.Item
-                          label="Max Value"
+                          label={t('paramModal.maxValue')}
                           name="max"
                           style={{ flex: 1 }}
                         >
@@ -630,10 +634,10 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                         <Form.Item
                           label={
                             <Space>
-                              Allowed Values (Optional)
+                              {t('paramModal.allowedValues')}
                               <InfoCircleOutlined
                                 style={{ color: '#8c8c8c', fontSize: '12px' }}
-                                title="Restrict input to specific values. Leave empty to allow any value."
+                                title={t('paramModal.allowedValuesTooltip')}
                               />
                               <Button
                                 type="link"
@@ -641,14 +645,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                                 onClick={() => setShowAdvancedAllowedValues(!showAdvancedAllowedValues)}
                                 style={{ padding: 0, height: 'auto', fontSize: '12px' }}
                               >
-                                {showAdvancedAllowedValues ? 'Hide Advanced' : 'Advanced'}
+                                {showAdvancedAllowedValues ? t('paramModal.hideAdvanced') : t('paramModal.advanced')}
                               </Button>
                             </Space>
                           }
                           name="allowedValues"
                           help={
                             selectedCellInfo?.dropdownItems && !editingParameter
-                              ? `✓ Auto-detected from cell dropdown (${selectedCellInfo.dropdownItems.length} items)`
+                              ? t('paramModal.autoDetectedDropdown', { count: String(selectedCellInfo.dropdownItems.length) })
                               : undefined
                           }
                         >
@@ -667,15 +671,15 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                             <Form.Item
                               label={
                                 <Space>
-                                  Or Load from Worksheet Range
+                                  {t('paramModal.loadFromRange')}
                                   <InfoCircleOutlined
                                     style={{ color: '#8c8c8c', fontSize: '12px' }}
-                                    title="Values will be extracted from this range when you publish the service"
+                                    title={t('paramModal.loadFromRangeTooltip')}
                                   />
                                 </Space>
                               }
                               name="allowedValuesRange"
-                              help="Extract allowed values from a worksheet range at publish time (e.g., Values!B2:B24)"
+                              help={t('paramModal.loadFromRangeHelp')}
                               rules={[
                                 {
                                   validator: (_, value) => {
@@ -710,7 +714,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                                 valuePropName="checked"
                                 style={{ marginTop: -8, marginBottom: 16 }}
                               >
-                                <Checkbox>Case-sensitive matching</Checkbox>
+                                <Checkbox>{t('paramModal.caseSensitive')}</Checkbox>
                               </Form.Item>
                             ) : null;
                           }}
@@ -737,9 +741,9 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                     // Only show for optional parameters
                     return !isMandatory ? (
                       <Form.Item
-                        label="Default Value (Optional)"
+                        label={t('paramModal.defaultValue')}
                         name="defaultValue"
-                        help="Value to use when this parameter is not provided"
+                        help={t('paramModal.defaultValueHelp')}
                         rules={[
                           {
                             validator: (_, value) => {
@@ -756,7 +760,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                                 : allowedValues.map((v: any) => String(v).toLowerCase());
 
                               if (!allowedSet.includes(valueToCheck)) {
-                                return Promise.reject(new Error(`Default value must be one of: ${allowedValues.join(', ')}`));
+                                return Promise.reject(new Error(t('paramModal.defaultValueMustBeOneOf', { values: allowedValues.join(', ') })));
                               }
 
                               return Promise.resolve();
@@ -765,14 +769,14 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                         ]}
                       >
                         {dataType === 'number' ? (
-                          <Input type="number" placeholder="Optional default" />
+                          <Input type="number" placeholder={t('paramModal.optionalDefault')} />
                         ) : dataType === 'boolean' ? (
-                          <Select placeholder="Select default" allowClear>
+                          <Select placeholder={t('paramModal.selectDefault')} allowClear>
                             <Select.Option value={true}>True</Select.Option>
                             <Select.Option value={false}>False</Select.Option>
                           </Select>
                         ) : (
-                          <Input placeholder="Optional default" />
+                          <Input placeholder={t('paramModal.optionalDefault')} />
                         )}
                       </Form.Item>
                     ) : null;
@@ -786,7 +790,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
                 name="mandatory"
                 valuePropName="checked"
               >
-                <Checkbox>Mandatory parameter</Checkbox>
+                <Checkbox>{t('paramModal.mandatoryParameter')}</Checkbox>
               </Form.Item>
             )}
           </>
@@ -797,36 +801,36 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 24 }}>
             <div>
               <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
-                Description (for AI assistants)
+                {t('paramModal.descriptionForAi')}
               </div>
               <Form.Item name="description" noStyle>
                 <Input.TextArea
                   rows={3}
-                  placeholder="Describe what this parameter represents and how it should be used by AI assistants..."
+                  placeholder={t('paramModal.descriptionForAiPlaceholder')}
                   maxLength={500}
                   showCount
                 />
               </Form.Item>
               <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                Help AI understand the purpose and usage of this parameter
+                {t('paramModal.descriptionForAiHelp')}
               </div>
             </div>
 
             {parameterType === 'input' && (
               <div>
                 <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
-                  Example Values
+                  {t('paramModal.exampleValues')}
                 </div>
                 <Form.Item name="aiExamples" noStyle>
                   <Select
                     mode="tags"
                     style={{ width: '100%' }}
-                    placeholder="E.g., '0.05 (5% APR)', '300000 (for $300k)', '30 (years)'"
+                    placeholder={t('paramModal.exampleValuesPlaceholder')}
                     tokenSeparators={[',']}
                   />
                 </Form.Item>
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  Provide example values that AI can suggest to users
+                  {t('paramModal.exampleValuesHelp')}
                 </div>
               </div>
             )}
@@ -834,15 +838,15 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             {parameterType === 'output' && (
               <div>
                 <div style={{ marginBottom: 8, fontSize: 13, color: '#666', fontWeight: 500 }}>
-                  Presentation Hint
+                  {t('paramModal.presentationHint')}
                 </div>
                 <Form.Item name="aiPresentationHint" noStyle>
                   <Input
-                    placeholder="E.g., 'Format as currency with 2 decimals' or 'Show as percentage'"
+                    placeholder={t('paramModal.presentationHintPlaceholder')}
                   />
                 </Form.Item>
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  Guide AI on how to format and present this result to users
+                  {t('paramModal.presentationHintHelp')}
                 </div>
               </div>
             )}
@@ -852,10 +856,10 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
         <Form.Item style={{ marginBottom: 0, paddingBottom: 0 }}>
           <Space style={{ marginTop: 8 }}>
             <Button type="primary" htmlType="submit">
-              {editingParameter ? 'Update' : 'Add'} Parameter
+              {editingParameter ? t('paramModal.updateParameter') : t('paramModal.addParameterBtn')}
             </Button>
             <Button onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </Space>
         </Form.Item>

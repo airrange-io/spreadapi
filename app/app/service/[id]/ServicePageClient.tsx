@@ -66,6 +66,7 @@ import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_
 import { appStore } from '../../../stores/AppStore';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
+import { useTranslation } from '@/lib/i18n';
 
 // Import the main sidebar
 const Sidebar = dynamic(() => import('@/components/Sidebar'), {
@@ -81,7 +82,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const searchParams = useSearchParams();
   const workbookRef = useRef<any>(null);
   const { notification, modal } = App.useApp();
+  const { t, locale } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
+  const [isCompactNav, setIsCompactNav] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
   const [activeView, setActiveView] = useState<'Settings' | 'Workbook' | 'API' | 'Agents' | 'Apps' | 'Usage'>(() => {
@@ -98,7 +101,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [loading, setLoading] = useState(false);
   const [savingWorkbook, setSavingWorkbook] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
-  const [loadingMessage, setLoadingMessage] = useState('Loading service...');
+  const [loadingMessage, setLoadingMessage] = useState(
+    typeof navigator !== 'undefined' && navigator.language?.startsWith('de') ? 'Service wird geladen...' : 'Loading service...'
+  );
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
   const [workbookSize, setWorkbookSize] = useState<number | null>(null);
   const [apiConfig, setApiConfig] = useState({
@@ -214,24 +219,25 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const timer = setTimeout(async () => {
       try {
         // Dynamic imports - only loaded when needed
-        const [{ serviceDetailTour }, { Tour }, { useTour }] = await Promise.all([
+        const [{ getServiceDetailTourSteps }, { Tour }, { useTour }] = await Promise.all([
           import('@/tours/serviceDetailTour'),
           import('antd'),
           import('@/hooks/useTour')
         ]);
 
         // Create tour steps with refs
+        const tourSteps = getServiceDetailTourSteps(locale);
         const steps = [
           {
-            ...serviceDetailTour.steps[0],
+            ...tourSteps[0],
             target: () => parametersPanelRef.current,
           },
           {
-            ...serviceDetailTour.steps[1],
+            ...tourSteps[1],
             target: () => addButtonRef.current,
           },
           {
-            ...serviceDetailTour.steps[2],
+            ...tourSteps[2],
             target: () => viewSwitcherRef.current,
           },
         ];
@@ -247,7 +253,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [template, activeView, workbookLoaded, isMobile]);
+  }, [template, activeView, workbookLoaded, isMobile, locale]);
 
   // Auto-detect parameters from template cell addresses using SpreadJS
   const autoDetectTemplateParameters = useCallback((spread: any, cells: string[]) => {
@@ -545,23 +551,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     if (!template || !template.cells.length || !spreadInstance) return;
     templateParamsPromptedRef.current = true;
 
-    const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
     modal.confirm({
-      title: isGerman ? 'Parameter einrichten?' : 'Set up parameters?',
-      content: isGerman
-        ? `Diese Vorlage enthält ${template.cells.length} vordefinierte Parameter. Möchten Sie diese automatisch erkennen und konfigurieren?`
-        : `This template has ${template.cells.length} predefined parameter cells. Would you like to auto-detect and configure them?`,
-      okText: isGerman ? 'Ja, einrichten' : 'Yes, set them up',
-      cancelText: isGerman ? 'Nein, danke' : 'No thanks',
+      title: t('service.setupParameters'),
+      content: t('service.setupParametersContent', { count: String(template.cells.length) }),
+      okText: t('service.yesSetUp'),
+      cancelText: t('service.noThanks'),
       onOk: () => {
         const result = autoDetectTemplateParameters(spreadInstance, template.cells);
         setApiConfig(prev => ({ ...prev, inputs: result.inputs, outputs: result.outputs }));
         setConfigHasChanges(true);
         const totalParams = result.inputs.length + result.outputs.length;
         notification.success({
-          message: isGerman
-            ? `${totalParams} Parameter wurden automatisch konfiguriert (${result.inputs.length} Eingaben, ${result.outputs.length} Ausgaben)`
-            : `${totalParams} parameters auto-configured (${result.inputs.length} inputs, ${result.outputs.length} outputs)`
+          message: t('service.paramsAutoConfigured', { total: String(totalParams), inputs: String(result.inputs.length), outputs: String(result.outputs.length) })
         });
 
         // After parameters are added, show a one-step tour highlighting the test button
@@ -572,13 +573,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             setTourState({
               open: true,
               steps: [{
-                title: isGerman ? 'Service sofort testen' : 'Test your service instantly',
+                title: t('service.testServiceInstantly'),
                 description: (
                   <div>
                     <p style={{ margin: 0 }}>
-                      {isGerman
-                        ? 'Klicken Sie hier, um Ihren Service sofort zu testen – ganz ohne Veröffentlichung.'
-                        : 'Click here to test your service right away – no publishing needed. Change values directly in the workbook and see results update in real-time.'}
+                      {t('service.testServiceInstantlyDesc')}
                     </p>
                   </div>
                 ),
@@ -687,6 +686,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       const mobile = window.innerWidth < 1024;
       const wasMobile = isMobile;
       setIsMobile(mobile);
+      setIsCompactNav(window.innerWidth < 1120);
 
       // Auto-manage drawer visibility based on screen size
       if (mobile && !wasMobile) {
@@ -828,7 +828,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        notification.error({ message: 'Failed to load workbook' });
+        notification.error({ message: t('service.failedLoadWorkbook') });
       }
       setWorkbookLoading(false);
     } finally {
@@ -895,7 +895,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       // Parallel load all data for optimal performance
-      setLoadingMessage('Loading service data...');
+      setLoadingMessage(t('service.loadingServiceData'));
 
       try {
         // Only load service data initially - NOT workbook
@@ -1134,18 +1134,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 data: arrayBuffer,
                 fileName: info.file.name
               });
-              notification.success({ message: `${info.file.name} loaded successfully.` });
+              notification.success({ message: t('service.fileLoadedSuccess', { name: info.file.name }) });
             }
           } catch (error) {
-            notification.error({ message: 'Failed to process the file' });
+            notification.error({ message: t('service.failedProcessFile') });
           }
         };
         reader.readAsArrayBuffer(originFileObj);
       } catch (error) {
-        notification.error({ message: 'Failed to read the file' });
+        notification.error({ message: t('service.failedReadFile') });
       }
     } else if (status === 'error') {
-      notification.error({ message: `${info.file.name} file upload failed.` });
+      notification.error({ message: t('service.fileUploadFailed', { name: info.file.name }) });
     }
   };
 
@@ -1171,10 +1171,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     if (hasAnyChanges) {
       modal.confirm({
-        title: 'Unsaved Changes',
-        content: 'You have unsaved changes that will be lost if you leave. Do you want to continue?',
-        okText: 'Leave without saving',
-        cancelText: 'Stay',
+        title: t('service.unsavedChanges'),
+        content: t('service.unsavedChangesContent'),
+        okText: t('service.leaveWithoutSaving'),
+        cancelText: t('service.stay'),
         okButtonProps: { danger: true },
         onOk: () => {
           router.push('/app');
@@ -1190,7 +1190,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        notification.warning({ message: 'Please save your changes before publishing' });
+        notification.warning({ message: t('service.saveBeforePublishing') });
         return;
       }
 
@@ -1200,19 +1200,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          notification.error({ message: 'Cannot publish: No parameters defined. Please add inputs or outputs first.' });
+          notification.error({ message: t('service.cannotPublishNoParams') });
           return;
         }
 
         // Show modal asking user to switch to Workbook view
         modal.confirm({
-          title: 'Workbook Required for Publishing',
-          content: 'Publishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try publishing again.',
-          okText: 'Switch to Workbook',
-          cancelText: 'Cancel',
+          title: t('service.workbookRequiredPublish'),
+          content: t('service.workbookRequiredPublishContent'),
+          okText: t('service.switchToWorkbook'),
+          cancelText: t('common.cancel'),
           onOk: () => {
             setActiveView('Workbook');
-            notification.info({ message: 'Please wait for the workbook to load, then click Publish again.' });
+            notification.info({ message: t('service.waitForWorkbookThenPublish') });
           }
         });
 
@@ -1220,12 +1220,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        notification.error({ message: 'Please define at least one input, output, or editable area' });
+        notification.error({ message: t('service.defineAtLeastOneParam') });
         return;
       }
 
       setLoading(true);
-      notification.info({ message: 'Preparing service for publishing...', key: 'publish', duration: 0 });
+      notification.info({ message: t('service.preparingPublish'), key: 'publish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1247,19 +1247,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Progress callback for large payloads
       const onProgress = isLargePayload ? (percent: number) => {
-        let status = 'Preparing...';
-        if (percent >= 0 && percent < 5) status = 'Preparing data...';
-        if (percent >= 5 && percent < 20) status = 'Compressing workbook...';
-        if (percent >= 20 && percent < 50) status = 'Encoding data...';
-        if (percent >= 50 && percent < 85) status = 'Uploading to server...';
-        if (percent >= 85 && percent < 100) status = 'Processing on server...';
-        if (percent >= 100) status = 'Finalizing...';
+        let status = t('service.progressPreparing');
+        if (percent >= 0 && percent < 5) status = t('service.progressPreparingData');
+        if (percent >= 5 && percent < 20) status = t('service.progressCompressing');
+        if (percent >= 20 && percent < 50) status = t('service.progressEncoding');
+        if (percent >= 50 && percent < 85) status = t('service.progressUploading');
+        if (percent >= 85 && percent < 100) status = t('service.progressProcessing');
+        if (percent >= 100) status = t('service.progressFinalizing');
         setPublishProgress({ visible: true, percent, status });
       } : null;
 
       if (isLargePayload) {
         notification.destroy('publish'); // Clear the "Preparing..." message
-        setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
+        setPublishProgress({ visible: true, percent: 0, status: t('service.progressPreparingData') });
       }
 
       // Publish the service
@@ -1272,7 +1272,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      notification.success({ message: 'Service published successfully!' });
+      notification.success({ message: t('service.publishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1297,7 +1297,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to publish service:', error);
-      notification.error({ message: 'Failed to publish service: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.publishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1307,7 +1307,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        notification.warning({ message: 'Please save your changes before republishing' });
+        notification.warning({ message: t('service.saveBeforeRepublishing') });
         return;
       }
 
@@ -1317,19 +1317,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          notification.error({ message: 'Cannot republish: No parameters defined. Please add inputs or outputs first.' });
+          notification.error({ message: t('service.cannotRepublishNoParams') });
           return;
         }
 
         // Show modal asking user to switch to Workbook view
         modal.confirm({
-          title: 'Workbook Required for Republishing',
-          content: 'Republishing requires the workbook to be loaded. Please switch to the Workbook view to load the spreadsheet data, then try republishing again.',
-          okText: 'Switch to Workbook',
-          cancelText: 'Cancel',
+          title: t('service.workbookRequiredRepublish'),
+          content: t('service.workbookRequiredRepublishContent'),
+          okText: t('service.switchToWorkbook'),
+          cancelText: t('common.cancel'),
           onOk: () => {
             setActiveView('Workbook');
-            notification.info({ message: 'Please wait for the workbook to load, then click Republish again.' });
+            notification.info({ message: t('service.waitForWorkbookThenRepublish') });
           }
         });
 
@@ -1337,12 +1337,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        notification.error({ message: 'Please define at least one input, output, or editable area' });
+        notification.error({ message: t('service.defineAtLeastOneParam') });
         return;
       }
 
       setLoading(true);
-      notification.info({ message: 'Republishing service...', key: 'republish', duration: 0 });
+      notification.info({ message: t('service.republishing'), key: 'republish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1364,19 +1364,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Progress callback for large payloads
       const onProgress = isLargePayload ? (percent: number) => {
-        let status = 'Preparing...';
-        if (percent >= 0 && percent < 5) status = 'Preparing data...';
-        if (percent >= 5 && percent < 20) status = 'Compressing workbook...';
-        if (percent >= 20 && percent < 50) status = 'Encoding data...';
-        if (percent >= 50 && percent < 85) status = 'Uploading to server...';
-        if (percent >= 85 && percent < 100) status = 'Processing on server...';
-        if (percent >= 100) status = 'Finalizing...';
+        let status = t('service.progressPreparing');
+        if (percent >= 0 && percent < 5) status = t('service.progressPreparingData');
+        if (percent >= 5 && percent < 20) status = t('service.progressCompressing');
+        if (percent >= 20 && percent < 50) status = t('service.progressEncoding');
+        if (percent >= 50 && percent < 85) status = t('service.progressUploading');
+        if (percent >= 85 && percent < 100) status = t('service.progressProcessing');
+        if (percent >= 100) status = t('service.progressFinalizing');
         setPublishProgress({ visible: true, percent, status });
       } : null;
 
       if (isLargePayload) {
         notification.destroy('republish'); // Clear the "Republishing..." message
-        setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
+        setPublishProgress({ visible: true, percent: 0, status: t('service.progressPreparingData') });
       }
 
       // Publish the service (backend handles update)
@@ -1389,7 +1389,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      notification.success({ message: 'Service republished successfully!' });
+      notification.success({ message: t('service.republishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1414,7 +1414,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to republish service:', error);
-      notification.error({ message: 'Failed to republish service: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.republishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1423,7 +1423,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleUnpublish = async () => {
     try {
       if (hasAnyChanges) {
-        notification.warning({ message: 'Please save your changes before unpublishing' });
+        notification.warning({ message: t('service.saveBeforeUnpublishing') });
         return;
       }
 
@@ -1439,7 +1439,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(error.error || 'Failed to unpublish service');
       }
 
-      notification.success({ message: 'Service unpublished successfully!' });
+      notification.success({ message: t('service.unpublishedSuccess') });
 
       // Update the service status
       setServiceStatus(prevStatus => ({
@@ -1450,7 +1450,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }));
 
     } catch (error) {
-      notification.error({ message: 'Failed to unpublish: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.unpublishFailed', { error: error.message || t('service.unknownError') }) });
     } finally {
       setLoading(false);
     }
@@ -1466,7 +1466,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       if (!response.ok) {
         if (response.status === 404) {
-          notification.error({ message: 'Service not published yet. Please publish the service first.' });
+          notification.error({ message: t('service.notPublishedYet') });
           setShowApiDefinitionModal(false);
           return;
         }
@@ -1477,7 +1477,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setApiDefinitionData(data);
 
     } catch (error) {
-      notification.error({ message: 'Failed to load API definition: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.failedLoadApiDef', { error: error.message || t('service.unknownError') }) });
       setShowApiDefinitionModal(false);
     } finally {
       setLoadingApiDefinition(false);
@@ -1487,11 +1487,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleExportToExcel = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: 'Spreadsheet not loaded' });
+        notification.error({ message: t('service.spreadsheetNotLoaded') });
         return;
       }
 
-      notification.open({ message: 'Exporting to Excel...', key: 'export-excel', duration: 0 });
+      notification.open({ message: t('service.exportingExcel'), key: 'export-excel', duration: 0 });
 
       await workbookManager.exportToExcel(
         spreadInstance,
@@ -1499,21 +1499,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       );
 
       notification.destroy('export-excel');
-      notification.success({ message: 'Excel file exported successfully' });
+      notification.success({ message: t('service.excelExportSuccess') });
     } catch (error) {
       notification.destroy('export-excel');
-      notification.error({ message: 'Failed to export: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
   const handleExportServicePackage = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: 'Spreadsheet not loaded' });
+        notification.error({ message: t('service.spreadsheetNotLoaded') });
         return;
       }
 
-      notification.open({ message: 'Exporting service package...', key: 'export-package', duration: 0 });
+      notification.open({ message: t('service.exportingPackage'), key: 'export-package', duration: 0 });
 
       // Get workbook JSON
       const workbookJSON = spreadInstance.toJSON();
@@ -1557,21 +1557,21 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       URL.revokeObjectURL(url);
 
       notification.destroy('export-package');
-      notification.success({ message: 'Service package exported successfully' });
+      notification.success({ message: t('service.packageExportSuccess') });
     } catch (error) {
       notification.destroy('export-package');
-      notification.error({ message: 'Failed to export package: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.packageExportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
   const handleExportForRuntime = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: 'Spreadsheet not loaded' });
+        notification.error({ message: t('service.spreadsheetNotLoaded') });
         return;
       }
 
-      notification.open({ message: 'Exporting for Runtime...', key: 'export-runtime', duration: 0 });
+      notification.open({ message: t('service.exportingRuntime'), key: 'export-runtime', duration: 0 });
 
       // Get workbook JSON (this is the fileJson for calculations)
       const fileJson = spreadInstance.toJSON();
@@ -1638,10 +1638,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       URL.revokeObjectURL(url);
 
       notification.destroy('export-runtime');
-      notification.success({ message: 'Runtime package exported! Upload this file to your SpreadAPI Runtime.' });
+      notification.success({ message: t('service.runtimeExportSuccess') });
     } catch (error: any) {
       notification.destroy('export-runtime');
-      notification.error({ message: 'Failed to export: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
@@ -1650,7 +1650,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     // Prevent concurrent saves
     if (isSavingRef.current) {
-      notification.warning({ message: 'Save already in progress' });
+      notification.warning({ message: t('service.saveInProgress') });
       return;
     }
 
@@ -1668,7 +1668,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check if there are any changes to save
       if (!configHasChanges && !shouldSaveWorkbook) {
-        notification.info({ message: 'No changes to save' });
+        notification.info({ message: t('service.noChanges') });
         setLoading(false);
         return;
       }
@@ -1676,12 +1676,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Show specific loading message
       if (shouldSaveWorkbook && configHasChanges) {
         setSavingWorkbook(true);
-        notification.open({ message: 'Saving configuration and workbook...', key: 'save', duration: 0 });
+        notification.open({ message: t('service.savingConfigAndWorkbook'), key: 'save', duration: 0 });
       } else if (shouldSaveWorkbook) {
         setSavingWorkbook(true);
-        notification.open({ message: 'Saving workbook...', key: 'save', duration: 0 });
+        notification.open({ message: t('service.savingWorkbook'), key: 'save', duration: 0 });
       } else if (configHasChanges) {
-        notification.open({ message: 'Saving configuration...', key: 'save', duration: 0 });
+        notification.open({ message: t('service.savingConfig'), key: 'save', duration: 0 });
       }
 
       let workbookBlob = null;
@@ -1690,7 +1690,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Additional safety check for workbookRef
       if (!workbookRef.current && shouldSaveWorkbook) {
-        notification.error({ message: 'Please wait for the workbook to load before saving' });
+        notification.error({ message: t('service.waitForWorkbookBeforeSaving') });
         setLoading(false);
         setSavingWorkbook(false);
         return;
@@ -1709,7 +1709,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             // If save takes more than 500ms, show progress
             const progressTimeout = setTimeout(() => {
               notification.destroy('save');
-              setSaveProgress({ visible: true, percent: 30, status: 'Saving workbook data...' });
+              setSaveProgress({ visible: true, percent: 30, status: t('service.savingWorkbookData') });
             }, 500);
 
             workbookBlob = await savePromise;
@@ -1723,7 +1723,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               const sizeInMB = workbookBlob.size / 1024 / 1024;
               // Update progress if it's a large file and we're showing progress
               if (sizeInMB > 2 && saveProgress.visible) {
-                setSaveProgress({ visible: true, percent: 60, status: `Uploading ${sizeInMB.toFixed(1)}MB file...` });
+                setSaveProgress({ visible: true, percent: 60, status: t('service.uploadingFile', { size: sizeInMB.toFixed(1) }) });
               }
             }
           } catch (error) {
@@ -1809,7 +1809,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         // Update progress for large files during upload
         const sizeInMB = workbookBlob.size / 1024 / 1024;
         if (saveProgress.visible) {
-          setSaveProgress({ visible: true, percent: 90, status: 'Finalizing...' });
+          setSaveProgress({ visible: true, percent: 90, status: t('service.progressFinalizing') });
         }
 
         const workbookResponse = await fetch(`/api/workbook/${serviceId}`, {
@@ -1842,11 +1842,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setSaveProgress({ visible: false, percent: 0, status: '' });
 
       if (shouldSaveWorkbook && configHasChanges) {
-        notification.success({ message: 'Configuration and workbook saved successfully!' });
+        notification.success({ message: t('service.savedConfigAndWorkbook') });
       } else if (shouldSaveWorkbook) {
-        notification.success({ message: 'Workbook saved successfully!' });
+        notification.success({ message: t('service.savedWorkbook') });
       } else {
-        notification.success({ message: 'Configuration saved successfully!' });
+        notification.success({ message: t('service.savedConfig') });
       }
 
       // Update saved state to match current state
@@ -1863,7 +1863,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setWorkbookChangeCount(0);
       }
     } catch (error) {
-      notification.error({ message: 'Failed to save: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.saveFailed', { error: error.message || t('service.unknownError') }) });
     } finally {
       isSavingRef.current = false;
       setLoading(false);
@@ -2067,7 +2067,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check file size
       if (file.size > MAX_FILE_SIZE) {
-        notification.error({ message: `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please use a smaller file.` });
+        notification.error({ message: t('service.fileSizeExceeds', { size: String(MAX_FILE_SIZE / (1024 * 1024)) }) });
         setSavingWorkbook(false);
         return;
       }
@@ -2075,14 +2075,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Check file type and extension
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       if (!ALLOWED_EXTENSIONS.includes(fileExtension) && !ALLOWED_EXCEL_TYPES.includes(file.type)) {
-        notification.error({ message: 'Only Excel files (.xls, .xlsx, .xlsm) are supported' });
+        notification.error({ message: t('service.onlyExcelSupported') });
         setSavingWorkbook(false);
         return;
       }
 
       // Check for macro-enabled files
       if (fileExtension === '.xlsm' || file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12') {
-        notification.warning({ message: 'This file contains macros (.xlsm), but macros are not supported. Only the spreadsheet data will be imported.' });
+        notification.warning({ message: t('service.macrosNotSupported') });
       }
 
       if (workbookRef.current) {
@@ -2090,7 +2090,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           await workbookManager.importFromExcel(workbookRef.current, file);
           setWorkbookChangeCount(prev => prev + 1);
 
-          let successMessage = 'Excel file imported successfully!';
+          let successMessage = t('service.excelImportSuccess');
 
           // Check if the current name is a default name pattern (starts with "Service")
           if (apiConfig.name.startsWith('Service ')) {
@@ -2102,18 +2102,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               name: filename
             }));
             setConfigHasChanges(true); // Mark config as changed
-            successMessage = `Excel file imported and service renamed to "${filename}"`;
+            successMessage = t('service.excelImportRenamed', { filename });
           }
 
           notification.success({ message: successMessage });
         } catch (error: any) {
-          notification.error({ message: 'Failed to import Excel file: ' + (error.message || 'Unknown error') });
+          notification.error({ message: t('service.excelImportFailed', { error: error.message || t('service.unknownError') }) });
         }
       } else {
-        notification.error({ message: 'Spreadsheet not initialized. Please wait for the workbook to load.' });
+        notification.error({ message: t('service.spreadsheetNotInitialized') });
       }
     } catch (error) {
-      notification.error({ message: 'Failed to import Excel file' });
+      notification.error({ message: t('service.excelImportFailedGeneric') });
     } finally {
       setSavingWorkbook(false);
     }
@@ -2123,7 +2123,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleImportExcelUpdate = useCallback(() => {
     // Check if workbook is available
     if (!workbookRef.current) {
-      notification.error({ message: 'Please wait for the workbook to load' });
+      notification.error({ message: t('service.waitForWorkbook') });
       return;
     }
 
@@ -2131,22 +2131,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const hasUnsavedChanges = workbookRef.current?.hasChanges?.() || false;
 
     modal.confirm({
-      title: 'Import Excel File',
+      title: t('service.importExcelTitle'),
       content: (
         <div>
-          <p>This will replace your current workbook content with the imported Excel file.</p>
+          <p>{t('service.importExcelReplace')}</p>
           {hasUnsavedChanges && (
             <p style={{ color: '#ff4d4f', marginTop: 8 }}>
-              <strong>Warning:</strong> You have unsaved changes that will be lost.
+              <strong>{t('service.warning')}</strong> {t('service.unsavedChangesLost')}
             </p>
           )}
           <p style={{ marginTop: 8 }}>
-            Your parameters and settings will be preserved.
+            {t('service.paramsPreserved')}
           </p>
         </div>
       ),
-      okText: 'Import',
-      cancelText: 'Cancel',
+      okText: t('service.import'),
+      cancelText: t('common.cancel'),
       okButtonProps: { danger: hasUnsavedChanges },
       onOk: () => {
         // Create hidden file input
@@ -2159,20 +2159,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           try {
             // Show loading message
-            notification.open({ message: 'Importing Excel file...', key: 'import-excel', duration: 0 });
+            notification.open({ message: t('service.importingExcel'), key: 'import-excel', duration: 0 });
 
             // Use existing import function
             await handleImportExcel(file);
 
             // Clear loading and show success
             notification.destroy('import-excel');
-            notification.success({ message: 'Excel file imported successfully! Remember to save your changes.' });
+            notification.success({ message: t('service.excelImportedRememberSave') });
 
             // Mark as having changes so save button is enabled
             setWorkbookChangeCount(prev => prev + 1);
           } catch (error: any) {
             notification.destroy('import-excel');
-            notification.error({ message: 'Failed to import: ' + (error.message || 'Unknown error') });
+            notification.error({ message: t('service.importFailed', { error: error.message || t('service.unknownError') }) });
           }
         };
         input.click();
@@ -2197,7 +2197,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // Set importing flag to prevent config from being overwritten by API load
       setIsImporting(true);
-      notification.open({ message: 'Importing service package...', key: 'import-package', duration: 0 });
+      notification.open({ message: t('service.importingPackage'), key: 'import-package', duration: 0 });
 
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -2245,7 +2245,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           // Then, set the configuration (include ALL properties)
           const importedConfig = {
-            name: service.name || 'Imported Service',
+            name: service.name || t('service.importedService'),
             description: service.description || '',
             aiDescription: service.aiDescription || '',
             aiUsageGuidance: service.aiUsageGuidance || '',
@@ -2283,18 +2283,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           justImportedRef.current = true; // Prevent API reload after import
 
           notification.destroy('import-package');
-          notification.success({ message: 'Service package imported successfully! Remember to save your changes.' });
+          notification.success({ message: t('service.packageImportedRememberSave') });
         } catch (error: any) {
           console.error('[Import] Error:', error);
           notification.destroy('import-package');
-          notification.error({ message: 'Failed to parse service package: ' + (error.message || 'Invalid JSON') });
+          notification.error({ message: t('service.packageParseFailed', { error: error.message || t('service.invalidJson') }) });
           setIsImporting(false);
         }
       };
 
       reader.onerror = () => {
         notification.destroy('import-package');
-        notification.error({ message: 'Failed to read file' });
+        notification.error({ message: t('service.failedReadFile') });
         setIsImporting(false);
       };
 
@@ -2302,7 +2302,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } catch (error: any) {
       console.error('[Import] Outer error:', error);
       notification.destroy('import-package');
-      notification.error({ message: 'Failed to import service package: ' + (error.message || 'Unknown error') });
+      notification.error({ message: t('service.packageImportFailed', { error: error.message || t('service.unknownError') }) });
       setIsImporting(false);
     }
   }, []);
@@ -2373,10 +2373,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const handlePopState = () => {
       backGuardPushed.current = false;
       modal.confirm({
-        title: 'Unsaved Changes',
-        content: 'You have unsaved changes that will be lost if you leave. Do you want to continue?',
-        okText: 'Leave without saving',
-        cancelText: 'Stay',
+        title: t('service.unsavedChanges'),
+        content: t('service.unsavedChangesContent'),
+        okText: t('service.leaveWithoutSaving'),
+        cancelText: t('service.stay'),
         okButtonProps: { danger: true },
         onOk: () => {
           window.history.back();
@@ -2481,7 +2481,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             onClick={appStore.toggleSidebar}
           />
           {isMobile && (
-            <Tooltip title="Open parameters panel to configure inputs and outputs">
+            <Tooltip title={t('service.openParamsPanel')}>
               <Button
                 type="text"
                 icon={<MenuUnfoldOutlined />}
@@ -2498,14 +2498,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 {
                   title: configLoaded ? (
                     <Text
-                      ellipsis={{ tooltip: apiConfig.name || 'New Service' }}
+                      ellipsis={{ tooltip: apiConfig.name || t('service.newService') }}
                       style={{ margin: 0, maxWidth: 200, cursor: 'pointer' }}
                       onClick={() => {
                         setActiveView('Settings');
                         saveViewPreference(serviceId, 'Settings');
                       }}
                     >
-                      {apiConfig.name || 'New Service'}
+                      {apiConfig.name || t('service.newService')}
                     </Text>
                   ) : '...',
                 },
@@ -2525,14 +2525,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 // Save view preference using helper
                 saveViewPreference(serviceId, newView);
               }}
-              options={isMobile ? [
+              options={isCompactNav ? [
               {
                 value: 'Settings',
-                icon: <Tooltip title="Settings"><SettingOutlined /></Tooltip>
+                icon: <Tooltip title={t('service.settings')}><SettingOutlined /></Tooltip>
               },
               {
                 value: 'Workbook',
-                icon: <Tooltip title="Workbook"><TableOutlined /></Tooltip>
+                icon: <Tooltip title={t('service.workbook')}><TableOutlined /></Tooltip>
               },
               {
                 value: 'API',
@@ -2540,23 +2540,30 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               },
               {
                 value: 'Agents',
-                icon: <Tooltip title="Agents"><RobotOutlined /></Tooltip>
+                icon: <Tooltip title={t('service.agents')}><RobotOutlined /></Tooltip>
               },
               {
                 value: 'Apps',
-                icon: <Tooltip title="Apps"><AppstoreOutlined /></Tooltip>
+                icon: <Tooltip title={t('service.apps')}><AppstoreOutlined /></Tooltip>
               },
               {
                 value: 'Usage',
-                icon: <Tooltip title="Usage"><BarChartOutlined /></Tooltip>
+                icon: <Tooltip title={t('service.usage')}><BarChartOutlined /></Tooltip>
               }
-            ] : ['Settings', 'Workbook', 'API', 'Agents', 'Apps', 'Usage']}
+            ] : [
+              { value: 'Settings', label: t('service.settings') },
+              { value: 'Workbook', label: t('service.workbook') },
+              { value: 'API', label: 'API' },
+              { value: 'Agents', label: t('service.agents') },
+              { value: 'Apps', label: t('service.apps') },
+              { value: 'Usage', label: t('service.usage') }
+            ]}
             style={{ marginLeft: 'auto', marginRight: 'auto' }}
           />
           </div>
           {/* Test Parameters Button */}
           {(apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0) && (
-            <Tooltip title="Test your service instantly! Play with parameters, change formulas, and see outputs in real-time - no publishing needed.">
+            <Tooltip title={t('service.testTooltip')}>
               <Button
                 ref={testButtonRef}
                 type="primary"
@@ -2574,10 +2581,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           {hasAnyChanges && !isDemoMode && (
             <Tooltip title={
               configHasChanges && workbookChangeCount > 0
-                ? 'Save configuration and workbook changes'
+                ? t('service.saveConfigAndWorkbookTooltip')
                 : configHasChanges
-                  ? 'Save configuration changes'
-                  : 'Save workbook changes'
+                  ? t('service.saveConfigTooltip')
+                  : t('service.saveWorkbookTooltip')
             }>
               <Button
                 type="primary"
@@ -2585,7 +2592,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 onClick={handleSave}
                 loading={loading}
               >
-                Save
+                {t('common.save')}
               </Button>
             </Tooltip>
           )}
@@ -2598,7 +2605,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   items: [
                     {
                       key: 'republish',
-                      label: 'Republish',
+                      label: t('service.republish'),
                       icon: <CheckCircleOutlined />,
                       onClick: handleRepublish,
                       disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
@@ -2608,7 +2615,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     },
                     {
                       key: 'unpublish',
-                      label: 'Unpublish',
+                      label: t('service.unpublish'),
                       icon: <CloseCircleOutlined />,
                       danger: true,
                       onClick: handleUnpublish,
@@ -2622,16 +2629,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   icon={<CheckCircleOutlined />}
                   style={{ color: '#52c41a', borderColor: '#52c41a' }}
                 >
-                  Published <DownOutlined />
+                  {t('service.published')} <DownOutlined />
                 </Button>
               </Dropdown>
             ) : (
               <Tooltip
                 title={
                   hasAnyChanges
-                    ? 'Please save your changes before publishing'
+                    ? t('service.saveBeforePublishing')
                     : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                    ? 'Please define at least one input, output, or editable area. Switch to the Workbook view to create your spreadsheet and define parameters.'
+                    ? t('service.defineParamsToPublish')
                     : ''
                 }
               >
@@ -2640,7 +2647,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   onClick={handlePublish}
                   disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
                 >
-                  Publish
+                  {t('service.publish')}
                 </Button>
               </Tooltip>
             )
@@ -2653,30 +2660,30 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 ...(isMobile && !isDemoMode ? [
                   serviceStatus?.published ? {
                     key: 'republish',
-                    label: 'Republish this service',
+                    label: t('service.republishThisService'),
                     icon: <CheckCircleOutlined />,
                     onClick: handleRepublish,
                     disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
                     title: hasAnyChanges
-                      ? 'Please save your changes before republishing'
+                      ? t('service.saveBeforeRepublishing')
                       : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                      ? 'Please define at least one input, output, or editable area'
+                      ? t('service.defineAtLeastOneParam')
                       : undefined
                   } : {
                     key: 'publish',
-                    label: 'Publish this service',
+                    label: t('service.publishThisService'),
                     icon: <CheckCircleOutlined />,
                     onClick: handlePublish,
                     disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)),
                     title: hasAnyChanges
-                      ? 'Please save your changes before publishing'
+                      ? t('service.saveBeforePublishing')
                       : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                      ? 'Please define at least one input, output, or editable area'
+                      ? t('service.defineAtLeastOneParam')
                       : undefined
                   },
                   ...(serviceStatus?.published ? [{
                     key: 'unpublish',
-                    label: 'Unpublish this service',
+                    label: t('service.unpublishThisService'),
                     icon: <CloseCircleOutlined />,
                     danger: true,
                     onClick: handleUnpublish,
@@ -2688,7 +2695,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 ] : []),
                 {
                   key: 'view-definition',
-                  label: 'View API Definition',
+                  label: t('service.viewApiDefinition'),
                   icon: <FileExcelOutlined />,
                   onClick: handleViewApiDefinition,
                   disabled: !serviceStatus?.published
@@ -2698,7 +2705,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 },
                 {
                   key: 'import-excel',
-                  label: 'Import from Excel',
+                  label: t('service.importFromExcel'),
                   icon: <FileExcelOutlined />,
                   onClick: () => handleImportExcelUpdate(),
                   disabled: !spreadInstance || activeView !== 'Workbook'
@@ -2708,7 +2715,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 },
                 {
                   key: 'export-excel',
-                  label: 'Export to Excel',
+                  label: t('service.exportToExcel'),
                   icon: <FileExcelOutlined />,
                   onClick: () => handleExportToExcel()
                 },
@@ -2717,14 +2724,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 },
                 {
                   key: 'export-package',
-                  label: 'Export Service Package',
+                  label: t('service.exportServicePackage'),
                   icon: <DownloadOutlined />,
                   onClick: () => handleExportServicePackage(),
                   disabled: !spreadInstance
                 },
                 {
                   key: 'export-runtime',
-                  label: 'Export for Runtime',
+                  label: t('service.exportForRuntime'),
                   icon: <DownloadOutlined />,
                   onClick: () => handleExportForRuntime(),
                   disabled: !spreadInstance
@@ -2779,7 +2786,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         }}>
                           <div style={{ textAlign: 'center' }}>
                             <Spin size="default" />
-                            <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
+                            <div style={{ marginTop: 16, color: '#666' }}>{t('service.loadingSpreadsheet')}</div>
                           </div>
                         </div>
                       ) : (
@@ -2918,7 +2925,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       {/* Mobile Drawer */}
       <Drawer
-        title="Parameters"
+        title={t('service.parameters')}
         placement="left"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
@@ -2980,8 +2987,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         visible={publishProgress.visible}
         percent={publishProgress.percent}
         status={publishProgress.status}
-        title="Publishing Service"
-        subtitle="Large workbooks may take a moment to upload..."
+        title={t('service.publishingService')}
+        subtitle={t('service.publishingSubtitle')}
       />
 
       {/* API Definition Modal */}

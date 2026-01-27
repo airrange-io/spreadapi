@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n';
 
 const { Text, Paragraph } = Typography;
 
@@ -35,6 +36,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const searchQueryRef = useRef(searchQuery);
+  const { t, locale } = useTranslation();
 
   // Keep refs updated
   useEffect(() => {
@@ -154,14 +156,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             window.location.href = '/login';
           }
         } else {
-          notification.error({ message: 'Failed to load services' });
+          notification.error({ message: t('serviceList.loadFailed') });
         }
       }
     } catch (error: any) {
       // Only log non-401 errors
       if (error?.status !== 401) {
         // Error loading services
-        notification.error({ message: 'Failed to load services' });
+        notification.error({ message: t('serviceList.loadFailed') });
       }
     } finally {
       setLoading(false);
@@ -176,7 +178,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       });
 
       if (response.ok) {
-        notification.success({ message: `Service "${serviceName}" deleted` });
+        notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
         // Remove the deleted service from state immediately for better UX
         setServices(prevServices => prevServices.filter(s => s.id !== serviceId));
         setFilteredServices(prevFiltered => prevFiltered.filter(s => s.id !== serviceId));
@@ -187,22 +189,22 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         const errorData = await response.json().catch(() => null);
         if (errorData?.error?.includes('published')) {
           notification.warning({
-            message: 'Cannot delete published service',
+            message: t('serviceList.cannotDeletePublished'),
             description: (
               <span>
-                Please unpublish <strong>{serviceName}</strong> first, then try deleting again.
+                {({ en: <>Please unpublish <strong>{serviceName}</strong> first, then try deleting again.</>, de: <>Bitte <strong>{serviceName}</strong> zuerst deaktivieren, dann erneut versuchen.</> } as Record<string, React.ReactNode>)[locale] ?? <>Please unpublish <strong>{serviceName}</strong> first, then try deleting again.</>}
               </span>
             ),
           });
         } else {
-          notification.error({ message: 'Failed to delete service' });
+          notification.error({ message: t('serviceList.deleteFailed') });
         }
       }
     } catch (error) {
       // Error deleting service
-      notification.error({ message: 'Failed to delete service' });
+      notification.error({ message: t('serviceList.deleteFailed') });
     }
-  }, [notification]);
+  }, [notification, t, locale]);
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
@@ -211,14 +213,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-  }, []);
+  }, [locale]);
 
   const tableColumns = useMemo(() => [
     {
@@ -234,12 +236,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Description',
+      title: t('serviceList.description'),
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
       responsive: ['md' as const] as any,
-      render: (text: string) => text || 'No description',
+      render: (text: string) => text || t('serviceList.noDescription'),
     },
     {
       title: 'Status',
@@ -249,17 +251,17 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       width: 100,
       render: (status: string) => (
         <Tag color={status === 'published' ? 'green' : 'orange'}>
-          {status}
+          {status === 'published' ? t('serviceList.statusActive') : t('serviceList.statusDraft')}
         </Tag>
       ),
       filters: [
-        { text: 'Published', value: 'published' },
-        { text: 'Draft', value: 'draft' },
+        { text: t('serviceList.filterPublished'), value: 'published' },
+        { text: t('serviceList.filterDraft'), value: 'draft' },
       ],
       onFilter: (value: string, record: Service) => record.status === value,
     },
     {
-      title: 'Calls',
+      title: t('serviceList.calls'),
       dataIndex: 'calls',
       key: 'calls',
       align: 'center' as const,
@@ -293,20 +295,20 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                 {
                   key: 'copy',
                   icon: <CopyOutlined />,
-                  label: 'Copy ID',
+                  label: t('serviceList.copyId'),
                   onClick: () => {
                     navigator.clipboard.writeText(record.id);
-                    notification.success({ message: 'Service ID copied to clipboard' });
+                    notification.success({ message: t('serviceList.idCopied') });
                   },
                 },
                 {
                   key: 'endpoint',
                   icon: <ApiOutlined />,
-                  label: 'Copy Endpoint',
+                  label: t('serviceList.copyEndpoint'),
                   onClick: () => {
                     const endpoint = `${window.location.origin}/api/v1/services/${record.id}/execute`;
                     navigator.clipboard.writeText(endpoint);
-                    notification.success({ message: 'API endpoint copied to clipboard' });
+                    notification.success({ message: t('serviceList.endpointCopied') });
                   },
                   disabled: record.status === 'draft',
                 },
@@ -316,17 +318,17 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   icon: <DeleteOutlined />,
                   label: (
                     <Popconfirm
-                      title="Delete this service?"
-                      description="This action cannot be undone."
+                      title={t('serviceList.deleteConfirmTitle')}
+                      description={t('serviceList.deleteConfirmDescription')}
                       onConfirm={(e) => {
                         e?.stopPropagation();
                         handleDelete(record.id, record.name);
                       }}
-                      okText="Yes"
-                      cancelText="No"
+                      okText={t('common.yes')}
+                      cancelText={t('common.no')}
                       okButtonProps={{ danger: true }}
                     >
-                      Delete
+                      {t('common.delete')}
                     </Popconfirm>
                   ),
                   danger: true,
@@ -340,7 +342,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </Space>
       ),
     },
-  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification]);
+  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification, t, locale]);
 
   if (loading) {
     return (
@@ -357,7 +359,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }
 
   if (services.length === 0 && !searchQuery) {
-    const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
     return (
         <div style={{
           display: 'flex',
@@ -379,9 +380,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             maxWidth: '360px',
             userSelect: 'none',
           }}>
-            {isGerman
-              ? 'Laden Sie Ihre Arbeitsmappe hoch, wählen Sie Zellen als Parameter aus und erhalten Sie einen REST-Endpunkt — angetrieben von Ihren Formeln.'
-              : 'Upload your workbook, select cells as parameters, and get a REST endpoint — powered by your formulas.'}
+            {t('serviceList.emptyDescription')}
           </p>
 
           {/* Hero illustration: Spreadsheet → API */}
@@ -430,7 +429,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   if (filteredServices.length === 0 && searchQuery) {
     return (
       <Empty
-        description={`No APIs found matching "${searchQuery}"`}
+        description={t('serviceList.noApisFound', { query: searchQuery })}
         style={{ marginTop: 100 }}
       />
     );
@@ -482,7 +481,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     icon={<EditOutlined />}
                     onClick={() => handleEdit(service.id)}
                   >
-                    Edit
+                    {t('common.edit')}
                   </Button>
                 </div>,
                 // <div onClick={(e) => e.stopPropagation()}>
@@ -507,7 +506,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       {clickedServiceId === service.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
                     </div>
                     <Tag color={service.status === 'published' ? 'green' : 'orange'} style={{ marginInlineEnd: 4 }}>
-                      {service.status}
+                      {service.status === 'published' ? t('serviceList.statusActive') : t('serviceList.statusDraft')}
                     </Tag>
                   </div>
                 }
@@ -517,7 +516,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       ellipsis={{ rows: 2 }}
                       style={{ marginBottom: 8 }}
                     >
-                      {service.description || 'No description'}
+                      {service.description || t('serviceList.noDescription')}
                     </Paragraph>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -530,11 +529,11 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
                       <div onClick={(e) => e.stopPropagation()}>
                         <Popconfirm
-                          title="Delete this service?"
-                          description="This action cannot be undone."
+                          title={t('serviceList.deleteConfirmTitle')}
+                          description={t('serviceList.deleteConfirmDescription')}
                           onConfirm={() => handleDelete(service.id, service.name)}
-                          okText="Yes"
-                          cancelText="No"
+                          okText={t('common.yes')}
+                          cancelText={t('common.no')}
                           okButtonProps={{ danger: true }}
                         >
                           <Button
@@ -551,7 +550,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
                         <BarChartOutlined />
                         <Text type="secondary" style={{ fontSize: '12px' }}>
-                          {service.calls} calls
+                          {t('serviceList.callCount', { count: String(service.calls) })}
                         </Text>
                       </Space>
                     )}

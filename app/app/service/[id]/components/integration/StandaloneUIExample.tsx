@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { generateStandaloneUIHTML } from '@/lib/codeExamples';
 import type { CodeExampleParams } from '@/lib/codeExamples';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { useTranslation } from '@/lib/i18n';
 
 // Lazy load syntax highlighter
 const SyntaxHighlighter = dynamic(
@@ -37,6 +38,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
   outputs = []
 }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [htmlContent, setHtmlContent] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -57,7 +59,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(htmlContent);
-    notification.success({ message: 'Copied to clipboard' });
+    notification.success({ message: t('standalone.copiedToClipboard') });
   };
 
   const downloadHtml = () => {
@@ -70,7 +72,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    notification.success({ message: 'HTML file downloaded!' });
+    notification.success({ message: t('standalone.htmlDownloaded') });
   };
 
   const openHtmlInNewTab = () => {
@@ -79,25 +81,24 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      notification.success({ message: 'Calculator opened in new tab!' });
+      notification.success({ message: t('standalone.calculatorOpened') });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      notification.error({ message: 'Please allow popups to open the calculator' });
+      notification.error({ message: t('standalone.allowPopups') });
     }
   };
 
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
-        <Title level={4}>Standalone UI Calculator</Title>
+        <Title level={4}>{t('standalone.title')}</Title>
         <div style={{ marginBottom: 16, padding: '16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
           <Text strong style={{ display: 'block', marginBottom: 8, color: '#0369a1' }}>
-            📦 Ready-to-Use Calculator UI
+            {t('standalone.readyToUseUi')}
           </Text>
           <Text style={{ fontSize: 13, color: '#075985', display: 'block', marginBottom: 12 }}>
-            A complete, standalone HTML file with a beautiful UI for your service.
-            Open it instantly or download for offline use!
+            {t('standalone.description')}
           </Text>
           <Space>
             <Button
@@ -106,14 +107,14 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
               onClick={openHtmlInNewTab}
               size="large"
             >
-              Open in New Tab
+              {t('standalone.openInNewTab')}
             </Button>
             <Button
               icon={<DownloadOutlined />}
               onClick={downloadHtml}
               size="large"
             >
-              Download HTML
+              {t('standalone.downloadHtml')}
             </Button>
           </Space>
         </div>
@@ -126,7 +127,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
           onClick={copyToClipboard}
           style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
         >
-          Copy
+          {t('standalone.copy')}
         </Button>
         {mounted ? (
           <SyntaxHighlighter

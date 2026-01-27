@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Space, Input, Checkbox, Tooltip, Select } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
+import { useTranslation } from '@/lib/i18n';
 
 // Debounced Input component to prevent parent re-renders on every keystroke
 interface DebouncedInputProps {
@@ -155,22 +156,24 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   onCacheTableSheetDataChange,
   onTableSheetCacheTTLChange,
 }) => {
+  const { t } = useTranslation();
+
   // Determine if cache options should be disabled and why
   const cacheOptionsDisabled = !workbookLoaded || !hasTableSheets;
 
   // Generate tooltip text based on state
   const getCacheTooltip = (optionName: string) => {
     if (!workbookLoaded) {
-      return `Load the workbook first to determine if this service uses external data sources. ${optionName} settings are only available for services with TableSheet data connections.`;
+      return t('settings.cacheTooltipLoadWorkbook', { optionName });
     }
     if (!hasTableSheets) {
-      return `This option is only available for services with TableSheet data connections. Caching is always enabled for services without external data sources.`;
+      return t('settings.cacheTooltipNoTableSheets');
     }
     // Workbook loaded and has TableSheets - show regular help text
     if (optionName === 'Response caching') {
-      return "Cache API responses for improved performance. Disable if your TableSheet data changes frequently and you need real-time results.";
+      return t('settings.cacheTooltipResponse');
     }
-    return "Cache external TableSheet data sources for better performance. Disable for real-time data that changes frequently.";
+    return t('settings.cacheTooltipTableSheet');
   };
 
   return (
@@ -184,9 +187,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
         <CollapsibleSection title="Service Info" defaultOpen={true}>
           <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           <div>
-            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Service Name</strong></div>
+            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>{t('settings.serviceName')}</strong></div>
             <DebouncedInput
-              placeholder="Enter service name"
+              placeholder={t('settings.enterServiceName')}
               defaultValue={apiName}
               onChange={onApiNameChange}
               disabled={isLoading}
@@ -195,9 +198,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
           </div>
 
           <div>
-            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>Description</strong></div>
+            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>{t('settings.description')}</strong></div>
             <DebouncedTextArea
-              placeholder="Describe what this API does"
+              placeholder={t('settings.enterDescription')}
               defaultValue={apiDescription}
               onChange={onApiDescriptionChange}
               rows={2}
@@ -207,7 +210,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
           </div>
 
           <div style={{ marginTop: '0px' }}>
-            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>External Data Caching</strong></div>
+            <div style={{ marginBottom: '8px', color: "#898989" }}><strong>{t('settings.externalDataCaching')}</strong></div>
             <Space orientation="vertical" style={{ width: '100%' }}>
               <Space align="center">
                 <Checkbox
@@ -215,7 +218,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                   onChange={(e) => onEnableCachingChange(e.target.checked)}
                   disabled={isLoading || cacheOptionsDisabled}
                 >
-                  Enable response caching
+                  {t('settings.enableResponseCaching')}
                 </Checkbox>
                 <Tooltip title={getCacheTooltip('Response caching')}>
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
@@ -228,7 +231,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
                   onChange={(e) => onCacheTableSheetDataChange(e.target.checked)}
                   disabled={isLoading || cacheOptionsDisabled}
                 >
-                  Cache TableSheet data
+                  {t('settings.cacheTableSheetData')}
                 </Checkbox>
                 <Tooltip title={getCacheTooltip('TableSheet caching')}>
                   <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: '14px', cursor: 'help' }} />
@@ -237,18 +240,18 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
               {cacheTableSheetData && workbookLoaded && hasTableSheets && (
                 <Space align="center" style={{ marginLeft: '24px' }}>
-                  <span style={{ color: '#666' }}>Cache duration:</span>
+                  <span style={{ color: '#666' }}>{t('settings.cacheDuration')}</span>
                   <Select
                     value={tableSheetCacheTTL}
                     onChange={onTableSheetCacheTTLChange}
                     style={{ width: '120px' }}
                     disabled={isLoading}
                   >
-                    <Select.Option value={60}>1 minute</Select.Option>
-                    <Select.Option value={300}>5 minutes</Select.Option>
-                    <Select.Option value={900}>15 minutes</Select.Option>
-                    <Select.Option value={1800}>30 minutes</Select.Option>
-                    <Select.Option value={3600}>1 hour</Select.Option>
+                    <Select.Option value={60}>{t('settings.oneMinute')}</Select.Option>
+                    <Select.Option value={300}>{t('settings.fiveMinutes')}</Select.Option>
+                    <Select.Option value={900}>{t('settings.fifteenMinutes')}</Select.Option>
+                    <Select.Option value={1800}>{t('settings.thirtyMinutes')}</Select.Option>
+                    <Select.Option value={3600}>{t('settings.oneHour')}</Select.Option>
                   </Select>
                 </Space>
               )}

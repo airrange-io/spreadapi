@@ -3,6 +3,7 @@
 import React from 'react';
 import { Modal, Button, Space, Input, Form, Radio, Collapse, Row, Col, Checkbox, Typography, App } from 'antd';
 import { TableOutlined, LockOutlined, EditOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
@@ -92,11 +93,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
   onSave,
   onAreaChange
 }) => {
+  const { t } = useTranslation();
   const { notification } = App.useApp();
 
   const handleSave = () => {
     if (!editingArea?.name || !editingArea?.address) {
-      notification.error({ message: 'Area name and address are required' });
+      notification.error({ message: t('areaModal.nameAndAddressRequired') });
       return;
     }
     onSave(editingArea);
@@ -109,7 +111,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
       title={
         <Space>
           <TableOutlined />
-          <span>{editingAreaIndex === -1 ? 'Add' : 'Edit'} Editable Area</span>
+          <span>{editingAreaIndex === -1 ? t('areaModal.addArea') : t('areaModal.editArea')}</span>
         </Space>
       }
       open={open}
@@ -117,14 +119,14 @@ const AreaModal: React.FC<AreaModalProps> = ({
       width={700}
       footer={[
         <Button key="cancel" onClick={onClose}>
-          Cancel
+          {t('common.cancel')}
         </Button>,
         <Button
           key="save"
           type="primary"
           onClick={handleSave}
         >
-          {editingAreaIndex === -1 ? 'Add' : 'Save'} Area
+          {editingAreaIndex === -1 ? t('areaModal.addAreaBtn') : t('areaModal.saveAreaBtn')}
         </Button>
       ]}
       centered
@@ -133,23 +135,23 @@ const AreaModal: React.FC<AreaModalProps> = ({
         {/* Basic Info */}
         <div>
           <Form layout="vertical">
-            <Form.Item label="Area Name" required>
+            <Form.Item label={t('areaModal.areaName')} required>
               <Input
                 value={editingArea.name}
                 onChange={e => onAreaChange({ ...editingArea, name: e.target.value })}
-                placeholder="e.g., sales_data or Monthly Sales Data"
+                placeholder={t('areaModal.areaNamePlaceholder')}
               />
             </Form.Item>
 
-            <Form.Item label="Selected Range">
+            <Form.Item label={t('areaModal.selectedRange')}>
               <Input value={editingArea.address} disabled />
             </Form.Item>
 
-            <Form.Item label="Description">
+            <Form.Item label={t('areaModal.description')}>
               <Input.TextArea
                 value={editingArea.description}
                 onChange={e => onAreaChange({ ...editingArea, description: e.target.value })}
-                placeholder="Describe what this area contains..."
+                placeholder={t('areaModal.descriptionPlaceholder')}
                 rows={2}
               />
             </Form.Item>
@@ -158,7 +160,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
 
         {/* Quick Permission Presets */}
         <div>
-          <Title level={5}>Access Level</Title>
+          <Title level={5}>{t('areaModal.accessLevel')}</Title>
           <Radio.Group
             value={editingArea.mode}
             onChange={e => {
@@ -176,24 +178,24 @@ const AreaModal: React.FC<AreaModalProps> = ({
               <Radio value="readonly">
                 <Space>
                   <LockOutlined />
-                  <span>Read Only</span>
-                  <Text type="secondary">- AI can see values but not modify</Text>
+                  <span>{t('areaModal.readOnly')}</span>
+                  <Text type="secondary">{t('areaModal.readOnlyDesc')}</Text>
                 </Space>
               </Radio>
               <Radio value="editable">
                 <Space>
                   <EditOutlined />
-                  <span>Editable Values</span>
-                  <Text type="secondary">- AI can modify values but not formulas</Text>
+                  <span>{t('areaModal.editableValues')}</span>
+                  <Text type="secondary">{t('areaModal.editableValuesDesc')}</Text>
                 </Space>
               </Radio>
               <Radio value="interactive" disabled>
                 <Space>
                   <TableOutlined />
-                  <span>Full Interactive</span>
-                  <Text type="secondary">- AI can modify values, formulas, and structure</Text>
+                  <span>{t('areaModal.fullInteractive')}</span>
+                  <Text type="secondary">{t('areaModal.fullInteractiveDesc')}</Text>
                   <Text type="warning" style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>
-                    ⚠️ Disabled for safety - Formula editing by AI is too risky for production
+                    {t('areaModal.interactiveDisabledWarning')}
                   </Text>
                 </Space>
               </Radio>
@@ -203,7 +205,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
 
         {/* Advanced Options */}
         <Collapse ghost>
-          <Panel header="Advanced Permissions" key="1">
+          <Panel header={t('areaModal.advancedPermissions')} key="1">
             <Row gutter={16}>
               <Col span={12}>
                 <Space orientation="vertical">
@@ -214,7 +216,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       permissions: { ...editingArea.permissions, canReadFormulas: e.target.checked }
                     })}
                   >
-                    Show formulas to AI
+                    {t('areaModal.showFormulasToAi')}
                   </Checkbox>
                   <Checkbox
                     checked={editingArea.permissions.canWriteFormulas}
@@ -225,9 +227,9 @@ const AreaModal: React.FC<AreaModalProps> = ({
                     disabled={true}
                   >
                     <span style={{ opacity: 0.5 }}>
-                      Allow formula modifications
+                      {t('areaModal.allowFormulaModifications')}
                       <Text type="secondary" style={{ display: 'block', fontSize: '11px' }}>
-                        (Disabled for production safety)
+                        {t('areaModal.disabledForSafety')}
                       </Text>
                     </span>
                   </Checkbox>
@@ -238,7 +240,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       permissions: { ...editingArea.permissions, canReadFormatting: e.target.checked }
                     })}
                   >
-                    Include cell formatting
+                    {t('areaModal.includeCellFormatting')}
                   </Checkbox>
                 </Space>
               </Col>
@@ -251,7 +253,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       permissions: { ...editingArea.permissions, canAddRows: e.target.checked }
                     })}
                   >
-                    Allow adding rows
+                    {t('areaModal.allowAddingRows')}
                   </Checkbox>
                   <Checkbox
                     checked={editingArea.permissions.canDeleteRows}
@@ -260,7 +262,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       permissions: { ...editingArea.permissions, canDeleteRows: e.target.checked }
                     })}
                   >
-                    Allow deleting rows
+                    {t('areaModal.allowDeletingRows')}
                   </Checkbox>
                   <Checkbox
                     checked={editingArea.permissions.canModifyStructure}
@@ -269,34 +271,34 @@ const AreaModal: React.FC<AreaModalProps> = ({
                       permissions: { ...editingArea.permissions, canModifyStructure: e.target.checked }
                     })}
                   >
-                    Allow structure changes
+                    {t('areaModal.allowStructureChanges')}
                   </Checkbox>
                 </Space>
               </Col>
             </Row>
           </Panel>
 
-          <Panel header="AI Context (Optional)" key="2">
-            <Form.Item label="Purpose">
+          <Panel header={t('areaModal.aiContext')} key="2">
+            <Form.Item label={t('areaModal.purpose')}>
               <Input.TextArea
                 value={editingArea.aiContext?.purpose}
                 onChange={e => onAreaChange({
                   ...editingArea,
                   aiContext: { ...editingArea.aiContext, purpose: e.target.value }
                 })}
-                placeholder="Describe what this area contains and its purpose..."
+                placeholder={t('areaModal.purposePlaceholder')}
                 rows={2}
               />
             </Form.Item>
 
-            <Form.Item label="Expected Behavior">
+            <Form.Item label={t('areaModal.expectedBehavior')}>
               <Input.TextArea
                 value={editingArea.aiContext?.expectedBehavior}
                 onChange={e => onAreaChange({
                   ...editingArea,
                   aiContext: { ...editingArea.aiContext, expectedBehavior: e.target.value }
                 })}
-                placeholder="Guide the AI on how to interact with this area..."
+                placeholder={t('areaModal.expectedBehaviorPlaceholder')}
                 rows={2}
               />
             </Form.Item>

@@ -11,6 +11,7 @@ import { useAppStore } from '@/shared/hooks/useAppStore';
 import { SIZES, TRANSITIONS, COLORS } from '@/constants/theme';
 import dynamic from 'next/dynamic';
 import ServiceListSkeleton from '@/components/ServiceListSkeleton';
+import { useTranslation } from '@/lib/i18n';
 
 // Dynamically import heavy components
 const Sidebar = dynamic(() => import('@/components/Sidebar'), {
@@ -60,7 +61,7 @@ const ListsPage: React.FC = observer(() => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [loadedTemplates, setLoadedTemplates] = useState<Template[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
-  const [isGerman, setIsGerman] = useState(false);
+  const { t, locale } = useTranslation();
 
   // Tour refs
   const serviceListRef = useRef<HTMLDivElement>(null);
@@ -92,23 +93,24 @@ const ListsPage: React.FC = observer(() => {
     const timer = setTimeout(async () => {
       try {
         // Dynamic imports - only loaded when needed
-        const [{ appTour }, { Tour }] = await Promise.all([
+        const [{ getAppTourSteps }, { Tour }] = await Promise.all([
           import('@/tours/appTour'),
           import('antd')
         ]);
 
         // Create tour steps with refs
+        const tourSteps = getAppTourSteps(locale);
         const steps = [
           {
-            ...appTour.steps[0],
+            ...tourSteps[0],
             target: () => watchVideoCardRef.current,
           },
           {
-            ...appTour.steps[1],
+            ...tourSteps[1],
             target: () => useSampleCardRef.current,
           },
           {
-            ...appTour.steps[2],
+            ...tourSteps[2],
             target: () => newServiceButtonRef.current,
           }
         ];
@@ -124,7 +126,7 @@ const ListsPage: React.FC = observer(() => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [locale]);
 
   // Handle tour close
   const handleTourClose = useCallback(() => {
@@ -160,14 +162,10 @@ const ListsPage: React.FC = observer(() => {
     }
   }, [authIsAuthenticated, authLoading]);
 
-  // Detect language for video selection
+  // Select video based on locale
   useEffect(() => {
-    if (typeof navigator !== 'undefined') {
-      const german = navigator.language?.startsWith('de');
-      setIsGerman(german);
-      setSelectedVideoId(german ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
-    }
-  }, []);
+    setSelectedVideoId(locale === 'de' ? 'pi5ljxwf4o' : 'rfdcf8rpnd');
+  }, [locale]);
 
   // Lazy-load template data only when the modal opens
   useEffect(() => {
@@ -244,7 +242,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Check authentication
     if (!isAuthenticated) {
-      notification.warning({ message: 'Please sign in to create a new service' });
+      notification.warning({ message: t('app.pleaseSignIn') });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -261,7 +259,7 @@ const ListsPage: React.FC = observer(() => {
     const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
     if (!isCSV && !isJSON && !isExcel) {
-      notification.error({ message: 'Please select a CSV, Excel or JSON file' });
+      notification.error({ message: t('app.selectFileType') });
       return;
     }
 
@@ -311,7 +309,7 @@ const ListsPage: React.FC = observer(() => {
           body: JSON.stringify({
             id: newId,
             name: automaticName,
-            description: `Imported from ${file.name}`
+            description: t('app.importedFrom', { fileName: file.name })
           })
         });
 
@@ -322,18 +320,18 @@ const ListsPage: React.FC = observer(() => {
           // Handle error
           const errorData = await createResponse.json().catch(() => ({}));
           console.error('Failed to create service:', errorData);
-          notification.error({ message: 'Failed to create service. Please try again.' });
+          notification.error({ message: t('app.failedToCreateService') });
           delete (window as any).__draggedFile; // Clean up the global variable
         }
       } catch (error) {
         console.error('Error processing file:', error);
-        notification.error({ message: 'Error processing the file. Please try again.' });
+        notification.error({ message: t('app.errorProcessingFile') });
         delete (window as any).__draggedFile; // Clean up the global variable
       }
     };
 
     reader.readAsArrayBuffer(file);
-  }, [isAuthenticated, notification, router, user?.id]);
+  }, [isAuthenticated, notification, router, user?.id, t]);
 
   // Memoized dropdown menu items
   const dropdownMenuItems = useMemo(() => {
@@ -342,14 +340,14 @@ const ListsPage: React.FC = observer(() => {
         {
           key: 'profile',
           icon: <SettingOutlined />,
-          label: 'Profile Settings',
+          label: t('app.profileSettings'),
           onClick: () => router.push('/app/profile'),
         },
         { type: 'divider' as const },
         {
           key: 'logout',
           icon: <LogoutOutlined />,
-          label: 'Logout',
+          label: t('app.logout'),
           onClick: async () => {
             document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
             router.push('/app');
@@ -361,11 +359,11 @@ const ListsPage: React.FC = observer(() => {
     return [
       {
         key: 'login',
-        label: 'Login',
+        label: t('app.login'),
         onClick: () => router.push('/login'),
       },
     ];
-  }, [isAuthenticated, router, setIsAuthenticated]);
+  }, [isAuthenticated, router, setIsAuthenticated, t]);
 
   // Memoized new service handler
   const handleNewService = useCallback(async (e: React.MouseEvent) => {
@@ -413,20 +411,20 @@ const ListsPage: React.FC = observer(() => {
         // Handle other errors
         const errorData = await createResponse.json().catch(() => ({}));
         console.error('Failed to create service:', errorData);
-        notification.error({ message: 'Failed to create service. Please try again.' });
+        notification.error({ message: t('app.failedToCreateService') });
         setIsCreatingService(false);
       }
     } catch (error) {
       console.error('Error creating service:', error);
-      notification.error({ message: 'Failed to create service. Please try again.' });
+      notification.error({ message: t('app.failedToCreateService') });
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, router, user?.id, notification]);
+  }, [isAuthenticated, router, user?.id, notification, t]);
 
   // Template selection handler
   const handleTemplateSelect = useCallback(async (template: Template) => {
     if (!isAuthenticated) {
-      notification.warning({ message: isGerman ? 'Bitte melden Sie sich an' : 'Please sign in to use templates' });
+      notification.warning({ message: t('app.pleaseSignInTemplates') });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -456,7 +454,7 @@ const ListsPage: React.FC = observer(() => {
 
       // Generate service ID and name
       const newId = generateServiceId(user?.id);
-      const templateName = isGerman ? template.name.de : template.name.en;
+      const templateName = (template.name as Record<string, string>)[locale] ?? template.name.en;
       const date = new Date();
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const serviceName = `${templateName} - ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
@@ -468,7 +466,7 @@ const ListsPage: React.FC = observer(() => {
         body: JSON.stringify({
           id: newId,
           name: serviceName,
-          description: isGerman ? template.description.de : template.description.en,
+          description: (template.description as Record<string, string>)[locale] ?? template.description.en,
         }),
       });
 
@@ -479,11 +477,11 @@ const ListsPage: React.FC = observer(() => {
       }
     } catch (error) {
       console.error('Error creating service from template:', error);
-      notification.error({ message: isGerman ? 'Fehler beim Erstellen des Service' : 'Failed to create service from template' });
+      notification.error({ message: t('app.failedToCreateFromTemplate') });
       delete (window as any).__draggedFile;
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, isGerman, notification, router, user?.id]);
+  }, [isAuthenticated, locale, t, notification, router, user?.id]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
@@ -531,7 +529,7 @@ const ListsPage: React.FC = observer(() => {
                 <div style={dragOverlayContentStyle}>
                   <InboxOutlined style={{ fontSize: 48, color: '#4F2D7F', marginBottom: 16, display: 'block' }} />
                   <Typography.Title level={4} style={{ margin: 0, color: '#4F2D7F' }}>
-                    Drop your Excel, CSV or JSON file here
+                    {t('app.dropFileHere')}
                   </Typography.Title>
                 </div>
               </div>
@@ -550,7 +548,7 @@ const ListsPage: React.FC = observer(() => {
                 <div className="desktop-only">
                   <Breadcrumb
                     items={[{
-                      title: <span style={{ marginLeft: 0 }}>Spreadsheet APIs</span>,
+                      title: <span style={{ marginLeft: 0 }}>{t('app.breadcrumb')}</span>,
                     }]}
                   />
                 </div>
@@ -566,7 +564,7 @@ const ListsPage: React.FC = observer(() => {
                     color="default"
                     icon={<MessageOutlined />}
                     onClick={() => router.push('/app/chat')}
-                    title="Chat with services"
+                    title={t('app.chatWithServices')}
                   >
                     <span className="desktop-text">Chat</span>
                   </Button>
@@ -583,8 +581,8 @@ const ListsPage: React.FC = observer(() => {
                   onClick={handleNewService}
                   className="new-list-button"
                 >
-                  <span className="desktop-text">New Service</span>
-                  <span className="mobile-text">New</span>
+                  <span className="desktop-text">{t('app.newService')}</span>
+                  <span className="mobile-text">{t('app.new')}</span>
                 </Button>
 
                 {/* User Menu - Always visible */}
@@ -634,7 +632,7 @@ const ListsPage: React.FC = observer(() => {
                 {serviceCount > 0 && (
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
                   <Input
-                    placeholder="Search Service APIs..."
+                    placeholder={t('app.searchPlaceholder')}
                     disabled={appStore.loading}
                     prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
                     value={searchQuery}
@@ -762,10 +760,10 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                         <div style={{ textAlign: 'left' }}>
                           <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {isGerman ? 'Video ansehen' : 'Watch Video'}
+                            {t('app.watchVideo')}
                           </div>
                           <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {isGerman ? '5-Minuten-Tutorial' : '5 minute tutorial'}
+                            {t('app.fiveMinTutorial')}
                           </div>
                         </div>
                       </div>
@@ -818,10 +816,10 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                         <div style={{ textAlign: 'left' }}>
                           <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {isGerman ? 'Beispiel testen' : 'Use a Sample'}
+                            {t('app.useSample')}
                           </div>
                           <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {isGerman ? 'Sofort ausprobieren' : 'Test immediately'}
+                            {t('app.testImmediately')}
                           </div>
                         </div>
                       </div>
@@ -872,10 +870,10 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                         <div style={{ textAlign: 'left' }}>
                           <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {isGerman ? 'So funktioniert\'s' : 'How it Works'}
+                            {t('app.howItWorks')}
                           </div>
                           <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {isGerman ? 'In Aktion sehen' : 'See it in action'}
+                            {t('app.seeInAction')}
                           </div>
                         </div>
                       </a>
@@ -1011,12 +1009,10 @@ const ListsPage: React.FC = observer(() => {
         footer={null}
         width={640}
         centered
-        title={isGerman ? 'Beispiel-Arbeitsmappe wählen' : 'Choose a sample workbook'}
+        title={t('app.chooseSampleWorkbook')}
       >
         <p style={{ color: '#8c8c8c', margin: '4px 0 20px' }}>
-          {isGerman
-            ? 'Wählen Sie eine Vorlage, um sofort loszulegen.'
-            : 'Pick a template to get started right away.'}
+          {t('app.pickTemplate')}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {loadedTemplates.length === 0 && (
@@ -1064,7 +1060,7 @@ const ListsPage: React.FC = observer(() => {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px', color: '#262626' }}>
-                  {isGerman ? template.name.de : template.name.en}
+                  {(template.name as Record<string, string>)[locale] ?? template.name.en}
                 </div>
                 <div style={{
                   fontSize: '13px',
@@ -1075,7 +1071,7 @@ const ListsPage: React.FC = observer(() => {
                   WebkitBoxOrient: 'vertical' as const,
                   overflow: 'hidden',
                 }}>
-                  {isGerman ? template.description.de : template.description.en}
+                  {(template.description as Record<string, string>)[locale] ?? template.description.en}
                 </div>
               </div>
               <ArrowRightOutlined style={{ fontSize: '14px', color: '#d9d9d9', flexShrink: 0 }} />

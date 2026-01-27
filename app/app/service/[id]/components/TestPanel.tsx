@@ -6,6 +6,7 @@ import { CaretRightOutlined } from '@ant-design/icons';
 import { applyDefaults } from '@/lib/parameterValidation';
 import { InputRenderer } from '@/components/InputRenderer';
 import type { InputDefinition, OutputDefinition } from './ParametersSection';
+import { useTranslation } from '@/lib/i18n';
 
 interface TestPanelProps {
   open: boolean;
@@ -98,6 +99,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
   outputs,
   spreadInstance
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState<any>(null);
@@ -333,7 +335,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
       // Set values in spreadsheet
       if (!spreadInstance) {
-        throw new Error('Spreadsheet not loaded. Please switch to Workbook view first.');
+        throw new Error(t('testPanel.spreadsheetNotLoaded'));
       }
 
       // Build inputs array (same format as API)
@@ -349,12 +351,12 @@ const TestPanel: React.FC<TestPanelProps> = ({
           // Get sheet
           const sheet = spreadInstance.getSheetFromName(sheetName);
           if (!sheet) {
-            throw new Error(`Sheet "${sheetName}" not found for input "${input.title || input.name}"`);
+            throw new Error(t('testPanel.sheetNotFound', { sheet: sheetName, param: input.title || input.name }));
           }
 
           // Validate row/col exist
           if (input.row === undefined || input.col === undefined) {
-            throw new Error(`Missing row or column for input "${input.title || input.name}"`);
+            throw new Error(t('testPanel.missingRowCol', { param: input.title || input.name }));
           }
 
           // Set value in spreadsheet
@@ -366,7 +368,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
             value: value
           });
         } catch (err: any) {
-          throw new Error(`Failed to set input "${input.title || input.name}": ${err.message}`);
+          throw new Error(t('testPanel.failedSetInput', { param: input.title || input.name, error: err.message }));
         }
       }
 
@@ -382,12 +384,12 @@ const TestPanel: React.FC<TestPanelProps> = ({
           // Get sheet
           const sheet = spreadInstance.getSheetFromName(sheetName);
           if (!sheet) {
-            throw new Error(`Sheet "${sheetName}" not found for output "${output.title || output.name}"`);
+            throw new Error(t('testPanel.sheetNotFound', { sheet: sheetName, param: output.title || output.name }));
           }
 
           // Validate row/col exist
           if (output.row === undefined || output.col === undefined) {
-            throw new Error(`Missing row or column for output "${output.title || output.name}"`);
+            throw new Error(t('testPanel.missingRowCol', { param: output.title || output.name }));
           }
 
           // Check if single cell or range
@@ -414,7 +416,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
           answerOutputs.push(outputObj);
         } catch (err: any) {
-          throw new Error(`Failed to read output "${output.title || output.name}": ${err.message}`);
+          throw new Error(t('testPanel.failedReadOutput', { param: output.title || output.name, error: err.message }));
         }
       }
 
@@ -432,7 +434,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
       setExecutionTime(responseTime);
       setHasChanges(false); // Disable button after calculation
     } catch (err: any) {
-      setError(err.message || 'Test failed');
+      setError(err.message || t('testPanel.testFailed'));
     } finally {
       setTesting(false);
     }
@@ -447,7 +449,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
 
   return (
     <Drawer
-      title="Test Current Parameters"
+      title={t('testPanel.title')}
       placement="right"
       onClose={onClose}
       open={open}
@@ -493,13 +495,13 @@ const TestPanel: React.FC<TestPanelProps> = ({
             block
             size="large"
           >
-            {testing ? 'Calculating...' : 'Calculate'}
+            {testing ? t('testPanel.calculating') : t('testPanel.calculate')}
           </Button>
 
           {/* Error */}
           {error && (
             <Alert
-              title="Test Failed"
+              title={t('testPanel.testFailedTitle')}
               description={error}
               type="error"
               showIcon
@@ -518,15 +520,15 @@ const TestPanel: React.FC<TestPanelProps> = ({
                 marginBottom: 12
               }}>
                 <Typography.Title level={5} style={{ margin: 0, fontSize: 14 }}>
-                  Results
+                  {t('testPanel.results')}
                 </Typography.Title>
                 <Segmented
                   value={viewMode}
                   onChange={(value) => setViewMode(value as 'result' | 'json' | 'request')}
                   options={[
-                    { label: 'Result', value: 'result' },
+                    { label: t('testPanel.resultTab'), value: 'result' },
                     { label: 'JSON', value: 'json' },
-                    { label: 'Request', value: 'request' }
+                    { label: t('testPanel.requestTab'), value: 'request' }
                   ]}
                   size="small"
                 />
@@ -609,7 +611,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
                   {/* GET Request */}
                   <div>
                     <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
-                      GET Request
+                      {t('testPanel.getRequest')}
                     </Typography.Text>
                     <div style={{
                       backgroundColor: '#f5f5f5',
@@ -633,7 +635,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
                   {/* POST Request */}
                   <div>
                     <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
-                      POST Request
+                      {t('testPanel.postRequest')}
                     </Typography.Text>
                     <div style={{
                       backgroundColor: '#f5f5f5',

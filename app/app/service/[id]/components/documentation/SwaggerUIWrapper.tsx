@@ -5,6 +5,7 @@ import { Spin, Alert, Button, Space, Typography, App } from 'antd';
 import { DownloadOutlined, CopyOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import 'swagger-ui-react/swagger-ui.css';
+import { useTranslation } from '@/lib/i18n';
 
 // Dynamically import Swagger UI to avoid SSR issues
 const SwaggerUI = dynamic<any>(() => import('swagger-ui-react'), {
@@ -21,6 +22,7 @@ interface SwaggerUIWrapperProps {
 
 const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublished }) => {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [spec, setSpec] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,20 +62,20 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
     link.href = url;
     link.download = `${serviceId}-openapi.${format}`;
     link.click();
-    notification.success({ message: `Downloaded OpenAPI spec as ${format.toUpperCase()}` });
+    notification.success({ message: t('swagger.downloadedSpec', { format: format.toUpperCase() }) });
   };
 
   const copySpecUrl = (format: 'json' | 'yaml') => {
     const url = `${window.location.origin}/api/v1/services/${serviceId}/openapi?format=${format}`;
     navigator.clipboard.writeText(url);
-    notification.success({ message: 'Copied OpenAPI URL to clipboard' });
+    notification.success({ message: t('swagger.copiedSpecUrl') });
   };
 
   if (!isPublished) {
     return (
       <Alert
-        title="Service Not Published"
-        description="API documentation is only available for published services. Publish your service first to view the interactive documentation."
+        title={t('swagger.serviceNotPublished')}
+        description={t('swagger.publishFirst')}
         type="info"
         showIcon
       />
@@ -85,7 +87,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
       <div style={{ padding: '20% 40px 40px 40px', textAlign: 'center' }}>
         <Spin size="default" />
         <div style={{ marginTop: 16 }}>
-          <Text type="secondary">Loading API documentation...</Text>
+          <Text type="secondary">{t('swagger.loadingDocs')}</Text>
         </div>
       </div>
     );
@@ -94,13 +96,13 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
   if (error) {
     return (
       <Alert
-        title="Error Loading Documentation"
+        title={t('swagger.errorLoading')}
         description={error}
         type="error"
         showIcon
         action={
           <Button size="small" onClick={fetchOpenAPISpec}>
-            Retry
+            {t('swagger.retry')}
           </Button>
         }
       />
@@ -119,7 +121,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
       }}>
         <Space orientation="vertical" size={8} style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text strong style={{ fontSize: 15 }}>Interactive API Documentation</Text>
+            <Text strong style={{ fontSize: 15 }}>{t('swagger.interactiveDocs')}</Text>
             <Space>
               <Button
                 size="small"
@@ -140,13 +142,12 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
                 icon={<CopyOutlined />}
                 onClick={() => copySpecUrl('json')}
               >
-                Copy Spec URL
+                {t('swagger.copySpecUrl')}
               </Button>
             </Space>
           </div>
           <Paragraph type="secondary" style={{ margin: 0, fontSize: 13 }}>
-            Use this OpenAPI specification to generate client SDKs, import into Postman/Insomnia,
-            or integrate with API testing tools.
+            {t('swagger.specDescription')}
           </Paragraph>
         </Space>
       </div>
