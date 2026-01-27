@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useRouter, usePathname } from 'next/navigation';
-import { generateServiceId } from '@/lib/generateServiceId';
+import { useRouter } from 'next/navigation';
 
 const { Text, Paragraph } = Typography;
 
@@ -23,12 +22,12 @@ interface ServiceListProps {
   searchQuery?: string;
   viewMode?: 'table' | 'card';
   isAuthenticated?: boolean | null;
-  userId?: string;
+  onServiceCount?: (count: number) => void;
+  onUseSample?: () => void;
 }
 
-export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, userId }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, onServiceCount, onUseSample }: ServiceListProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { message } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(isAuthenticated === null);
@@ -91,6 +90,10 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
     setFilteredServices(filtered);
   }, [searchQuery, services]);
+
+  useEffect(() => {
+    onServiceCount?.(services.length);
+  }, [services.length, onServiceCount]);
 
   const loadServices = async () => {
     // Prevent duplicate calls
@@ -352,21 +355,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }
 
   if (services.length === 0 && !searchQuery) {
-    // If auth state is still loading (null), don't show anything yet
-    if (isAuthenticated === null) {
-      return (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-          padding: '20px 0'
-        }}>
-          <Spin size="default" />
-        </div>
-      );
-    }
-
     const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
     return (
         <div style={{
@@ -374,7 +362,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 'calc(100vh - 280px)',
+          minHeight: 'calc(100vh - 260px)',
           padding: '24px',
           maxWidth: '560px',
           margin: '0 auto',
@@ -387,6 +375,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             margin: '0 0 20px',
             lineHeight: '1.6',
             maxWidth: '360px',
+            userSelect: 'none',
           }}>
             {isGerman
               ? 'Laden Sie Ihre Arbeitsmappe hoch, wählen Sie Zellen als Parameter aus und erhalten Sie einen REST-Endpunkt — angetrieben von Ihren Formeln.'
@@ -394,12 +383,16 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           </p>
 
           {/* Hero illustration: Spreadsheet → API */}
-          <div style={{
-            width: '100%',
-            maxWidth: 480,
-            borderRadius: 12,
-            overflow: 'hidden',
-          }}>
+          <div
+            onClick={onUseSample}
+            style={{
+              width: '100%',
+              maxWidth: 480,
+              borderRadius: 12,
+              overflow: 'hidden',
+              cursor: onUseSample ? 'pointer' : undefined,
+            }}
+          >
             <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
               <rect width="800" height="400" fill="#F8F6FE" rx="12"/>
               {/* Spreadsheet on left */}
@@ -479,7 +472,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
               hoverable
               onClick={() => handleEdit(service.id)}
               style={{ cursor: 'pointer' }}
-              styles={{ body: { padding: 24, paddingRight: 16 } }}
+              styles={{ body: { paddingTop: 24, paddingBottom: 24, paddingLeft: 24, paddingRight: 16 } }}
               actions={[
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button
@@ -517,7 +510,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   </div>
                 }
                 description={
-                  <Space orientation="vertical" style={{ width: '100%' }}>
+                  <Space direction="vertical" style={{ width: '100%' }}>
                     <Paragraph
                       ellipsis={{ rows: 2 }}
                       style={{ marginBottom: 8 }}

@@ -55,6 +55,7 @@ const ListsPage: React.FC = observer(() => {
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
+  const [serviceCount, setServiceCount] = useState(0);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [loadedTemplates, setLoadedTemplates] = useState<Template[]>([]);
@@ -199,6 +200,10 @@ const ListsPage: React.FC = observer(() => {
   const handleHomeClick = useCallback(() => {
     router.push('/app');
   }, [router]);
+
+  const handleUseSample = useCallback(() => {
+    setIsTemplateModalOpen(true);
+  }, []);
 
   // Drag and drop handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -619,7 +624,8 @@ const ListsPage: React.FC = observer(() => {
               {/* Page Title and Search */}
               <div style={{ width: '100%' }}>
 
-                {/* Search Bar and View Toggle */}
+                {/* Search Bar and View Toggle — hidden when no services */}
+                {serviceCount > 0 && (
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
                   <Input
                     placeholder="Search Service APIs..."
@@ -648,10 +654,11 @@ const ListsPage: React.FC = observer(() => {
                     }}
                   />
                 </div>
+                )}
                 {/* Service List */}
                 <div ref={serviceListRef}>
                   {isClient ? (
-                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} userId={user?.id} />
+                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} />
                   ) : (
                     <ServiceListSkeleton viewMode={viewMode} />
                   )}
@@ -803,10 +810,10 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                         <div style={{ textAlign: 'left' }}>
                           <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {isGerman ? 'Beispiel nutzen' : 'Use a Sample'}
+                            {isGerman ? 'Beispiel testen' : 'Use a Sample'}
                           </div>
                           <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {isGerman ? 'Demo-Modelle testen' : 'Various demo models'}
+                            {isGerman ? 'Sofort ausprobieren' : 'Test immediately'}
                           </div>
                         </div>
                       </div>
