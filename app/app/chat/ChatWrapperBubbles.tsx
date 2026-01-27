@@ -3,21 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown, Empty } from 'antd';
-import { MenuOutlined, UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, MessageOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, MessageOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
-import { useAppStore } from '@/shared/hooks/useAppStore';
-import dynamic from 'next/dynamic';
 import markdownit from 'markdown-it';
 import { useTranslation } from '@/lib/i18n';
 import './chat.css';
-
-const Sidebar = dynamic(() => import('@/components/Sidebar'), {
-  ssr: false,
-  loading: () => null
-});
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -100,7 +93,6 @@ const renderMarkdown: BubbleProps['messageRender'] = (content) => {
 export default function ChatWrapperBubbles() {
   const { t } = useTranslation();
   const router = useRouter();
-  const appStore = useAppStore();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [selectedService, setSelectedService] = useState<string>('general');
   const [userServices, setUserServices] = useState<any[]>([]);
@@ -283,8 +275,6 @@ export default function ChatWrapperBubbles() {
 
   return (
     <Layout style={{ minHeight: '100vh', background: 'white' }}>
-      <Sidebar />
-      
       <Layout style={{ marginLeft: 0, background: 'white' }}>
         {/* Header */}
         <div style={{
@@ -297,11 +287,6 @@ export default function ChatWrapperBubbles() {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Button
-              type='text'
-              icon={<MenuOutlined />}
-              onClick={appStore.toggleSidebar}
-            />
             <Breadcrumb
               items={[
                 { title: <a onClick={() => router.push('/app')}>{t('chat.breadcrumbServices')}</a> },

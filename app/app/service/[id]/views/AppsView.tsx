@@ -304,11 +304,11 @@ const AppsView: React.FC<AppsViewProps> = ({
                 <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
                   {t('apps.webAppToken')}
                 </div>
-                <Space.Compact style={{ width: '100%' }}>
+                <Space.Compact style={{ display: 'flex', width: '100%', flexWrap: 'nowrap' }}>
                   <Input
                     value={webAppToken}
                     readOnly
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, minWidth: 0, height: 32, overflow: 'hidden' }}
                   />
                   <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
                     <Button
@@ -326,6 +326,7 @@ const AppsView: React.FC<AppsViewProps> = ({
                     />
                   </Tooltip>
                 </Space.Compact>
+
                 <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
                   {t('apps.regenerateHint')}
                 </div>

@@ -14,11 +14,6 @@ import ServiceListSkeleton from '@/components/ServiceListSkeleton';
 import { useTranslation } from '@/lib/i18n';
 
 // Dynamically import heavy components
-const Sidebar = dynamic(() => import('@/components/Sidebar'), {
-  ssr: false,
-  loading: () => null
-});
-
 const ServiceList = dynamic(() => import('@/components/ServiceList'), {
   ssr: true
 });
@@ -528,8 +523,6 @@ const ListsPage: React.FC = observer(() => {
   return (
     <>
       <Layout style={{ height: '100vh', overflow: 'hidden' }}>
-        <Sidebar />
-
         <Layout
           style={{
             marginLeft: 0, // No margin needed since sidebar is now a drawer overlay
@@ -574,7 +567,7 @@ const ListsPage: React.FC = observer(() => {
               {/* Right side - Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
                 {/* Chat Button - hidden when no services exist */}
-                {appStore.list.length > 0 && (
+                {serviceCount > 0 && (
                   <Button
                     ref={chatButtonRef}
                     variant='filled'
@@ -685,7 +678,7 @@ const ListsPage: React.FC = observer(() => {
                   )}
                 </div>
                 {/* New here? Cards - show for users with less than 5 lists */}
-                {!searchQuery && appStore.list.length < 5 && (
+                {!searchQuery && serviceCount < 5 && (
                   <div style={{
                     position: isContentScrollable ? 'relative' : 'fixed',
                     bottom: isContentScrollable ? 'auto' : '40px',
