@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, MenuOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
@@ -63,17 +63,9 @@ const TestPanel = dynamic(() => import('./components/TestPanel'), {
 
 import { generateParameterId } from '@/lib/generateParameterId';
 import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_LIMITS } from '@/utils/publishService';
-import { appStore } from '../../../stores/AppStore';
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 import { useTranslation } from '@/lib/i18n';
-
-// Import the main sidebar
-const Sidebar = dynamic(() => import('@/components/Sidebar'), {
-  ssr: false,
-  loading: () => null
-});
-
 
 const { Text } = Typography;
 
@@ -2458,7 +2450,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <Sidebar />
       {/* Header */}
       <div style={{
         minHeight: 56,
@@ -2475,11 +2466,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         borderBottom: `1px solid ${COLORS.border}`,
       }}>
         <Space size="small" align="center">
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={appStore.toggleSidebar}
-          />
           {isMobile && (
             <Tooltip title={t('service.openParamsPanel')}>
               <Button
@@ -2489,29 +2475,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               />
             </Tooltip>
           )}
-          {!isMobile && (
-            <Breadcrumb
-              items={[
-                {
-                  title: <a onClick={handleBack}>Services</a>,
-                },
-                {
-                  title: configLoaded ? (
-                    <Text
-                      ellipsis={{ tooltip: apiConfig.name || t('service.newService') }}
-                      style={{ margin: 0, maxWidth: 200, cursor: 'pointer' }}
-                      onClick={() => {
-                        setActiveView('Settings');
-                        saveViewPreference(serviceId, 'Settings');
-                      }}
-                    >
-                      {apiConfig.name || t('service.newService')}
-                    </Text>
-                  ) : '...',
-                },
-              ]}
-            />
-          )}
+          <Breadcrumb
+            items={[
+              {
+                title: <a onClick={handleBack}>Services</a>,
+              },
+              ...(!isMobile ? [{
+                title: configLoaded ? (
+                  <Text
+                    ellipsis={{ tooltip: apiConfig.name || t('service.newService') }}
+                    style={{ margin: 0, maxWidth: 200, cursor: 'pointer' }}
+                    onClick={() => {
+                      setActiveView('Settings');
+                      saveViewPreference(serviceId, 'Settings');
+                    }}
+                  >
+                    {apiConfig.name || t('service.newService')}
+                  </Text>
+                ) : '...',
+              }] : []),
+            ]}
+          />
         </Space>
 
         <Space size="small">

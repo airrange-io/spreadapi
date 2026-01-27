@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -557,19 +557,18 @@ const ListsPage: React.FC = observer(() => {
             <div className="lists-page-header">
               {/* Left side */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
-                <Button
-                  type='text'
-                  icon={<MenuOutlined />}
-                  onClick={appStore.toggleSidebar}
+                <img
+                  src="/icons/logo.svg"
+                  alt="SpreadAPI"
+                  style={{ width: 18, height: 18, borderRadius: 3, cursor: 'pointer' }}
+                  onClick={() => router.push('/')}
                 />
                 {/* Breadcrumb */}
-                <div className="desktop-only">
-                  <Breadcrumb
-                    items={[{
-                      title: <span style={{ marginLeft: 0 }}>{t('app.breadcrumb')}</span>,
-                    }]}
-                  />
-                </div>
+                <Breadcrumb
+                  items={[{
+                    title: <span style={{ marginLeft: 0 }}>{t('app.breadcrumb')}</span>,
+                  }]}
+                />
               </div>
 
               {/* Right side - Action Buttons */}
