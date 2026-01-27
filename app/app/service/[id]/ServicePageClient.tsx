@@ -66,6 +66,7 @@ import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_
 import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 import { useTranslation } from '@/lib/i18n';
+import { useEnterpriseMode } from '@/lib/useEnterpriseMode';
 
 const { Text } = Typography;
 
@@ -75,6 +76,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const workbookRef = useRef<any>(null);
   const { notification, modal } = App.useApp();
   const { t, locale } = useTranslation();
+  const { isEnterpriseMode } = useEnterpriseMode();
   const [isMobile, setIsMobile] = useState(false);
   const [isCompactNav, setIsCompactNav] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -2564,17 +2566,20 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         <Space>
           {hasAnyChanges && !isDemoMode && (
             <Tooltip title={
-              configHasChanges && workbookChangeCount > 0
-                ? t('service.saveConfigAndWorkbookTooltip')
-                : configHasChanges
-                  ? t('service.saveConfigTooltip')
-                  : t('service.saveWorkbookTooltip')
+              isEnterpriseMode
+                ? t('enterprise.cloudDisabled')
+                : configHasChanges && workbookChangeCount > 0
+                  ? t('service.saveConfigAndWorkbookTooltip')
+                  : configHasChanges
+                    ? t('service.saveConfigTooltip')
+                    : t('service.saveWorkbookTooltip')
             }>
               <Button
                 type="primary"
                 icon={<SaveOutlined />}
                 onClick={handleSave}
                 loading={loading}
+                disabled={isEnterpriseMode}
               >
                 {t('common.save')}
               </Button>
@@ -2582,7 +2587,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           )}
 
           {/* Desktop Publish Button - Only visible on desktop */}
-          {!isMobile && !isDemoMode && (
+          {!isMobile && !isDemoMode && !isEnterpriseMode && (
             serviceStatus?.published ? (
               <Dropdown
                 menu={{
@@ -2640,8 +2645,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Dropdown
             menu={{
               items: [
-                // Publish/Draft options (only for mobile and non-demo services)
-                ...(isMobile && !isDemoMode ? [
+                // Publish/Draft options (only for mobile and non-demo/non-enterprise services)
+                ...(isMobile && !isDemoMode && !isEnterpriseMode ? [
                   serviceStatus?.published ? {
                     key: 'republish',
                     label: t('service.republishThisService'),
