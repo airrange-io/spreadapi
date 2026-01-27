@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin } from 'antd';
-import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -61,7 +61,7 @@ const ListsPage: React.FC = observer(() => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [loadedTemplates, setLoadedTemplates] = useState<Template[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState('rfdcf8rpnd');
-  const { t, locale } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
 
   // Tour refs
   const serviceListRef = useRef<HTMLDivElement>(null);
@@ -335,6 +335,11 @@ const ListsPage: React.FC = observer(() => {
 
   // Memoized dropdown menu items
   const dropdownMenuItems = useMemo(() => {
+    const languageItems = [
+      { key: 'en', label: 'English', icon: <CheckOutlined style={{ visibility: locale === 'en' ? 'visible' : 'hidden' }} />, onClick: () => setLocale('en') },
+      { key: 'de', label: 'Deutsch', icon: <CheckOutlined style={{ visibility: locale === 'de' ? 'visible' : 'hidden' }} />, onClick: () => setLocale('de') },
+    ];
+
     if (isAuthenticated) {
       return [
         {
@@ -342,6 +347,12 @@ const ListsPage: React.FC = observer(() => {
           icon: <SettingOutlined />,
           label: t('app.profileSettings'),
           onClick: () => router.push('/app/profile'),
+        },
+        {
+          key: 'language',
+          icon: <GlobalOutlined />,
+          label: t('app.language'),
+          children: languageItems,
         },
         { type: 'divider' as const },
         {
@@ -358,12 +369,19 @@ const ListsPage: React.FC = observer(() => {
     }
     return [
       {
+        key: 'language',
+        icon: <GlobalOutlined />,
+        label: t('app.language'),
+        children: languageItems,
+      },
+      { type: 'divider' as const },
+      {
         key: 'login',
         label: t('app.login'),
         onClick: () => router.push('/login'),
       },
     ];
-  }, [isAuthenticated, router, setIsAuthenticated, t]);
+  }, [isAuthenticated, router, setIsAuthenticated, t, locale, setLocale]);
 
   // Memoized new service handler
   const handleNewService = useCallback(async (e: React.MouseEvent) => {

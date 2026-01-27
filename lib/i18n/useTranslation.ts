@@ -3,9 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { translations, type Locale } from './translations';
 
-/** Detect browser locale, falling back to English. */
+const LOCALE_STORAGE_KEY = 'spreadapi-locale';
+
+/** Detect locale: stored preference → browser language → English. */
 function detectLocale(): Locale {
-  if (typeof navigator === 'undefined') return 'en';
+  if (typeof window === 'undefined') return 'en';
+  const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
+  if (stored && stored in translations) return stored;
   const lang = navigator.language?.slice(0, 2) as Locale;
   return lang in translations ? lang : 'en';
 }
@@ -14,16 +18,22 @@ function detectLocale(): Locale {
  * React hook that exposes:
  * - `t(key, params?)` – looks up a plain-string translation.
  * - `locale`          – the resolved locale (`'en' | 'de' | …`).
+ * - `setLocale(l)`    – override locale and persist to localStorage.
  *
  * For JSX-heavy translations use `locale` directly with a
  * `Record<Locale, ReactNode>` pattern so each language block
  * can contain arbitrary markup.
  */
 export function useTranslation() {
-  const [locale, setLocale] = useState<Locale>('en');
+  const [locale, setLocaleState] = useState<Locale>('en');
 
   useEffect(() => {
-    setLocale(detectLocale());
+    setLocaleState(detectLocale());
+  }, []);
+
+  const setLocale = useCallback((newLocale: Locale) => {
+    localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
+    setLocaleState(newLocale);
   }, []);
 
   const t = useCallback(
@@ -40,5 +50,5 @@ export function useTranslation() {
     [locale],
   );
 
-  return { t, locale };
+  return { t, locale, setLocale };
 }
