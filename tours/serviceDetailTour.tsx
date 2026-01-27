@@ -55,19 +55,5 @@ export const serviceDetailTour: TourDefinition = {
       ),
       placement: 'top',
     },
-    {
-      title: 'Debug Your Service',
-      description: (
-        <div>
-          <p style={{ marginBottom: 12 }}>
-            Click <strong>Test Parameters</strong> to open the test panel and debug your service during API development.
-          </p>
-          <p style={{ margin: 0 }}>
-            You can adjust values or formulas in your workbook and instantly test how those changes affect your draft service.
-          </p>
-        </div>
-      ),
-      placement: 'top',
-    },
   ],
 };

@@ -234,10 +234,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             ...serviceDetailTour.steps[2],
             target: () => viewSwitcherRef.current,
           },
-          {
-            ...serviceDetailTour.steps[3],
-            target: () => testButtonRef.current,
-          },
         ];
 
         setTourState({

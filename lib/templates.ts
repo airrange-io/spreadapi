@@ -32,7 +32,7 @@ export const templates: Template[] = [
     name: { en: 'Email Quality Checker', de: 'Email-Qualitätsprüfer' },
     description: { en: "This Excel file is an intelligent email validation tool that analyzes email addresses for quality issues. It detects disposable, fake, and potentially invalid email addresses that shouldn't be used in marketing campaigns or CRM systems.", de: "Diese Excel-Datei ist ein intelligentes Tool zur E-Mail-Validierung, das E-Mail-Adressen auf Qualitätsprobleme analysiert. Es erkennt Wegwerf-, Fake- und potenziell ungültige E-Mail-Adressen, die nicht in Marketing-Kampagnen oder CRM-Systemen verwendet werden sollten." },
     fileUrl: 'https://ug526ez8nuob7cr7.public.blob.vercel-storage.com/samples/Email%20Quality%20Checker.xlsx',
-    cells: ["EmailChecker!C3","EmailChecker!C25","EmailChecker!C26","EmailChecker!C27","EmailChecker!C13:C22"],
+    cells: ["EmailChecker!C3","EmailChecker!C25","EmailChecker!C26","EmailChecker!C27","EmailChecker!B13:C22"],
   },
   {
     id: 'sample-quotation-1',
