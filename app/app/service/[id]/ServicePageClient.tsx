@@ -80,7 +80,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const workbookRef = useRef<any>(null);
-  const { message, modal } = App.useApp();
+  const { notification, modal } = App.useApp();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   // Initialize activeView from localStorage or default based on context
@@ -558,11 +558,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setApiConfig(prev => ({ ...prev, inputs: result.inputs, outputs: result.outputs }));
         setConfigHasChanges(true);
         const totalParams = result.inputs.length + result.outputs.length;
-        message.success(
-          isGerman
+        notification.success({
+          message: isGerman
             ? `${totalParams} Parameter wurden automatisch konfiguriert (${result.inputs.length} Eingaben, ${result.outputs.length} Ausgaben)`
             : `${totalParams} parameters auto-configured (${result.inputs.length} inputs, ${result.outputs.length} outputs)`
-        );
+        });
 
         // After parameters are added, show a one-step tour highlighting the test button
         // Delay to let React render the test button (it's conditional on parameters existing)
@@ -593,7 +593,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }, 5000);
       },
     });
-  }, [template, spreadInstance, autoDetectTemplateParameters, modal, message]);
+  }, [template, spreadInstance, autoDetectTemplateParameters, modal, notification]);
 
   // Handle tour close — offer parameter auto-config for templates
   const handleTourClose = useCallback(() => {
@@ -828,14 +828,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        message.error('Failed to load workbook');
+        notification.error({ message: 'Failed to load workbook' });
       }
       setWorkbookLoading(false);
     } finally {
       // Clear the abort controller ref after request completes
       workbookLoadAbortControllerRef.current = null;
     }
-  }, [serviceId, workbookLoaded, workbookLoading, spreadsheetData, message, processWorkbookData]);
+  }, [serviceId, workbookLoaded, workbookLoading, spreadsheetData, notification, processWorkbookData]);
 
   // Load workbook when switching to Workbook view
   useEffect(() => {
@@ -1134,18 +1134,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 data: arrayBuffer,
                 fileName: info.file.name
               });
-              message.success(`${info.file.name} loaded successfully.`);
+              notification.success({ message: `${info.file.name} loaded successfully.` });
             }
           } catch (error) {
-            message.error('Failed to process the file');
+            notification.error({ message: 'Failed to process the file' });
           }
         };
         reader.readAsArrayBuffer(originFileObj);
       } catch (error) {
-        message.error('Failed to read the file');
+        notification.error({ message: 'Failed to read the file' });
       }
     } else if (status === 'error') {
-      message.error(`${info.file.name} file upload failed.`);
+      notification.error({ message: `${info.file.name} file upload failed.` });
     }
   };
 
@@ -1190,7 +1190,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        message.warning('Please save your changes before publishing');
+        notification.warning({ message: 'Please save your changes before publishing' });
         return;
       }
 
@@ -1200,7 +1200,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          message.error('Cannot publish: No parameters defined. Please add inputs or outputs first.');
+          notification.error({ message: 'Cannot publish: No parameters defined. Please add inputs or outputs first.' });
           return;
         }
 
@@ -1212,7 +1212,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           cancelText: 'Cancel',
           onOk: () => {
             setActiveView('Workbook');
-            message.info('Please wait for the workbook to load, then click Publish again.');
+            notification.info({ message: 'Please wait for the workbook to load, then click Publish again.' });
           }
         });
 
@@ -1220,12 +1220,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        message.error('Please define at least one input, output, or editable area');
+        notification.error({ message: 'Please define at least one input, output, or editable area' });
         return;
       }
 
       setLoading(true);
-      message.info('Preparing service for publishing...');
+      notification.info({ message: 'Preparing service for publishing...', key: 'publish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1258,7 +1258,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       } : null;
 
       if (isLargePayload) {
-        message.destroy(); // Clear the "Preparing..." message
+        notification.destroy('publish'); // Clear the "Preparing..." message
         setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
       }
 
@@ -1272,7 +1272,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      message.success('Service published successfully!');
+      notification.success({ message: 'Service published successfully!' });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1297,7 +1297,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to publish service:', error);
-      message.error('Failed to publish service: ' + (error.message || 'Unknown error'));
+      notification.error({ message: 'Failed to publish service: ' + (error.message || 'Unknown error') });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1307,7 +1307,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        message.warning('Please save your changes before republishing');
+        notification.warning({ message: 'Please save your changes before republishing' });
         return;
       }
 
@@ -1317,7 +1317,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          message.error('Cannot republish: No parameters defined. Please add inputs or outputs first.');
+          notification.error({ message: 'Cannot republish: No parameters defined. Please add inputs or outputs first.' });
           return;
         }
 
@@ -1329,7 +1329,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           cancelText: 'Cancel',
           onOk: () => {
             setActiveView('Workbook');
-            message.info('Please wait for the workbook to load, then click Republish again.');
+            notification.info({ message: 'Please wait for the workbook to load, then click Republish again.' });
           }
         });
 
@@ -1337,12 +1337,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        message.error('Please define at least one input, output, or editable area');
+        notification.error({ message: 'Please define at least one input, output, or editable area' });
         return;
       }
 
       setLoading(true);
-      message.info('Republishing service...');
+      notification.info({ message: 'Republishing service...', key: 'republish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1375,7 +1375,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       } : null;
 
       if (isLargePayload) {
-        message.destroy(); // Clear the "Republishing..." message
+        notification.destroy('republish'); // Clear the "Republishing..." message
         setPublishProgress({ visible: true, percent: 0, status: 'Preparing data...' });
       }
 
@@ -1389,7 +1389,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      message.success('Service republished successfully!');
+      notification.success({ message: 'Service republished successfully!' });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1414,7 +1414,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to republish service:', error);
-      message.error('Failed to republish service: ' + (error.message || 'Unknown error'));
+      notification.error({ message: 'Failed to republish service: ' + (error.message || 'Unknown error') });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1423,7 +1423,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleUnpublish = async () => {
     try {
       if (hasAnyChanges) {
-        message.warning('Please save your changes before unpublishing');
+        notification.warning({ message: 'Please save your changes before unpublishing' });
         return;
       }
 
@@ -1439,7 +1439,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(error.error || 'Failed to unpublish service');
       }
 
-      message.success('Service unpublished successfully!');
+      notification.success({ message: 'Service unpublished successfully!' });
 
       // Update the service status
       setServiceStatus(prevStatus => ({
@@ -1450,7 +1450,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }));
 
     } catch (error) {
-      message.error('Failed to unpublish: ' + (error.message || 'Unknown error'));
+      notification.error({ message: 'Failed to unpublish: ' + (error.message || 'Unknown error') });
     } finally {
       setLoading(false);
     }
@@ -1466,7 +1466,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       if (!response.ok) {
         if (response.status === 404) {
-          message.error('Service not published yet. Please publish the service first.');
+          notification.error({ message: 'Service not published yet. Please publish the service first.' });
           setShowApiDefinitionModal(false);
           return;
         }
@@ -1477,7 +1477,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setApiDefinitionData(data);
 
     } catch (error) {
-      message.error('Failed to load API definition: ' + (error.message || 'Unknown error'));
+      notification.error({ message: 'Failed to load API definition: ' + (error.message || 'Unknown error') });
       setShowApiDefinitionModal(false);
     } finally {
       setLoadingApiDefinition(false);
@@ -1487,33 +1487,33 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleExportToExcel = async () => {
     try {
       if (!spreadInstance) {
-        message.error('Spreadsheet not loaded');
+        notification.error({ message: 'Spreadsheet not loaded' });
         return;
       }
 
-      message.loading('Exporting to Excel...', 0);
+      notification.open({ message: 'Exporting to Excel...', key: 'export-excel', duration: 0 });
 
       await workbookManager.exportToExcel(
         spreadInstance,
         apiConfig.name || 'spreadsheet'
       );
 
-      message.destroy();
-      message.success('Excel file exported successfully');
+      notification.destroy('export-excel');
+      notification.success({ message: 'Excel file exported successfully' });
     } catch (error) {
-      message.destroy();
-      message.error('Failed to export: ' + (error.message || 'Unknown error'));
+      notification.destroy('export-excel');
+      notification.error({ message: 'Failed to export: ' + (error.message || 'Unknown error') });
     }
   };
 
   const handleExportServicePackage = async () => {
     try {
       if (!spreadInstance) {
-        message.error('Spreadsheet not loaded');
+        notification.error({ message: 'Spreadsheet not loaded' });
         return;
       }
 
-      message.loading('Exporting service package...', 0);
+      notification.open({ message: 'Exporting service package...', key: 'export-package', duration: 0 });
 
       // Get workbook JSON
       const workbookJSON = spreadInstance.toJSON();
@@ -1556,22 +1556,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      message.destroy();
-      message.success('Service package exported successfully');
+      notification.destroy('export-package');
+      notification.success({ message: 'Service package exported successfully' });
     } catch (error) {
-      message.destroy();
-      message.error('Failed to export package: ' + (error.message || 'Unknown error'));
+      notification.destroy('export-package');
+      notification.error({ message: 'Failed to export package: ' + (error.message || 'Unknown error') });
     }
   };
 
   const handleExportForRuntime = async () => {
     try {
       if (!spreadInstance) {
-        message.error('Spreadsheet not loaded');
+        notification.error({ message: 'Spreadsheet not loaded' });
         return;
       }
 
-      message.loading('Exporting for Runtime...', 0);
+      notification.open({ message: 'Exporting for Runtime...', key: 'export-runtime', duration: 0 });
 
       // Get workbook JSON (this is the fileJson for calculations)
       const fileJson = spreadInstance.toJSON();
@@ -1637,11 +1637,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      message.destroy();
-      message.success('Runtime package exported! Upload this file to your SpreadAPI Runtime.');
+      notification.destroy('export-runtime');
+      notification.success({ message: 'Runtime package exported! Upload this file to your SpreadAPI Runtime.' });
     } catch (error: any) {
-      message.destroy();
-      message.error('Failed to export: ' + (error.message || 'Unknown error'));
+      notification.destroy('export-runtime');
+      notification.error({ message: 'Failed to export: ' + (error.message || 'Unknown error') });
     }
   };
 
@@ -1650,7 +1650,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     // Prevent concurrent saves
     if (isSavingRef.current) {
-      message.warning('Save already in progress');
+      notification.warning({ message: 'Save already in progress' });
       return;
     }
 
@@ -1668,7 +1668,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check if there are any changes to save
       if (!configHasChanges && !shouldSaveWorkbook) {
-        message.info('No changes to save');
+        notification.info({ message: 'No changes to save' });
         setLoading(false);
         return;
       }
@@ -1676,12 +1676,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Show specific loading message
       if (shouldSaveWorkbook && configHasChanges) {
         setSavingWorkbook(true);
-        message.loading('Saving configuration and workbook...', 0);
+        notification.open({ message: 'Saving configuration and workbook...', key: 'save', duration: 0 });
       } else if (shouldSaveWorkbook) {
         setSavingWorkbook(true);
-        message.loading('Saving workbook...', 0);
+        notification.open({ message: 'Saving workbook...', key: 'save', duration: 0 });
       } else if (configHasChanges) {
-        message.loading('Saving configuration...', 0);
+        notification.open({ message: 'Saving configuration...', key: 'save', duration: 0 });
       }
 
       let workbookBlob = null;
@@ -1690,7 +1690,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Additional safety check for workbookRef
       if (!workbookRef.current && shouldSaveWorkbook) {
-        message.error('Please wait for the workbook to load before saving');
+        notification.error({ message: 'Please wait for the workbook to load before saving' });
         setLoading(false);
         setSavingWorkbook(false);
         return;
@@ -1708,7 +1708,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
             // If save takes more than 500ms, show progress
             const progressTimeout = setTimeout(() => {
-              message.destroy();
+              notification.destroy('save');
               setSaveProgress({ visible: true, percent: 30, status: 'Saving workbook data...' });
             }, 500);
 
@@ -1838,15 +1838,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       // Show appropriate success message based on what was saved
-      message.destroy();
+      notification.destroy('save');
       setSaveProgress({ visible: false, percent: 0, status: '' });
 
       if (shouldSaveWorkbook && configHasChanges) {
-        message.success('Configuration and workbook saved successfully!');
+        notification.success({ message: 'Configuration and workbook saved successfully!' });
       } else if (shouldSaveWorkbook) {
-        message.success('Workbook saved successfully!');
+        notification.success({ message: 'Workbook saved successfully!' });
       } else {
-        message.success('Configuration saved successfully!');
+        notification.success({ message: 'Configuration saved successfully!' });
       }
 
       // Update saved state to match current state
@@ -1863,7 +1863,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setWorkbookChangeCount(0);
       }
     } catch (error) {
-      message.error('Failed to save: ' + (error.message || 'Unknown error'));
+      notification.error({ message: 'Failed to save: ' + (error.message || 'Unknown error') });
     } finally {
       isSavingRef.current = false;
       setLoading(false);
@@ -2050,7 +2050,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return newConfig;
       });
     }
-  }, [savedConfig, serviceStatus.published, message]);
+  }, [savedConfig, serviceStatus.published, notification]);
 
   const handleImportExcel = useCallback(async (file: File) => {
     try {
@@ -2067,7 +2067,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check file size
       if (file.size > MAX_FILE_SIZE) {
-        message.error(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please use a smaller file.`);
+        notification.error({ message: `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please use a smaller file.` });
         setSavingWorkbook(false);
         return;
       }
@@ -2075,14 +2075,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Check file type and extension
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       if (!ALLOWED_EXTENSIONS.includes(fileExtension) && !ALLOWED_EXCEL_TYPES.includes(file.type)) {
-        message.error('Only Excel files (.xls, .xlsx, .xlsm) are supported');
+        notification.error({ message: 'Only Excel files (.xls, .xlsx, .xlsm) are supported' });
         setSavingWorkbook(false);
         return;
       }
 
       // Check for macro-enabled files
       if (fileExtension === '.xlsm' || file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12') {
-        message.warning('This file contains macros (.xlsm), but macros are not supported. Only the spreadsheet data will be imported.');
+        notification.warning({ message: 'This file contains macros (.xlsm), but macros are not supported. Only the spreadsheet data will be imported.' });
       }
 
       if (workbookRef.current) {
@@ -2105,15 +2105,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             successMessage = `Excel file imported and service renamed to "${filename}"`;
           }
 
-          message.success(successMessage);
+          notification.success({ message: successMessage });
         } catch (error: any) {
-          message.error('Failed to import Excel file: ' + (error.message || 'Unknown error'));
+          notification.error({ message: 'Failed to import Excel file: ' + (error.message || 'Unknown error') });
         }
       } else {
-        message.error('Spreadsheet not initialized. Please wait for the workbook to load.');
+        notification.error({ message: 'Spreadsheet not initialized. Please wait for the workbook to load.' });
       }
     } catch (error) {
-      message.error('Failed to import Excel file');
+      notification.error({ message: 'Failed to import Excel file' });
     } finally {
       setSavingWorkbook(false);
     }
@@ -2123,7 +2123,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleImportExcelUpdate = useCallback(() => {
     // Check if workbook is available
     if (!workbookRef.current) {
-      message.error('Please wait for the workbook to load');
+      notification.error({ message: 'Please wait for the workbook to load' });
       return;
     }
 
@@ -2159,26 +2159,26 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           try {
             // Show loading message
-            message.loading('Importing Excel file...', 0);
+            notification.open({ message: 'Importing Excel file...', key: 'import-excel', duration: 0 });
 
             // Use existing import function
             await handleImportExcel(file);
 
             // Clear loading and show success
-            message.destroy();
-            message.success('Excel file imported successfully! Remember to save your changes.');
+            notification.destroy('import-excel');
+            notification.success({ message: 'Excel file imported successfully! Remember to save your changes.' });
 
             // Mark as having changes so save button is enabled
             setWorkbookChangeCount(prev => prev + 1);
           } catch (error: any) {
-            message.destroy();
-            message.error('Failed to import: ' + (error.message || 'Unknown error'));
+            notification.destroy('import-excel');
+            notification.error({ message: 'Failed to import: ' + (error.message || 'Unknown error') });
           }
         };
         input.click();
       }
     });
-  }, [handleImportExcel, workbookRef, spreadInstance, activeView, modal, message]);
+  }, [handleImportExcel, workbookRef, spreadInstance, activeView, modal, notification]);
 
   // Handle Excel import for empty state (when workbook is not initialized yet)
   const handleEmptyStateImport = useCallback((file: File) => {
@@ -2197,7 +2197,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // Set importing flag to prevent config from being overwritten by API load
       setIsImporting(true);
-      message.loading('Importing service package...', 0);
+      notification.open({ message: 'Importing service package...', key: 'import-package', duration: 0 });
 
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -2282,27 +2282,27 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           setIsImporting(false);
           justImportedRef.current = true; // Prevent API reload after import
 
-          message.destroy();
-          message.success('Service package imported successfully! Remember to save your changes.');
+          notification.destroy('import-package');
+          notification.success({ message: 'Service package imported successfully! Remember to save your changes.' });
         } catch (error: any) {
           console.error('[Import] Error:', error);
-          message.destroy();
-          message.error('Failed to parse service package: ' + (error.message || 'Invalid JSON'));
+          notification.destroy('import-package');
+          notification.error({ message: 'Failed to parse service package: ' + (error.message || 'Invalid JSON') });
           setIsImporting(false);
         }
       };
 
       reader.onerror = () => {
-        message.destroy();
-        message.error('Failed to read file');
+        notification.destroy('import-package');
+        notification.error({ message: 'Failed to read file' });
         setIsImporting(false);
       };
 
       reader.readAsText(file);
     } catch (error: any) {
       console.error('[Import] Outer error:', error);
-      message.destroy();
-      message.error('Failed to import service package: ' + (error.message || 'Unknown error'));
+      notification.destroy('import-package');
+      notification.error({ message: 'Failed to import service package: ' + (error.message || 'Unknown error') });
       setIsImporting(false);
     }
   }, []);
@@ -2497,24 +2497,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 },
                 {
                   title: configLoaded ? (
-                    <Space>
-                      <Text
-                        editable={!isDemoMode && {
-                          onChange: (value) => {
-                            if (value && value.trim()) {
-                              setApiConfig(prev => ({ ...prev, name: value.trim() }));
-                              setConfigHasChanges(true);
-                            }
-                          },
-                          tooltip: 'Click to edit service name',
-                          enterIcon: null,
-                          maxLength: 100,
-                        }}
-                        style={{ margin: 0 }}
-                      >
-                        {apiConfig.name || 'New Service'}
-                      </Text>
-                    </Space>
+                    <Text
+                      ellipsis={{ tooltip: apiConfig.name || 'New Service' }}
+                      style={{ margin: 0, maxWidth: 200, cursor: 'pointer' }}
+                      onClick={() => {
+                        setActiveView('Settings');
+                        saveViewPreference(serviceId, 'Settings');
+                      }}
+                    >
+                      {apiConfig.name || 'New Service'}
+                    </Text>
                   ) : '...',
                 },
               ]}
@@ -2580,23 +2572,22 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         <Space>
           {hasAnyChanges && !isDemoMode && (
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              loading={loading}
-            >
-              <span>
+            <Tooltip title={
+              configHasChanges && workbookChangeCount > 0
+                ? 'Save configuration and workbook changes'
+                : configHasChanges
+                  ? 'Save configuration changes'
+                  : 'Save workbook changes'
+            }>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSave}
+                loading={loading}
+              >
                 Save
-                {(configHasChanges || workbookChangeCount > 0) && (
-                  <span style={{ fontSize: '12px', marginLeft: '4px', opacity: 0.8 }}>
-                    ({configHasChanges && 'Config'}
-                    {configHasChanges && workbookChangeCount > 0 && ' + '}
-                    {workbookChangeCount > 0 && 'Workbook'})
-                  </span>
-                )}
-              </span>
-            </Button>
+              </Button>
+            </Tooltip>
           )}
 
           {/* Desktop Publish Button - Only visible on desktop */}

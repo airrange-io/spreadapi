@@ -32,7 +32,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   containerWidth: propsContainerWidth,
   onTestComplete
 }) => {
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
   const [form] = Form.useForm();
   const [parameterValues, setParameterValues] = useState<Record<string, any>>({});
   const [wizardTesting, setWizardTesting] = useState(false);
@@ -314,7 +314,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   icon={<CopyOutlined />}
                   onClick={() => {
                     navigator.clipboard.writeText(wizardUrl);
-                    message.success('URL copied to clipboard');
+                    notification.success({ message: 'URL copied to clipboard' });
                   }}
                   style={{ color: '#8c8c8c' }}
                 />

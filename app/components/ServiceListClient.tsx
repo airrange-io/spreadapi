@@ -32,7 +32,7 @@ export default function ServiceListClient({
   initialSearchQuery 
 }: ServiceListClientProps) {
   const router = useRouter();
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
   const { user } = useAuth();
   const [services, setServices] = useState<Service[]>(allServices);
   const [filteredServices, setFilteredServices] = useState<Service[]>(initialServices);
@@ -66,7 +66,7 @@ export default function ServiceListClient({
         throw new Error('Failed to delete service');
       }
 
-      message.success(`Service "${serviceName}" deleted`);
+      notification.success({ message: `Service "${serviceName}" deleted` });
       
       // Trigger server revalidation
       router.refresh();
@@ -74,7 +74,7 @@ export default function ServiceListClient({
       // Revert on error
       console.error('Error deleting service:', error);
       setServices(previousServices);
-      message.error('Failed to delete service');
+      notification.error({ message: 'Failed to delete service' });
     } finally {
       setDeletingIds(prev => {
         const next = new Set(prev);
@@ -82,7 +82,7 @@ export default function ServiceListClient({
         return next;
       });
     }
-  }, [services, message, router]);
+  }, [services, notification, router]);
 
   const handleEdit = useCallback((serviceId: string) => {
     router.push(`/app/service/${serviceId}`);

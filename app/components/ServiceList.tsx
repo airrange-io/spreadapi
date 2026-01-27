@@ -28,7 +28,7 @@ interface ServiceListProps {
 
 export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, onServiceCount, onUseSample }: ServiceListProps) {
   const router = useRouter();
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(isAuthenticated === null);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
@@ -154,14 +154,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
             window.location.href = '/login';
           }
         } else {
-          message.error('Failed to load services');
+          notification.error({ message: 'Failed to load services' });
         }
       }
     } catch (error: any) {
       // Only log non-401 errors
       if (error?.status !== 401) {
         // Error loading services
-        message.error('Failed to load services');
+        notification.error({ message: 'Failed to load services' });
       }
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       });
 
       if (response.ok) {
-        message.success(`Service "${serviceName}" deleted`);
+        notification.success({ message: `Service "${serviceName}" deleted` });
         // Remove the deleted service from state immediately for better UX
         setServices(prevServices => prevServices.filter(s => s.id !== serviceId));
         setFilteredServices(prevFiltered => prevFiltered.filter(s => s.id !== serviceId));
@@ -186,21 +186,23 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         // Check for specific error message
         const errorData = await response.json().catch(() => null);
         if (errorData?.error?.includes('published')) {
-          message.warning(
-            <span>
-              Cannot delete published service. Please unpublish <strong>{serviceName}</strong> first, then try deleting again.
-            </span>,
-            5 // Show for 5 seconds
-          );
+          notification.warning({
+            message: 'Cannot delete published service',
+            description: (
+              <span>
+                Please unpublish <strong>{serviceName}</strong> first, then try deleting again.
+              </span>
+            ),
+          });
         } else {
-          message.error('Failed to delete service');
+          notification.error({ message: 'Failed to delete service' });
         }
       }
     } catch (error) {
       // Error deleting service
-      message.error('Failed to delete service');
+      notification.error({ message: 'Failed to delete service' });
     }
-  }, [message]);
+  }, [notification]);
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
@@ -294,7 +296,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   label: 'Copy ID',
                   onClick: () => {
                     navigator.clipboard.writeText(record.id);
-                    message.success('Service ID copied to clipboard');
+                    notification.success({ message: 'Service ID copied to clipboard' });
                   },
                 },
                 {
@@ -304,7 +306,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                   onClick: () => {
                     const endpoint = `${window.location.origin}/api/v1/services/${record.id}/execute`;
                     navigator.clipboard.writeText(endpoint);
-                    message.success('API endpoint copied to clipboard');
+                    notification.success({ message: 'API endpoint copied to clipboard' });
                   },
                   disabled: record.status === 'draft',
                 },
@@ -338,7 +340,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </Space>
       ),
     },
-  ], [clickedServiceId, formatDate, handleDelete, handleEdit, message]);
+  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification]);
 
   if (loading) {
     return (

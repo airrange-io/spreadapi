@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tabs, Button, Typography, message, Space } from 'antd';
+import { Tabs, Button, Typography, App, Space } from 'antd';
 import { CopyOutlined, CaretRightOutlined } from '@ant-design/icons';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -25,9 +25,10 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
   inputs = [],
   outputs = []
 }) => {
+  const { notification } = App.useApp();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    message.success('Copied to clipboard');
+    notification.success({ message: 'Copied to clipboard' });
   };
 
   // Build V1 API URL
@@ -725,7 +726,7 @@ function SPREADAPI(serviceId, ...args) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    message.success('HTML file downloaded!');
+    notification.success({ message: 'HTML file downloaded!' });
   };
 
   const openHtmlInNewTab = () => {
@@ -735,11 +736,11 @@ function SPREADAPI(serviceId, ...args) {
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      message.success('Calculator opened in new tab!');
+      notification.success({ message: 'Calculator opened in new tab!' });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      message.error('Please allow popups to open the calculator');
+      notification.error({ message: 'Please allow popups to open the calculator' });
     }
   };
 

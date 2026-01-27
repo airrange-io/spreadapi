@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Tabs, Spin, Alert, Button, Space, Typography, message } from 'antd';
+import { Tabs, Spin, Alert, Button, Space, Typography, App } from 'antd';
 import { DownloadOutlined, CopyOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import 'swagger-ui-react/swagger-ui.css';
@@ -20,6 +20,7 @@ interface ApiDocumentationProps {
 }
 
 const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublished }) => {
+  const { notification } = App.useApp();
   const [spec, setSpec] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,13 +61,13 @@ const ApiDocumentation: React.FC<ApiDocumentationProps> = ({ serviceId, isPublis
     link.href = url;
     link.download = `${serviceId}-openapi.${format}`;
     link.click();
-    message.success(`Downloaded OpenAPI spec as ${format.toUpperCase()}`);
+    notification.success({ message: `Downloaded OpenAPI spec as ${format.toUpperCase()}` });
   };
 
   const copySpecUrl = (format: 'json' | 'yaml') => {
     const url = `${window.location.origin}/api/v1/services/${serviceId}/openapi?format=${format}`;
     navigator.clipboard.writeText(url);
-    message.success('Copied OpenAPI URL to clipboard');
+    notification.success({ message: 'Copied OpenAPI URL to clipboard' });
   };
 
   if (!isPublished) {

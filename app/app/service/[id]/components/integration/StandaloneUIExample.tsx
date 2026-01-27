@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button, message, Typography, Space, Skeleton } from 'antd';
+import { Button, Typography, Space, Skeleton, App } from 'antd';
 import { CopyOutlined, CaretRightOutlined, DownloadOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import { generateStandaloneUIHTML } from '@/lib/codeExamples';
@@ -36,6 +36,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
   inputs = [],
   outputs = []
 }) => {
+  const { notification } = App.useApp();
   const [htmlContent, setHtmlContent] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -56,7 +57,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(htmlContent);
-    message.success('Copied to clipboard');
+    notification.success({ message: 'Copied to clipboard' });
   };
 
   const downloadHtml = () => {
@@ -69,7 +70,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    message.success('HTML file downloaded!');
+    notification.success({ message: 'HTML file downloaded!' });
   };
 
   const openHtmlInNewTab = () => {
@@ -78,11 +79,11 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      message.success('Calculator opened in new tab!');
+      notification.success({ message: 'Calculator opened in new tab!' });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      message.error('Please allow popups to open the calculator');
+      notification.error({ message: 'Please allow popups to open the calculator' });
     }
   };
 

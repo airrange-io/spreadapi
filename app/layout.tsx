@@ -91,7 +91,7 @@ export default function RootLayout({
                 },
               }}
             >
-              <App>
+              <App notification={{ placement: 'bottomRight' }}>
                 <AuthProvider>
                   {children}
                 </AuthProvider>

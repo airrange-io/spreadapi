@@ -17,7 +17,7 @@ export default function ApiEndpointPreview({
   requireToken = false,
   baseUrl
 }: ApiEndpointPreviewProps) {
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
   
   // Use current origin for local development if baseUrl not provided
   const apiBaseUrl = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io');
@@ -25,7 +25,7 @@ export default function ApiEndpointPreview({
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(endpoint);
-    message.success('Endpoint copied to clipboard');
+    notification.success({ message: 'Endpoint copied to clipboard' });
   };
 
   return (

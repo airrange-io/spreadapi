@@ -12,11 +12,11 @@ import {
   Tag,
   Tooltip,
   Popconfirm,
-  message,
   Empty,
   Spin,
   Card,
-  Alert
+  Alert,
+  App
 } from 'antd';
 import {
   PlusOutlined,
@@ -54,6 +54,7 @@ interface TokenManagementProps {
 }
 
 const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> }, TokenManagementProps>(function TokenManagement({ serviceId, requireToken, isDemoMode, onRequireTokenChange, onTokenCountChange, onTokensChange }, ref) {
+  const { notification } = App.useApp();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -118,7 +119,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Handle 403 for demo mode as expected
         // Handle 404 for new services that don't exist yet
         if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
-          message.error('Failed to load tokens');
+          notification.error({ message: 'Failed to load tokens' });
         }
         // Still update count to 0 on error
         if (onTokenCountChange) {
@@ -128,7 +129,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
     } catch (error: any) {
       // Only log unexpected errors (not 401/unauthorized)
       if (error?.status !== 401 && error?.code !== 'unauthorized') {
-        message.error('Error loading tokens');
+        notification.error({ message: 'Error loading tokens' });
       }
       if (onTokenCountChange) {
         onTokenCountChange(0);
@@ -162,14 +163,14 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Auto-enable token requirement when first token is created
         if (tokens.length === 0 && !requireToken) {
           onRequireTokenChange(true);
-          message.info('Token authentication has been automatically enabled');
+          notification.info({ message: 'Token authentication has been automatically enabled' });
         }
       } else {
         const error = await response.json();
-        message.error(error.error || 'Failed to create token');
+        notification.error({ message: error.error || 'Failed to create token' });
       }
     } catch (error) {
-      message.error('Failed to create token');
+      notification.error({ message: 'Failed to create token' });
     } finally {
       setCreating(false);
     }
@@ -182,26 +183,26 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       });
 
       if (response.ok) {
-        message.success('Token revoked successfully');
+        notification.success({ message: 'Token revoked successfully' });
         await loadTokens();
 
         // Auto-disable token requirement when last token is deleted
         if (tokens.length === 1 && requireToken) {
           onRequireTokenChange(false);
-          message.info('Token authentication has been automatically disabled as no tokens remain');
+          notification.info({ message: 'Token authentication has been automatically disabled as no tokens remain' });
         }
       } else {
         const error = await response.json();
-        message.error(error.error || 'Failed to revoke token');
+        notification.error({ message: error.error || 'Failed to revoke token' });
       }
     } catch (error) {
-      message.error('Failed to revoke token');
+      notification.error({ message: 'Failed to revoke token' });
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    message.success('Copied to clipboard');
+    notification.success({ message: 'Copied to clipboard' });
   };
 
   const columns = [

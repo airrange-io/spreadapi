@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button, message, Typography, Skeleton } from 'antd';
+import { Button, App, Typography, Skeleton } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
 import { getCodeExample, getLanguageDescription } from '@/lib/codeExamples';
@@ -40,6 +40,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
   inputs = [],
   outputs = []
 }) => {
+  const { notification } = App.useApp();
   const [code, setCode] = useState('');
   const [mounted, setMounted] = useState(false);
 
@@ -60,7 +61,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
-    message.success('Copied to clipboard');
+    notification.success({ message: 'Copied to clipboard' });
   };
 
   // Map language names to syntax highlighter language identifiers

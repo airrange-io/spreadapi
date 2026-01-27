@@ -10,11 +10,11 @@ interface ApiDefinitionModalProps {
 }
 
 export default function ApiDefinitionModal({ visible, onClose, data, loading }: ApiDefinitionModalProps) {
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    message.success('API definition copied to clipboard!');
+    notification.success({ message: 'API definition copied to clipboard!' });
   };
 
   return (

@@ -92,11 +92,11 @@ const AreaModal: React.FC<AreaModalProps> = ({
   onSave,
   onAreaChange
 }) => {
-  const { message } = App.useApp();
+  const { notification } = App.useApp();
 
   const handleSave = () => {
     if (!editingArea?.name || !editingArea?.address) {
-      message.error('Area name and address are required');
+      notification.error({ message: 'Area name and address are required' });
       return;
     }
     onSave(editingArea);

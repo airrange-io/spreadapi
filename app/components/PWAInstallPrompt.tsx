@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, message } from 'antd';
+import { Button, App } from 'antd';
 import { DownloadOutlined, AppstoreAddOutlined } from '@ant-design/icons';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
+  const { notification } = App.useApp();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [supportsPWA, setSupportsPWA] = useState(false);
@@ -35,7 +36,7 @@ export function PWAInstallPrompt() {
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       setInstallPrompt(null);
-      message.success('App wurde erfolgreich installiert!');
+      notification.success({ message: 'App wurde erfolgreich installiert!' });
     });
 
     return () => {

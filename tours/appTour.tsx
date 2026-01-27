@@ -13,23 +13,33 @@ export const appTour: TourDefinition = {
   route: '/app',
   steps: [
     {
-      title: 'Welcome to SpreadAPI!',
-      description: (
-        <div>
-          <p style={{ marginBottom: 12 }}>
-            Watch a <strong>short video</strong> to see how SpreadAPI turns Excel workbooks into APIs,
-            or try one of our <strong>sample workbooks</strong> to get hands-on right away.
-          </p>
-        </div>
-      ),
-      placement: 'top',
-    },
-    {
-      title: 'Create Your Own Service',
+      title: 'See How It Works',
       description: (
         <div>
           <p style={{ margin: 0 }}>
-            Ready to use your own Excel file? Click here to create a new API service.
+            Start with a quick <strong>5-minute walkthrough</strong>. See how to upload an Excel file, define parameters, and turn your formulas into a live API endpoint.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      title: 'Try a Ready-Made Example',
+      description: (
+        <div>
+          <p style={{ margin: 0 }}>
+            Explore one of our <strong>sample workbooks</strong> — complete with pre-configured input and output parameters. A great way to see what's possible before building your own.
+          </p>
+        </div>
+      ),
+      placement: 'bottom',
+    },
+    {
+      title: 'Build Your First API',
+      description: (
+        <div>
+          <p style={{ margin: 0 }}>
+            When you're ready, create a new service from your own Excel workbook. Upload your file, select cells as parameters, and publish your API in minutes.
           </p>
         </div>
       ),

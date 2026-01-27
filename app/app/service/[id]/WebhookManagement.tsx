@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Input, Button, Space, Alert, Typography, message } from 'antd';
+import { Input, Button, Space, Alert, Typography, App } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -21,12 +21,13 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
   isDemoMode = false,
   onConfigChange
 }) => {
+  const { notification } = App.useApp();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
   const handleTest = async () => {
     if (!webhookUrl) {
-      message.error('Please enter a webhook URL');
+      notification.error({ message: 'Please enter a webhook URL' });
       return;
     }
 
@@ -47,16 +48,16 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
       setTestResult(result);
 
       if (result.success) {
-        message.success('Webhook test successful!');
+        notification.success({ message: 'Webhook test successful!' });
       } else {
-        message.error(`Webhook test failed: ${result.error}`);
+        notification.error({ message: `Webhook test failed: ${result.error}` });
       }
     } catch (error: any) {
       setTestResult({
         success: false,
         error: error.message || 'Failed to test webhook'
       });
-      message.error('Failed to test webhook');
+      notification.error({ message: 'Failed to test webhook' });
     } finally {
       setTesting(false);
     }

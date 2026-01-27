@@ -43,7 +43,7 @@ const { Content } = Layout;
 const { Text } = Typography;
 
 const ListsPage: React.FC = observer(() => {
-  const { message: messageApi } = App.useApp();
+  const { notification } = App.useApp();
   const router = useRouter();
   const appStore = useAppStore();
   const { user, isAuthenticated: authIsAuthenticated, loading: authLoading } = useAuth();
@@ -65,6 +65,8 @@ const ListsPage: React.FC = observer(() => {
   // Tour refs
   const serviceListRef = useRef<HTMLDivElement>(null);
   const onboardingCardsRef = useRef<HTMLDivElement>(null);
+  const watchVideoCardRef = useRef<HTMLDivElement>(null);
+  const useSampleCardRef = useRef<HTMLDivElement>(null);
   const newServiceButtonRef = useRef<HTMLButtonElement>(null);
   const chatButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -99,10 +101,14 @@ const ListsPage: React.FC = observer(() => {
         const steps = [
           {
             ...appTour.steps[0],
-            target: () => onboardingCardsRef.current,
+            target: () => watchVideoCardRef.current,
           },
           {
             ...appTour.steps[1],
+            target: () => useSampleCardRef.current,
+          },
+          {
+            ...appTour.steps[2],
             target: () => newServiceButtonRef.current,
           }
         ];
@@ -238,7 +244,7 @@ const ListsPage: React.FC = observer(() => {
 
     // Check authentication
     if (!isAuthenticated) {
-      messageApi.warning('Please sign in to create a new service');
+      notification.warning({ message: 'Please sign in to create a new service' });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -255,7 +261,7 @@ const ListsPage: React.FC = observer(() => {
     const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
     if (!isCSV && !isJSON && !isExcel) {
-      messageApi.error('Please select a CSV, Excel or JSON file');
+      notification.error({ message: 'Please select a CSV, Excel or JSON file' });
       return;
     }
 
@@ -316,18 +322,18 @@ const ListsPage: React.FC = observer(() => {
           // Handle error
           const errorData = await createResponse.json().catch(() => ({}));
           console.error('Failed to create service:', errorData);
-          messageApi.error('Failed to create service. Please try again.');
+          notification.error({ message: 'Failed to create service. Please try again.' });
           delete (window as any).__draggedFile; // Clean up the global variable
         }
       } catch (error) {
         console.error('Error processing file:', error);
-        messageApi.error('Error processing the file. Please try again.');
+        notification.error({ message: 'Error processing the file. Please try again.' });
         delete (window as any).__draggedFile; // Clean up the global variable
       }
     };
 
     reader.readAsArrayBuffer(file);
-  }, [isAuthenticated, messageApi, router, user?.id]);
+  }, [isAuthenticated, notification, router, user?.id]);
 
   // Memoized dropdown menu items
   const dropdownMenuItems = useMemo(() => {
@@ -407,20 +413,20 @@ const ListsPage: React.FC = observer(() => {
         // Handle other errors
         const errorData = await createResponse.json().catch(() => ({}));
         console.error('Failed to create service:', errorData);
-        messageApi.error('Failed to create service. Please try again.');
+        notification.error({ message: 'Failed to create service. Please try again.' });
         setIsCreatingService(false);
       }
     } catch (error) {
       console.error('Error creating service:', error);
-      messageApi.error('Failed to create service. Please try again.');
+      notification.error({ message: 'Failed to create service. Please try again.' });
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, router, user?.id, messageApi]);
+  }, [isAuthenticated, router, user?.id, notification]);
 
   // Template selection handler
   const handleTemplateSelect = useCallback(async (template: Template) => {
     if (!isAuthenticated) {
-      messageApi.warning(isGerman ? 'Bitte melden Sie sich an' : 'Please sign in to use templates');
+      notification.warning({ message: isGerman ? 'Bitte melden Sie sich an' : 'Please sign in to use templates' });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -473,11 +479,11 @@ const ListsPage: React.FC = observer(() => {
       }
     } catch (error) {
       console.error('Error creating service from template:', error);
-      messageApi.error(isGerman ? 'Fehler beim Erstellen des Service' : 'Failed to create service from template');
+      notification.error({ message: isGerman ? 'Fehler beim Erstellen des Service' : 'Failed to create service from template' });
       delete (window as any).__draggedFile;
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, isGerman, messageApi, router, user?.id]);
+  }, [isAuthenticated, isGerman, notification, router, user?.id]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
@@ -694,6 +700,7 @@ const ListsPage: React.FC = observer(() => {
                     }}>
                       {/* Watch Video Card */}
                       <div
+                        ref={watchVideoCardRef}
                         onClick={() => setIsVideoModalOpen(true)}
                         style={{
                           background: 'white',
@@ -765,6 +772,7 @@ const ListsPage: React.FC = observer(() => {
 
                       {/* Use a Sample Card */}
                       <div
+                        ref={useSampleCardRef}
                         onClick={() => setIsTemplateModalOpen(true)}
                         style={{
                           background: 'white',

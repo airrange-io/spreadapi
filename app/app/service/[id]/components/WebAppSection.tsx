@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Space, Input, Tooltip, Button, message, Alert, Modal } from 'antd';
+import { Space, Input, Tooltip, Button, App, Alert, Modal } from 'antd';
 import { InfoCircleOutlined, CopyOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import CollapsibleSection from './CollapsibleSection';
 
@@ -26,12 +26,13 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   onWebAppTokenChange,
   onWebAppConfigChange,
 }) => {
+  const { notification } = App.useApp();
   const [configError, setConfigError] = useState<string | null>(null);
   const handleGenerateToken = () => {
     // Generate a URL-safe random token
     const token = crypto.randomUUID().replace(/-/g, '');
     onWebAppTokenChange(token);
-    message.success('Web app token generated!');
+    notification.success({ message: 'Web app token generated!' });
   };
 
   const handleDeleteToken = () => {
@@ -43,7 +44,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
       cancelText: 'Cancel',
       onOk: () => {
         onWebAppTokenChange('');
-        message.success('Web app disabled');
+        notification.success({ message: 'Web app disabled' });
       }
     });
   };
@@ -51,7 +52,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   const handleCopyLink = () => {
     const appUrl = `${window.location.origin}/app/v1/services/${serviceId}?token=${webAppToken}`;
     navigator.clipboard.writeText(appUrl);
-    message.success('Link copied to clipboard!');
+    notification.success({ message: 'Link copied to clipboard!' });
   };
 
   const handleConfigChange = (value: string) => {
