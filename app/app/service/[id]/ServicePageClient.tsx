@@ -61,6 +61,7 @@ const TestPanel = dynamic(() => import('./components/TestPanel'), {
   ssr: false
 });
 
+import { generateParameterId } from '@/lib/generateParameterId';
 import { prepareServiceForPublish, publishService, estimatePayloadSize, PAYLOAD_LIMITS } from '@/utils/publishService';
 import { appStore } from '../../../stores/AppStore';
 import { workbookManager } from '@/utils/workbookManager';
@@ -180,6 +181,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const viewSwitcherRef = useRef<HTMLDivElement>(null);
   const statusBarRef = useRef<HTMLDivElement>(null);
   const testButtonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
+  const templateParamsPromptedRef = useRef(false);
 
   // Lazy load tour only when needed
   const [tourState, setTourState] = useState<{
@@ -251,6 +253,334 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     return () => clearTimeout(timer);
   }, [template, activeView, workbookLoaded, isMobile]);
 
+  // Auto-detect parameters from template cell addresses using SpreadJS
+  const autoDetectTemplateParameters = useCallback((spread: any, cells: string[]) => {
+    const inputs: any[] = [];
+    const outputs: any[] = [];
+    const usedNames = new Set<string>();
+
+    const colLetterToIndex = (letters: string): number => {
+      let index = 0;
+      for (let i = 0; i < letters.length; i++) {
+        index = index * 26 + (letters.toUpperCase().charCodeAt(i) - 64);
+      }
+      return index - 1;
+    };
+
+    const parseCellRef = (ref: string) => {
+      const match = ref.match(/^([A-Za-z]+)(\d+)$/);
+      if (!match) return { row: 0, col: 0 };
+      return { row: parseInt(match[2]) - 1, col: colLetterToIndex(match[1]) };
+    };
+
+    const getCellAddr = (row: number, col: number) => {
+      let columnLetter = '';
+      let tempCol = col;
+      while (tempCol >= 0) {
+        columnLetter = String.fromCharCode(65 + (tempCol % 26)) + columnLetter;
+        tempCol = Math.floor(tempCol / 26) - 1;
+      }
+      return `${columnLetter}${row + 1}`;
+    };
+
+    const isTextLabel = (val: any): boolean => {
+      if (val === null || val === undefined) return false;
+      if (typeof val === 'number' || typeof val === 'boolean') return false;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed) return false;
+        const numVal = parseFloat(trimmed);
+        if (!isNaN(numVal) && trimmed === numVal.toString()) return false;
+        if (/^[\d.,\-+$€£¥%()]+$/.test(trimmed)) return false;
+        return true;
+      }
+      return false;
+    };
+
+    const findLabel = (
+      sheet: any, startRow: number, startCol: number,
+      rowDelta: number, colDelta: number, maxSteps: number
+    ): string | null => {
+      for (let step = 1; step <= maxSteps; step++) {
+        const r = startRow + rowDelta * step;
+        const c = startCol + colDelta * step;
+        if (r < 0 || c < 0) break;
+        try {
+          const v = sheet.getValue(r, c);
+          if (v === null || v === undefined || (typeof v === 'string' && !v.trim())) continue;
+          if (isTextLabel(v)) return String(v).trim();
+          else break;
+        } catch { break; }
+      }
+      return null;
+    };
+
+    for (const cellAddr of cells) {
+      try {
+        const bangIndex = cellAddr.indexOf('!');
+        const sheetName = bangIndex > -1 ? cellAddr.substring(0, bangIndex) : 'Sheet1';
+        const cellRef = bangIndex > -1 ? cellAddr.substring(bangIndex + 1) : cellAddr;
+        const parts = cellRef.split(':');
+        const start = parseCellRef(parts[0]);
+
+        let rowCount = 1, colCount = 1;
+        if (parts.length === 2) {
+          const end = parseCellRef(parts[1]);
+          rowCount = end.row - start.row + 1;
+          colCount = end.col - start.col + 1;
+        }
+
+        const sheet = spread.getSheetFromName(sheetName);
+        if (!sheet) continue;
+
+        const isRange = rowCount > 1 || colCount > 1;
+        let value = null;
+        let hasFormula = false;
+        let detectedType: 'number' | 'string' | 'boolean' = 'string';
+        let cellFormat: any = null;
+        let dropdownItems: any = null;
+
+        value = sheet.getValue(start.row, start.col);
+        hasFormula = !!sheet.getFormula(start.row, start.col);
+
+        // Detect data type
+        if (typeof value === 'number') detectedType = 'number';
+        else if (typeof value === 'boolean') detectedType = 'boolean';
+        else if (typeof value === 'string') {
+          const numVal = parseFloat(value);
+          if (!isNaN(numVal) && value.trim() === numVal.toString()) detectedType = 'number';
+        }
+
+        // Detect format and dropdown (single cells only)
+        if (!isRange) {
+          try {
+            const cell = sheet.getCell(start.row, start.col);
+            const formatter = cell.formatter();
+            const style = sheet.getStyle(start.row, start.col);
+            const formatterString = formatter || (style && style.formatter) || null;
+
+            cellFormat = {
+              formatter: formatterString,
+              isPercentage: false,
+              format: null as string | null,
+              currencySymbol: null as string | null,
+              decimals: null as number | null,
+              thousandsSeparator: null as boolean | null
+            };
+
+            if (formatterString) {
+              if (formatterString.includes('%')) {
+                cellFormat.isPercentage = true;
+                cellFormat.format = 'percentage';
+                const m = formatterString.match(/0\.(0+)%/);
+                cellFormat.decimals = m ? m[1].length : 0;
+              } else if (/[$€£¥₹]|CHF/.test(formatterString)) {
+                cellFormat.format = 'currency';
+                if (formatterString.includes('€')) cellFormat.currencySymbol = '€';
+                else if (formatterString.includes('$')) cellFormat.currencySymbol = '$';
+                else if (formatterString.includes('£')) cellFormat.currencySymbol = '£';
+                else if (formatterString.includes('¥')) cellFormat.currencySymbol = '¥';
+                else if (formatterString.includes('₹')) cellFormat.currencySymbol = '₹';
+                else if (formatterString.includes('CHF')) cellFormat.currencySymbol = 'CHF';
+                const dm = formatterString.match(/0\.(0+)/);
+                cellFormat.decimals = dm ? dm[1].length : formatterString.includes('.') ? 2 : 0;
+                cellFormat.thousandsSeparator = formatterString.includes('#,##') || formatterString.includes('#.##');
+              } else if (/[dmyDMY]{1,4}|h{1,2}|s{1,2}/.test(formatterString)) {
+                cellFormat.format = 'date';
+              }
+            }
+
+            // Detect dropdown — combobox cell type
+            if (style?.cellType) {
+              const ct = style.cellType;
+              if (ct.typeName === 'combobox' || ct.type === 'combobox') {
+                dropdownItems = ct.items || ct.option?.items || null;
+              }
+            }
+
+            // Detect dropdown — data validation list
+            if (!dropdownItems) {
+              const dv = sheet.getDataValidator(start.row, start.col);
+              if (dv && dv.type() === 3) {
+                try {
+                  const validList = dv.getValidList(sheet, start.row, start.col);
+                  if (validList && Array.isArray(validList) && validList.length > 0) {
+                    dropdownItems = validList;
+                  }
+                } catch {
+                  let formula = dv._S?.[0] ?? null;
+                  if (formula && typeof formula === 'object' && 'row' in formula && 'col' in formula && 'rowCount' in formula && 'colCount' in formula) {
+                    dropdownItems = [];
+                    for (let r = formula.row; r < formula.row + formula.rowCount; r++) {
+                      for (let c = formula.col; c < formula.col + formula.colCount; c++) {
+                        const v = sheet.getValue(r, c);
+                        if (v !== null && v !== undefined && v !== '') dropdownItems.push(v);
+                      }
+                    }
+                  } else if (formula && typeof formula === 'string') {
+                    dropdownItems = formula.split(',').map((item: string) => item.trim().replace(/^["']|["']$/g, ''));
+                  }
+                }
+              }
+            }
+
+            // Detect dropdown — legacy cellButtons
+            if (!dropdownItems && style?.cellButtons?.length > 0) {
+              const hasDd = style.cellButtons.some((btn: any) => btn.command === 'openList' || btn.imageType === 1);
+              if (hasDd && style.dropDowns?.[0]?.option?.items) {
+                dropdownItems = style.dropDowns[0].option.items;
+              }
+            }
+          } catch { /* ignore format/dropdown detection errors */ }
+        }
+
+        // Find label from adjacent cells (left first, then up)
+        const MAX_STEPS = 4;
+        let titleText = findLabel(sheet, start.row, start.col, 0, -1, MAX_STEPS) || '';
+        if (!titleText) titleText = findLabel(sheet, start.row, start.col, -1, 0, MAX_STEPS) || '';
+
+        // Generate parameter name
+        const cellAddress = getCellAddr(start.row, start.col);
+        let suggestedName = '';
+        if (titleText) {
+          suggestedName = titleText.toLowerCase()
+            .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+            .replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/^_+|_+$/g, '').replace(/^(\d)/, '_$1');
+          if (!suggestedName || /^_*$/.test(suggestedName)) suggestedName = cellAddress.toLowerCase();
+        } else {
+          suggestedName = cellAddress.toLowerCase();
+        }
+
+        // Ensure unique name
+        let finalName = suggestedName;
+        let counter = 2;
+        while (usedNames.has(finalName)) { finalName = `${suggestedName}_${counter}`; counter++; }
+        usedNames.add(finalName);
+
+        const suggestedTitle = titleText || (value ? String(value).substring(0, 30) : cellAddress);
+        const endAddress = isRange ? getCellAddr(start.row + rowCount - 1, start.col + colCount - 1) : '';
+        const address = isRange ? `${sheetName}!${cellAddress}:${endAddress}` : `${sheetName}!${cellAddress}`;
+        const paramDirection = hasFormula || isRange ? 'output' : 'input';
+
+        if (paramDirection === 'input') {
+          const param: any = {
+            id: generateParameterId(),
+            address,
+            name: finalName,
+            title: suggestedTitle,
+            row: start.row,
+            col: start.col,
+            type: detectedType,
+            value,
+            direction: 'input' as const,
+            description: '',
+          };
+
+          if (cellFormat?.isPercentage) {
+            param.format = 'percentage';
+            param.aiExamples = ['0.05 for 5%', '0.10 for 10%', '0.075 for 7.5%'];
+            param.description = 'CRITICAL: This is a percentage parameter. User says "6%" but you MUST pass 0.06 as decimal. Convert: 5%→0.05, 6%→0.06, 7.5%→0.075. Never pass the whole number!';
+          } else if (detectedType === 'boolean') {
+            param.aiExamples = ['true', 'false', 'yes', 'no', '1', '0'];
+            param.description = 'Accept multiple formats: yes/no, true/false, 1/0, ja/nein. Pass actual boolean value (true/false), NOT string.';
+          }
+
+          if (dropdownItems?.length > 0) {
+            param.allowedValues = dropdownItems.map((item: any) => String(item));
+            param.type = 'string';
+          }
+
+          if (cellFormat?.formatter) {
+            param.formatString = cellFormat.formatter;
+          }
+
+          inputs.push(param);
+        } else {
+          const param: any = {
+            id: generateParameterId(),
+            address,
+            name: finalName,
+            title: suggestedTitle,
+            row: start.row,
+            col: start.col,
+            rowCount,
+            colCount,
+            type: detectedType,
+            value,
+            direction: 'output' as const,
+            description: '',
+          };
+
+          if (cellFormat?.formatter) {
+            param.formatString = cellFormat.formatter;
+          }
+
+          outputs.push(param);
+        }
+      } catch (error) {
+        console.error(`Error auto-detecting parameter for ${cellAddr}:`, error);
+      }
+    }
+
+    return { inputs, outputs };
+  }, []);
+
+  // Show auto-detect prompt and apply results
+  const promptAutoDetectParameters = useCallback(() => {
+    if (templateParamsPromptedRef.current) return;
+    if (!template || !template.cells.length || !spreadInstance) return;
+    templateParamsPromptedRef.current = true;
+
+    const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
+    modal.confirm({
+      title: isGerman ? 'Parameter einrichten?' : 'Set up parameters?',
+      content: isGerman
+        ? `Diese Vorlage enthält ${template.cells.length} vordefinierte Parameter. Möchten Sie diese automatisch erkennen und konfigurieren?`
+        : `This template has ${template.cells.length} predefined parameter cells. Would you like to auto-detect and configure them?`,
+      okText: isGerman ? 'Ja, einrichten' : 'Yes, set them up',
+      cancelText: isGerman ? 'Nein, danke' : 'No thanks',
+      onOk: () => {
+        const result = autoDetectTemplateParameters(spreadInstance, template.cells);
+        setApiConfig(prev => ({ ...prev, inputs: result.inputs, outputs: result.outputs }));
+        setConfigHasChanges(true);
+        const totalParams = result.inputs.length + result.outputs.length;
+        message.success(
+          isGerman
+            ? `${totalParams} Parameter wurden automatisch konfiguriert (${result.inputs.length} Eingaben, ${result.outputs.length} Ausgaben)`
+            : `${totalParams} parameters auto-configured (${result.inputs.length} inputs, ${result.outputs.length} outputs)`
+        );
+
+        // After parameters are added, show a one-step tour highlighting the test button
+        // Delay to let React render the test button (it's conditional on parameters existing)
+        setTimeout(async () => {
+          try {
+            const { Tour } = await import('antd');
+            setTourState({
+              open: true,
+              steps: [{
+                title: isGerman ? 'Service sofort testen' : 'Test your service instantly',
+                description: (
+                  <div>
+                    <p style={{ margin: 0 }}>
+                      {isGerman
+                        ? 'Klicken Sie hier, um Ihren Service sofort zu testen – ganz ohne Veröffentlichung.'
+                        : 'Click here to test your service right away – no publishing needed. Change values directly in the workbook and see results update in real-time.'}
+                    </p>
+                  </div>
+                ),
+                target: () => testButtonRef.current,
+                placement: 'bottom' as const,
+              }],
+              TourComponent: Tour,
+            });
+          } catch (error) {
+            console.error('Failed to load tour for test button:', error);
+          }
+        }, 5000);
+      },
+    });
+  }, [template, spreadInstance, autoDetectTemplateParameters, modal, message]);
+
   // Handle tour close — offer parameter auto-config for templates
   const handleTourClose = useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -258,48 +588,30 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
     setTourState(null);
 
-    // If template has parameters defined, offer to set them up
-    if (template && (template.inputs.length > 0 || template.outputs.length > 0)) {
-      const isGerman = typeof navigator !== 'undefined' && navigator.language?.startsWith('de');
-      modal.confirm({
-        title: isGerman ? 'Parameter einrichten?' : 'Set up parameters?',
-        content: isGerman
-          ? `Diese Vorlage enthält ${template.inputs.length} Eingabe- und ${template.outputs.length} Ausgabeparameter. Möchten Sie diese automatisch konfigurieren?`
-          : `This template includes ${template.inputs.length} input and ${template.outputs.length} output parameters. Would you like to configure them automatically?`,
-        okText: isGerman ? 'Ja, einrichten' : 'Yes, set them up',
-        cancelText: isGerman ? 'Nein, danke' : 'No thanks',
-        onOk: () => {
-          // Map template parameters to the apiConfig format
-          const inputs = template.inputs.map((inp, i) => ({
-            id: `template-input-${i}`,
-            address: inp.address,
-            name: inp.name,
-            row: inp.row,
-            col: inp.col,
-            type: inp.dataType,
-            direction: 'input' as const,
-            mandatory: true,
-            description: inp.description || '',
-            ...(inp.defaultValue !== undefined && { defaultValue: inp.defaultValue }),
-          }));
-          const outputs = template.outputs.map((out, i) => ({
-            id: `template-output-${i}`,
-            address: out.address,
-            name: out.name,
-            row: out.row,
-            col: out.col,
-            type: 'string' as const,
-            direction: 'output' as const,
-            description: out.description || '',
-            ...(out.rowCount && { rowCount: out.rowCount }),
-            ...(out.colCount && { colCount: out.colCount }),
-          }));
-          handleConfigChange({ inputs, outputs });
-          message.success(isGerman ? 'Parameter wurden konfiguriert' : 'Parameters configured successfully');
-        },
-      });
+    // If template has cell definitions, offer to auto-detect and load parameters
+    if (template && template.cells.length > 0) {
+      promptAutoDetectParameters();
     }
-  }, [template, modal, message]);
+  }, [template, promptAutoDetectParameters]);
+
+  // If tour was already completed, prompt for auto-detect directly when template loads
+  useEffect(() => {
+    if (templateParamsPromptedRef.current) return;
+    if (!template || !template.cells.length) return;
+    if (!workbookLoaded || !spreadInstance) return;
+    // Only trigger if no parameters have been configured yet
+    if (apiConfig.inputs.length > 0 || apiConfig.outputs.length > 0) return;
+
+    const tourCompleted = typeof window !== 'undefined' &&
+      localStorage.getItem('spreadapi_tour_completed_service-detail-tour') === 'true';
+    if (!tourCompleted) return; // Tour will handle it via handleTourClose
+
+    // Tour was already seen — prompt directly after a short delay
+    const timer = setTimeout(() => {
+      promptAutoDetectParameters();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [template, workbookLoaded, spreadInstance, apiConfig.inputs.length, apiConfig.outputs.length, promptAutoDetectParameters]);
 
   // Handle tour step change
   const handleTourChange = useCallback((current: number) => {
