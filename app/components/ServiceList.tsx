@@ -36,49 +36,9 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const { notification } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(isAuthenticated === null);
-  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
   const loadingRef = useRef(false);
-  const searchQueryRef = useRef(searchQuery);
   const { t, locale } = useTranslation();
-
-  // Keep refs updated
-  useEffect(() => {
-    searchQueryRef.current = searchQuery;
-  }, [searchQuery]);
-
-  useEffect(() => {
-    // Only load services once when auth state is determined
-    if (isAuthenticated !== null) {
-      loadServices();
-    }
-  }, [isAuthenticated]);
-
-  // Listen for storage events to refresh when services are published/unpublished
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'refreshServiceList') {
-        loadServices();
-      }
-    };
-
-    // Check on focus if we need to refresh
-    const handleFocus = () => {
-      const lastRefresh = window.localStorage.getItem('refreshServiceList');
-      if (lastRefresh) {
-        window.localStorage.removeItem('refreshServiceList');
-        loadServices();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
 
   // Merge cloud services with local (private) services
   const mergedServices = useMemo(() => {
@@ -95,28 +55,18 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     return [...localList, ...services];
   }, [services, localServices]);
 
-  // Filter services based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredServices(mergedServices);
-      return;
-    }
-
+  // Derive filtered services from mergedServices + searchQuery (no separate state needed)
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) return mergedServices;
     const query = searchQuery.toLowerCase();
-    const filtered = mergedServices.filter(service =>
+    return mergedServices.filter(service =>
       service.name.toLowerCase().includes(query) ||
       service.description.toLowerCase().includes(query) ||
       service.id.toLowerCase().includes(query)
     );
-
-    setFilteredServices(filtered);
   }, [searchQuery, mergedServices]);
 
-  useEffect(() => {
-    onServiceCount?.(mergedServices.length);
-  }, [mergedServices.length, onServiceCount]);
-
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     // Prevent duplicate calls
     if (loadingRef.current) {
       return;
@@ -157,15 +107,11 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       if (response.ok) {
         const data = await response.json();
         const loadedServices = data.services || [];
-
         setServices(loadedServices);
-        // filteredServices will update via mergedServices effect
       } else {
         // Handle 401 errors
         if (response.status === 401) {
           setServices([]);
-          // filteredServices will update via mergedServices effect
-          // If we thought we were authenticated but got 401, update state
           if (isAuthenticated) {
             window.location.href = '/login';
           }
@@ -176,14 +122,50 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     } catch (error: any) {
       // Only log non-401 errors
       if (error?.status !== 401) {
-        // Error loading services
         notification.error({ message: t('serviceList.loadFailed') });
       }
     } finally {
       setLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [isAuthenticated, notification, t]);
+
+  useEffect(() => {
+    // Only load services once when auth state is determined
+    if (isAuthenticated !== null) {
+      loadServices();
+    }
+  }, [isAuthenticated, loadServices]);
+
+  // Listen for storage events to refresh when services are published/unpublished
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'refreshServiceList') {
+        loadServices();
+      }
+    };
+
+    // Check on focus if we need to refresh
+    const handleFocus = () => {
+      const lastRefresh = window.localStorage.getItem('refreshServiceList');
+      if (lastRefresh) {
+        window.localStorage.removeItem('refreshServiceList');
+        loadServices();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [loadServices]);
+
+  useEffect(() => {
+    onServiceCount?.(mergedServices.length);
+  }, [mergedServices.length, onServiceCount]);
 
   const handleDelete = useCallback(async (serviceId: string, serviceName: string) => {
     // Check if this is a private (local) service
@@ -193,7 +175,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       try {
         await deleteLocalService(serviceId);
         notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
-        setFilteredServices(prev => prev.filter(s => s.id !== serviceId));
         onLocalServicesChange?.();
       } catch {
         notification.error({ message: t('serviceList.deleteFailed') });
@@ -210,7 +191,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
         // Remove the deleted service from state immediately for better UX
         setServices(prevServices => prevServices.filter(s => s.id !== serviceId));
-        setFilteredServices(prevFiltered => prevFiltered.filter(s => s.id !== serviceId));
         // Then reload to ensure consistency with backend
         loadServices();
       } else {
@@ -233,7 +213,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       // Error deleting service
       notification.error({ message: t('serviceList.deleteFailed') });
     }
-  }, [notification, t, locale, localServices, onLocalServicesChange]);
+  }, [notification, t, locale, localServices, onLocalServicesChange, loadServices]);
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
@@ -256,11 +236,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      ellipsis: true,
+      onCell: () => ({ style: { color: '#4F2D7F', cursor: 'pointer' } }),
       render: (text: string, record: Service) => (
-        <Button type="link" onClick={() => handleEdit(record.id)} style={{ padding: 0 }}>
+        <span onClick={() => handleEdit(record.id)}>
           {text}
           {clickedServiceId === record.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
-        </Button>
+        </span>
       ),
       sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
     },
@@ -279,7 +261,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       align: 'center' as const,
       width: 100,
       render: (status: string) => (
-        <Tag color={status === 'published' ? 'green' : status === 'private' ? 'blue' : 'orange'}>
+        <Tag color={status === 'published' ? 'purple' : status === 'private' ? 'blue' : 'orange'}>
           {status === 'published' ? t('serviceList.statusActive') : status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
         </Tag>
       ),
@@ -296,17 +278,9 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'calls',
       align: 'center' as const,
       width: 100,
-      render: (calls: number) => calls || 0,
+      render: (calls: number, record: Service) => record.status === 'private' ? '–' : (calls || 0),
       sorter: (a: Service, b: Service) => a.calls - b.calls,
     },
-    // {
-    //   title: 'Updated',
-    //   dataIndex: 'updatedAt',
-    //   key: 'updatedAt',
-    //   width: 180,
-    //   render: (date: string) => formatDate(date),
-    //   sorter: (a: Service, b: Service) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-    // },
     {
       title: '',
       key: 'actions',
@@ -314,11 +288,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       align: 'left' as const,
       render: (_: any, record: Service) => (
         <Space size="middle">
-          {/* <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
-          /> */}
           <Dropdown
             menu={{
               items: [
@@ -467,17 +436,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
   if (viewMode === 'table') {
     return (
-      <div style={{ padding: '20px 0' }}>
+      <div style={{ marginTop: 20, border: '1px solid #E7E7E7', borderRadius: 8, overflow: 'hidden' }}>
         <Table
           columns={tableColumns}
           dataSource={filteredServices}
           rowKey="id"
           pagination={false}
-          // pagination={{
-          //   pageSize: 10,
-          //   showSizeChanger: true,
-          //   showTotal: (total) => `Total ${total} services`,
-          // }}
           onRow={(record) => ({
             style: { cursor: 'pointer' },
             onClick: (e) => {
@@ -514,16 +478,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                     {t('common.edit')}
                   </Button>
                 </div>,
-                // <div onClick={(e) => e.stopPropagation()}>
-                //   <Button
-                //     type="text"
-                //     icon={<PlayCircleOutlined />}
-                //     onClick={() => handleTest(service.id, service.name)}
-                //     disabled={service.status === 'draft'}
-                //   >
-                //     Test
-                //   </Button>
-                // </div>,
                 <div onClick={(e) => e.stopPropagation()}>
                 </div>
               ]}
@@ -535,7 +489,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       <Text strong>{service.name}</Text>
                       {clickedServiceId === service.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
                     </div>
-                    <Tag color={service.status === 'published' ? 'green' : service.status === 'private' ? 'blue' : 'orange'} style={{ marginInlineEnd: 4 }}>
+                    <Tag color={service.status === 'published' ? 'purple' : service.status === 'private' ? 'blue' : 'orange'} style={{ marginInlineEnd: 4 }}>
                       {service.status === 'published' ? t('serviceList.statusActive') : service.status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
                     </Tag>
                   </div>

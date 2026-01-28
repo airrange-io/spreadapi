@@ -30,6 +30,10 @@ const IntercomScript = dynamic(() => import('../components/IntercomScript').then
   ssr: false
 });
 
+const PWAInstallPrompt = dynamic(() => import('../components/PWAInstallPrompt').then(mod => ({ default: mod.PWAInstallPrompt })), {
+  ssr: false
+});
+
 // MCP Settings Modal removed - now using service-specific MCP Integration
 
 
@@ -48,8 +52,6 @@ const ListsPage: React.FC = observer(() => {
   const { user, isAuthenticated: authIsAuthenticated, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDragging, setIsDragging] = useState(false);
-  const [isContentScrollable, setIsContentScrollable] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -145,11 +147,6 @@ const ListsPage: React.FC = observer(() => {
     setTourState(null);
   }, []);
 
-  // Handle tour step change
-  const handleTourChange = useCallback((current: number) => {
-    // Track step changes if needed
-  }, []);
-
   // Mark when we're on the client
   useEffect(() => {
     setIsClient(true);
@@ -202,17 +199,6 @@ const ListsPage: React.FC = observer(() => {
     // This checks auth and loads lists in the background
     appStore.initializeClient();
   }, [appStore]);
-
-  // Debug auth state (only when auth becomes ready)
-  useEffect(() => {
-    if (appStore.authChecked) {
-    }
-  }, [appStore.authChecked, appStore.user.isRegistered]);
-
-  // Memoized handlers
-  const handleHomeClick = useCallback(() => {
-    router.push('/app');
-  }, [router]);
 
   const handleUseSample = useCallback(() => {
     setIsTemplateModalOpen(true);
@@ -313,6 +299,7 @@ const ListsPage: React.FC = observer(() => {
         // Private mode: create locally
         if (isEnterpriseMode) {
           await createLocalService(newId, automaticName, description);
+          refreshLocalServices();
           router.push(`/app/service/${newId}?fileDropped=true`);
           return;
         }
@@ -348,7 +335,7 @@ const ListsPage: React.FC = observer(() => {
     };
 
     reader.readAsArrayBuffer(file);
-  }, [isAuthenticated, notification, router, user?.id, t, isEnterpriseMode]);
+  }, [isAuthenticated, notification, router, user?.id, t, isEnterpriseMode, refreshLocalServices]);
 
   // Memoized dropdown menu items
   const dropdownMenuItems = useMemo(() => {
@@ -425,6 +412,7 @@ const ListsPage: React.FC = observer(() => {
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const automaticName = `Service ${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
         await createLocalService(newId, automaticName, '');
+        refreshLocalServices();
         router.push(`/app/service/${newId}`);
       } catch (error) {
         console.error('Error creating private service:', error);
@@ -483,7 +471,7 @@ const ListsPage: React.FC = observer(() => {
       notification.error({ message: t('app.failedToCreateService') });
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, router, user?.id, notification, t, isEnterpriseMode]);
+  }, [isAuthenticated, router, user?.id, notification, t, isEnterpriseMode, refreshLocalServices]);
 
   // Template selection handler
   const handleTemplateSelect = useCallback(async (template: Template) => {
@@ -528,6 +516,7 @@ const ListsPage: React.FC = observer(() => {
       // Private mode: create locally
       if (isEnterpriseMode) {
         await createLocalService(newId, serviceName, serviceDescription);
+        refreshLocalServices();
         router.push(`/app/service/${newId}?templateId=${template.id}`);
         return;
       }
@@ -554,7 +543,7 @@ const ListsPage: React.FC = observer(() => {
       delete (window as any).__draggedFile;
       setIsCreatingService(false);
     }
-  }, [isAuthenticated, locale, t, notification, router, user?.id, isEnterpriseMode]);
+  }, [isAuthenticated, locale, t, notification, router, user?.id, isEnterpriseMode, refreshLocalServices]);
 
   // Memoized styles
   const dragOverlayStyle = useMemo(() => ({
@@ -582,6 +571,18 @@ const ListsPage: React.FC = observer(() => {
 
   return (
     <>
+      <style jsx global>{`
+        @media (max-width: 732px) {
+          .how-it-works-card { display: none !important; }
+        }
+        .search-input.ant-input-outlined,
+        .search-input .ant-input {
+          font-size: 14px !important;
+        }
+        .ant-tour .ant-tour-content {
+          max-width: 400px !important;
+        }
+      `}</style>
       <Layout style={{ height: '100vh', overflow: 'hidden' }}>
         <Layout
           style={{
@@ -700,7 +701,7 @@ const ListsPage: React.FC = observer(() => {
 
                 {/* Search Bar and View Toggle — hidden when no services */}
                 {serviceCount > 0 && (
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 0 }}>
                   <Input
                     placeholder={t('app.searchPlaceholder')}
                     disabled={appStore.loading}
@@ -708,11 +709,11 @@ const ListsPage: React.FC = observer(() => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     allowClear
-                    size="large"
+                    // size="large"
                     style={{
                       flex: 1,
                       borderRadius: '8px',
-                      fontSize: '16px'
+                      fontSize: '14px'
                     }}
                     className="search-input"
                   />
@@ -740,26 +741,18 @@ const ListsPage: React.FC = observer(() => {
                 {/* New here? Cards - show for users with less than 5 lists */}
                 {!searchQuery && serviceCount < 7 && (
                   <div style={{
-                    position: isContentScrollable ? 'relative' : 'fixed',
-                    bottom: isContentScrollable ? 'auto' : '40px',
-                    left: isContentScrollable ? 'auto' : '50%',
-                    transform: isContentScrollable ? 'none' : 'translateX(-50%)',
+                    position: 'fixed',
+                    bottom: '40px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
                     textAlign: 'center',
-                    marginTop: isContentScrollable ? '48px' : '0',
-                    paddingBottom: isContentScrollable ? '24px' : '0',
-                    width: isContentScrollable ? 'auto' : '100%',
+                    marginTop: '0',
+                    paddingBottom: '0',
+                    width: '100%',
                     maxWidth: '700px',
                     transition: 'all 0.3s ease',
                     zIndex: 1
                   }}>
-                    {/* <p style={{
-                      color: '#8c8c8c',
-                      fontSize: '14px',
-                      marginBottom: '16px',
-                      fontWeight: '400'
-                    }}>
-                      New to SpreadAPI? Get started here:
-                    </p> */}
                     <div ref={onboardingCardsRef} style={{
                       display: 'flex',
                       gap: '12px',
@@ -782,6 +775,7 @@ const ListsPage: React.FC = observer(() => {
                           gap: '12px',
                           flex: '1 1 0',
                           minWidth: '140px',
+                          maxWidth: '220px',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
                         }}
@@ -854,6 +848,7 @@ const ListsPage: React.FC = observer(() => {
                           gap: '12px',
                           flex: '1 1 0',
                           minWidth: '140px',
+                          maxWidth: '220px',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
                         }}
@@ -894,9 +889,10 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                       </div>
 
-                      {/* How it Works Card */}
+                      {/* How it Works Card — hidden on small screens */}
                       <a
                         href="/how-excel-api-works"
+                        className="how-it-works-card"
                         style={{
                           background: 'white',
                           border: '1px solid #e8e8e8',
@@ -909,6 +905,7 @@ const ListsPage: React.FC = observer(() => {
                           gap: '12px',
                           flex: '1 1 0',
                           minWidth: '140px',
+                          maxWidth: '220px',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
                         }}
@@ -948,54 +945,6 @@ const ListsPage: React.FC = observer(() => {
                         </div>
                       </a>
 
-                      {/* Claude Setup Card */}
-                      {/* <a
-                        href="/excel-ai-integration#quick-setup"
-                        style={{
-                          background: 'white',
-                          border: '1px solid #e8e8e8',
-                          borderRadius: '8px',
-                          padding: '16px 20px',
-                          textDecoration: 'none',
-                          color: '#262626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          minWidth: '140px',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(80, 45, 128, 0.15)';
-                          e.currentTarget.style.borderColor = '#502D80';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.04)';
-                          e.currentTarget.style.borderColor = '#e8e8e8';
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          background: '#fff0e6',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <svg height="18" viewBox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg">
-                            <title>Claude</title>
-                            <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fillRule="nonzero" />
-                          </svg>
-                        </div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>Claude Setup</div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Connect AI to Excel</div>
-                        </div>
-                      </a> */}
                     </div>
                   </div>
                 )}
@@ -1010,22 +959,17 @@ const ListsPage: React.FC = observer(() => {
         <>
           <IntercomProvider />
           <IntercomScript />
+          <PWAInstallPrompt />
         </>
       )}
 
       {/* Welcome Tour - Lazy Loaded */}
       {tourState && tourState.TourComponent && (
         <>
-          <style jsx global>{`
-            .ant-tour .ant-tour-content {
-              max-width: 400px !important;
-            }
-          `}</style>
           <tourState.TourComponent
             open={tourState.open}
             onClose={handleTourClose}
             steps={tourState.steps}
-            onChange={handleTourChange}
           />
         </>
       )}

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Button, App } from 'antd';
-import { DownloadOutlined, AppstoreAddOutlined } from '@ant-design/icons';
+import { AppstoreAddOutlined } from '@ant-design/icons';
+import { useTranslation } from '@/lib/i18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,13 +12,12 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAInstallPrompt() {
   const { notification } = App.useApp();
+  const { t } = useTranslation();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [supportsPWA, setSupportsPWA] = useState(false);
 
   useEffect(() => {
-    // next-pwa handles service worker registration automatically
-
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
@@ -30,19 +30,20 @@ export function PWAInstallPrompt() {
       setSupportsPWA(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Listen for successful installation
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       setIsInstalled(true);
       setInstallPrompt(null);
-      notification.success({ message: 'App wurde erfolgreich installiert!' });
-    });
+      notification.success({ message: t('pwa.installSuccess') });
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [notification, t]);
 
   const handleInstallClick = async () => {
     if (!installPrompt) return;
@@ -73,7 +74,7 @@ export function PWAInstallPrompt() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       }}
     >
-      App installieren
+      {t('pwa.installApp')}
     </Button>
   );
 }

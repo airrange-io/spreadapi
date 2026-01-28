@@ -331,6 +331,9 @@ const en: TranslationDictionary = {
   'private.savedLocally': 'Service saved locally',
   'private.savingLocally': 'Saving locally...',
 
+  'pwa.installApp': 'Install App',
+  'pwa.installSuccess': 'App installed successfully!',
+
   'howItWorks.aiAutoModifies': 'AI automatically modifies cell C14 to 30%, recalculates, and shows the impact',
   'howItWorks.aiCapabilities': 'AI Capabilities',
   'howItWorks.aiFriendlyTitle': '🤖 Making Your Service AI-Friendly',
@@ -701,20 +704,6 @@ const en: TranslationDictionary = {
   'settings.oneMinute': '1 minute',
   'settings.serviceName': 'Service Name',
   'settings.thirtyMinutes': '30 minutes',
-
-  'sidebar.aiIntegration': 'AI Integration',
-  'sidebar.allApis': 'All APIs',
-  'sidebar.collapseSidebar': 'Collapse sidebar',
-  'sidebar.deleteList': 'Delete list',
-  'sidebar.deleteNotImplemented': 'Delete functionality not yet implemented',
-  'sidebar.errorDeleting': 'Error deleting the list',
-  'sidebar.howItWorks': 'How it works',
-  'sidebar.newService': 'New Service',
-  'sidebar.pricing': 'Pricing',
-  'sidebar.product': 'Product',
-  'sidebar.showApis': 'Show APIs',
-  'sidebar.spreadsheetApis': 'Spreadsheet APIs',
-  'sidebar.yesDelete': 'Yes, delete',
 
   'sortable.delete': 'Delete',
   'sortable.dragHint': 'Press space to start dragging. Use arrow keys to reorder. Press space again to drop.',
@@ -1290,6 +1279,9 @@ const de: TranslationDictionary = {
   'private.savedLocally': 'Service lokal gespeichert',
   'private.savingLocally': 'Wird lokal gespeichert...',
 
+  'pwa.installApp': 'App installieren',
+  'pwa.installSuccess': 'App wurde erfolgreich installiert!',
+
   'howItWorks.aiAutoModifies': 'KI ändert automatisch Zelle C14 auf 30%, berechnet neu und zeigt die Auswirkungen',
   'howItWorks.aiCapabilities': 'KI-Fähigkeiten',
   'howItWorks.aiFriendlyTitle': '🤖 Ihren Service KI-freundlich gestalten',
@@ -1660,20 +1652,6 @@ const de: TranslationDictionary = {
   'settings.oneMinute': '1 Minute',
   'settings.serviceName': 'Service-Name',
   'settings.thirtyMinutes': '30 Minuten',
-
-  'sidebar.aiIntegration': 'KI-Integration',
-  'sidebar.allApis': 'Alle APIs',
-  'sidebar.collapseSidebar': 'Seitenleiste einklappen',
-  'sidebar.deleteList': 'Liste löschen',
-  'sidebar.deleteNotImplemented': 'Löschen noch nicht verfügbar',
-  'sidebar.errorDeleting': 'Fehler beim Löschen',
-  'sidebar.howItWorks': 'So funktioniert\'s',
-  'sidebar.newService': 'Neuer Service',
-  'sidebar.pricing': 'Preise',
-  'sidebar.product': 'Produkt',
-  'sidebar.showApis': 'APIs anzeigen',
-  'sidebar.spreadsheetApis': 'Tabellen-APIs',
-  'sidebar.yesDelete': 'Ja, löschen',
 
   'sortable.delete': 'Löschen',
   'sortable.dragHint': 'Leertaste drücken, um das Ziehen zu starten. Pfeiltasten zum Neuordnen verwenden. Leertaste erneut drücken zum Ablegen.',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Layout, Button, Drawer, Divider, Space, Spin, Splitter, Breadcrumb, App, Tag, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
+import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -10,10 +10,13 @@ import type { Template } from '@/lib/templates';
 import ParametersPanel from './components/ParametersPanel';
 import PrivateHeaderActions from './components/PrivateHeaderActions';
 import ErrorBoundary from './components/ErrorBoundary';
-import WorkbookView from './views/WorkbookView';
-import pako from 'pako';
 
-// Lazy load views that are not immediately visible
+// Lazy load views
+const WorkbookView = dynamic(() => import('./views/WorkbookView'), {
+  loading: () => <div style={{ padding: 20 }}></div>,
+  ssr: false
+});
+
 const ApiView = dynamic(() => import('./views/ApiView'), {
   loading: () => <div style={{ padding: 20 }}></div>,
   ssr: false
@@ -154,7 +157,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [workbookLoaded, setWorkbookLoaded] = useState(false); // Track if workbook has been loaded
   const templateId = searchParams.get('templateId');
   const [template, setTemplate] = useState<Template | null>(null);
-  const isDemoMode = false; // Keep false — template services are fully editable
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
@@ -222,10 +224,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     const timer = setTimeout(async () => {
       try {
         // Dynamic imports - only loaded when needed
-        const [{ getServiceDetailTourSteps }, { Tour }, { useTour }] = await Promise.all([
+        const [{ getServiceDetailTourSteps }, { Tour }] = await Promise.all([
           import('@/tours/serviceDetailTour'),
-          import('antd'),
-          import('@/hooks/useTour')
+          import('antd')
         ]);
 
         // Create tour steps with refs
@@ -629,11 +630,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     return () => clearTimeout(timer);
   }, [template, workbookLoaded, spreadInstance, apiConfig.inputs.length, apiConfig.outputs.length, promptAutoDetectParameters]);
 
-  // Handle tour step change
-  const handleTourChange = useCallback((current: number) => {
-    // Track step changes if needed
-  }, []);
-
   // Custom hook for panel sizes
   const usePanelSizes = () => {
     const [sizes, setSizes] = useState<number[]>([30, 70]); // Default sizes - parameters panel 30%, content 70%
@@ -851,7 +847,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Calculate workbook size when workbook data is fully loaded into SpreadJS
   // This is called from the workbook-loaded event, which fires AFTER fromJSON completes
   const workbookSizeCalculated = useRef(false);
-  const handleWorkbookDataLoaded = useCallback((spreadInstance: any) => {
+  const handleWorkbookDataLoaded = useCallback(async (spreadInstance: any) => {
     if (!spreadInstance || workbookSizeCalculated.current) return;
 
     workbookSizeCalculated.current = true;
@@ -862,7 +858,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const size = new Blob([jsonString]).size;
         setWorkbookSize(size);
 
-        // Calculate compressed size to show upload estimate
+        // Dynamically import pako for compressed size calculation (diagnostic only)
+        const pako = await import('pako');
         const compressed = pako.gzip(jsonString);
         const compressedSize = compressed.length;
         const ratio = ((1 - compressedSize / size) * 100).toFixed(1);
@@ -2095,7 +2092,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         }}>
           <WorkbookViewer
             storeLocal={{ spread: spreadsheetData }}
-            readOnly={isDemoMode}
+            readOnly={false}
             ref={workbookRef}
             workbookLayout="default"
             initialZoom={zoomLevel}
@@ -2488,7 +2485,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         areas: apiConfig.areas
       }}
       isLoading={!configLoaded}
-      isDemoMode={isDemoMode}
+      isDemoMode={false}
       addButtonRef={addButtonRef}
     />
     </div>
@@ -2678,7 +2675,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           />
         ) : (
           <Space>
-            {hasAnyChanges && !isDemoMode && (
+            {hasAnyChanges && (
               <Tooltip title={
                 configHasChanges && workbookChangeCount > 0
                   ? t('service.saveConfigAndWorkbookTooltip')
@@ -2698,7 +2695,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             )}
 
             {/* Desktop Publish Button - Only visible on desktop */}
-            {!isMobile && !isDemoMode && (
+            {!isMobile && (
               serviceStatus?.published ? (
                 <Dropdown
                   menu={{
@@ -2757,7 +2754,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               menu={{
                 items: [
                   // Publish/Draft options (only for mobile and non-demo services)
-                  ...(isMobile && !isDemoMode ? [
+                  ...(isMobile ? [
                     serviceStatus?.published ? {
                       key: 'republish',
                       label: t('service.republishThisService'),
@@ -2895,7 +2892,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           ref={workbookRef}
                           spreadsheetData={memoizedSpreadsheetData}
                           showEmptyState={showEmptyState}
-                          isDemoMode={isDemoMode}
+                          isDemoMode={false}
                           zoomLevel={zoomLevel}
                           onWorkbookInit={handleWorkbookInit}
                           onWorkbookDataLoaded={handleWorkbookDataLoaded}
@@ -2929,7 +2926,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         apiConfig={apiConfig}
                         serviceStatus={serviceStatus}
                         availableTokens={availableTokens}
-                        isDemoMode={isDemoMode}
+                        isDemoMode={false}
                         configLoaded={configLoaded}
                         isLoading={!configLoaded}
                         hasUnsavedChanges={configHasChanges}
@@ -2951,7 +2948,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         serviceId={serviceId}
                         apiConfig={apiConfig}
                         serviceStatus={serviceStatus}
-                        isDemoMode={isDemoMode}
+                        isDemoMode={false}
                         configLoaded={configLoaded}
                         isLoading={!configLoaded}
                         hasUnsavedChanges={configHasChanges}
@@ -2968,7 +2965,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         serviceId={serviceId}
                         apiConfig={apiConfig}
                         serviceStatus={serviceStatus}
-                        isDemoMode={isDemoMode}
+                        isDemoMode={false}
                         configLoaded={configLoaded}
                         isLoading={!configLoaded}
                         hasUnsavedChanges={configHasChanges}
@@ -2988,7 +2985,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         serviceId={serviceId}
                         serviceStatus={serviceStatus}
                         availableTokens={availableTokens}
-                        isDemoMode={isDemoMode}
+                        isDemoMode={false}
                         isLoading={!configLoaded}
                         onConfigChange={handleConfigChange}
                         onTokensChange={setAvailableTokens}
@@ -3112,7 +3109,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             open={tourState.open}
             onClose={handleTourClose}
             steps={tourState.steps}
-            onChange={handleTourChange}
           />
         </>
       )}

@@ -144,7 +144,6 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
             {!useCompactLayout && (
               <Tooltip title={parameter.address} placement="top">
                 <Tag
-                  color='purple'
                   onClick={onNavigate}
                   style={{
                     cursor: 'pointer',
@@ -152,7 +151,12 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
                     maxWidth: '150px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    background: '#E8F4FD',
+                    color: '#4F2D7F',
+                    borderColor: '#E8F4FD',
+                    margin: 0,
+                    marginTop: 4
                   }}
                 >
                   {parameter.address}
