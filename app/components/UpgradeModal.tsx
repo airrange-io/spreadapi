@@ -12,12 +12,13 @@ interface UpgradeModalProps {
   onClose: () => void;
   currentLicense: LicenseType;
   title?: string;
+  userEmail?: string;
 }
 
 const STRIPE_LINKS = {
-  pro: process.env.NEXT_PUBLIC_STRIPE_PRO_LINK || '',
-  premium: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_LINK || '',
-  extraCalls10k: process.env.NEXT_PUBLIC_STRIPE_EXTRA_CALLS_10K_LINK || '',
+  pro: 'https://buy.stripe.com/9B6dRadnV9MU2Li1yj9IQ0r',
+  premium: 'https://buy.stripe.com/14AeVebfN0ck71y6SD9IQ0s',
+  extraCalls10k: '',
 };
 
 interface PlanConfig {
@@ -189,10 +190,15 @@ export default function UpgradeModal({
   onClose,
   currentLicense,
   title,
+  userEmail,
 }: UpgradeModalProps) {
   const handleSelect = (stripeLink: string) => {
     if (stripeLink) {
-      window.open(stripeLink, '_blank');
+      // Append prefilled_email parameter if user email is available
+      const url = userEmail
+        ? `${stripeLink}?prefilled_email=${encodeURIComponent(userEmail)}`
+        : stripeLink;
+      window.open(url, '_blank');
     }
   };
 

@@ -1137,6 +1137,7 @@ const ListsPage: React.FC = observer(() => {
         open={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         currentLicense={(user?.licenseType || 'free') as LicenseType}
+        userEmail={user?.email}
       />
     </>
   );
