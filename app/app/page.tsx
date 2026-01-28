@@ -401,6 +401,7 @@ const ListsPage: React.FC = observer(() => {
           icon: <CloudOutlined />,
           label: t('app.storageMode'),
           children: storageModeItems,
+          disabled: process.env.NODE_ENV === 'production',
         },
         { type: 'divider' as const },
         {
