@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App } from 'antd';
+import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App, Segmented } from 'antd';
 import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
@@ -9,6 +9,12 @@ import { useTranslation } from '@/lib/i18n';
 
 const { Text } = Typography;
 const { TextArea } = Input;
+
+// Available API endpoints
+const API_ENDPOINTS = [
+  { key: 'main', label: 'spreadapi.io', url: 'https://spreadapi.io/api/v1/services/{serviceId}/execute' },
+  { key: 'run', label: 'spreadapi.run', url: 'https://spreadapi.run/{serviceId}' },
+];
 
 interface ServiceTesterProps {
   serviceId: string;
@@ -43,6 +49,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [wizardResponseTime, setWizardResponseTime] = useState<number>(0);
   const [totalCalls, setTotalCalls] = useState<number>(0);
   const [responseBoxHeight, setResponseBoxHeight] = useState<number>(200);
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string>('main');
+  const [urlManuallyEdited, setUrlManuallyEdited] = useState<boolean>(false);
   const containerWidth = propsContainerWidth || 0;
   const isMounted = useRef(false);
   const responseBoxRef = useRef<HTMLDivElement>(null);
@@ -78,19 +86,20 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     setWizardError('');
     // Don't clear wizardResult - keep previous results visible while loading
 
-    // Validate form before testing
-    try {
-      await form.validateFields();
-    } catch (error) {
-      setWizardError(t('tester.fillRequiredFields'));
-      setWizardTesting(false);
-      return;
+    // Validate form before testing (only if URL wasn't manually edited)
+    if (!urlManuallyEdited) {
+      try {
+        await form.validateFields();
+      } catch (error) {
+        setWizardError(t('tester.fillRequiredFields'));
+        setWizardTesting(false);
+        return;
+      }
     }
 
-    // Get current form values and build URL
-    const currentFormValues = form.getFieldsValue();
-    const testUrl = buildWizardUrl(currentFormValues);
-    
+    // Use the current wizardUrl (respects manual edits)
+    const testUrl = wizardUrl;
+
     const startTime = Date.now();
 
     try {
@@ -139,10 +148,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   };
 
   // Build wizard test URL dynamically
-  const buildWizardUrl = (params: Record<string, any>) => {
-    const baseUrl = `${window.location.origin}/api/v1/services/${serviceId}/execute`;
+  const buildWizardUrl = (params: Record<string, any>, endpoint: string = selectedEndpoint) => {
+    const endpointConfig = API_ENDPOINTS.find(e => e.key === endpoint) || API_ENDPOINTS[0];
+    const baseUrl = endpointConfig.url.replace('{serviceId}', serviceId);
     const urlParams = new URLSearchParams();
-
 
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -162,11 +171,13 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
   const [wizardUrl, setWizardUrl] = useState('');
 
-  // Update wizard URL when parameters change
+  // Update wizard URL when parameters or endpoint change
   useEffect(() => {
-    // Use parameterValues directly since form might not be synced yet
-    setWizardUrl(buildWizardUrl(parameterValues));
-  }, [parameterValues, serviceId, requireToken, existingToken]);
+    // Only auto-update if URL wasn't manually edited
+    if (!urlManuallyEdited) {
+      setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint));
+    }
+  }, [parameterValues, serviceId, requireToken, existingToken, selectedEndpoint, urlManuallyEdited]);
 
   // Track mounted state
   useEffect(() => {
@@ -300,13 +311,22 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   cursor: 'help'
                 }}>GET</span>
               </Tooltip>
-              <span style={{ flex: 1 }}>{t('tester.testUrl')}</span>
+              <Segmented
+                size="small"
+                value={selectedEndpoint}
+                onChange={(value) => {
+                  setSelectedEndpoint(value as string);
+                  setUrlManuallyEdited(false);
+                }}
+                options={API_ENDPOINTS.map(e => ({ label: e.label, value: e.key }))}
+              />
+              <span style={{ flex: 1 }}></span>
               {requireToken && (
                 <>
-                  <span style={{ color: '#d9d9d9' }}>|</span>
                   <span style={{ color: '#faad14', fontSize: 12 }}>
                     {t('tester.replaceToken')}
                   </span>
+                  <span style={{ color: '#d9d9d9' }}>|</span>
                 </>
               )}
               <Tooltip title={t('tester.copyUrlToClipboard')}>
@@ -324,7 +344,10 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             </div>
             <TextArea
               value={wizardUrl}
-              onChange={(e) => setWizardUrl(e.target.value)}
+              onChange={(e) => {
+                setWizardUrl(e.target.value);
+                setUrlManuallyEdited(true);
+              }}
               rows={3}
               style={{
                 fontFamily: 'monospace',
@@ -334,6 +357,21 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               }}
               disabled={!isPublished}
             />
+            {urlManuallyEdited && (
+              <div style={{ marginTop: 4, fontSize: 11, color: '#8c8c8c' }}>
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ padding: 0, height: 'auto', fontSize: 11 }}
+                  onClick={() => {
+                    setUrlManuallyEdited(false);
+                    setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint));
+                  }}
+                >
+                  {t('tester.resetUrl')}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Test Buttons */}
