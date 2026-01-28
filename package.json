@@ -54,6 +54,7 @@
     "react-syntax-highlighter": "^15.6.6",
     "recharts": "^3.6.0",
     "redis": "^5.10.0",
+    "stripe": "^20.2.0",
     "swagger-ui-react": "^5.31.0",
     "yaml": "^2.8.2",
     "zod": "^4.2.1"
