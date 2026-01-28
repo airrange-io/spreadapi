@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import redis from '@/lib/redis';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Lazy-initialize Stripe client (env vars not available at build time)
+let stripe;
+function getStripe() {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+}
 
 // SpreadAPI product IDs from Stripe Dashboard
 const SPREADAPI_PRODUCTS = {
@@ -49,7 +56,7 @@ export async function POST(request) {
   // Verify webhook signature
   let event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_SPREADAPI_WEBHOOK_SECRET
@@ -67,7 +74,7 @@ export async function POST(request) {
 
     try {
       // Get line items to find the product
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const lineItems = await getStripe().checkout.sessions.listLineItems(session.id);
       const priceData = lineItems.data[0]?.price;
       const productId = typeof priceData?.product === 'string'
         ? priceData.product
