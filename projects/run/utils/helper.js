@@ -77,3 +77,8 @@ export function getRangeAsOffset(address) {
 export function getError(info) {
   return { error: info };
 }
+
+export function getDateForCallsLog() {
+  const now = new Date();
+  return now.toISOString().split("T")[0];
+}

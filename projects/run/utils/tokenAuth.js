@@ -1,5 +1,5 @@
-import redis from '@/lib/redis';
-import { hashToken, parseAuthToken } from './tokenUtils';
+import redis from '../lib/redis.js';
+import { hashToken, parseAuthToken } from './tokenUtils.js';
 
 export async function validateServiceToken(request, serviceId) {
   try {

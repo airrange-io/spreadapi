@@ -1,4 +1,6 @@
 {
+  "regions": ["fra1"],
+  "fluid": true,
   "functions": {
     "app/[id]/route.js": {
       "maxDuration": 30

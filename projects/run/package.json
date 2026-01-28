@@ -7,15 +7,20 @@
     "build": "next build",
     "start": "next start"
   },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/react": "19.2.2",
+    "@types/node": "^20.11.0"
+  },
   "dependencies": {
-    "@mescius/spread-sheets": "^18.0.0",
-    "@mescius/spread-sheets-tablesheet": "^18.0.0",
-    "canvas": "^3.0.0",
-    "is": "^3.3.0",
+    "@mescius/spread-sheets": "^18.2.5",
+    "@mescius/spread-sheets-tablesheet": "^18.2.5",
+    "canvas": "^3.2.0",
+    "is": "^3.3.2",
     "mock-browser": "^0.92.14",
-    "next": "^15.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "redis": "^4.6.13"
+    "next": "^16.0.10",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "redis": "^5.10.0"
   }
 }

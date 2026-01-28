@@ -12,11 +12,17 @@ const redis = createClient({
   },
   commandsQueueMaxLength: 10000,
   disableOfflineQueue: false,
-  maxRetriesPerRequest: 3,
+  // Redis v5: Use RESP2 protocol for backward compatibility
+  // This makes hGetAll return plain objects instead of Maps
   RESP: 2,
 });
 
-redis.connect().catch(() => {});
-redis.on("error", () => {});
+redis.connect().catch((err) => {
+  console.error('[Redis] Connection failed:', err.message);
+});
+
+redis.on("error", (err) => {
+  console.error('[Redis] Error:', err.message);
+});
 
 export default redis;
