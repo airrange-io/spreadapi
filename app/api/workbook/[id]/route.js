@@ -199,11 +199,11 @@ export async function PUT(request, { params }) {
     }
     
 
-    // Check size (Vercel Blob limit is 512MB)
+    // Check size (50MB max for workbook storage)
     const sizeMB = workbookBuffer.length / (1024 * 1024);
-    if (sizeMB > 500) {
-      return NextResponse.json({ 
-        error: 'Workbook size exceeds limit (500MB)' 
+    if (sizeMB > 50) {
+      return NextResponse.json({
+        error: 'Workbook size exceeds limit (50MB)'
       }, { status: 413 });
     }
 

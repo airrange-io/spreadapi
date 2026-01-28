@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { trackUserActivity } from '@/lib/userData';
+import { trackUserActivity, getUserStats } from '@/lib/userData';
 import { CACHE_KEYS } from '@/lib/cacheHelpers';
 import { delBlob } from '@/lib/blob-client';
 import { revalidateServicesCache } from '@/lib/revalidateServices';
+import { getLicenseType, getLimits } from '@/lib/licensing';
 
 // GET /api/services - List all services for user
 export async function GET(request) {
@@ -120,18 +121,41 @@ export async function POST(request) {
     }
     
     const body = await request.json();
-    
+
     const { id, name, description } = body;
-    
+
     console.log('[Services API] Creating service with ID:', id, 'for user:', userId);
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Service ID is required' },
         { status: 400 }
       );
     }
-    
+
+    // Check service count limit based on user's license
+    const userData = await redis.hGetAll(`user:${userId}`);
+    const licenseType = getLicenseType(userData?.licenseType);
+    const limits = getLimits(licenseType);
+    const stats = await getUserStats(userId);
+
+    console.log('[Services API] License check:', { userId, licenseType, maxServices: limits.maxServices, currentServices: stats.services });
+
+    if (stats.services >= limits.maxServices) {
+      console.log('[Services API] Service limit reached for user:', userId);
+      return NextResponse.json(
+        {
+          error: 'Service limit reached',
+          code: 'SERVICE_LIMIT_REACHED',
+          message: `Your ${licenseType} plan allows ${limits.maxServices} service${limits.maxServices === 1 ? '' : 's'}. Upgrade your plan to create more.`,
+          currentCount: stats.services,
+          maxAllowed: limits.maxServices,
+          licenseType
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if service already exists
     const exists = await redis.exists(`service:${id}`);
     if (exists) {

@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
-import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin } from 'antd';
-import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined, CloudOutlined } from '@ant-design/icons';
+import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin, Tag } from 'antd';
+import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined, CloudOutlined, CrownOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -41,6 +41,10 @@ import type { MenuProps } from 'antd';
 import { generateServiceId } from '@/lib/generateServiceId';
 import type { Template } from '@/lib/templates';
 import { useAuth } from '@/components/auth/AuthContext';
+import { LICENSE_LIMITS, type LicenseType } from '@/lib/licensing';
+const UpgradeModal = dynamic(() => import('@/components/UpgradeModal'), {
+  ssr: false
+});
 
 const { Content } = Layout;
 const { Text } = Typography;
@@ -64,6 +68,7 @@ const ListsPage: React.FC = observer(() => {
   const { t, locale, setLocale } = useTranslation();
   const { isEnterpriseMode, setEnterpriseMode } = useEnterpriseMode();
   const [localServices, setLocalServices] = useState<LocalService[]>([]);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   // Load local services from IndexedDB
   const refreshLocalServices = useCallback(() => {
@@ -350,7 +355,35 @@ const ListsPage: React.FC = observer(() => {
     ];
 
     if (isAuthenticated) {
+      const licenseType = (user?.licenseType || 'free') as LicenseType;
+      const licenseColors: Record<LicenseType, string> = {
+        free: '#8c8c8c',
+        pro: '#722ed1',
+        premium: '#faad14',
+      };
+      const licenseLabels: Record<LicenseType, string> = {
+        free: 'Free',
+        pro: 'Pro',
+        premium: 'Premium',
+      };
+
       return [
+        {
+          key: 'license',
+          icon: <CrownOutlined style={{ color: licenseColors[licenseType] }} />,
+          label: (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Tag color={licenseType === 'free' ? 'default' : licenseType === 'pro' ? 'purple' : 'gold'} style={{ margin: 0 }}>
+                {licenseLabels[licenseType]}
+              </Tag>
+              {licenseType !== 'premium' && (
+                <span style={{ fontSize: 12, color: '#722ed1' }}>{t('app.upgrade')}</span>
+              )}
+            </div>
+          ),
+          onClick: () => setUpgradeModalOpen(true),
+        },
+        { type: 'divider' as const },
         {
           key: 'profile',
           icon: <SettingOutlined />,
@@ -396,7 +429,7 @@ const ListsPage: React.FC = observer(() => {
         onClick: () => router.push('/login'),
       },
     ];
-  }, [isAuthenticated, router, setIsAuthenticated, t, locale, setLocale, isEnterpriseMode, setEnterpriseMode]);
+  }, [isAuthenticated, router, setIsAuthenticated, t, locale, setLocale, isEnterpriseMode, setEnterpriseMode, user?.licenseType]);
 
   // Memoized new service handler
   const handleNewService = useCallback(async (e: React.MouseEvent) => {
@@ -463,7 +496,11 @@ const ListsPage: React.FC = observer(() => {
         // Handle other errors
         const errorData = await createResponse.json().catch(() => ({}));
         console.error('Failed to create service:', errorData);
-        notification.error({ message: t('app.failedToCreateService') });
+        if (errorData.code === 'SERVICE_LIMIT_REACHED') {
+          setUpgradeModalOpen(true);
+        } else {
+          notification.error({ message: t('app.failedToCreateService') });
+        }
         setIsCreatingService(false);
       }
     } catch (error) {
@@ -1093,6 +1130,13 @@ const ListsPage: React.FC = observer(() => {
           ))}
         </div>
       </Modal>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        currentLicense={(user?.licenseType || 'free') as LicenseType}
+      />
     </>
   );
 });

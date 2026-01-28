@@ -78,9 +78,24 @@ export async function POST(request) {
       }
     }
 
+    // Get service count for limit checking
+    const { getUserStats } = await import('@/lib/userData');
+    const stats = await getUserStats(userId);
+
+    // Build user data to return (merge existing with any updates to avoid extra fetch)
+    const fullUserData = isNewUser
+      ? await getUserData(userId)  // New user: fetch after store
+      : {
+          ...existingUser,
+          lastLogin: new Date().toISOString(),
+          email: userData?.email || existingUser.email,
+        };
+
     return NextResponse.json({
       success: true,
-      message: 'User data stored successfully'
+      message: 'User data stored successfully',
+      user: fullUserData,
+      stats
     });
 
   } catch (error) {

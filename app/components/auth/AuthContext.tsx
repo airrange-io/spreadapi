@@ -4,8 +4,17 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Hanko } from '@teamhanko/hanko-elements';
 import { useRouter, usePathname } from 'next/navigation';
 
+interface UserData {
+  id: string;
+  email?: string;
+  licenseType?: 'free' | 'pro' | 'premium';
+  serviceCount?: number;
+  tokenCount?: number;
+  [key: string]: any;
+}
+
 interface AuthContextType {
-  user: any | null;
+  user: UserData | null;
   loading: boolean;
   error: string | null;
   logout: () => Promise<void>;
@@ -61,10 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentUser);
         setError(null);
         
-        // Store user data in Redis
+        // Store user data in Redis and get full user record (including licenseType)
         if (currentUser) {
           try {
-            await fetch('/api/auth/user-data', {
+            const response = await fetch('/api/auth/user-data', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -73,6 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 action: 'session_check'
               })
             });
+            const data = await response.json();
+            if (data.user || data.stats) {
+              // Merge Hanko user with Redis data (licenseType, etc.)
+              setUser({
+                ...currentUser,
+                licenseType: data.user?.licenseType || 'free',
+                serviceCount: data.stats?.services || 0,
+                tokenCount: data.stats?.tokens || 0,
+              });
+              return; // Already set user, skip the setUser below
+            }
           } catch (error) {
             console.error('Failed to store user data:', error);
           }

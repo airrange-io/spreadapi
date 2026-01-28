@@ -71,6 +71,8 @@ import { workbookManager } from '@/utils/workbookManager';
 import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/viewPreferences';
 import { useTranslation } from '@/lib/i18n';
 import { loadLocalService } from '@/lib/localServiceStorage';
+import { useAuth } from '@/components/auth/AuthContext';
+import { getLimitsForUser } from '@/lib/licensing';
 
 const { Text } = Typography;
 
@@ -80,6 +82,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const workbookRef = useRef<any>(null);
   const { notification, modal } = App.useApp();
   const { t, locale } = useTranslation();
+  const { user } = useAuth();
+  const licenseLimits = getLimitsForUser(user?.licenseType);
   const [serviceMode, setServiceMode] = useState<'cloud' | 'private' | null>(null);
   const ENTERPRISE_HIDDEN_VIEWS = ['Agents', 'Apps', 'Usage'];
   const [isMobile, setIsMobile] = useState(false);
@@ -2132,8 +2136,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       setSavingWorkbook(true);
 
-      // File validation
-      const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB for free tier (will be updated with licenses)
+      // File validation - use license-based limits
+      const MAX_FILE_SIZE = licenseLimits.maxFileSizeBytes;
       const ALLOWED_EXCEL_TYPES = [
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -2141,9 +2145,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       ];
       const ALLOWED_EXTENSIONS = ['.xls', '.xlsx', '.xlsm'];
 
-      // Check file size
+      // Check file size against license limit
       if (file.size > MAX_FILE_SIZE) {
-        notification.error({ message: t('service.fileSizeExceeds', { size: String(MAX_FILE_SIZE / (1024 * 1024)) }) });
+        notification.error({ message: t('service.fileSizeExceeds', { size: String(licenseLimits.maxFileSizeMB) }) });
         setSavingWorkbook(false);
         return;
       }
@@ -2193,7 +2197,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } finally {
       setSavingWorkbook(false);
     }
-  }, [apiConfig.name]);
+  }, [apiConfig.name, licenseLimits, notification, t]);
 
   // Handle Import from Excel menu action (updates existing workbook)
   const handleImportExcelUpdate = useCallback(() => {
