@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   runtime:
     build: .
+    image: spreadapi-runtime
     container_name: spreadapi-runtime
     restart: unless-stopped
     ports:
