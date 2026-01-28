@@ -1,0 +1,50 @@
+<svg viewBox="0 0 800 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="320" fill="#FAFAFA" rx="12"/>
+
+  <!-- Your Network Boundary -->
+  <rect x="30" y="50" width="500" height="240" rx="12" fill="none" stroke="#22C55E" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="50" y="75" fill="#22C55E" font-size="12" font-weight="600" font-family="system-ui, sans-serif">YOUR PRIVATE NETWORK</text>
+
+  <!-- Browser -->
+  <rect x="60" y="100" width="140" height="80" rx="8" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+  <text x="130" y="135" text-anchor="middle" fill="#333" font-size="11" font-weight="500" font-family="system-ui, sans-serif">Browser</text>
+  <text x="130" y="155" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">(Build Mode)</text>
+
+  <!-- Runtime Server -->
+  <rect x="280" y="100" width="140" height="80" rx="8" fill="#9333EA" stroke="none"/>
+  <text x="350" y="135" text-anchor="middle" fill="white" font-size="11" font-weight="500" font-family="system-ui, sans-serif">SpreadAPI</text>
+  <text x="350" y="155" text-anchor="middle" fill="white" font-size="10" font-family="system-ui, sans-serif">Runtime</text>
+
+  <!-- Internal Apps -->
+  <rect x="60" y="200" width="100" height="60" rx="8" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+  <text x="110" y="235" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">Internal App</text>
+
+  <rect x="180" y="200" width="100" height="60" rx="8" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+  <text x="230" y="235" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">ERP System</text>
+
+  <rect x="300" y="200" width="100" height="60" rx="8" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+  <text x="350" y="235" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">CRM</text>
+
+  <!-- Internal Arrows -->
+  <path d="M200 140 L270 140" stroke="#9333EA" stroke-width="2"/>
+  <path d="M260 132 L272 140 L260 148" fill="#9333EA"/>
+
+  <path d="M350 180 L350 195" stroke="#9333EA" stroke-width="2"/>
+  <path d="M350 180 L230 195" stroke="#9333EA" stroke-width="1.5"/>
+  <path d="M350 180 L110 195" stroke="#9333EA" stroke-width="1.5"/>
+
+  <!-- Cloud (crossed out) -->
+  <rect x="600" y="100" width="160" height="120" rx="12" fill="#FEE2E2" stroke="#EF4444" stroke-width="1"/>
+  <text x="680" y="150" text-anchor="middle" fill="#EF4444" font-size="12" font-weight="500" font-family="system-ui, sans-serif">External Cloud</text>
+  <text x="680" y="170" text-anchor="middle" fill="#EF4444" font-size="10" font-family="system-ui, sans-serif">Services</text>
+
+  <!-- X mark -->
+  <line x1="550" y1="130" x2="580" y2="170" stroke="#EF4444" stroke-width="3"/>
+  <line x1="580" y1="130" x2="550" y2="170" stroke="#EF4444" stroke-width="3"/>
+
+  <text x="565" y="200" text-anchor="middle" fill="#EF4444" font-size="11" font-weight="500" font-family="system-ui, sans-serif">NO CONNECTION</text>
+
+  <!-- Legend -->
+  <text x="680" y="265" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">Data never leaves</text>
+  <text x="680" y="280" text-anchor="middle" fill="#666" font-size="10" font-family="system-ui, sans-serif">your network boundary</text>
+</svg>

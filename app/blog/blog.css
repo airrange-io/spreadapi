@@ -711,6 +711,65 @@
 }
 
 
+/* Blog images with figures */
+.blog-post-content figure.blog-image {
+  margin: 2rem 0;
+  padding: 0;
+}
+
+.blog-post-content figure.blog-image img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.blog-post-content figure.blog-image figcaption {
+  font-size: 0.875rem;
+  color: #6B7280;
+  text-align: center;
+  margin-top: 0.75rem;
+  font-style: italic;
+}
+
+/* Blog tables */
+.blog-post-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.blog-post-content table thead {
+  background: #F3F4F6;
+}
+
+.blog-post-content table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #1F2937;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.blog-post-content table td {
+  padding: 12px 16px;
+  color: #4B5563;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.blog-post-content table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.blog-post-content table tbody tr:hover {
+  background: #F9FAFB;
+}
+
 .blog-post-content img,
 .blog-post-content iframe,
 .blog-post-content video,

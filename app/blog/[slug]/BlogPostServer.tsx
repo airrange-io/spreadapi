@@ -55,16 +55,19 @@ function formatContent(content: string): React.ReactElement {
   const processInlineFormatting = (text: string): string => {
     // Handle inline code
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
+
     // Handle bold
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
+
     // Handle italic
     text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    
+
+    // Handle images (must be before links!)
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="blog-image"><img src="$2" alt="$1" loading="lazy" /><figcaption>$1</figcaption></figure>');
+
     // Handle links
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
     return text;
   };
 
@@ -150,6 +153,18 @@ function formatContent(content: string): React.ReactElement {
     } else if (line.startsWith('---') || line.startsWith('***')) {
       // Handle horizontal rules
       elements.push(<hr key={elements.length} />);
+    } else if (line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/)) {
+      // Handle images (block-level)
+      const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+      if (imgMatch) {
+        const [, alt, src] = imgMatch;
+        elements.push(
+          <figure key={elements.length} className="blog-image">
+            <img src={src} alt={alt} loading="lazy" />
+            {alt && <figcaption>{alt}</figcaption>}
+          </figure>
+        );
+      }
     } else if (line.trim() !== '') {
       // Handle regular paragraphs
       elements.push(

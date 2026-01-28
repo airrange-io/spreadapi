@@ -118,12 +118,57 @@ export default function BlogPostClient({ post, relatedPosts = [], locale = 'en' 
     
     // Replace horizontal rules (---)
     html = html.replace(/^---$/gm, '<hr />');
-    
+
+    // Replace markdown images ![alt](src)
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+      return `<figure class="blog-image"><img src="${src}" alt="${alt}" loading="lazy" />${alt ? `<figcaption>${alt}</figcaption>` : ''}</figure>`;
+    });
+
+    // Replace markdown links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+    // Replace markdown tables
+    html = html.replace(/((?:^\|.+\|$\n?)+)/gm, (match) => {
+      const rows = match.trim().split('\n').filter(row => row.trim());
+      if (rows.length < 2) return match;
+
+      // Check if second row is separator (|---|---|)
+      const isSeparator = (row: string) => /^\|[\s-:|]+\|$/.test(row);
+
+      let tableHtml = '<table>';
+      let inHeader = true;
+
+      rows.forEach((row, index) => {
+        if (isSeparator(row)) {
+          inHeader = false;
+          return;
+        }
+
+        const cells = row.split('|').slice(1, -1).map(cell => cell.trim());
+        const tag = inHeader && index === 0 ? 'th' : 'td';
+        const rowTag = inHeader && index === 0 ? 'thead' : (index === 1 || (index === 2 && !isSeparator(rows[1])) ? 'tbody' : '');
+
+        if (rowTag === 'thead') tableHtml += '<thead>';
+        if (rowTag === 'tbody') tableHtml += '<tbody>';
+
+        tableHtml += '<tr>';
+        cells.forEach(cell => {
+          tableHtml += `<${tag}>${cell}</${tag}>`;
+        });
+        tableHtml += '</tr>';
+
+        if (inHeader && index === 0) tableHtml += '</thead>';
+      });
+
+      tableHtml += '</tbody></table>';
+      return tableHtml;
+    });
+
     // Handle paragraphs - split by double newlines
     const paragraphs = html.split(/\n\n+/);
     html = paragraphs.map(para => {
       // Don't wrap if it's already a block element
-      if (para.match(/^<(h[1-6]|ul|ol|pre|blockquote|hr)/)) {
+      if (para.match(/^<(h[1-6]|ul|ol|pre|blockquote|hr|figure|table)/)) {
         return para;
       }
       // Convert single newlines to <br> within paragraphs

@@ -102,6 +102,14 @@ export const slugTranslations: Record<string, Record<string, string>> = {
     de: 'tabellenkalkulation-api-entwickler-benoetigen',
     fr: 'api-tableur-besoins-developpeurs',
     es: 'api-hojas-calculo-necesitan-desarrolladores'
+  },
+
+  // On-Premises Excel API Data Sovereignty
+  'on-premises-excel-api-data-sovereignty': {
+    en: 'on-premises-excel-api-data-sovereignty',
+    de: 'on-premises-excel-api-datensouveraenitaet',
+    fr: 'api-excel-on-premises-souverainete-donnees',
+    es: 'api-excel-on-premises-soberania-datos'
   }
 };
 
