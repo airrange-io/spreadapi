@@ -421,6 +421,17 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
               <text x="490" y="270" fill="#5a5a5a" fontSize="14">{"}"}</text>
             </svg>
           </div>
+
+          {/* On-premises hint */}
+          <p style={{
+            fontSize: 14,
+            color: '#bfbfbf',
+            textAlign: 'center',
+            margin: '20px 0 0',
+            lineHeight: '1.6',
+          }}>
+            {t('serviceList.onPremisesHint')} <a href="/on-premises" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>
+          </p>
         </div>
     );
   }
