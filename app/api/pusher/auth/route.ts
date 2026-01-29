@@ -1,5 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateChannel } from '@/lib/pusher/server';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { cookies } from 'next/headers';
+
+const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
+
+/**
+ * Verify Hanko JWT and extract user ID
+ * In Next.js 16, middleware is for routing only, so auth must be done in route handlers
+ */
+async function verifyAuth(request: NextRequest): Promise<string | null> {
+  try {
+    // Try to get user ID from middleware header first (backwards compatibility)
+    const proxyUserId = request.headers.get('x-user-id');
+    if (proxyUserId) {
+      return proxyUserId;
+    }
+
+    // Otherwise, verify the Hanko cookie directly
+    const cookieStore = await cookies();
+    const hanko = cookieStore.get('hanko')?.value;
+
+    if (!hanko) {
+      return null;
+    }
+
+    const JWKS = createRemoteJWKSet(
+      new URL(`${hankoApiUrl}/.well-known/jwks.json`)
+    );
+
+    const verifiedJWT = await jwtVerify(hanko, JWKS);
+    return verifiedJWT.payload.sub as string;
+  } catch (error) {
+    console.warn('[Pusher Auth] Auth verification failed:', error);
+    return null;
+  }
+}
 
 /**
  * POST /api/pusher/auth
@@ -10,8 +46,8 @@ import { authenticateChannel } from '@/lib/pusher/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get user ID from middleware header
-    const userId = request.headers.get('x-user-id');
+    // Verify auth and get user ID
+    const userId = await verifyAuth(request);
 
     if (!userId) {
       return NextResponse.json(

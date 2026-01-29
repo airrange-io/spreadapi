@@ -57,6 +57,8 @@ export function useRealtimeCallCounts({
 
   // Handle incoming call count update (debounced)
   const handleCallCountUpdate = useCallback((data: CallCountUpdate) => {
+    console.log('[Pusher] Received call-count-update:', data);
+
     // Buffer the update
     pendingUpdatesRef.current.set(data.serviceId, data.calls);
 
@@ -67,6 +69,7 @@ export function useRealtimeCallCounts({
 
     // Schedule flush after debounce delay
     debounceTimerRef.current = setTimeout(() => {
+      console.log('[Pusher] Flushing updates to state');
       flushUpdates();
     }, debounceMs);
   }, [debounceMs, flushUpdates]);
@@ -74,14 +77,17 @@ export function useRealtimeCallCounts({
   useEffect(() => {
     // Skip if not enabled or no user
     if (!enabled || !userId) {
+      console.log('[Pusher] Hook skipped: enabled=', enabled, 'userId=', userId);
       return;
     }
 
     const pusher = getPusherClient();
     if (!pusher) {
-      // Pusher not configured
+      console.log('[Pusher] Client not configured (missing env vars?)');
       return;
     }
+
+    console.log('[Pusher] Initializing subscription for user:', userId);
 
     // Subscribe to user's private channel
     const channelName = `private-user-${userId}`;

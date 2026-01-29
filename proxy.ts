@@ -225,6 +225,7 @@ export const config = {
     '/api/services/:path*',
     '/api/workbook/:path*',
     '/api/blob/:path*',
+    '/api/pusher/:path*',
     '/api/manageapi/:path*',
     '/api/cache-stats',
     '/api/cache/:path*',

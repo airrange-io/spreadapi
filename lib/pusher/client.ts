@@ -29,8 +29,11 @@ export function getPusherClient(): PusherClient | null {
 
   pusherClient = new PusherClient(key, {
     cluster,
-    authEndpoint: '/api/pusher/auth',
-    // Auth will include cookies automatically
+    channelAuthorization: {
+      endpoint: '/api/pusher/auth',
+      transport: 'ajax',
+      headers: {},
+    },
   });
 
   // Log connection state changes in development

@@ -46,7 +46,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   // Real-time call count updates via Pusher
   const { getCallCount } = useRealtimeCallCounts({
     userId: user?.id,
-    enabled: isAuthenticated === true,
+    enabled: !!user?.id,
   });
 
   // Merge cloud services with local (private) services
@@ -363,7 +363,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         </Space>
       ),
     },
-  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification, t, locale]);
+  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification, t, locale, getCallCount]);
 
   if (loading) {
     return (
