@@ -29,19 +29,7 @@ export function getPusherClient(): PusherClient | null {
 
   pusherClient = new PusherClient(key, {
     cluster,
-    channelAuthorization: {
-      endpoint: '/api/pusher/auth',
-      transport: 'ajax',
-      headers: {},
-    },
   });
-
-  // Log connection state changes in development
-  if (process.env.NODE_ENV === 'development') {
-    pusherClient.connection.bind('state_change', (states: { current: string; previous: string }) => {
-      console.log('[Pusher] Connection state:', states.previous, '->', states.current);
-    });
-  }
 
   return pusherClient;
 }

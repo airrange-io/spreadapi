@@ -73,7 +73,7 @@ export async function logCalls(apiId, apiToken) {
       const shouldSend = results[results.length - 2] === 'OK';
       const newCallCount = results[results.length - 1];
       if (shouldSend) {
-        triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
+        await triggerPusherEvent(`user-${userId}`, 'call-count-update', {
           serviceId: apiId,
           calls: parseInt(newCallCount) || 0,
         });
