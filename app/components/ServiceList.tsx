@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown } from 'antd';
+import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown, Badge } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { deleteLocalService } from '@/lib/localServiceStorage';
 import type { LocalService } from '@/lib/localServiceStorage';
+import { useAuth } from '@/components/auth/AuthContext';
+import { useRealtimeCallCounts } from '@/hooks/useRealtimeCallCounts';
 
 const { Text, Paragraph } = Typography;
 
@@ -39,6 +41,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const [clickedServiceId, setClickedServiceId] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const { t, locale } = useTranslation();
+  const { user } = useAuth();
+
+  // Real-time call count updates via Pusher
+  const { getCallCount } = useRealtimeCallCounts({
+    userId: user?.id,
+    enabled: isAuthenticated === true,
+  });
 
   // Merge cloud services with local (private) services
   const mergedServices = useMemo(() => {
@@ -278,7 +287,20 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'calls',
       align: 'center' as const,
       width: 100,
-      render: (calls: number, record: Service) => record.status === 'private' ? '–' : (calls || 0),
+      render: (calls: number, record: Service) => {
+        if (record.status === 'private') return '–';
+        // Use real-time count if available, otherwise fall back to initial count
+        const realtimeCount = getCallCount(record.id);
+        const displayCount = realtimeCount !== undefined ? realtimeCount : (calls || 0);
+        return (
+          <Badge
+            count={displayCount}
+            showZero
+            overflowCount={999999}
+            style={{ backgroundColor: '#b0b0b0' }}
+          />
+        );
+      },
       sorter: (a: Service, b: Service) => a.calls - b.calls,
     },
     {
@@ -541,14 +563,28 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
                       </div>
                     </div>
 
-                    {service.calls > 0 && (
-                      <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
-                        <BarChartOutlined />
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                          {t('serviceList.callCount', { count: String(service.calls) })}
-                        </Text>
-                      </Space>
-                    )}
+                    {(() => {
+                      // Use real-time count if available, otherwise fall back to initial count
+                      const realtimeCount = getCallCount(service.id);
+                      const displayCount = realtimeCount !== undefined ? realtimeCount : service.calls;
+                      if (service.status !== 'private') {
+                        return (
+                          <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
+                            <BarChartOutlined />
+                            <Badge
+                              count={displayCount}
+                              showZero
+                              overflowCount={999999}
+                              style={{ backgroundColor: '#b0b0b0' }}
+                            />
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              {t('serviceList.calls').toLowerCase()}
+                            </Text>
+                          </Space>
+                        );
+                      }
+                      return null;
+                    })()}
                   </Space>
                 }
               />

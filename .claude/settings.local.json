@@ -74,7 +74,9 @@
       "Bash(git show:*)",
       "Bash(git diff:*)",
       "Bash(head:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "WebFetch(domain:www.hanko.io)",
+      "WebFetch(domain:redis.com)"
     ],
     "deny": []
   }

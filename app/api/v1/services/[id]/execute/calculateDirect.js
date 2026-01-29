@@ -11,6 +11,7 @@ import {
 } from '@/utils/helper';
 import { analyticsQueue } from '@/lib/analyticsQueue.js';
 import { triggerWebhook } from '@/lib/webhookHelpers.js';
+import { triggerPusherEvent } from '@/lib/pusher/server';
 
 // Lazy load SpreadJS to improve cold start
 let spreadjsModule = null;
@@ -37,9 +38,11 @@ function logCalls(apiId, apiToken) {
   setImmediate(async () => {
     try {
       // This Redis call now happens AFTER the API response is sent
-      const tenantId = await redis
-        .HGET(`service:${apiId}`, "tenantId")
-        .catch(() => null);
+      // Fetch tenantId and userId together (same hash)
+      const [tenantId, userId] = await Promise.all([
+        redis.hGet(`service:${apiId}`, "tenantId").catch(() => null),
+        redis.hGet(`service:${apiId}`, "userId").catch(() => null),
+      ]);
       const dateString = getDateForCallsLog();
       const now = new Date();
       const today = now.toISOString().split('T')[0];
@@ -74,8 +77,27 @@ function logCalls(apiId, apiToken) {
         );
       }
 
+      // Real-time update: add debounce check + count fetch at END of multi
+      // (so we always know they're the last two results)
+      if (userId) {
+        multi.set(`pusher:debounce:${apiId}`, '1', { EX: 5, NX: true });
+        multi.hGet(`service:${apiId}:published`, 'calls');
+      }
+
       // Execute - errors are logged but don't block
-      await multi.exec();
+      const results = await multi.exec();
+
+      // Trigger Pusher if debounce allows (last two results are debounce + count)
+      if (userId && results && results.length >= 2) {
+        const shouldSend = results[results.length - 2] === 'OK';
+        const newCallCount = results[results.length - 1];
+        if (shouldSend) {
+          triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
+            serviceId: apiId,
+            calls: parseInt(newCallCount) || 0,
+          });
+        }
+      }
     } catch (error) {
       console.error("Log calls error:", error);
     }

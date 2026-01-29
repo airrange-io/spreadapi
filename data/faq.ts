@@ -5,11 +5,15 @@ export const productFAQs = [
   },
   {
     question: "How does SpreadAPI protect my Excel data?",
-    answer: "SpreadAPI stores your Excel files on secure servers but gives you complete control over what AI and applications can access. You define specific input/output cells and can grant granular permissions to different areas. Your formulas and sensitive data remain private."
+    answer: "Your Excel files are stored on enterprise-grade infrastructure (Vercel, Redis Cloud) with SOC 2 Type 2 and ISO 27001 certifications. We use TLS 1.3 encryption for all connections. You define specific input/output cells and grant granular permissions—your formulas and sensitive data remain private and are never exposed through the API."
   },
   {
     question: "Is SpreadAPI secure for sensitive business data?",
-    answer: "Yes, SpreadAPI is designed with security first. All connections are encrypted, and you maintain full control over access permissions. You decide exactly which cells AI and applications can access, keeping your proprietary formulas and sensitive data private."
+    answer: "Yes. Our infrastructure providers (Vercel, Redis Cloud) maintain SOC 2 Type 2, ISO 27001, and GDPR compliance. We store only your email address—no names, addresses, or personal details. Calculation results are cached for maximum 15 minutes, then automatically deleted. For regulated industries, we offer on-premises deployment where data never leaves your infrastructure."
+  },
+  {
+    question: "Do you have HIPAA or SOC 2 compliance?",
+    answer: "SpreadAPI runs on SOC 2 Type 2 and ISO 27001 certified infrastructure (Vercel, Redis Cloud). For HIPAA-regulated workloads, we offer two paths: Enterprise Cloud with Vercel's HIPAA-compliant infrastructure, or On-Premises deployment where you maintain full control. Our minimal data architecture—no result storage, 15-minute cache max—reduces compliance scope significantly."
   },
   {
     question: "Can I use SpreadAPI with ChatGPT or Claude?",

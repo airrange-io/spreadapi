@@ -5,6 +5,7 @@ import { validateServiceToken } from '../../utils/tokenAuth.js';
 import { validateParameters, applyDefaults, coerceTypes } from '../../lib/parameterValidation.js';
 import { getSheetNameFromAddress, getIsSingleCellFromAddress, getRangeAsOffset, getDateForCallsLog } from '../../utils/helper.js';
 import { triggerWebhook } from '../../lib/webhookHelpers.js';
+import { triggerPusherEvent } from '../../lib/pusher/server.js';
 
 // Lazy load SpreadJS
 let spreadjsModule = null;
@@ -27,12 +28,11 @@ const tableSheetCache = require('../../lib/tableSheetDataCache.js');
 function logCalls(apiId, apiToken) {
   setImmediate(async () => {
     try {
-      const tenantId = await redis
-        .HGET(`service:${apiId}`, "tenantId")
-        .catch((err) => {
-          console.error(`[logCalls] Failed to get tenantId for ${apiId}:`, err.message);
-          return null;
-        });
+      // Fetch tenantId and userId together
+      const [tenantId, userId] = await Promise.all([
+        redis.hGet(`service:${apiId}`, "tenantId").catch(() => null),
+        redis.hGet(`service:${apiId}`, "userId").catch(() => null),
+      ]);
 
       const dateString = getDateForCallsLog();
       const now = new Date();
@@ -60,7 +60,25 @@ function logCalls(apiId, apiToken) {
         multi.hIncrBy(`service:${apiId}`, `calls:${dateString}:token:${apiToken}`, 1);
       }
 
-      await multi.exec();
+      // Real-time update: debounce check + count fetch at END of multi
+      if (userId) {
+        multi.set(`pusher:debounce:${apiId}`, '1', { EX: 5, NX: true });
+        multi.hGet(`service:${apiId}:published`, 'calls');
+      }
+
+      const results = await multi.exec();
+
+      // Trigger Pusher if debounce allows (last two results are debounce + count)
+      if (userId && results && results.length >= 2) {
+        const shouldSend = results[results.length - 2] === 'OK';
+        const newCallCount = results[results.length - 1];
+        if (shouldSend) {
+          triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
+            serviceId: apiId,
+            calls: parseInt(newCallCount) || 0,
+          });
+        }
+      }
     } catch (error) {
       console.error("[logCalls] Error logging API call:", error.message);
     }

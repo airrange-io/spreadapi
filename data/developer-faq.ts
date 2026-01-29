@@ -9,7 +9,11 @@ export const developerFAQs = [
   },
   {
     question: "Is my data shared with AI providers like OpenAI or Anthropic?",
-    answer: "No. Your Excel files stay on SpreadAPI's secure servers. AI assistants only access what you explicitly allow - specific cells or ranges you've granted permission to. They receive calculation results, not your full spreadsheet, keeping your proprietary formulas and sensitive data separate from AI training datasets."
+    answer: "No. Your Excel files stay on SpreadAPI's secure servers (SOC 2 Type 2, ISO 27001 certified). AI assistants only access cells you explicitly permit—they receive calculation results, never your formulas. We don't store query inputs or results beyond a 15-minute cache. Your data is never used for AI training."
+  },
+  {
+    question: "What about on-premises deployment for regulated industries?",
+    answer: "SpreadAPI offers a fully on-premises Runtime for organizations with strict compliance requirements (HIPAA, SOC 2, ISO 27001, GDPR, PCI DSS). Deploy via Docker or Kubernetes within your infrastructure—no external connections required, air-gap compatible. Your data never leaves your network, and there's zero vendor access. Contact us at team@airrange.io for enterprise options."
   },
   {
     question: "Can SpreadAPI handle real-time data and streaming calculations?",

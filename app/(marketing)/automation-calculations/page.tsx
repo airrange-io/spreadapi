@@ -227,19 +227,54 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-                      {[
-                        { scenario: 'Calculate a quote with 47 pricing rules', icon: '💰' },
-                        { scenario: 'Score leads using your proven Excel model', icon: '📊' },
-                        { scenario: 'Determine shipping costs across 12 carriers', icon: '🚚' },
-                        { scenario: 'Check if an order qualifies for custom discounts', icon: '🏷️' },
-                        { scenario: 'Calculate commissions with accelerators and tiers', icon: '💼' },
-                        { scenario: 'Decide reorder quantities based on 20 factors', icon: '📦' },
-                      ].map((item, index) => (
-                        <div key={index} style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                          <span style={{ fontSize: '28px' }}>{item.icon}</span>
-                          <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"{item.scenario}"</p>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                          </svg>
                         </div>
-                      ))}
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Calculate a quote with 47 pricing rules"</p>
+                      </div>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+                          </svg>
+                        </div>
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Score leads using your proven Excel model"</p>
+                      </div>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 18V6a2 2 0 00-2-2H4a2 2 0 00-2 2v11a1 1 0 001 1h2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/><path d="M14 18h8v-4a4 4 0 00-4-4h-2v8z"/>
+                          </svg>
+                        </div>
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Determine shipping costs across 12 carriers"</p>
+                      </div>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 6H3v8h8V6z"/><path d="M21 6h-6v4h6V6z"/><path d="M21 14h-6v4h6v-4z"/><path d="M11 18H3v-4h8v4z"/>
+                          </svg>
+                        </div>
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Check if an order qualifies for custom discounts"</p>
+                      </div>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 20V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/><path d="M4 10h16"/><path d="M4 18h16"/><path d="M2 6h4v16H2z"/>
+                          </svg>
+                        </div>
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Calculate commissions with accelerators and tiers"</p>
+                      </div>
+                      <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e8e8e8', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                          </svg>
+                        </div>
+                        <p style={{ margin: 0, color: '#333', fontSize: '15px', lineHeight: '1.5' }}>"Decide reorder quantities based on 20 factors"</p>
+                      </div>
                     </div>
 
                     <div style={{ textAlign: 'center', marginTop: '32px' }}>
@@ -513,7 +548,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', maxWidth: '1100px', margin: '0 auto' }}>
                       {/* Dynamic Pricing */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>💰</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Dynamic Pricing</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           E-commerce order comes in → Calculate custom price based on quantity, customer tier, active promotions, and margins → Update order with final price.
@@ -525,7 +564,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
 
                       {/* Lead Scoring */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>📊</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Lead Scoring & Routing</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           New lead enters CRM → Score using 50+ weighted factors from your proven model → Route to the right sales rep automatically.
@@ -537,7 +580,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
 
                       {/* Quote Generation */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>📄</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Instant Quotes</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           Customer fills a form → Calculate complex pricing with dependencies, configurations, and discounts → Generate and send PDF quote.
@@ -549,7 +596,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
 
                       {/* Commission Calculation */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>💼</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 20V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/><path d="M4 10h16"/><path d="M4 18h16"/><path d="M2 6h4v16H2z"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Commission Calculation</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           Deal marked as won → Calculate commission with tiers, accelerators, team splits, and bonuses → Update payroll system.
@@ -561,7 +612,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
 
                       {/* Inventory Decisions */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>📦</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Smart Reordering</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           Daily inventory check → Calculate optimal reorder quantities considering lead times, seasonality, and cash flow → Create purchase orders.
@@ -573,7 +628,11 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
 
                       {/* Approval Thresholds */}
                       <div style={{ background: '#f8f9fa', padding: '32px', borderRadius: '16px' }}>
-                        <div style={{ fontSize: '32px', marginBottom: '16px' }}>✅</div>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                          </svg>
+                        </div>
                         <h3 style={{ marginBottom: '12px', fontSize: '20px' }}>Smart Approvals</h3>
                         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                           Expense submitted → Evaluate against budget, policy rules, and historical patterns → Auto-approve or route for human review.
