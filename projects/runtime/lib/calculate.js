@@ -1,6 +1,9 @@
-// Core calculation engine (stateless with L1 result caching)
+// Core calculation engine
+// Supports configurable caching modes via environment variables
+// Thread-safe shared workbook access via mutex locks
 
-const { createWorkbookFromJson } = require('./spreadjs');
+const config = require('./config');
+const { withWorkbook, clearCache } = require('./spreadjs');
 const { logRequest } = require('./logger');
 const resultCache = require('./resultCache');
 
@@ -113,120 +116,127 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
       return error;
     }
 
-    // 2. Check L1 result cache (after validation, before expensive calculation)
-    const cachedResult = resultCache.get(serviceId, finalInputs);
-    if (cachedResult) {
+    // 2. Check result cache (if enabled)
+    if (config.resultCache) {
+      const cachedResult = resultCache.get(serviceId, finalInputs);
+      if (cachedResult) {
+        const executionTime = Date.now() - startTime;
+        logRequest({
+          serviceId,
+          inputs: finalInputs,
+          outputCount: cachedResult.outputs?.length || 0,
+          executionTime,
+          cached: true,
+          cacheLayer: 'result',
+          status: 'success',
+          ...requestInfo,
+        });
+        return {
+          ...cachedResult,
+          metadata: {
+            ...cachedResult.metadata,
+            executionTime,
+            timestamp: new Date().toISOString(),
+            fromCache: true,
+            cacheLayer: 'result',
+          },
+        };
+      }
+    }
+
+    // 3. Execute calculation with thread-safe workbook access
+    const result = await withWorkbook(serviceId, fileJson, async (workbook, workbookFromCache) => {
+      // 4. Set input values
+      let activeSheet = workbook.getActiveSheet();
+      let activeSheetName = activeSheet.name();
+      const answerInputs = [];
+
+      for (const inputDef of apiInputs) {
+        const value = finalInputs[inputDef.name];
+        if (value === undefined) continue;
+
+        // Switch sheet if needed
+        const sheetName = getSheetName(inputDef.address);
+        if (sheetName && sheetName !== activeSheetName) {
+          activeSheet = workbook.getSheetFromName(sheetName);
+          if (!activeSheet) {
+            throw new Error(`Sheet not found: ${sheetName}`);
+          }
+          activeSheetName = activeSheet.name();
+        }
+
+        // Set cell value - handle NULL_DEFAULT_VALUE marker by clearing the cell
+        let cellValue = value;
+        if (cellValue === NULL_DEFAULT_VALUE) {
+          cellValue = null;
+        }
+        activeSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
+        answerInputs.push({
+          name: inputDef.name,
+          title: inputDef.title || inputDef.name,
+          value: cellValue,
+        });
+      }
+
+      // 5. Read output values
+      const answerOutputs = [];
+
+      for (const outputDef of apiOutputs) {
+        const sheetName = getSheetName(outputDef.address);
+        if (sheetName && sheetName !== activeSheetName) {
+          activeSheet = workbook.getSheetFromName(sheetName);
+          if (!activeSheet) {
+            throw new Error(`Output sheet not found: ${sheetName}`);
+          }
+          activeSheetName = activeSheet.name();
+        }
+
+        let cellValue;
+        if (isSingleCell(outputDef.address)) {
+          cellValue = activeSheet.getCell(outputDef.row, outputDef.col).value();
+        } else {
+          // Range output
+          const rowCount = outputDef.rowCount || 1;
+          const colCount = outputDef.colCount || 1;
+          cellValue = activeSheet.getArray(outputDef.row, outputDef.col, rowCount, colCount, false);
+        }
+
+        answerOutputs.push({
+          name: outputDef.name,
+          title: outputDef.title || outputDef.name,
+          value: cellValue,
+          ...(outputDef.formatString && { formatString: outputDef.formatString }),
+        });
+      }
+
       const executionTime = Date.now() - startTime;
-      logRequest({
-        serviceId,
-        inputs: finalInputs,
-        outputCount: cachedResult.outputs?.length || 0,
-        executionTime,
-        cached: true,
-        status: 'success',
-        ...requestInfo,
-      });
+
+      // 6. Build result
       return {
-        ...cachedResult,
+        serviceId,
+        serviceName: apiJson?.title || apiJson?.name || serviceId,
+        inputs: answerInputs,
+        outputs: answerOutputs,
         metadata: {
-          ...cachedResult.metadata,
           executionTime,
           timestamp: new Date().toISOString(),
-          fromCache: true,
-          cacheLayer: 'L1:Result',
+          workbookFromCache: workbookFromCache,
         },
       };
+    });
+
+    // 7. Cache result for future requests with same inputs (if enabled)
+    if (config.resultCache) {
+      resultCache.set(serviceId, finalInputs, result);
     }
-
-    // 3. Create fresh workbook from JSON (stateless - no shared state between requests)
-    const workbook = createWorkbookFromJson(fileJson);
-
-    // 4. Set input values
-    let activeSheet = workbook.getActiveSheet();
-    let activeSheetName = activeSheet.name();
-    const answerInputs = [];
-
-    for (const inputDef of apiInputs) {
-      const value = finalInputs[inputDef.name];
-      if (value === undefined) continue;
-
-      // Switch sheet if needed
-      const sheetName = getSheetName(inputDef.address);
-      if (sheetName && sheetName !== activeSheetName) {
-        activeSheet = workbook.getSheetFromName(sheetName);
-        if (!activeSheet) {
-          return { error: 'CALCULATION_ERROR', message: `Sheet not found: ${sheetName}` };
-        }
-        activeSheetName = activeSheet.name();
-      }
-
-      // Set cell value - handle NULL_DEFAULT_VALUE marker by clearing the cell
-      let cellValue = value;
-      if (cellValue === NULL_DEFAULT_VALUE) {
-        cellValue = null;
-      }
-      activeSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
-      answerInputs.push({
-        name: inputDef.name,
-        title: inputDef.title || inputDef.name,
-        value: cellValue,
-      });
-    }
-
-    // 5. Read output values
-    const answerOutputs = [];
-
-    for (const outputDef of apiOutputs) {
-      const sheetName = getSheetName(outputDef.address);
-      if (sheetName && sheetName !== activeSheetName) {
-        activeSheet = workbook.getSheetFromName(sheetName);
-        if (!activeSheet) {
-          return { error: 'CALCULATION_ERROR', message: `Output sheet not found: ${sheetName}` };
-        }
-        activeSheetName = activeSheet.name();
-      }
-
-      let cellValue;
-      if (isSingleCell(outputDef.address)) {
-        cellValue = activeSheet.getCell(outputDef.row, outputDef.col).value();
-      } else {
-        // Range output
-        const rowCount = outputDef.rowCount || 1;
-        const colCount = outputDef.colCount || 1;
-        cellValue = activeSheet.getArray(outputDef.row, outputDef.col, rowCount, colCount, false);
-      }
-
-      answerOutputs.push({
-        name: outputDef.name,
-        title: outputDef.title || outputDef.name,
-        value: cellValue,
-        ...(outputDef.formatString && { formatString: outputDef.formatString }),
-      });
-    }
-
-    const executionTime = Date.now() - startTime;
-
-    // 6. Build result
-    const result = {
-      serviceId,
-      serviceName: apiJson?.title || apiJson?.name || serviceId,
-      inputs: answerInputs,
-      outputs: answerOutputs,
-      metadata: {
-        executionTime,
-        timestamp: new Date().toISOString(),
-      },
-    };
-
-    // 7. Cache result for future requests with same inputs
-    resultCache.set(serviceId, finalInputs, result);
 
     // 8. Log the request
     logRequest({
       serviceId,
       inputs: finalInputs,
-      outputCount: answerOutputs.length,
-      executionTime,
+      outputCount: result.outputs?.length || 0,
+      executionTime: result.metadata?.executionTime,
+      workbookCached: result.metadata?.workbookFromCache,
       status: 'success',
       ...requestInfo,
     });
@@ -252,5 +262,6 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
 
 module.exports = {
   executeCalculation,
+  clearCache,
   NULL_DEFAULT_VALUE,
 };

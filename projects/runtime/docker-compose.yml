@@ -9,9 +9,15 @@ services:
     environment:
       - NODE_ENV=production
       - SPREADJS_LICENSE_KEY=${SPREADJS_LICENSE_KEY}
+      - SPREADAPI_SHARED_WORKBOOK=${SPREADAPI_SHARED_WORKBOOK:-true}
+      - SPREADAPI_RESULT_CACHE=${SPREADAPI_RESULT_CACHE:-true}
     volumes:
       - ./services:/app/services
       - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s

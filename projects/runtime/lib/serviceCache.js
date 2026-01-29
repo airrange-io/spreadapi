@@ -1,7 +1,7 @@
 // Service JSON Cache - simple in-memory cache with TTL
 
 const cache = new Map();
-const MAX_ENTRIES = 20;
+const MAX_ENTRIES = 50;
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function get(serviceId) {
@@ -25,4 +25,8 @@ function invalidate(serviceId) {
   cache.delete(serviceId);
 }
 
-module.exports = { get, set, invalidate };
+function getStats() {
+  return { entries: cache.size, maxEntries: MAX_ENTRIES };
+}
+
+module.exports = { get, set, invalidate, getStats };

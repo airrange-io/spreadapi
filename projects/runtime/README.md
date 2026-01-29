@@ -98,6 +98,79 @@ docker compose up -d
 docker compose logs -f
 ```
 
+## Configuration
+
+The runtime can be configured via environment variables. All settings have sensible defaults optimized for production performance.
+
+### Engine Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPREADAPI_SHARED_WORKBOOK` | `true` | Reuse workbooks across requests. Set to `false` for stateless mode (slower but isolated). |
+| `SPREADAPI_RESULT_CACHE` | `true` | Cache calculation results by inputs. Identical inputs return instant cached response. |
+
+### Cache Tuning
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPREADAPI_WORKBOOK_CACHE_TTL` | `1800000` | Workbook cache lifetime in ms (default: 30 minutes) |
+| `SPREADAPI_RESULT_CACHE_TTL` | `300000` | Result cache lifetime in ms (default: 5 minutes) |
+| `SPREADAPI_RESULT_CACHE_MAX_ENTRIES` | `1000` | Maximum cached results before LRU eviction |
+
+### Required Settings
+
+| Variable | Description |
+|----------|-------------|
+| `SPREADJS_LICENSE_KEY` | Your SpreadJS license key (or `NEXT_SPREADJS18_KEY`) |
+
+### Docker Compose Example
+
+```yaml
+services:
+  spreadapi-runtime:
+    image: spreadapi-runtime
+    environment:
+      - SPREADJS_LICENSE_KEY=your-license-key
+      # Performance tuning (optional)
+      - SPREADAPI_SHARED_WORKBOOK=true
+      - SPREADAPI_RESULT_CACHE=true
+      - SPREADAPI_WORKBOOK_CACHE_TTL=3600000  # 1 hour
+      - SPREADAPI_RESULT_CACHE_TTL=600000     # 10 minutes
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./services:/app/services
+```
+
+### Configuration Modes
+
+**Default (Recommended for Production)**
+```bash
+# No env vars needed - optimal defaults applied
+docker run spreadapi-runtime
+```
+
+**High-Traffic Mode**
+```bash
+# Longer cache times for high-volume APIs
+docker run \
+  -e SPREADAPI_WORKBOOK_CACHE_TTL=3600000 \
+  -e SPREADAPI_RESULT_CACHE_TTL=900000 \
+  -e SPREADAPI_RESULT_CACHE_MAX_ENTRIES=5000 \
+  spreadapi-runtime
+```
+
+**Debug/Development Mode**
+```bash
+# Stateless - each request creates fresh workbook
+docker run \
+  -e SPREADAPI_SHARED_WORKBOOK=false \
+  -e SPREADAPI_RESULT_CACHE=false \
+  spreadapi-runtime
+```
+
+Configuration is logged on container startup - check logs to verify settings.
+
 ## Service JSON Format
 
 The uploaded JSON should have this structure:

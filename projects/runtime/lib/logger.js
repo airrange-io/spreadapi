@@ -6,7 +6,6 @@ const path = require('path');
 const LOGS_DIR = path.join(process.cwd(), 'logs');
 const MAX_LOG_ENTRIES = 1000;
 
-// In-memory recent logs
 const recentLogs = [];
 
 async function ensureDir() {
@@ -22,7 +21,7 @@ function getLogFileName() {
   return `requests-${date}.log`;
 }
 
-async function logRequest(entry) {
+function logRequest(entry) {
   const logEntry = {
     timestamp: new Date().toISOString(),
     ...entry,
@@ -34,14 +33,15 @@ async function logRequest(entry) {
     recentLogs.shift();
   }
 
-  // Write to file (non-blocking)
-  try {
-    await ensureDir();
-    const filePath = path.join(LOGS_DIR, getLogFileName());
-    await fs.appendFile(filePath, JSON.stringify(logEntry) + '\n');
-  } catch (err) {
-    console.error('Failed to write log:', err.message);
-  }
+  // Fire-and-forget file write
+  ensureDir()
+    .then(() => {
+      const filePath = path.join(LOGS_DIR, getLogFileName());
+      return fs.appendFile(filePath, JSON.stringify(logEntry) + '\n');
+    })
+    .catch(err => {
+      console.error('Failed to write log:', err.message);
+    });
 
   return logEntry;
 }
@@ -52,7 +52,6 @@ function getRecentLogs(options = {}) {
   if (options.serviceId) {
     logs = logs.filter(l => l.serviceId === options.serviceId);
   }
-
   if (options.status) {
     logs = logs.filter(l => l.status === options.status);
   }
@@ -69,25 +68,23 @@ async function getLogsFromFile(date) {
     return content
       .split('\n')
       .filter(line => line.trim())
-      .map(line => JSON.parse(line));
+      .map(line => {
+        try { return JSON.parse(line); }
+        catch { return null; }
+      })
+      .filter(Boolean);
   } catch (err) {
     return [];
   }
 }
 
-// Simple analytics from recent logs
 function getAnalytics(serviceId) {
   const logs = serviceId
     ? recentLogs.filter(l => l.serviceId === serviceId)
     : recentLogs;
 
   if (logs.length === 0) {
-    return {
-      totalRequests: 0,
-      successCount: 0,
-      errorCount: 0,
-      avgExecutionTime: 0,
-    };
+    return { totalRequests: 0, successCount: 0, errorCount: 0, avgExecutionTime: 0 };
   }
 
   const successLogs = logs.filter(l => l.status === 'success');
@@ -103,9 +100,4 @@ function getAnalytics(serviceId) {
   };
 }
 
-module.exports = {
-  logRequest,
-  getRecentLogs,
-  getLogsFromFile,
-  getAnalytics,
-};
+module.exports = { logRequest, getRecentLogs, getLogsFromFile, getAnalytics };

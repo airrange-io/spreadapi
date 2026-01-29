@@ -1,10 +1,9 @@
 // L1 Result Cache - caches calculation results by serviceId + hash(inputs)
 
 const crypto = require('crypto');
+const config = require('./config');
 
 const cache = new Map();
-const MAX_ENTRIES = 1000;
-const TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 function hashInputs(inputs) {
   const sorted = JSON.stringify(inputs, Object.keys(inputs || {}).sort());
@@ -14,29 +13,47 @@ function hashInputs(inputs) {
 function get(serviceId, inputs) {
   const key = `${serviceId}:${hashInputs(inputs)}`;
   const entry = cache.get(key);
-  if (entry && Date.now() - entry.timestamp < TTL_MS) {
-    return entry.result;
+
+  if (!entry) return null;
+
+  if (Date.now() - entry.timestamp >= config.resultCacheTTL) {
+    cache.delete(key);
+    return null;
   }
-  if (entry) cache.delete(key);
-  return null;
+
+  return entry.result;
 }
 
 function set(serviceId, inputs, result) {
   const key = `${serviceId}:${hashInputs(inputs)}`;
-  if (cache.size >= MAX_ENTRIES) {
+
+  // Simple eviction when full
+  if (cache.size >= config.resultCacheMaxEntries) {
     const oldestKey = cache.keys().next().value;
     cache.delete(oldestKey);
   }
+
   cache.set(key, { result, timestamp: Date.now() });
 }
 
 function invalidateService(serviceId) {
   const prefix = `${serviceId}:`;
-  for (const key of cache.keys()) {
+  for (const key of [...cache.keys()]) {
     if (key.startsWith(prefix)) {
       cache.delete(key);
     }
   }
 }
 
-module.exports = { get, set, invalidateService };
+function clear() {
+  cache.clear();
+}
+
+function getStats() {
+  return {
+    entries: cache.size,
+    maxEntries: config.resultCacheMaxEntries,
+  };
+}
+
+module.exports = { get, set, invalidateService, clear, getStats };
