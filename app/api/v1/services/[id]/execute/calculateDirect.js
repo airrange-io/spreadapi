@@ -32,79 +32,72 @@ const getSpreadjsModule = () => {
 // TableSheet data caching
 const tableSheetCache = require('@/lib/tableSheetDataCache');
 
-// Helper function to log API calls (optimized for zero blocking)
-function logCalls(apiId, apiToken) {
-  // Defer to next event loop tick - completely non-blocking
-  setImmediate(async () => {
-    try {
-      // This Redis call now happens AFTER the API response is sent
-      // Fetch tenantId and userId together (same hash)
-      const [tenantId, userId] = await Promise.all([
-        redis.hGet(`service:${apiId}`, "tenantId").catch(() => null),
-        redis.hGet(`service:${apiId}`, "userId").catch(() => null),
-      ]);
-      const dateString = getDateForCallsLog();
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const currentHour = now.getUTCHours();
+// Helper function to log API calls
+// Returns a promise that can be awaited with after() for Vercel compatibility
+export async function logCalls(apiId, apiToken) {
+  try {
+    // Fetch tenantId and userId together (same hash)
+    const [tenantId, userId] = await Promise.all([
+      redis.hGet(`service:${apiId}`, "tenantId").catch(() => null),
+      redis.hGet(`service:${apiId}`, "userId").catch(() => null),
+    ]);
+    const dateString = getDateForCallsLog();
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentHour = now.getUTCHours();
 
-      const multi = redis.multi();
+    const multi = redis.multi();
 
-      if (tenantId) {
-        multi.hIncrBy(`tenant:${tenantId}`, "calls", 1);
-        multi.hIncrBy(`tenant:${tenantId}`, `calls:${dateString}`, 1);
-        multi.hIncrBy(
-          `tenant:${tenantId}`,
-          `calls:${dateString}:service:${apiId}`,
-          1
-        );
-      }
-
-      multi.hIncrBy(`service:${apiId}:published`, "calls", 1);
-      multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
-
-      // New analytics tracking
-      multi.hIncrBy(`service:${apiId}:analytics`, 'total', 1);
-      multi.hIncrBy(`service:${apiId}:analytics`, `${today}:${currentHour}`, 1);
-      multi.hIncrBy(`service:${apiId}:analytics`, `${today}:calls`, 1);
-
-      if (apiToken) {
-        multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
-        multi.hIncrBy(
-          `service:${apiId}`,
-          `calls:${dateString}:token:${apiToken}`,
-          1
-        );
-      }
-
-      // Real-time update: add debounce check + count fetch at END of multi
-      // (so we always know they're the last two results)
-      if (userId) {
-        multi.set(`pusher:debounce:${apiId}`, '1', { EX: 5, NX: true });
-        multi.hGet(`service:${apiId}:published`, 'calls');
-      }
-
-      // Execute - errors are logged but don't block
-      const results = await multi.exec();
-
-      // Trigger Pusher if debounce allows (last two results are debounce + count)
-      if (userId && results && results.length >= 2) {
-        const shouldSend = results[results.length - 2] === 'OK';
-        const newCallCount = results[results.length - 1];
-        console.log(`[Pusher] userId=${userId}, shouldSend=${shouldSend}, count=${newCallCount}`);
-        if (shouldSend) {
-          triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
-            serviceId: apiId,
-            calls: parseInt(newCallCount) || 0,
-          });
-        }
-      } else {
-        console.log(`[Pusher] Skipped: userId=${userId}, resultsLength=${results?.length}`);
-      }
-    } catch (error) {
-      console.error("Log calls error:", error);
+    if (tenantId) {
+      multi.hIncrBy(`tenant:${tenantId}`, "calls", 1);
+      multi.hIncrBy(`tenant:${tenantId}`, `calls:${dateString}`, 1);
+      multi.hIncrBy(
+        `tenant:${tenantId}`,
+        `calls:${dateString}:service:${apiId}`,
+        1
+      );
     }
-  });
+
+    multi.hIncrBy(`service:${apiId}:published`, "calls", 1);
+    multi.hIncrBy(`service:${apiId}`, `calls:${dateString}`, 1);
+
+    // Analytics tracking
+    multi.hIncrBy(`service:${apiId}:analytics`, 'total', 1);
+    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:${currentHour}`, 1);
+    multi.hIncrBy(`service:${apiId}:analytics`, `${today}:calls`, 1);
+
+    if (apiToken) {
+      multi.hIncrBy(`service:${apiId}`, `calls:token:${apiToken}`, 1);
+      multi.hIncrBy(
+        `service:${apiId}`,
+        `calls:${dateString}:token:${apiToken}`,
+        1
+      );
+    }
+
+    // Real-time update: add debounce check + count fetch at END of multi
+    if (userId) {
+      multi.set(`pusher:debounce:${apiId}`, '1', { EX: 5, NX: true });
+      multi.hGet(`service:${apiId}:published`, 'calls');
+    }
+
+    const results = await multi.exec();
+
+    // Trigger Pusher if debounce allows (last two results are debounce + count)
+    if (userId && results && results.length >= 2) {
+      const shouldSend = results[results.length - 2] === 'OK';
+      const newCallCount = results[results.length - 1];
+      console.log(`[Pusher] userId=${userId}, shouldSend=${shouldSend}, count=${newCallCount}`);
+      if (shouldSend) {
+        triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
+          serviceId: apiId,
+          calls: parseInt(newCallCount) || 0,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Log calls error:", error);
+  }
 }
 
 /**
@@ -125,8 +118,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
   const { nocdn = false, nocache = false, isWebAppAuthenticated = false } = options;
 
   try {
-    // Log the call
-    logCalls(serviceId, apiToken);
+    // Note: logCalls is now called from route.js with after() for Vercel compatibility
 
     // L1: Check result cache FIRST (fastest - complete result cached)
     // This is the express lane: if exact same calculation was done before, return it immediately

@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { after } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import redis from '../../lib/redis.js';
-import { calculateDirect } from './calculateDirect.js';
+import { calculateDirect, logCalls } from './calculateDirect.js';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '../../lib/rateLimit.ts';
 import { createErrorResponse } from '../../lib/errors.ts';
 import { parseAuthToken } from '../../utils/tokenUtils.js';
@@ -115,6 +114,9 @@ export async function POST(request, { params }) {
       nocache: body.nocache,
       isWebAppAuthenticated
     });
+
+    // Log call counts after response (Vercel keeps function alive with after())
+    after(() => logCalls(serviceId, token));
 
     if (result.error) {
       // Return detailed error if available (e.g., from 404 handling with parameters)

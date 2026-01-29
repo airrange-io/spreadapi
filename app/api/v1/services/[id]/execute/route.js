@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import redis from '@/lib/redis';
-import { calculateDirect } from './calculateDirect';
+import { calculateDirect, logCalls } from './calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 import { parseAuthToken } from '@/utils/tokenUtils';
@@ -93,6 +93,9 @@ export async function POST(request, { params}) {
       isWebAppAuthenticated
     });
     console.log(`[v1/execute] Direct calculation: ${Date.now() - calcStart}ms`);
+
+    // Log call counts after response (Vercel keeps function alive with after())
+    after(() => logCalls(serviceId, token));
     
     if (result.error) {
       return NextResponse.json({

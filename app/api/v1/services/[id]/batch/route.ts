@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import redis from '@/lib/redis';
-import { calculateDirect } from '../execute/calculateDirect';
+import { calculateDirect, logCalls } from '../execute/calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 
@@ -168,6 +168,13 @@ export async function POST(
     const errorCount = responses.length - successCount;
 
     const batchTime = Date.now() - batchStart;
+
+    // Log call counts for each successful calculation
+    after(async () => {
+      for (let i = 0; i < successCount; i++) {
+        await logCalls(serviceId, token);
+      }
+    });
 
     return NextResponse.json({
       serviceId,
