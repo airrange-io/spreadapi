@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import '@/styles/listcard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin, Tag } from 'antd';
-import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined, CloudOutlined, CrownOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined, CloudOutlined, CrownOutlined, BarChartOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -665,6 +665,19 @@ const ListsPage: React.FC = observer(() => {
 
               {/* Right side - Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 0 }}>
+                {/* Analytics Button - hidden when no services exist */}
+                {serviceCount > 0 && (
+                  <Button
+                    variant='filled'
+                    color="default"
+                    icon={<BarChartOutlined />}
+                    onClick={() => router.push('/app/analytics')}
+                    title="Analytics"
+                  >
+                    <span className="desktop-text">Analytics</span>
+                  </Button>
+                )}
+
                 {/* Chat Button - hidden when no services exist */}
                 {serviceCount > 0 && (
                   <Button

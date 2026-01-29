@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Layout, Button, Typography, Select, Space, Spin, Avatar, Breadcrumb, Dropdown, Empty } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, MessageOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SettingOutlined, SendOutlined, RobotOutlined, MessageOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import type { BubbleProps } from '@ant-design/x';
 import { useRouter } from 'next/navigation';
@@ -287,9 +287,13 @@ export default function ChatWrapperBubbles() {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Button
+              type="text"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => router.push('/app')}
+            />
             <Breadcrumb
               items={[
-                { title: <a onClick={() => router.push('/app')}>{t('chat.breadcrumbServices')}</a> },
                 { title: t('chat.breadcrumbChat') }
               ]}
             />

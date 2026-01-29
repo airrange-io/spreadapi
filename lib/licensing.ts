@@ -13,6 +13,7 @@ export interface LicenseLimits {
   maxFileSizeMB: number;
   maxFileSizeBytes: number;
   maxServices: number;
+  maxCallsPerMonth: number;
   hasMcpAccess: boolean;
   hasAdvancedAnalytics: boolean;
 }
@@ -22,6 +23,7 @@ export const LICENSE_LIMITS: Record<LicenseType, LicenseLimits> = {
     maxFileSizeMB: 1,
     maxFileSizeBytes: 1 * 1024 * 1024,
     maxServices: 1,
+    maxCallsPerMonth: 100,
     hasMcpAccess: false,
     hasAdvancedAnalytics: false,
   },
@@ -29,6 +31,7 @@ export const LICENSE_LIMITS: Record<LicenseType, LicenseLimits> = {
     maxFileSizeMB: 3,
     maxFileSizeBytes: 3 * 1024 * 1024,
     maxServices: 3,
+    maxCallsPerMonth: 10000,
     hasMcpAccess: true,
     hasAdvancedAnalytics: false,
   },
@@ -36,6 +39,7 @@ export const LICENSE_LIMITS: Record<LicenseType, LicenseLimits> = {
     maxFileSizeMB: 25,
     maxFileSizeBytes: 25 * 1024 * 1024,
     maxServices: Infinity,
+    maxCallsPerMonth: Infinity,
     hasMcpAccess: true,
     hasAdvancedAnalytics: true,
   },

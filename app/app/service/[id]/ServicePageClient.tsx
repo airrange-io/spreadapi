@@ -2554,6 +2554,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         borderBottom: `1px solid ${COLORS.border}`,
       }}>
         <Space size="small" align="center">
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
+          />
           {isMobile && (
             <Tooltip title={t('service.openParamsPanel')}>
               <Button
@@ -2566,13 +2571,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           <Breadcrumb
             items={[
               {
-                title: <a onClick={handleBack}>Services</a>,
-              },
-              ...(!isMobile ? [{
                 title: configLoaded ? (
                   <Text
                     ellipsis={{ tooltip: apiConfig.name || t('service.newService') }}
-                    style={{ margin: 0, maxWidth: 200, cursor: 'pointer' }}
+                    style={{ margin: 0, maxWidth: isMobile ? 120 : 200, cursor: 'pointer' }}
                     onClick={() => {
                       setActiveView('Settings');
                       saveViewPreference(serviceId, 'Settings');
@@ -2581,7 +2583,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                     {apiConfig.name || t('service.newService')}
                   </Text>
                 ) : '...',
-              }] : []),
+              },
             ]}
           />
         </Space>

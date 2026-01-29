@@ -70,6 +70,7 @@ export async function proxy(req: NextRequest) {
     '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
+    '/api/analytics', // Analytics dashboard requires auth
     // '/api/warm', // Removed - cron jobs need unauthenticated access
     '/api/mcp/tokens', // MCP token management requires auth
     '/api/mcp/create-token', // MCP token creation requires auth
@@ -235,8 +236,9 @@ export const config = {
     '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
+    '/api/analytics',
     // '/api/warm', // Removed - cron jobs need unauthenticated access
-    
+
     // MCP routes (token management needs auth)
     '/api/mcp/tokens/:path*',
     '/api/mcp/create-token',
