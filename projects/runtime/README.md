@@ -171,6 +171,158 @@ docker run \
 
 Configuration is logged on container startup - check logs to verify settings.
 
+## Production Deployment Guide
+
+### Recommended Setup
+
+The runtime is designed for enterprise on-premises deployment. Start with the default settings - they are optimized for most workloads.
+
+```yaml
+# docker-compose.yml (production)
+services:
+  spreadapi-runtime:
+    image: spreadapi-runtime
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - SPREADJS_LICENSE_KEY=${SPREADJS_LICENSE_KEY}
+    volumes:
+      - ./services:/app/services
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+### Performance Characteristics
+
+| Mode | Response Time | Memory Usage | Use Case |
+|------|---------------|--------------|----------|
+| **Shared workbook** (default) | ~50ms | Higher, stable | Standard deployments |
+| **Stateless** | ~200-500ms | Lower per request | High isolation needs |
+| **With result cache** | <5ms (cache hit) | +~50MB | Repeated identical calls |
+
+### Deployment Scenarios
+
+**Standard Deployment (< 100 calls/hour)**
+```bash
+# Use defaults - no configuration needed
+docker compose up -d
+```
+
+**High-Volume Deployment (> 1000 calls/hour)**
+```bash
+# Use stateless mode with multiple containers behind load balancer
+docker compose up -d --scale runtime=4
+```
+
+With stateless configuration:
+```yaml
+environment:
+  - SPREADAPI_SHARED_WORKBOOK=false
+  - SPREADAPI_RESULT_CACHE=true
+```
+
+**Maximum Isolation (Financial/Audit Requirements)**
+```yaml
+environment:
+  - SPREADAPI_SHARED_WORKBOOK=false
+  - SPREADAPI_RESULT_CACHE=false
+```
+
+### Monitoring
+
+Check the health endpoint for runtime status:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+Response includes:
+- Service count and list
+- Cache statistics
+- Memory usage
+- Request analytics
+
+### Troubleshooting
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| Memory usage > 1.5GB | Normal cache growth | Container will self-manage; or restart weekly via cron |
+| Occasional unexpected results | Rare race condition | Set `SPREADAPI_SHARED_WORKBOOK=false` |
+| Slow response times | Cold start or stateless mode | Enable result cache; use shared workbook mode |
+| Container restarts | Memory limit reached | Normal behavior - health check triggers restart |
+
+**Quick fixes:**
+
+```bash
+# Restart container (clears all caches)
+docker restart spreadapi-runtime
+
+# Switch to guaranteed-safe mode
+docker compose down
+# Add SPREADAPI_SHARED_WORKBOOK=false to environment
+docker compose up -d
+
+# Check logs for errors
+docker compose logs -f --tail=100
+```
+
+### Maintenance
+
+The runtime is designed to be low-maintenance ("wartungsarm"):
+
+- **Auto-restart**: Container restarts automatically on crash
+- **Health checks**: Docker detects unresponsive container and restarts it
+- **Cache limits**: Caches auto-evict old entries, no manual cleanup needed
+- **Log rotation**: Logs are stored by date in `/app/logs/`
+
+**Optional scheduled restart** (for long-running deployments):
+
+```bash
+# Add to crontab for weekly restart (Sunday 3 AM)
+0 3 * * 0 docker restart spreadapi-runtime
+```
+
+### Security Considerations
+
+- Run in private network only - no built-in authentication
+- Use reverse proxy (nginx, traefik) for TLS termination
+- Mount services directory read-only if services won't change:
+  ```yaml
+  volumes:
+    - ./services:/app/services:ro
+  ```
+
+### Scaling
+
+**Vertical scaling**: Increase memory limit for more cached workbooks
+```yaml
+deploy:
+  resources:
+    limits:
+      memory: 4G
+```
+
+**Horizontal scaling**: Run multiple containers (use stateless mode)
+```yaml
+services:
+  runtime:
+    # ... config ...
+    environment:
+      - SPREADAPI_SHARED_WORKBOOK=false
+    deploy:
+      replicas: 4
+```
+
 ## Service JSON Format
 
 The uploaded JSON should have this structure:
