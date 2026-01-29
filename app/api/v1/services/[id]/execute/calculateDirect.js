@@ -2,7 +2,7 @@ import redis from '@/lib/redis';
 import { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } from '@/lib/cacheHelpers';
 import { getApiDefinition } from '@/utils/helperApi';
 import { validateServiceToken } from '@/utils/tokenAuth';
-import { validateParameters, applyDefaults, coerceTypes } from '@/lib/parameterValidation.js';
+import { validateParameters, applyDefaults, coerceTypes, NULL_DEFAULT_VALUE } from '@/lib/parameterValidation.js';
 import {
   getSheetNameFromAddress,
   getIsSingleCellFromAddress,
@@ -415,7 +415,12 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
       if (inputDef) {
         // Value is already validated and type-coerced
-        const cellValue = input.value;
+        let cellValue = input.value;
+
+        // Handle NULL_DEFAULT_VALUE marker - clear the cell
+        if (cellValue === NULL_DEFAULT_VALUE) {
+          cellValue = null;
+        }
 
         let inputSheetName = getSheetNameFromAddress(inputDef.address);
         if (inputSheetName !== actualSheetName) {

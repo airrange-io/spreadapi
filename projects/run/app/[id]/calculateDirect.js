@@ -2,7 +2,7 @@ import redis from '../../lib/redis.js';
 import { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } from '../../lib/cacheHelpers.ts';
 import { getApiDefinition } from '../../utils/helperApi.js';
 import { validateServiceToken } from '../../utils/tokenAuth.js';
-import { validateParameters, applyDefaults, coerceTypes } from '../../lib/parameterValidation.js';
+import { validateParameters, applyDefaults, coerceTypes, NULL_DEFAULT_VALUE } from '../../lib/parameterValidation.js';
 import { getSheetNameFromAddress, getIsSingleCellFromAddress, getRangeAsOffset, getDateForCallsLog } from '../../utils/helper.js';
 import { triggerWebhook } from '../../lib/webhookHelpers.js';
 import { triggerPusherEvent } from '../../lib/pusher/server.js';
@@ -347,6 +347,12 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     for (const input of inputList) {
       const inputDef = inputDefMap.get(input.name);
       if (inputDef) {
+        // Handle NULL_DEFAULT_VALUE marker - clear the cell
+        let cellValue = input.value;
+        if (cellValue === NULL_DEFAULT_VALUE) {
+          cellValue = null;
+        }
+
         let inputSheetName = getSheetNameFromAddress(inputDef.address);
         if (inputSheetName !== actualSheetName) {
           actualSheet = spread.getSheetFromName(inputSheetName);
@@ -358,7 +364,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         }
 
         try {
-          actualSheet.getCell(inputDef.row, inputDef.col).value(input.value);
+          actualSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
         } catch (cellError) {
           console.error(`[calculateDirect] Failed to set input cell for ${input.name} in ${serviceId}:`, cellError.message);
           return { error: `failed to set input: ${input.name}` };
@@ -367,7 +373,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         answerInputs.push({
           name: inputDef.name ?? input.name,
           title: inputDef.title || inputDef.name || input.name,
-          value: input.value,
+          value: cellValue,
         });
       }
     }

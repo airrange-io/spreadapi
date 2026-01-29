@@ -4,6 +4,12 @@ const { createWorkbookFromJson } = require('./spreadjs');
 const { logRequest } = require('./logger');
 const resultCache = require('./resultCache');
 
+/**
+ * Special marker value indicating that a cell should be cleared to null.
+ * Used when an optional parameter's default is explicitly "empty".
+ */
+const NULL_DEFAULT_VALUE = '__SPREADAPI_NULL__';
+
 // Helper: get sheet name from address like "Sheet1!B2"
 function getSheetName(address) {
   if (!address) return '';
@@ -154,12 +160,16 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
         activeSheetName = activeSheet.name();
       }
 
-      // Set cell value
-      activeSheet.getCell(inputDef.row, inputDef.col).value(value);
+      // Set cell value - handle NULL_DEFAULT_VALUE marker by clearing the cell
+      let cellValue = value;
+      if (cellValue === NULL_DEFAULT_VALUE) {
+        cellValue = null;
+      }
+      activeSheet.getCell(inputDef.row, inputDef.col).value(cellValue);
       answerInputs.push({
         name: inputDef.name,
         title: inputDef.title || inputDef.name,
-        value,
+        value: cellValue,
       });
     }
 
@@ -242,4 +252,5 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
 
 module.exports = {
   executeCalculation,
+  NULL_DEFAULT_VALUE,
 };

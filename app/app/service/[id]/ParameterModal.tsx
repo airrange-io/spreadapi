@@ -5,6 +5,7 @@ import { Modal, Form, Input, Select, Button, Space, Alert, Checkbox, Segmented, 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { validateRangeFormat } from '@/lib/rangeValidation';
 import { useTranslation } from '@/lib/i18n';
+import { NULL_DEFAULT_VALUE } from '@/lib/parameterValidation';
 
 interface InputDefinition {
   id: string;
@@ -301,6 +302,18 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             return val;
           };
 
+          // Determine the defaultValue for optional input parameters
+          let finalDefaultValue = normalizeValue(values.defaultValue);
+
+          // For optional input parameters: if no default value was specified,
+          // use NULL_DEFAULT_VALUE marker to indicate "clear the cell"
+          // This prevents stale values when the process cache is reused
+          if (parameterType === 'input' && values.mandatory === false) {
+            if (finalDefaultValue === undefined || finalDefaultValue === null) {
+              finalDefaultValue = NULL_DEFAULT_VALUE;
+            }
+          }
+
           // For input parameters, detect and set format based on formatString
           let processedValues = {
             ...values,
@@ -308,7 +321,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             name: values.name?.toLowerCase().trim(),
             min: normalizeValue(values.min),
             max: normalizeValue(values.max),
-            defaultValue: normalizeValue(values.defaultValue)
+            defaultValue: finalDefaultValue
           };
 
           if (parameterType === 'input' && values.formatString) {

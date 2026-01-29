@@ -2,6 +2,11 @@
  * Parameter Validation - Stripped for performance
  */
 
+/**
+ * Special marker value indicating that a cell should be cleared to null.
+ */
+export const NULL_DEFAULT_VALUE = '__SPREADAPI_NULL__';
+
 function coerceToBoolean(value) {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value === 1 ? true : value === 0 ? false : null;
@@ -167,8 +172,13 @@ export function applyDefaults(inputs, inputDefinitions) {
       }
 
       if (providedValue === undefined || providedValue === null || providedValue === '') {
-        const validation = validateSingleParameter(inputDef.defaultValue, inputDef);
-        if (validation.valid) result[paramName] = validation.coercedValue;
+        // Special case: NULL_DEFAULT_VALUE marker means "clear the cell"
+        if (inputDef.defaultValue === NULL_DEFAULT_VALUE) {
+          result[paramName] = NULL_DEFAULT_VALUE;
+        } else {
+          const validation = validateSingleParameter(inputDef.defaultValue, inputDef);
+          if (validation.valid) result[paramName] = validation.coercedValue;
+        }
       }
     }
   }
