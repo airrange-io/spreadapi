@@ -424,7 +424,7 @@ export default function SecurityPage() {
                           Need Complete Data Sovereignty?
                         </h2>
                         <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '24px', fontSize: '18px' }}>
-                          Deploy SpreadAPI in your own infrastructure. Zero external connections, air-gap compatible, no vendor access to your data.
+                          Deploy SpreadAPI Runtime in your own infrastructure. Zero external connections, air-gap compatible for runtime execution, no vendor access to your data.
                         </p>
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                           <a href="/on-premises" style={{
@@ -468,8 +468,8 @@ export default function SecurityPage() {
                             <path d="M8 21h8M12 17v4"/>
                           </svg>
                           <div>
-                            <div style={{ color: 'white', fontWeight: '600' }}>Air-Gap Ready</div>
-                            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>No internet connection required</div>
+                            <div style={{ color: 'white', fontWeight: '600' }}>Air-Gap Ready Runtime</div>
+                            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>No internet connection required for execution</div>
                           </div>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>

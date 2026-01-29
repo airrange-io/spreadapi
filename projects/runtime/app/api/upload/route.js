@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { saveService } from '@/lib/storage';
-import { clearCache } from '@/lib/calculate';
 
 // POST /api/upload - Upload a service JSON
 export async function POST(request) {
@@ -59,9 +58,6 @@ export async function POST(request) {
 
     // Save to storage
     await saveService(serviceId, service);
-
-    // Clear any cached workbook
-    clearCache(serviceId);
 
     return NextResponse.json({
       success: true,

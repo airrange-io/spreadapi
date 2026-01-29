@@ -1,7 +1,9 @@
-// Simple file-based service storage
+// File-based service storage with in-memory caching
 
 const fs = require('fs').promises;
 const path = require('path');
+const serviceCache = require('./serviceCache');
+const resultCache = require('./resultCache');
 
 const SERVICES_DIR = path.join(process.cwd(), 'services');
 
@@ -13,26 +15,68 @@ async function ensureDir() {
   }
 }
 
+/**
+ * Validate serviceId to prevent path traversal attacks
+ */
+function isValidServiceId(serviceId) {
+  if (!serviceId || typeof serviceId !== 'string') return false;
+  // Only allow alphanumeric, dash, underscore
+  return /^[a-zA-Z0-9_-]+$/.test(serviceId);
+}
+
 async function saveService(serviceId, data) {
+  if (!isValidServiceId(serviceId)) {
+    throw new Error('Invalid service ID');
+  }
+
   await ensureDir();
   const filePath = path.join(SERVICES_DIR, `${serviceId}.json`);
   await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+
+  // Invalidate caches - service data changed
+  serviceCache.invalidate(serviceId);
+  resultCache.invalidateService(serviceId);
 }
 
 async function getService(serviceId) {
+  if (!isValidServiceId(serviceId)) {
+    return null;
+  }
+
+  // Check cache first
+  const cached = serviceCache.get(serviceId);
+  if (cached) {
+    return cached;
+  }
+
+  // Read from filesystem
   try {
     const filePath = path.join(SERVICES_DIR, `${serviceId}.json`);
     const content = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(content);
+    const service = JSON.parse(content);
+
+    // Cache for next request
+    serviceCache.set(serviceId, service);
+
+    return service;
   } catch (err) {
     return null;
   }
 }
 
 async function deleteService(serviceId) {
+  if (!isValidServiceId(serviceId)) {
+    return false;
+  }
+
   try {
     const filePath = path.join(SERVICES_DIR, `${serviceId}.json`);
     await fs.unlink(filePath);
+
+    // Invalidate caches
+    serviceCache.invalidate(serviceId);
+    resultCache.invalidateService(serviceId);
+
     return true;
   } catch (err) {
     return false;
@@ -76,4 +120,5 @@ module.exports = {
   getService,
   deleteService,
   listServices,
+  isValidServiceId,
 };

@@ -1,12 +1,9 @@
 // SpreadJS server-side initialization
+// Stateless: each request creates a fresh workbook from JSON
 
 let isInitialized = false;
 let SpreadJS = null;
 let browserEnvSetup = false;
-
-// In-memory workbook cache
-const workbookCache = new Map();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function setupBrowserEnvironment() {
   if (browserEnvSetup) {
@@ -97,39 +94,21 @@ function createWorkbook() {
   return new MC.Spread.Sheets.Workbook();
 }
 
-function getCachedWorkbook(serviceId, fileJson) {
-  const cached = workbookCache.get(serviceId);
-
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return { workbook: cached.workbook, fromCache: true };
-  }
-
+/**
+ * Create a fresh workbook from JSON (stateless)
+ * Each request gets a new workbook instance - no shared state
+ */
+function createWorkbookFromJson(fileJson) {
   const workbook = createWorkbook();
   workbook.fromJSON(fileJson, {
     calcOnDemand: false,
     doNotRecalculateAfterLoad: true,
   });
-
-  // Cache it
-  workbookCache.set(serviceId, {
-    workbook,
-    timestamp: Date.now(),
-  });
-
-  return { workbook, fromCache: false };
-}
-
-function clearCache(serviceId) {
-  if (serviceId) {
-    workbookCache.delete(serviceId);
-  } else {
-    workbookCache.clear();
-  }
+  return workbook;
 }
 
 module.exports = {
   getSpreadJS,
   createWorkbook,
-  getCachedWorkbook,
-  clearCache,
+  createWorkbookFromJson,
 };

@@ -4112,7 +4112,7 @@ export const onPremisesPage = {
       dataSovereignty: 'Full Data Sovereignty',
       zeroDependencies: 'Zero External Dependencies',
       noCloud: 'No Cloud Storage',
-      airGapped: 'Air-Gapped Ready',
+      airGapped: 'Air-Gap Compatible Runtime',
     },
     challenge: {
       subheading: 'The Challenge',
@@ -4234,7 +4234,7 @@ export const onPremisesPage = {
       dataSovereignty: 'Volle Datensouveränität',
       zeroDependencies: 'Keine externen Abhängigkeiten',
       noCloud: 'Kein Cloud-Speicher',
-      airGapped: 'Air-Gap-fähig',
+      airGapped: 'Air-Gap-kompatibles Runtime',
     },
     challenge: {
       subheading: 'Die Herausforderung',

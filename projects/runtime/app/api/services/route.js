@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { listServices, getService, deleteService } from '@/lib/storage';
-import { clearCache } from '@/lib/calculate';
+import { listServices, deleteService } from '@/lib/storage';
 
 // GET /api/services - List all services
 export async function GET() {
@@ -33,7 +32,6 @@ export async function DELETE(request) {
 
     const deleted = await deleteService(serviceId);
     if (deleted) {
-      clearCache(serviceId);
       return NextResponse.json({ success: true, serviceId });
     } else {
       return NextResponse.json(

@@ -1,7 +1,8 @@
-// Core calculation engine
+// Core calculation engine (stateless with L1 result caching)
 
-const { getCachedWorkbook, clearCache } = require('./spreadjs');
+const { createWorkbookFromJson } = require('./spreadjs');
 const { logRequest } = require('./logger');
+const resultCache = require('./resultCache');
 
 // Helper: get sheet name from address like "Sheet1!B2"
 function getSheetName(address) {
@@ -79,13 +80,6 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
     const finalInputs = {};
     const validationErrors = [];
 
-    // Create lookup map
-    const inputDefMap = new Map();
-    for (const inp of apiInputs) {
-      inputDefMap.set(inp.name.toLowerCase(), inp);
-    }
-
-    // Check required inputs
     for (const inputDef of apiInputs) {
       const providedValue = inputs[inputDef.name] ?? inputs[inputDef.name?.toLowerCase()];
       const result = validateInput(providedValue, inputDef);
@@ -113,10 +107,35 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
       return error;
     }
 
-    // 2. Get workbook (from cache or create new)
-    const { workbook, fromCache } = getCachedWorkbook(serviceId, fileJson);
+    // 2. Check L1 result cache (after validation, before expensive calculation)
+    const cachedResult = resultCache.get(serviceId, finalInputs);
+    if (cachedResult) {
+      const executionTime = Date.now() - startTime;
+      logRequest({
+        serviceId,
+        inputs: finalInputs,
+        outputCount: cachedResult.outputs?.length || 0,
+        executionTime,
+        cached: true,
+        status: 'success',
+        ...requestInfo,
+      });
+      return {
+        ...cachedResult,
+        metadata: {
+          ...cachedResult.metadata,
+          executionTime,
+          timestamp: new Date().toISOString(),
+          fromCache: true,
+          cacheLayer: 'L1:Result',
+        },
+      };
+    }
 
-    // 3. Set input values
+    // 3. Create fresh workbook from JSON (stateless - no shared state between requests)
+    const workbook = createWorkbookFromJson(fileJson);
+
+    // 4. Set input values
     let activeSheet = workbook.getActiveSheet();
     let activeSheetName = activeSheet.name();
     const answerInputs = [];
@@ -144,7 +163,7 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
       });
     }
 
-    // 4. Read output values
+    // 5. Read output values
     const answerOutputs = [];
 
     for (const outputDef of apiOutputs) {
@@ -177,29 +196,32 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
 
     const executionTime = Date.now() - startTime;
 
-    // 5. Log the request
-    logRequest({
-      serviceId,
-      inputs: finalInputs,
-      outputCount: answerOutputs.length,
-      executionTime,
-      cached: fromCache,
-      status: 'success',
-      ...requestInfo,
-    });
-
-    // 6. Return result
-    return {
+    // 6. Build result
+    const result = {
       serviceId,
       serviceName: apiJson?.title || apiJson?.name || serviceId,
       inputs: answerInputs,
       outputs: answerOutputs,
       metadata: {
         executionTime,
-        cached: fromCache,
         timestamp: new Date().toISOString(),
       },
     };
+
+    // 7. Cache result for future requests with same inputs
+    resultCache.set(serviceId, finalInputs, result);
+
+    // 8. Log the request
+    logRequest({
+      serviceId,
+      inputs: finalInputs,
+      outputCount: answerOutputs.length,
+      executionTime,
+      status: 'success',
+      ...requestInfo,
+    });
+
+    return result;
 
   } catch (err) {
     const executionTime = Date.now() - startTime;
@@ -220,5 +242,4 @@ async function executeCalculation(service, inputs, requestInfo = {}) {
 
 module.exports = {
   executeCalculation,
-  clearCache,
 };
