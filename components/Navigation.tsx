@@ -13,7 +13,7 @@ const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitche
 });
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'stop-rewriting-excel-in-code' | 'automation-calculations' | 'excel-ai-integration' | 'on-premises' | 'blog' | 'pricing' | 'docs';
+  currentPage: 'product' | 'how-excel-api-works' | 'stop-rewriting-excel-in-code' | 'automation-calculations' | 'excel-ai-integration' | 'on-premises' | 'blog' | 'pricing' | 'docs' | 'security';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
@@ -39,13 +39,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
   };
 
   // Define menu items with their labels and paths
-  // All items shown on all pages (except Enterprise which hides on medium screens)
+  // All items shown on all pages (except Enterprise and Pricing which hide on medium screens)
   const menuItems = [
     { label: t.nav.howItWorks, path: `${prefix}/how-excel-api-works`, key: 'how-excel-api-works', hideOnMedium: false },
     { label: t.nav.developers, path: `${prefix}/stop-rewriting-excel-in-code`, key: 'stop-rewriting-excel-in-code', hideOnMedium: false },
     { label: t.nav.automations, path: `${prefix}/automation-calculations`, key: 'automation-calculations', hideOnMedium: false },
     { label: t.nav.ai, path: `${prefix}/excel-ai-integration`, key: 'excel-ai-integration', hideOnMedium: false },
     { label: t.nav.enterprise || 'Enterprise', path: `${prefix}/on-premises`, key: 'on-premises', hideOnMedium: true },
+    { label: t.nav.pricing || 'Pricing', path: '/pricing', key: 'pricing', hideOnMedium: true },
   ];
 
   // Show all menu items, highlight current page

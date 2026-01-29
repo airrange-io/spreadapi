@@ -46,15 +46,21 @@ const Footer: React.FC<FooterProps> = ({ locale = 'en', currentPath = '' }) => {
                       <a href={`${prefix}/automation-calculations`} className="footer-link">{t.footer.forAutomations}</a>
                       <a href={`${prefix}/excel-ai-integration`} className="footer-link">{t.footer.aiIntegration}</a>
                       <a href={`${prefix}/on-premises`} className="footer-link">{t.footer.enterprise || 'Enterprise'}</a>
+                    </div>
+                  </div>
+                  <div className="footer-menu-column">
+                    <div className="footer-menu-title">{t.footer.resources || 'Resources'}</div>
+                    <div className="footer-menu-list">
                       <a href="/docs" className="footer-link">{t.footer.documentation}</a>
+                      <a href="/security" className="footer-link">{t.footer.security || 'Security'}</a>
                       <a href="/pricing" className="footer-link">{t.footer.pricing}</a>
+                      <a href="/blog" className="footer-link">{t.footer.blog}</a>
                     </div>
                   </div>
                   <div className="footer-menu-column">
                     <div className="footer-menu-title">{t.footer.company}</div>
                     <div className="footer-menu-list">
                       <a href="https://www.airrange.io/imprint" className="footer-link">{t.footer.about}</a>
-                      <a href="/blog" className="footer-link">{t.footer.blog}</a>
                       <a href="https://www.airrange.io/contact-us" className="footer-link">{t.footer.contact}</a>
                     </div>
                   </div>

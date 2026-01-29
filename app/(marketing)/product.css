@@ -1313,8 +1313,8 @@ p {
 
 .footer-content-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4rem;
+  grid-template-columns: 1fr 1fr 1fr 1.5fr;
+  gap: 3rem;
   align-items: start;
   width: 100%;
 }
@@ -1354,6 +1354,7 @@ p {
 .footer-menu-list {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.75rem;
 }
 
@@ -1440,16 +1441,24 @@ p {
 /* Footer Responsive */
 @media (max-width: 992px) {
   .footer-content-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem;
+  }
+
+  .footer-menu-column {
+    text-align: left;
+  }
+
+  .footer-menu-list {
+    align-items: flex-start;
   }
 
   /* Logo section takes full row at bottom */
   .footer-right-section {
     grid-column: 1 / -1;
-    margin-top: 2rem;
-    align-items: center;
-    text-align: center;
+    margin-top: 1rem;
+    align-items: flex-start;
+    text-align: left;
   }
 }
 
@@ -1473,23 +1482,24 @@ p {
 
 @media (max-width: 767px) {
   .footer-content-grid {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
   }
-  
+
   .footer-menu-column {
-    text-align: center;
+    text-align: left;
   }
-  
+
   .footer-menu-list {
-    align-items: center;
+    align-items: flex-start;
   }
-  
-  /* Logo section no longer needs special handling in single column */
+
+  /* Logo section takes full row */
   .footer-right-section {
-    margin-top: 0;
-    text-align: center;
-    align-items: center;
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+    text-align: left;
+    align-items: flex-start;
   }
   
   /* Reduce padding on mobile */

@@ -821,6 +821,7 @@ export const marketing = {
       enterprise: 'Enterprise',
       getStarted: 'Get Started',
       home: 'Home',
+      pricing: 'Pricing',
     },
     // Footer
     footer: {
@@ -833,6 +834,8 @@ export const marketing = {
       enterprise: 'Enterprise',
       documentation: 'Documentation',
       pricing: 'Pricing',
+      security: 'Security',
+      resources: 'Resources',
       company: 'Company',
       about: 'About',
       blog: 'Blog',
@@ -863,6 +866,7 @@ export const marketing = {
       enterprise: 'Enterprise',
       getStarted: 'Loslegen',
       home: 'Start',
+      pricing: 'Preise',
     },
     footer: {
       product: 'Produkt',
@@ -874,6 +878,8 @@ export const marketing = {
       enterprise: 'Enterprise',
       documentation: 'Dokumentation',
       pricing: 'Preise',
+      security: 'Sicherheit',
+      resources: 'Ressourcen',
       company: 'Unternehmen',
       about: 'Über uns',
       blog: 'Blog',
@@ -903,6 +909,7 @@ export const marketing = {
       enterprise: 'Enterprise',
       getStarted: 'Commencer',
       home: 'Accueil',
+      pricing: 'Tarifs',
     },
     footer: {
       product: 'Produit',
@@ -914,6 +921,8 @@ export const marketing = {
       enterprise: 'Enterprise',
       documentation: 'Documentation',
       pricing: 'Tarifs',
+      security: 'Sécurité',
+      resources: 'Ressources',
       company: 'Entreprise',
       about: 'À propos',
       blog: 'Blog',
@@ -943,6 +952,7 @@ export const marketing = {
       enterprise: 'Enterprise',
       getStarted: 'Empezar',
       home: 'Inicio',
+      pricing: 'Precios',
     },
     footer: {
       product: 'Producto',
@@ -953,6 +963,8 @@ export const marketing = {
       aiIntegration: 'Integración IA',
       documentation: 'Documentación',
       pricing: 'Precios',
+      security: 'Seguridad',
+      resources: 'Recursos',
       company: 'Empresa',
       about: 'Nosotros',
       blog: 'Blog',
@@ -985,6 +997,7 @@ export type MarketingTranslations = {
     enterprise: string;
     getStarted: string;
     home: string;
+    pricing?: string;
   };
   footer: {
     product: string;
@@ -1004,6 +1017,8 @@ export type MarketingTranslations = {
     privacyPolicy: string;
     termsOfService: string;
     enterprise?: string;
+    security?: string;
+    resources?: string;
   };
   common: {
     getStartedFree: string;
