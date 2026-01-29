@@ -82,21 +82,27 @@ export async function logCalls(apiId, apiToken) {
     }
 
     const results = await multi.exec();
+    console.log(`[logCalls] userId=${userId}, results.length=${results?.length}`);
 
     // Trigger Pusher if debounce allows (last two results are debounce + count)
     if (userId && results && results.length >= 2) {
-      const shouldSend = results[results.length - 2] === 'OK';
+      const debounceResult = results[results.length - 2];
       const newCallCount = results[results.length - 1];
-      console.log(`[Pusher] userId=${userId}, shouldSend=${shouldSend}, count=${newCallCount}`);
+      const shouldSend = debounceResult === 'OK';
+      console.log(`[Pusher] debounceResult=${debounceResult}, shouldSend=${shouldSend}, count=${newCallCount}`);
       if (shouldSend) {
-        triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
+        console.log(`[Pusher] Triggering event for user ${userId}`);
+        await triggerPusherEvent(`private-user-${userId}`, 'call-count-update', {
           serviceId: apiId,
           calls: parseInt(newCallCount) || 0,
         });
+        console.log(`[Pusher] Event triggered successfully`);
       }
+    } else {
+      console.log(`[Pusher] Skipped: userId=${userId}, resultsLength=${results?.length}`);
     }
   } catch (error) {
-    console.error("Log calls error:", error);
+    console.error("[logCalls] Error:", error);
   }
 }
 
