@@ -304,6 +304,8 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
           // For input parameters, detect and set format based on formatString
           let processedValues = {
             ...values,
+            // Enforce lowercase parameter names for consistent lookups
+            name: values.name?.toLowerCase().trim(),
             min: normalizeValue(values.min),
             max: normalizeValue(values.max),
             defaultValue: normalizeValue(values.defaultValue)
@@ -403,7 +405,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({
             : (selectedCellInfo?.dropdownItems || undefined),
           allowedValuesRange: editingParameter && 'allowedValuesRange' in editingParameter ? editingParameter.allowedValuesRange : undefined,
           allowedValuesCaseSensitive: editingParameter && 'allowedValuesCaseSensitive' in editingParameter ? editingParameter.allowedValuesCaseSensitive : false,
-          defaultValue: editingParameter && 'defaultValue' in editingParameter ? editingParameter.defaultValue : undefined,
+          defaultValue: editingParameter && 'defaultValue' in editingParameter ? editingParameter.defaultValue : selectedCellInfo?.value,
           // Format string (for outputs) - build simple format from detected Excel format
           formatString: (() => {
             // If editing existing parameter, use its formatString
