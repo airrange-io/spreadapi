@@ -7,6 +7,7 @@ import { executeAreaRead } from '../../../../../lib/mcp/areaExecutors.js';
 import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js';
 import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
 import { getSingleServiceInstructions } from '../../../../../lib/mcp-ai-instructions.js';
+import { normalizeInputKeys } from '../../../../../lib/inputNormalizer.js';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -878,12 +879,15 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 
     switch (toolName) {
       case 'spreadapi_calc': {
+        // Normalize input keys to lowercase for consistent lookups
+        const normalizedInputs = normalizeInputKeys(toolArgs.inputs);
+
         // Single calculation - use optimized path when no area updates
         if (!toolArgs.areaUpdates || toolArgs.areaUpdates.length === 0) {
           // No area updates - use the standard, battle-tested calculateDirect
           const calcResult = await calculateDirect(
             serviceId,
-            toolArgs.inputs || {},
+            normalizedInputs,
             null, // token handled by MCP auth layer
             {}   // no special options
           );
@@ -901,7 +905,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
           // Area updates present - use enhanced calc
           result = await executeEnhancedCalc(
             serviceId,
-            toolArgs.inputs,
+            normalizedInputs,
             toolArgs.areaUpdates,
             {},
             null
@@ -930,11 +934,14 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
         for (let index = 0; index < scenarios.length; index++) {
           const scenario = scenarios[index];
           try {
+            // Normalize input keys to lowercase for consistent lookups
+            const normalizedScenarioInputs = normalizeInputKeys(scenario.inputs);
+
             // Batch calculations typically don't have area updates
             // Use calculateDirect for better performance and reliability
             const calcResult = await calculateDirect(
               serviceId,
-              scenario.inputs || {},
+              normalizedScenarioInputs,
               null, // token handled by MCP auth layer
               {}   // no special options
             );

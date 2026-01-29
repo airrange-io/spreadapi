@@ -7,6 +7,7 @@ import { executeAreaRead, executeAreaUpdate } from '@/lib/mcp/areaExecutors';
 import { executeEnhancedCalc } from '@/lib/mcp/executeEnhancedCalc';
 import { calculateDirect } from '../v1/services/[id]/execute/calculateDirect';
 import { getChatServiceInstructions, PERCENTAGE_CONVERSION_RULES } from '@/lib/mcp-ai-instructions';
+import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -694,13 +695,15 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
               const { areaUpdates, returnAreaData, ...rawInputs } = inputs;
               
               // Filter out only the actual calculation inputs (not the enhanced parameters)
-              const calculationInputs = {};
+              // and normalize keys to lowercase for consistent lookups
+              const filteredInputs = {};
               for (const [key, value] of Object.entries(rawInputs)) {
                 if (inputSchemas[key]) {
-                  calculationInputs[key] = value;
+                  filteredInputs[key] = value;
                 }
               }
-              
+              const calculationInputs = normalizeInputKeys(filteredInputs);
+
               // If area updates are provided, use enhanced calc
               if (areaUpdates && areaUpdates.length > 0) {
                 const returnOptions = {
@@ -853,8 +856,11 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
               const results = await Promise.all(
                 calculations.map(async (params, index) => {
                   try {
+                    // Normalize input keys to lowercase for consistent lookups
+                    const normalizedParams = normalizeInputKeys(params);
+
                     // Use V1 API direct calculation (no HTTP overhead)
-                    const data = await calculateDirect(serviceId, params, null, {});
+                    const data = await calculateDirect(serviceId, normalizedParams, null, {});
 
                     if (data.error) {
                       throw new Error(data.error);

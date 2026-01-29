@@ -3,6 +3,7 @@ import redis from '@/lib/redis';
 import { calculateDirect, logCalls } from '../execute/calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
+import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
 // Vercel timeout configuration - Critical for batch processing!
 export const maxDuration = 30;
@@ -106,9 +107,12 @@ export async function POST(
             throw new Error(`Request ${index}: inputs must be an object`);
           }
 
+          // Normalize input keys to lowercase for consistent lookups
+          const normalizedInputs = normalizeInputKeys(req.inputs);
+
           const result = await calculateDirect(
             serviceId,
-            req.inputs,
+            normalizedInputs,
             token,
             {
               nocdn: body.nocdn || req.nocdn,

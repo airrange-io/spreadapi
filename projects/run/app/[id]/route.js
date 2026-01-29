@@ -4,6 +4,7 @@ import { calculateDirect, logCalls } from './calculateDirect.js';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '../../lib/rateLimit.ts';
 import { createErrorResponse } from '../../lib/errors.ts';
 import { parseAuthToken } from '../../utils/tokenUtils.js';
+import { normalizeInputKeys } from '../../lib/inputNormalizer.js';
 
 export const maxDuration = 30;
 
@@ -108,8 +109,11 @@ export async function POST(request, { params }) {
       }, { status: 404 });
     }
 
+    // Normalize input keys to lowercase for consistent lookups
+    const normalizedInputs = normalizeInputKeys(body.inputs);
+
     // Execute
-    const result = await calculateDirect(serviceId, body.inputs, token, {
+    const result = await calculateDirect(serviceId, normalizedInputs, token, {
       nocdn: body.nocdn,
       nocache: body.nocache,
       isWebAppAuthenticated
@@ -221,9 +225,9 @@ export async function GET(request, { params }) {
     let token = null;
 
     for (const [key, value] of searchParams) {
-      if (key === 'token') {
+      if (key.toLowerCase() === 'token') {
         token = value;
-      } else if (!['nocdn', 'nocache'].includes(key) && !key.startsWith('_')) {
+      } else if (!['nocdn', 'nocache'].includes(key.toLowerCase()) && !key.startsWith('_')) {
         let parsedValue = value;
         if (value === 'true') parsedValue = true;
         else if (value === 'false') parsedValue = false;
@@ -231,7 +235,8 @@ export async function GET(request, { params }) {
           const numValue = Number(value);
           if (!isNaN(numValue) && value !== '') parsedValue = numValue;
         }
-        inputs[key] = parsedValue;
+        // Normalize key to lowercase for consistent lookups
+        inputs[key.toLowerCase()] = parsedValue;
       }
     }
 

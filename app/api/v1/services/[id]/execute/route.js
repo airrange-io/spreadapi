@@ -4,6 +4,7 @@ import { calculateDirect, logCalls } from './calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 import { parseAuthToken } from '@/utils/tokenUtils';
+import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -85,9 +86,13 @@ export async function POST(request, { params}) {
     // Result cache check now handled inside calculateDirect()
     // This allows all callers (route, MCP, chat) to benefit from result caching
 
+    // Normalize input keys to lowercase for consistent lookups
+    // This ensures { "Price": 100 } and { "price": 100 } are treated the same
+    const normalizedInputs = normalizeInputKeys(body.inputs);
+
     // Use direct calculation instead of HTTP call
     const calcStart = Date.now();
-    const result = await calculateDirect(serviceId, body.inputs, token, {
+    const result = await calculateDirect(serviceId, normalizedInputs, token, {
       nocdn: body.nocdn,
       nocache: body.nocache,
       isWebAppAuthenticated
@@ -228,9 +233,9 @@ export async function GET(request, { params }) {
     let token = null;
 
     for (const [key, value] of searchParams) {
-      if (key === 'token') {
+      if (key.toLowerCase() === 'token') {
         token = value;
-      } else if (key === 'nocdn' || key === 'nocache') {
+      } else if (key.toLowerCase() === 'nocdn' || key.toLowerCase() === 'nocache') {
         // Skip nocdn and nocache - already extracted above
       } else if (!key.startsWith('_')) {
         // Parse value types: boolean > number > string
@@ -249,7 +254,8 @@ export async function GET(request, { params }) {
           }
         }
 
-        inputs[key] = parsedValue;
+        // Normalize key to lowercase for consistent lookups
+        inputs[key.toLowerCase()] = parsedValue;
       }
     }
     

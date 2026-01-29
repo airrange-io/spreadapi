@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getService } from '@/lib/storage';
 import { executeCalculation } from '@/lib/calculate';
+import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
 export const maxDuration = 30;
 
@@ -9,7 +10,10 @@ export async function POST(request, { params }) {
   try {
     const { serviceId } = await params;
     const body = await request.json();
-    const inputs = body.inputs || body;
+    const rawInputs = body.inputs || body;
+
+    // Normalize input keys to lowercase for consistent lookups
+    const inputs = normalizeInputKeys(rawInputs);
 
     // Get service
     const service = await getService(serviceId);
@@ -48,7 +52,7 @@ export async function GET(request, { params }) {
     const { serviceId } = await params;
     const { searchParams } = new URL(request.url);
 
-    // Convert query params to inputs
+    // Convert query params to inputs (normalize keys to lowercase)
     const inputs = {};
     for (const [key, value] of searchParams) {
       if (key.startsWith('_')) continue; // Skip special params
@@ -59,7 +63,8 @@ export async function GET(request, { params }) {
       else if (value === 'false') parsed = false;
       else if (!isNaN(Number(value)) && value !== '') parsed = Number(value);
 
-      inputs[key] = parsed;
+      // Normalize key to lowercase for consistent lookups
+      inputs[key.toLowerCase()] = parsed;
     }
 
     // Get service
