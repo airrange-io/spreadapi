@@ -67,7 +67,8 @@ interface AnalyticsData {
 
 type TimeRange = 'day' | 'week' | 'month';
 
-function formatNumber(num: number): string {
+function formatNumber(num: number | null | undefined): string {
+  if (num == null) return '0';
   if (num >= 1000000) {
     const val = num / 1000000;
     return (val % 1 === 0 ? val.toString() : val.toFixed(1)) + 'M';
@@ -305,11 +306,14 @@ export default function AnalyticsPage() {
       align: 'right' as const,
       width: 80,
       responsive: ['lg'] as ('xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl')[],
-      render: (val: number) => (
-        <span style={{ color: val > 5 ? '#ff4d4f' : val > 1 ? '#faad14' : '#52c41a' }}>
-          {val.toFixed(1)}%
-        </span>
-      ),
+      render: (val: number | null) => {
+        const rate = val ?? 0;
+        return (
+          <span style={{ color: rate > 5 ? '#ff4d4f' : rate > 1 ? '#faad14' : '#52c41a' }}>
+            {rate.toFixed(1)}%
+          </span>
+        );
+      },
     },
   ];
 
