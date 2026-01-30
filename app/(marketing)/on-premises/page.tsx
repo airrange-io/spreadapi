@@ -101,6 +101,69 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                           </div>
                         </div>
                       </div>
+                      <div className="header-image-wrapper">
+                        <div className="header-illustration">
+                          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="400" fill="#F8F6FE"/>
+
+                            {/* Your Infrastructure - secure boundary */}
+                            <rect x="100" y="80" width="400" height="240" rx="16" fill="white" stroke="#28a745" strokeWidth="3" strokeDasharray="8,4"/>
+                            <text x="300" y="110" textAnchor="middle" fill="#28a745" fontSize="12" fontWeight="600">Your Infrastructure</text>
+
+                            {/* Lock icon */}
+                            <rect x="290" y="130" width="20" height="16" rx="3" fill="#D4EDDA" stroke="#28a745" strokeWidth="1.5"/>
+                            <path d="M295 130 L295 125 C295 121 298 118 300 118 C302 118 305 121 305 125 L305 130" fill="none" stroke="#28a745" strokeWidth="1.5" strokeLinecap="round"/>
+
+                            {/* Excel inside */}
+                            <rect x="130" y="170" width="100" height="80" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <rect x="140" y="180" width="80" height="14" fill="#F8F6FE"/>
+                            <text x="180" y="191" textAnchor="middle" fill="#666" fontSize="8">Your Excel</text>
+                            <rect x="140" y="198" width="80" height="10" fill="#E6F4FF"/>
+                            <rect x="140" y="210" width="80" height="10" fill="#F8F6FE"/>
+                            <rect x="140" y="222" width="80" height="10" fill="#D4EDDA"/>
+                            <text x="180" y="260" textAnchor="middle" fill="#666" fontSize="9">Data</text>
+
+                            {/* SpreadAPI inside */}
+                            <rect x="270" y="180" width="100" height="60" rx="8" fill="#F3E5F5" stroke="#9333EA" strokeWidth="2"/>
+                            <text x="320" y="215" textAnchor="middle" fill="#9333EA" fontSize="11" fontWeight="600">SpreadAPI</text>
+                            <text x="320" y="260" textAnchor="middle" fill="#666" fontSize="9">Engine</text>
+
+                            {/* API output inside */}
+                            <rect x="410" y="170" width="70" height="80" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <text x="445" y="195" textAnchor="middle" fill="#666" fontSize="8">API</text>
+                            <rect x="420" y="205" width="50" height="30" fill="#D4EDDA" rx="4"/>
+                            <text x="445" y="224" textAnchor="middle" fill="#28a745" fontSize="9">Result</text>
+                            <text x="445" y="260" textAnchor="middle" fill="#666" fontSize="9">Output</text>
+
+                            {/* Arrows inside */}
+                            <path d="M230 210 L260 210" stroke="#9333EA" strokeWidth="2"/>
+                            <path d="M255 205 L262 210 L255 215" fill="#9333EA"/>
+                            <path d="M370 210 L400 210" stroke="#9333EA" strokeWidth="2"/>
+                            <path d="M395 205 L402 210 L395 215" fill="#9333EA"/>
+
+                            {/* Cloud outside - crossed out */}
+                            <rect x="580" y="130" width="160" height="140" rx="12" fill="white" stroke="#FECACA" strokeWidth="2"/>
+                            <text x="660" y="160" textAnchor="middle" fill="#999" fontSize="10">External Cloud</text>
+
+                            {/* Cloud icon */}
+                            <path d="M630 200 C625 200 620 195 620 190 C620 183 627 178 635 178 C637 173 643 170 650 170 C660 170 668 178 668 188 C675 188 680 193 680 200 C680 207 675 212 668 212 L635 212 C627 212 620 207 620 200 Z" fill="#f5f5f5" stroke="#ccc" strokeWidth="1.5"/>
+
+                            {/* Red X over cloud */}
+                            <line x1="610" y1="155" x2="710" y2="255" stroke="#DC2626" strokeWidth="3" strokeLinecap="round"/>
+                            <line x1="710" y1="155" x2="610" y2="255" stroke="#DC2626" strokeWidth="3" strokeLinecap="round"/>
+
+                            {/* No data leaves arrow - blocked */}
+                            <path d="M510 200 L560 200" stroke="#ccc" strokeWidth="2" strokeDasharray="4,4"/>
+                            <circle cx="545" cy="200" r="12" fill="#FEE2E2" stroke="#DC2626" strokeWidth="2"/>
+                            <line x1="540" y1="195" x2="550" y2="205" stroke="#DC2626" strokeWidth="2" strokeLinecap="round"/>
+                            <line x1="550" y1="195" x2="540" y2="205" stroke="#DC2626" strokeWidth="2" strokeLinecap="round"/>
+
+                            {/* Labels */}
+                            <text x="300" y="340" textAnchor="middle" fill="#28a745" fontSize="11" fontWeight="600">100% On-Premises</text>
+                            <text x="660" y="340" textAnchor="middle" fill="#DC2626" fontSize="11" fontWeight="500">No data sent outside</text>
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -108,7 +171,7 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
             </header>
 
             {/* Trust Badges */}
-            <section style={{ background: '#f8f9fa', padding: '40px 0' }}>
+            <section style={{ paddingBottom: '40px', marginTop: '-40px' }}>
               <div className="padding-global">
                 <div className="container-large">
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '48px', flexWrap: 'wrap', alignItems: 'center' }}>
