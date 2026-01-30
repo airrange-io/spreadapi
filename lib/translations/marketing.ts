@@ -53,7 +53,9 @@ export const homepage = {
       title1: "Here's How We Help AI",
       title2: 'Excel at Spreadsheet Math',
       description: 'Transform your spreadsheets into real-time APIs that AI can call — no guessing, no hallucinations, just accurate results powered by your Excel logic. Whether it\'s simple calculations or complex chains of nested formulas, your Excel logic is executed exactly as you built it. The result: clean, reliable JSON that AI assistants, developers, and automation tools can work with — instantly and securely.',
+      link: 'Learn more about AI Integration',
     },
+    inAction: 'In Action',
     feature1: {
       title1: 'AI Sales Agents',
       title2: 'Creating Complex Excel Quotes',
@@ -261,7 +263,9 @@ export const homepage = {
       title1: 'So befähigen wir KI,',
       title2: 'Excel-Berechnungen zu meistern',
       description: 'Verwandeln Sie Ihre Tabellen in Echtzeit-APIs, die KI aufrufen kann — kein Raten, keine Halluzinationen, nur präzise Ergebnisse durch Ihre Excel-Logik. Ob einfache Berechnungen oder komplexe verschachtelte Formeln — Ihre Excel-Logik wird exakt so ausgeführt, wie Sie sie erstellt haben. Das Ergebnis: sauberes, zuverlässiges JSON, mit dem KI-Assistenten, Entwickler und Automatisierungstools sofort und sicher arbeiten können.',
+      link: 'Mehr über KI-Integration erfahren',
     },
+    inAction: 'In Aktion',
     feature1: {
       title1: 'KI-Vertriebsassistenten',
       title2: 'erstellen komplexe Excel-Angebote',
@@ -469,7 +473,9 @@ export const homepage = {
       title1: "Voici comment nous aidons l'IA à",
       title2: 'exceller en calcul',
       description: "Transformez vos feuilles de calcul en API temps réel que l'IA peut appeler — sans approximation, sans hallucination, juste des résultats précis alimentés par votre logique Excel. Que ce soit des calculs simples ou des chaînes complexes de formules imbriquées, votre logique Excel est exécutée exactement comme vous l'avez construite. Le résultat : un JSON propre et fiable que les assistants IA, développeurs et outils d'automatisation peuvent utiliser — instantanément et en toute sécurité.",
+      link: "En savoir plus sur l'intégration IA",
     },
+    inAction: 'En Action',
     feature1: {
       title1: 'Agents commerciaux IA',
       title2: 'créant des devis Excel complexes',
@@ -641,7 +647,9 @@ export const homepage = {
       title1: 'Así ayudamos a la IA a',
       title2: 'dominar los cálculos Excel',
       description: 'Transforme sus hojas de cálculo en APIs en tiempo real que la IA puede llamar — sin adivinanzas, sin alucinaciones, solo resultados precisos impulsados por su lógica Excel. Ya sean cálculos simples o cadenas complejas de fórmulas anidadas, su lógica Excel se ejecuta exactamente como la construyó. El resultado: JSON limpio y confiable que asistentes IA, desarrolladores y herramientas de automatización pueden usar — al instante y de forma segura.',
+      link: 'Más información sobre la integración IA',
     },
+    inAction: 'En Acción',
     feature1: {
       title1: 'Agentes de ventas IA',
       title2: 'creando presupuestos Excel complejos',
@@ -791,7 +799,9 @@ export interface HomepageTranslations {
     title1: string;
     title2: string;
     description: string;
+    link: string;
   };
+  inAction: string;
   feature1: {
     title1: string;
     title2: string;
