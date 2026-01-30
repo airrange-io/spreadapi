@@ -81,6 +81,61 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
                           </div>
                         </div>
                       </div>
+                      <div className="header-image-wrapper">
+                        <div className="header-illustration">
+                          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="400" fill="#F8F6FE"/>
+
+                            {/* AI Chat Bubble on left */}
+                            <rect x="50" y="120" width="200" height="160" rx="16" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <circle cx="90" cy="160" r="20" fill="#9333EA" fillOpacity="0.15"/>
+                            <text x="90" y="166" textAnchor="middle" fill="#9333EA" fontSize="20" fontWeight="600">AI</text>
+                            <rect x="125" y="150" width="100" height="8" rx="4" fill="#E8E0FF"/>
+                            <rect x="125" y="165" width="70" height="8" rx="4" fill="#E8E0FF"/>
+                            <text x="80" y="215" fill="#666" fontSize="12">Quote for 500 units</text>
+                            <text x="80" y="231" fill="#666" fontSize="12">with 15% volume</text>
+                            <text x="80" y="247" fill="#666" fontSize="12">discount?</text>
+                            <polygon points="50,250 30,270 70,250" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+
+                            {/* Arrow 1 */}
+                            <path d="M270 200 L310 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M300 190 L310 200 L300 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Spreadsheet in middle */}
+                            <rect x="330" y="100" width="180" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <rect x="345" y="115" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="420" y="132" textAnchor="middle" fill="#666" fontSize="11" fontWeight="500">Product Pricing.xlsx</text>
+                            <rect x="345" y="150" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="150" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="164" fill="#333" fontSize="10">Price</text>
+                            <text x="440" y="164" textAnchor="middle" fill="#333" fontSize="10">$49.90</text>
+                            <rect x="345" y="175" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="175" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="189" fill="#333" fontSize="10">Qty</text>
+                            <text x="440" y="189" textAnchor="middle" fill="#333" fontSize="10">500</text>
+                            <rect x="345" y="200" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="200" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="214" fill="#333" fontSize="10">Disc.</text>
+                            <text x="440" y="214" textAnchor="middle" fill="#333" fontSize="10">15%</text>
+                            <rect x="345" y="235" width="150" height="24" fill="#D4EDDA"/>
+                            <text x="360" y="251" fill="#28a745" fontSize="10" fontWeight="500">=B1*B2*(1-B3)</text>
+                            <rect x="345" y="264" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="420" y="280" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">$21,207.50</text>
+
+                            {/* Arrow 2 */}
+                            <path d="M530 200 L570 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M560 190 L570 200 L560 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Result with checkmark on right */}
+                            <rect x="590" y="120" width="160" height="160" rx="16" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <circle cx="670" cy="170" r="28" fill="#D4EDDA"/>
+                            <path d="M656 170 L665 179 L684 160" stroke="#28a745" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            <text x="670" y="220" textAnchor="middle" fill="#333" fontSize="13" fontWeight="600">$21,207.50</text>
+                            <text x="670" y="242" textAnchor="middle" fill="#666" fontSize="11">Exact calculation</text>
+                            <text x="670" y="258" textAnchor="middle" fill="#666" fontSize="11">No hallucination</text>
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
