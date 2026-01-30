@@ -73,8 +73,10 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
                               {t.hero.description}
                             </p>
-                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
                               <a href="/app" className="button is-primary" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 background: '#502D80',
                                 color: 'white',
                                 padding: '14px 28px',
@@ -86,6 +88,8 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
                                 {t.hero.cta}
                               </a>
                               <a href="#how-it-works" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 padding: '14px 28px',
                                 borderRadius: '8px',
                                 textDecoration: 'none',

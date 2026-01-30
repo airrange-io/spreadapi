@@ -74,8 +74,10 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
                               {t.hero.description}
                             </p>
-                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
                               <a href="mailto:team@airrange.io?subject=SpreadAPI Enterprise Inquiry" className="button is-primary" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 background: '#502D80',
                                 color: 'white',
                                 padding: '14px 28px',
@@ -87,6 +89,8 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                                 {t.hero.ctaPrimary}
                               </a>
                               <a href="#how-it-works" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 padding: '14px 28px',
                                 borderRadius: '8px',
                                 textDecoration: 'none',
@@ -234,7 +238,9 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                       <div style={{ background: '#fef2f2', padding: '28px', borderRadius: '12px', textAlign: 'center' }}>
                         <div style={{ fontSize: '36px', marginBottom: '12px' }}>
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="1.5" style={{ margin: '0 auto' }}>
-                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <circle cx="12" cy="16.5" r="0.5" fill="#dc2626"/>
                           </svg>
                         </div>
                         <h4 style={{ marginBottom: '8px', fontSize: '18px', color: '#991b1b' }}>{t.challenge.complianceRisk}</h4>
@@ -878,6 +884,9 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                       </p>
                       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <a href="mailto:team@airrange.io?subject=SpreadAPI Enterprise Inquiry" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           background: 'white',
                           color: '#502D80',
                           padding: '16px 32px',
@@ -889,6 +898,9 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                           {t.finalCta.ctaPrimary}
                         </a>
                         <a href="/app" style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           background: 'transparent',
                           color: 'white',
                           padding: '16px 32px',
