@@ -76,7 +76,16 @@
       "Bash(head:*)",
       "Bash(git checkout:*)",
       "WebFetch(domain:www.hanko.io)",
-      "WebFetch(domain:redis.com)"
+      "WebFetch(domain:redis.com)",
+      "WebFetch(domain:www.vercel-status.com)",
+      "WebFetch(domain:instatus.com)",
+      "WebFetch(domain:betterstack.com)",
+      "WebFetch(domain:status.linear.app)",
+      "WebFetch(domain:status.notion.so)",
+      "WebFetch(domain:linearstatus.com)",
+      "WebFetch(domain:www.notion-status.com)",
+      "WebFetch(domain:spreadapi.instatus.com)",
+      "WebFetch(domain:spreadapi.run)"
     ],
     "deny": []
   }

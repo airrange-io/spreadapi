@@ -839,6 +839,7 @@ export const marketing = {
       company: 'Company',
       about: 'About',
       blog: 'Blog',
+      status: 'Status',
       contact: 'Contact',
       description: 'SpreadAPI bridges the gap between Excel and AI, turning decades of business logic into secure, instant APIs. Your spreadsheets become powerful calculation engines that AI can access without seeing proprietary formulas.',
       copyright: '© {year} Airrange.io. All rights reserved.',
@@ -883,6 +884,7 @@ export const marketing = {
       company: 'Unternehmen',
       about: 'Über uns',
       blog: 'Blog',
+      status: 'Status',
       contact: 'Kontakt',
       description: 'SpreadAPI verbindet Excel mit KI und wandelt Ihre Geschäftslogik in sichere, sofortige APIs um. Ihre Tabellen werden zu Berechnungsmaschinen, auf die KI zugreifen kann, ohne Ihre Formeln zu sehen.',
       copyright: '© {year} Airrange.io. Alle Rechte vorbehalten.',
@@ -926,6 +928,7 @@ export const marketing = {
       company: 'Entreprise',
       about: 'À propos',
       blog: 'Blog',
+      status: 'Statut',
       contact: 'Contact',
       description: 'SpreadAPI connecte Excel et l\'IA, transformant votre logique métier en APIs sécurisées et instantanées. Vos feuilles de calcul deviennent des moteurs de calcul accessibles par l\'IA sans voir vos formules.',
       copyright: '© {year} Airrange.io. Tous droits réservés.',
@@ -968,6 +971,7 @@ export const marketing = {
       company: 'Empresa',
       about: 'Nosotros',
       blog: 'Blog',
+      status: 'Estado',
       contact: 'Contacto',
       description: 'SpreadAPI conecta Excel con IA, convirtiendo su lógica de negocio en APIs seguras e instantáneas. Sus hojas de cálculo se convierten en motores de cálculo que la IA puede acceder sin ver sus fórmulas.',
       copyright: '© {year} Airrange.io. Todos los derechos reservados.',
@@ -1011,6 +1015,7 @@ export type MarketingTranslations = {
     company: string;
     about: string;
     blog: string;
+    status?: string;
     contact: string;
     description: string;
     copyright: string;

@@ -55,6 +55,7 @@ const Footer: React.FC<FooterProps> = ({ locale = 'en', currentPath = '' }) => {
                       <a href="/security" className="footer-link">{t.footer.security || 'Security'}</a>
                       <a href="/pricing" className="footer-link">{t.footer.pricing}</a>
                       <a href="/blog" className="footer-link">{t.footer.blog}</a>
+                      <a href="https://spreadapi.instatus.com" className="footer-link" target="_blank" rel="noopener noreferrer">{t.footer.status || 'Status'}<span className="status-dot" aria-hidden="true"></span></a>
                     </div>
                   </div>
                   <div className="footer-menu-column">
