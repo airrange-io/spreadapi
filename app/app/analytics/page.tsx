@@ -433,21 +433,26 @@ export default function AnalyticsPage() {
                       <Statistic
                         title={
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <ThunderboltOutlined style={{ color: data.summary.monthCalls > data.license.maxCallsPerMonth ? '#ff4d4f' : '#52c41a' }} />
+                            <ThunderboltOutlined style={{ color: (data.license.maxCallsPerMonth > 0 && data.summary.monthCalls > data.license.maxCallsPerMonth) ? '#ff4d4f' : '#52c41a' }} />
                             This Month
                           </span>
                         }
                         value={data.summary.monthCalls}
-                        formatter={(val) => (
-                          <span style={{ color: data.summary.monthCalls > data.license.maxCallsPerMonth ? '#ff4d4f' : undefined }}>
-                            {formatNumber(val as number)}
-                            {data.license.maxCallsPerMonth !== Infinity && (
-                              <span style={{ fontSize: 14, fontWeight: 400, color: data.summary.monthCalls > data.license.maxCallsPerMonth ? '#ff4d4f' : '#8c8c8c' }}>
-                                {' '}of {formatNumber(data.license.maxCallsPerMonth)}
-                              </span>
-                            )}
-                          </span>
-                        )}
+                        formatter={(val) => {
+                          const maxCalls = data.license.maxCallsPerMonth;
+                          const isUnlimited = maxCalls === -1 || maxCalls == null;
+                          const isOverLimit = !isUnlimited && data.summary.monthCalls > maxCalls;
+                          return (
+                            <span style={{ color: isOverLimit ? '#ff4d4f' : undefined }}>
+                              {formatNumber(val as number)}
+                              {!isUnlimited && maxCalls > 0 && (
+                                <span style={{ fontSize: 14, fontWeight: 400, color: isOverLimit ? '#ff4d4f' : '#8c8c8c' }}>
+                                  {' '}of {formatNumber(maxCalls)}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        }}
                       />
                     </Card>
 

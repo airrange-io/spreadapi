@@ -185,6 +185,8 @@ export async function GET(request: NextRequest) {
     const serviceIds = Object.keys(serviceIndex);
 
     if (serviceIds.length === 0) {
+      // Handle Infinity for JSON serialization (use -1 to indicate unlimited)
+      const maxCallsForJson = limits.maxCallsPerMonth === Infinity ? -1 : limits.maxCallsPerMonth;
       const emptyResult: AggregatedAnalytics = {
         summary: {
           totalServices: 0,
@@ -193,13 +195,13 @@ export async function GET(request: NextRequest) {
           todayCalls: 0,
           weekCalls: 0,
           monthCalls: 0,
-          maxCallsPerMonth: limits.maxCallsPerMonth,
+          maxCallsPerMonth: maxCallsForJson,
           avgResponseTime: 0,
           errorRate: 0,
         },
         license: {
           type: licenseType,
-          maxCallsPerMonth: limits.maxCallsPerMonth,
+          maxCallsPerMonth: maxCallsForJson,
         },
         services: [],
         dailyData: [],
@@ -269,6 +271,9 @@ export async function GET(request: NextRequest) {
     // Sort services by total calls descending
     serviceSummaries.sort((a, b) => b.totalCalls - a.totalCalls);
 
+    // Handle Infinity for JSON serialization (use -1 to indicate unlimited)
+    const maxCallsForJson = limits.maxCallsPerMonth === Infinity ? -1 : limits.maxCallsPerMonth;
+
     const result: AggregatedAnalytics = {
       summary: {
         totalServices: serviceIds.length,
@@ -277,13 +282,13 @@ export async function GET(request: NextRequest) {
         todayCalls,
         weekCalls,
         monthCalls,
-        maxCallsPerMonth: limits.maxCallsPerMonth,
+        maxCallsPerMonth: maxCallsForJson,
         avgResponseTime: Math.round(avgResponseTime),
         errorRate: Math.round(errorRate * 10) / 10,
       },
       license: {
         type: licenseType,
-        maxCallsPerMonth: limits.maxCallsPerMonth,
+        maxCallsPerMonth: maxCallsForJson,
       },
       services: serviceSummaries,
       dailyData,
