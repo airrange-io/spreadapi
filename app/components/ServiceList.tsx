@@ -261,7 +261,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       key: 'description',
       ellipsis: true,
       responsive: ['md' as const] as any,
-      render: (text: string) => text || t('serviceList.noDescription'),
+      render: (text: string) => text || <Text type="secondary">{t('serviceList.noDescription')}</Text>,
     },
     {
       title: 'Status',
