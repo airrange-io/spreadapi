@@ -187,6 +187,30 @@ export const homepage = {
       description: 'Working in an industry where compliance and data security are non-negotiable? With SpreadAPI Runtime, you can deploy your Excel-based APIs entirely on your own infrastructure. No data ever leaves your network.',
       cta: 'Learn About On-Premises',
     },
+    excelApi: {
+      subheading: 'How It Works',
+      title1: 'Your Excel Logic,',
+      title2: 'Available Everywhere',
+      description: 'Upload your spreadsheet. Define inputs and outputs. Get a REST API that runs your exact formulas in milliseconds.',
+      step1: {
+        title: 'Upload Excel',
+        description: 'Your existing spreadsheet with all its formulas. Nothing to change.',
+      },
+      step2: {
+        title: 'Define Parameters',
+        description: 'Mark cells as inputs and outputs. Takes 2 minutes. No code needed.',
+      },
+      step3: {
+        title: 'Call Your API',
+        description: 'GET or POST request — returns clean JSON with calculated results.',
+      },
+      stat1: { value: '50ms', label: 'Response time' },
+      stat2: { value: '500+', label: 'Excel functions' },
+      stat3: { value: '100%', label: 'Accurate' },
+      stat4: { value: 'Zero', label: 'Lines of code' },
+      integrations: 'Zapier • Make • n8n • REST API • Python • JavaScript',
+      cta: 'See How It Works',
+    },
   },
 
   de: {
@@ -371,6 +395,30 @@ export const homepage = {
       description: 'Sie arbeiten in einer Branche, in der Compliance und Datensicherheit unverzichtbar sind? Mit SpreadAPI Runtime betreiben Sie Ihre Excel-basierten APIs vollständig auf Ihrer eigenen Infrastruktur. Keine Daten verlassen jemals Ihr Netzwerk.',
       cta: 'Mehr über On-Premises erfahren',
     },
+    excelApi: {
+      subheading: 'So funktioniert es',
+      title1: 'Ihre Excel-Logik,',
+      title2: 'überall verfügbar',
+      description: 'Laden Sie Ihre Tabelle hoch. Definieren Sie Ein- und Ausgaben. Erhalten Sie eine REST-API, die Ihre exakten Formeln in Millisekunden ausführt.',
+      step1: {
+        title: 'Excel hochladen',
+        description: 'Ihre bestehende Tabelle mit allen Formeln. Nichts zu ändern.',
+      },
+      step2: {
+        title: 'Parameter definieren',
+        description: 'Markieren Sie Zellen als Ein- und Ausgaben. Dauert 2 Minuten. Kein Code nötig.',
+      },
+      step3: {
+        title: 'API aufrufen',
+        description: 'GET- oder POST-Anfrage — liefert sauberes JSON mit berechneten Ergebnissen.',
+      },
+      stat1: { value: '50ms', label: 'Antwortzeit' },
+      stat2: { value: '500+', label: 'Excel-Funktionen' },
+      stat3: { value: '100%', label: 'Genau' },
+      stat4: { value: 'Null', label: 'Zeilen Code' },
+      integrations: 'Zapier • Make • n8n • REST API • Python • JavaScript',
+      cta: 'So funktioniert es',
+    },
   },
 
   fr: {
@@ -518,6 +566,30 @@ export const homepage = {
       title2: 'sur vos données ?',
       description: 'Vous travaillez dans un secteur où la conformité et la sécurité des données sont incontournables ? Avec SpreadAPI Runtime, déployez vos API Excel entièrement sur votre propre infrastructure. Aucune donnée ne quitte jamais votre réseau.',
       cta: 'Découvrir l\'offre On-Premises',
+    },
+    excelApi: {
+      subheading: 'Comment ça marche',
+      title1: 'Votre logique Excel,',
+      title2: 'disponible partout',
+      description: 'Téléchargez votre feuille de calcul. Définissez les entrées et sorties. Obtenez une API REST qui exécute vos formules exactes en millisecondes.',
+      step1: {
+        title: 'Télécharger Excel',
+        description: 'Votre feuille de calcul existante avec toutes ses formules. Rien à modifier.',
+      },
+      step2: {
+        title: 'Définir les paramètres',
+        description: 'Marquez les cellules comme entrées et sorties. 2 minutes. Aucun code requis.',
+      },
+      step3: {
+        title: 'Appeler votre API',
+        description: 'Requête GET ou POST — renvoie du JSON propre avec les résultats calculés.',
+      },
+      stat1: { value: '50ms', label: 'Temps de réponse' },
+      stat2: { value: '500+', label: 'Fonctions Excel' },
+      stat3: { value: '100%', label: 'Précis' },
+      stat4: { value: 'Zéro', label: 'Ligne de code' },
+      integrations: 'Zapier • Make • n8n • REST API • Python • JavaScript',
+      cta: 'Voir comment ça marche',
     },
   },
 
@@ -667,6 +739,30 @@ export const homepage = {
       description: '¿Trabaja en un sector donde el cumplimiento normativo y la seguridad de los datos son innegociables? Con SpreadAPI Runtime, despliegue sus APIs Excel completamente en su propia infraestructura. Ningún dato abandona jamás su red.',
       cta: 'Descubrir On-Premises',
     },
+    excelApi: {
+      subheading: 'Cómo funciona',
+      title1: 'Su lógica Excel,',
+      title2: 'disponible en todas partes',
+      description: 'Suba su hoja de cálculo. Defina entradas y salidas. Obtenga una API REST que ejecuta sus fórmulas exactas en milisegundos.',
+      step1: {
+        title: 'Subir Excel',
+        description: 'Su hoja de cálculo existente con todas sus fórmulas. Nada que cambiar.',
+      },
+      step2: {
+        title: 'Definir parámetros',
+        description: 'Marque celdas como entradas y salidas. 2 minutos. Sin código.',
+      },
+      step3: {
+        title: 'Llamar a su API',
+        description: 'Solicitud GET o POST — devuelve JSON limpio con resultados calculados.',
+      },
+      stat1: { value: '50ms', label: 'Tiempo de respuesta' },
+      stat2: { value: '500+', label: 'Funciones Excel' },
+      stat3: { value: '100%', label: 'Preciso' },
+      stat4: { value: 'Cero', label: 'Líneas de código' },
+      integrations: 'Zapier • Make • n8n • REST API • Python • JavaScript',
+      cta: 'Ver cómo funciona',
+    },
   },
 } as const;
 
@@ -791,6 +887,21 @@ export interface HomepageTranslations {
     title1: string;
     title2: string;
     description: string;
+    cta: string;
+  };
+  excelApi: {
+    subheading: string;
+    title1: string;
+    title2: string;
+    description: string;
+    step1: { title: string; description: string };
+    step2: { title: string; description: string };
+    step3: { title: string; description: string };
+    stat1: { value: string; label: string };
+    stat2: { value: string; label: string };
+    stat3: { value: string; label: string };
+    stat4: { value: string; label: string };
+    integrations: string;
     cta: string;
   };
 }

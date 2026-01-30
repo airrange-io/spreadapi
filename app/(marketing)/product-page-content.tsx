@@ -33,6 +33,133 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               locale={locale}
             />
 
+            {/* Excel API - How It Works Section */}
+            <section className="section-excel-api" style={{ background: '#f8f9fa', padding: '80px 0' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="text-align-center" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
+                      {t.excelApi.title1} <span style={{ color: '#9333EA' }}>{t.excelApi.title2}</span>
+                    </h2>
+                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
+                      {t.excelApi.description}
+                    </p>
+                  </div>
+
+                  {/* 3 Steps */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '30px',
+                    marginBottom: '50px',
+                    maxWidth: '1000px',
+                    margin: '0 auto 50px'
+                  }}>
+                    {/* Step 1 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">1</text>
+                        </svg>
+                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step1.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step1.description}</p>
+                    </div>
+
+                    {/* Step 2 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">2</text>
+                        </svg>
+                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step2.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step2.description}</p>
+                    </div>
+
+                    {/* Step 3 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">3</text>
+                        </svg>
+                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step3.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step3.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Stats Row */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                    gap: '40px',
+                    marginBottom: '40px'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat1.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat1.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat2.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat2.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat3.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat3.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat4.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat4.label}</div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div style={{ textAlign: 'center' }}>
+                    <Link
+                      href="/how-excel-api-works"
+                      style={{
+                        color: '#9333EA',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {t.excelApi.cta}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Pain Point Section */}
             <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
               <div className="padding-global">
