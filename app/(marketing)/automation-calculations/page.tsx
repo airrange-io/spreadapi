@@ -100,6 +100,89 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                           </div>
                         </div>
                       </div>
+                      <div className="header-image-wrapper">
+                        <div className="header-illustration">
+                          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="400" fill="#F8F6FE"/>
+
+                            {/* Automation Workflow on left */}
+                            <rect x="40" y="110" width="200" height="180" rx="12" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <text x="140" y="135" textAnchor="middle" fill="#666" fontSize="10" fontWeight="500">Automation Workflow</text>
+
+                            {/* Trigger node */}
+                            <rect x="80" y="155" width="50" height="24" rx="4" fill="#FFF3E0" stroke="#FF9800" strokeWidth="1.5"/>
+                            <text x="105" y="171" textAnchor="middle" fill="#E65100" fontSize="8" fontWeight="500">Trigger</text>
+
+                            {/* Arrow down */}
+                            <path d="M105 179 L105 189" stroke="#ccc" strokeWidth="1.5"/>
+                            <path d="M102 186 L105 191 L108 186" fill="#ccc"/>
+
+                            {/* Process node with question mark */}
+                            <rect x="80" y="193" width="50" height="24" rx="4" fill="#FFEBEE" stroke="#F44336" strokeWidth="1.5" strokeDasharray="3,2"/>
+                            <text x="105" y="209" textAnchor="middle" fill="#C62828" fontSize="11" fontWeight="600">?</text>
+
+                            {/* Arrow to API call */}
+                            <path d="M130 205 L150 205" stroke="#9333EA" strokeWidth="1.5"/>
+                            <path d="M147 202 L152 205 L147 208" fill="#9333EA"/>
+
+                            {/* API Call node */}
+                            <rect x="154" y="193" width="50" height="24" rx="4" fill="#F3E5F5" stroke="#9333EA" strokeWidth="1.5"/>
+                            <text x="179" y="203" textAnchor="middle" fill="#9333EA" fontSize="6" fontWeight="500">SpreadAPI</text>
+                            <text x="179" y="212" textAnchor="middle" fill="#9333EA" fontSize="6" fontWeight="500">Call</text>
+
+                            {/* Arrow down to result */}
+                            <path d="M105 217 L105 227" stroke="#ccc" strokeWidth="1.5"/>
+                            <path d="M102 224 L105 229 L108 224" fill="#ccc"/>
+
+                            {/* Result node */}
+                            <rect x="80" y="231" width="50" height="24" rx="4" fill="#E8F5E9" stroke="#4CAF50" strokeWidth="1.5"/>
+                            <text x="105" y="247" textAnchor="middle" fill="#2E7D32" fontSize="8">Continue</text>
+
+                            {/* Arrow from workflow to spreadsheet */}
+                            <path d="M260 200 L300 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M290 190 L300 200 L290 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Spreadsheet in middle */}
+                            <rect x="320" y="100" width="180" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <rect x="335" y="115" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="410" y="132" textAnchor="middle" fill="#666" fontSize="11" fontWeight="500">Commission Calc.xlsx</text>
+                            <rect x="335" y="150" width="55" height="20" fill="#E6F4FF"/>
+                            <rect x="395" y="150" width="90" height="20" fill="#F8F6FE"/>
+                            <text x="345" y="164" fill="#333" fontSize="10">Sales</text>
+                            <text x="435" y="164" textAnchor="middle" fill="#333" fontSize="10">$125,000</text>
+                            <rect x="335" y="175" width="55" height="20" fill="#E6F4FF"/>
+                            <rect x="395" y="175" width="90" height="20" fill="#F8F6FE"/>
+                            <text x="345" y="189" fill="#333" fontSize="10">Tier</text>
+                            <text x="435" y="189" textAnchor="middle" fill="#333" fontSize="10">Gold</text>
+                            <rect x="335" y="200" width="55" height="20" fill="#E6F4FF"/>
+                            <rect x="395" y="200" width="90" height="20" fill="#F8F6FE"/>
+                            <text x="345" y="214" fill="#333" fontSize="10">Region</text>
+                            <text x="435" y="214" textAnchor="middle" fill="#333" fontSize="10">EMEA</text>
+                            <rect x="335" y="235" width="150" height="24" fill="#D4EDDA"/>
+                            <text x="345" y="251" fill="#28a745" fontSize="9" fontWeight="500">=XLOOKUP(...)×B1</text>
+                            <rect x="335" y="264" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="410" y="280" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">$18,750.00</text>
+
+                            {/* Arrow from spreadsheet to result */}
+                            <path d="M520 200 L560 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M550 190 L560 200 L550 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Result - Completed Workflow */}
+                            <rect x="580" y="110" width="180" height="180" rx="12" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <text x="670" y="138" textAnchor="middle" fill="#666" fontSize="11" fontWeight="500">Workflow Complete</text>
+
+                            {/* Success icon */}
+                            <circle cx="670" cy="180" r="24" fill="#D4EDDA"/>
+                            <path d="M658 180 L666 188 L682 172" stroke="#28a745" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+
+                            {/* Result details */}
+                            <text x="670" y="225" textAnchor="middle" fill="#333" fontSize="12" fontWeight="600">Commission: $18,750</text>
+                            <text x="670" y="245" textAnchor="middle" fill="#666" fontSize="10">Slack notified ✓</text>
+                            <text x="670" y="262" textAnchor="middle" fill="#666" fontSize="10">CRM updated ✓</text>
+                            <text x="670" y="279" textAnchor="middle" fill="#666" fontSize="10">Email sent ✓</text>
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
