@@ -94,8 +94,8 @@ export const homepage = {
     },
     differentiators: {
       subheading: "Why We're Different",
-      title1: 'Give AI & Tools',
-      title2: 'Excel Superpowers',
+      title1: 'Real Calculations,',
+      title2: 'Zero Hallucinations',
       description: 'Transform your spreadsheets into powerful APIs that can be called by applications, AI assistants, or integrated into any workflow. Your Excel expertise becomes instantly accessible.',
       card1: {
         title: 'Predictable Every Time',
@@ -304,8 +304,8 @@ export const homepage = {
     },
     differentiators: {
       subheading: 'Was uns unterscheidet',
-      title1: 'Geben Sie KI & Tools',
-      title2: 'Excel-Superkräfte',
+      title1: 'Echte Berechnungen,',
+      title2: 'Keine Halluzinationen',
       description: 'Verwandeln Sie Ihre Tabellen in leistungsstarke APIs, die von Anwendungen und KI-Assistenten aufgerufen oder in jeden Workflow integriert werden können. Ihre Excel-Expertise wird sofort zugänglich.',
       card1: {
         title: 'Vorhersagbar. Immer.',
