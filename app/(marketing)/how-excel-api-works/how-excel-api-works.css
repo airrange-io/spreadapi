@@ -297,7 +297,11 @@
   border-radius: 16px;
   padding: 48px;
   margin-top: 80px !important;
-  margin-bottom: -32px;
+  margin-bottom: 0;
+}
+
+.section-home-practices {
+  margin-top: -60px;
 }
 
 .ai-example-card h3 {
@@ -453,6 +457,10 @@
 }
 
 /* Workflow Section */
+.section-home-workflow {
+  background: #F8F9FA;
+}
+
 .workflow-steps {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

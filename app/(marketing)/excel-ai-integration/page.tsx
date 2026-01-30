@@ -4,7 +4,8 @@ import './excel-ai-integration.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
-import { getAIIntegrationTranslations } from '@/lib/translations/marketing';
+import { getAIIntegrationTranslations, getHomepageTranslations } from '@/lib/translations/marketing';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Excel AI Integration - SpreadAPI | Connect ChatGPT & Claude to Excel',
@@ -44,6 +45,7 @@ interface AIIntegrationContentProps {
 
 export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProps) {
   const t = getAIIntegrationTranslations(locale);
+  const homepageT = getHomepageTranslations(locale);
 
   return (
     <>
@@ -79,11 +81,510 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
                           </div>
                         </div>
                       </div>
+                      <div className="header-image-wrapper">
+                        <div className="header-illustration">
+                          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
+
+                            {/* AI Chat Bubble on left */}
+                            <rect x="50" y="120" width="200" height="160" rx="16" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <circle cx="90" cy="160" r="20" fill="#9333EA" fillOpacity="0.15"/>
+                            <text x="90" y="166" textAnchor="middle" fill="#9333EA" fontSize="20" fontWeight="600">AI</text>
+                            <rect x="125" y="150" width="100" height="8" rx="4" fill="#E8E0FF"/>
+                            <rect x="125" y="165" width="70" height="8" rx="4" fill="#E8E0FF"/>
+                            <text x="80" y="215" fill="#666" fontSize="12">Quote for 500 units</text>
+                            <text x="80" y="231" fill="#666" fontSize="12">with 15% volume</text>
+                            <text x="80" y="247" fill="#666" fontSize="12">discount?</text>
+                            <polygon points="50,250 30,270 70,250" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+
+                            {/* Arrow 1 */}
+                            <path d="M270 200 L310 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M300 190 L310 200 L300 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Spreadsheet in middle */}
+                            <rect x="330" y="100" width="180" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <rect x="345" y="115" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="420" y="132" textAnchor="middle" fill="#666" fontSize="11" fontWeight="500">Product Pricing.xlsx</text>
+                            <rect x="345" y="150" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="150" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="164" fill="#333" fontSize="10">Price</text>
+                            <text x="440" y="164" textAnchor="middle" fill="#333" fontSize="10">$49.90</text>
+                            <rect x="345" y="175" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="175" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="189" fill="#333" fontSize="10">Qty</text>
+                            <text x="440" y="189" textAnchor="middle" fill="#333" fontSize="10">500</text>
+                            <rect x="345" y="200" width="50" height="20" fill="#E6F4FF"/>
+                            <rect x="400" y="200" width="95" height="20" fill="#F8F6FE"/>
+                            <text x="355" y="214" fill="#333" fontSize="10">Disc.</text>
+                            <text x="440" y="214" textAnchor="middle" fill="#333" fontSize="10">15%</text>
+                            <rect x="345" y="235" width="150" height="24" fill="#D4EDDA"/>
+                            <text x="360" y="251" fill="#28a745" fontSize="10" fontWeight="500">=B1*B2*(1-B3)</text>
+                            <rect x="345" y="264" width="150" height="24" fill="#F8F6FE"/>
+                            <text x="420" y="280" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">$21,207.50</text>
+
+                            {/* Arrow 2 */}
+                            <path d="M530 200 L570 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M560 190 L570 200 L560 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Result with checkmark on right */}
+                            <rect x="590" y="120" width="160" height="160" rx="16" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <circle cx="670" cy="170" r="28" fill="#D4EDDA"/>
+                            <path d="M656 170 L665 179 L684 160" stroke="#28a745" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            <text x="670" y="220" textAnchor="middle" fill="#333" fontSize="13" fontWeight="600">$21,207.50</text>
+                            <text x="670" y="242" textAnchor="middle" fill="#666" fontSize="11">Exact calculation</text>
+                            <text x="670" y="258" textAnchor="middle" fill="#666" fontSize="11">No hallucination</text>
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </header>
+
+            {/* Technical Differentiators Section */}
+            <section className="section-home-feature" style={{ background: '#f8f9fa' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="text-align-center">
+                      <div className="margin-bottom margin-xsmall">
+                        <div className="subheading">
+                          <div>{homepageT.differentiators.subheading}</div>
+                        </div>
+                      </div>
+                      <div className="margin-bottom margin-large">
+                        <h2>{homepageT.differentiators.title1} <span className="text-color-primary">{homepageT.differentiators.title2}</span></h2>
+                        <p style={{ fontSize: '18px', color: '#666666', marginTop: '20px', marginBottom: '0', maxWidth: '800px', margin: '20px auto 0' }}>
+                          {homepageT.differentiators.description}
+                        </p>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                        gap: '30px',
+                        maxWidth: '1000px',
+                        margin: '0 auto',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 6V14L20 20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card1.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card1.text}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card2.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card2.text}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card3.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card3.text}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5" />
+                              <circle cx="14" cy="17" r="1.5" fill="#9333EA" />
+                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card4.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card4.text}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                              <circle cx="11" cy="13" r="1" fill="#9333EA" />
+                              <circle cx="17" cy="13" r="1" fill="#9333EA" />
+                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card5.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card5.text}
+                          </p>
+                        </div>
+
+                        <div style={{
+                          background: 'white',
+                          padding: '30px',
+                          borderRadius: '12px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                        }}>
+                          <div style={{ marginBottom: '15px' }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M14 14L20 8M20 8H16M20 8V12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="14" cy="14" r="2" fill="#9333EA" />
+                            </svg>
+                          </div>
+                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{homepageT.differentiators.card6.title}</h3>
+                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
+                            {homepageT.differentiators.card6.text}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Editable Areas Section */}
+            <section className="section-home-feature">
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="feature-component reverse">
+                      <div className="feature-image-wrapper">
+                        <div className="feature-image-placeholder" style={{
+                          background: '#F8F6FE',
+                          borderRadius: '12px',
+                          padding: '30px',
+                          height: '400px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <svg viewBox="0 0 500 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
+                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8" />
+                            <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="330" y1="10" x2="330" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="410" y1="10" x2="410" y2="50" stroke="#E8E0FF" strokeWidth="1" />
+                            <text x="50" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">A</text>
+                            <text x="130" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">B</text>
+                            <text x="210" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">C</text>
+                            <text x="290" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">D</text>
+                            <text x="370" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">E</text>
+                            <text x="450" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">F</text>
+                            <rect x="10" y="50" width="80" height="280" fill="#F8F6FE" />
+                            <line x1="10" y1="90" x2="490" y2="90" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="130" x2="490" y2="130" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="170" x2="490" y2="170" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="210" x2="490" y2="210" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="250" x2="490" y2="250" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="10" y1="290" x2="490" y2="290" stroke="#E8E0FF" strokeWidth="1" />
+                            <text x="50" y="75" textAnchor="middle" fill="#6B7280" fontSize="14">1</text>
+                            <text x="50" y="115" textAnchor="middle" fill="#6B7280" fontSize="14">2</text>
+                            <text x="50" y="155" textAnchor="middle" fill="#6B7280" fontSize="14">3</text>
+                            <text x="50" y="195" textAnchor="middle" fill="#6B7280" fontSize="14">4</text>
+                            <text x="50" y="235" textAnchor="middle" fill="#6B7280" fontSize="14">5</text>
+                            <text x="50" y="275" textAnchor="middle" fill="#6B7280" fontSize="14">6</text>
+                            <text x="50" y="315" textAnchor="middle" fill="#6B7280" fontSize="14">7</text>
+                            <line x1="170" y1="50" x2="170" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="250" y1="50" x2="250" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="330" y1="50" x2="330" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <line x1="410" y1="50" x2="410" y2="330" stroke="#E8E0FF" strokeWidth="1" />
+                            <rect x="90" y="90" width="160" height="80" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2" rx="4" />
+                            <text x="170" y="75" textAnchor="middle" fill="#10B981" fontSize="12" fontWeight="600">AI Can Edit</text>
+                            <text x="130" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">Quantity</text>
+                            <text x="210" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">500</text>
+                            <text x="130" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">Discount</text>
+                            <text x="210" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">15%</text>
+                            <rect x="250" y="210" width="240" height="80" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4 2" rx="4" />
+                            <text x="370" y="195" textAnchor="middle" fill="#3B82F6" fontSize="12" fontWeight="600">AI Read-Only</text>
+                            <text x="290" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">Total</text>
+                            <text x="370" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">$21,112</text>
+                            <text x="290" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">Tax</text>
+                            <text x="370" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">$1,432</text>
+                            <rect x="330" y="90" width="160" height="80" fill="#6B7280" fillOpacity="0.1" rx="4" />
+                            <g transform="translate(395, 120)">
+                              <rect x="-8" y="-4" width="16" height="12" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none" />
+                              <path d="M-5 -4V-7C-5 -9.76142 -2.76142 -12 0 -12C2.76142 -12 5 -9.76142 5 -7V-4" stroke="#6B7280" strokeWidth="1.5" fill="none" />
+                              <circle cx="0" cy="2" r="1.5" fill="#6B7280" />
+                            </g>
+                            <text x="410" y="155" textAnchor="middle" fill="#6B7280" fontSize="11">Protected</text>
+                            <g transform="translate(20, 340)">
+                              <rect x="0" y="0" width="15" height="15" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="1.5" rx="2" />
+                              <text x="20" y="12" fill="#374151" fontSize="12">AI can modify values</text>
+                              <rect x="150" y="0" width="15" height="15" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="1.5" rx="2" />
+                              <text x="170" y="12" fill="#374151" fontSize="12">AI can read only</text>
+                              <rect x="280" y="0" width="15" height="15" fill="#6B7280" fillOpacity="0.1" stroke="#6B7280" strokeWidth="1.5" rx="2" />
+                              <text x="300" y="12" fill="#374151" fontSize="12">No AI access</text>
+                            </g>
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="feature-content-wrapper">
+                        <div className="margin-bottom margin-small">
+                          <h2>
+                            <span className="text-color-primary">{homepageT.editableAreas.title1}</span> {homepageT.editableAreas.title2}
+                          </h2>
+                        </div>
+                        <div className="margin-bottom margin-medium">
+                          <p className="text-size-medium">
+                            {homepageT.editableAreas.description}
+                          </p>
+                        </div>
+                        <div className="feature-list">
+                          <div className="feature-item">
+                            <div className="feature-item-icon-wrapper">
+                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M20 14C20 14 16 14 14 16C12 18 12 20 12 20C12 20 12 22 14 24C16 26 20 26 20 26M20 26C20 26 24 26 26 24C28 22 28 20 28 20C28 20 28 18 26 16C24 14 20 14 20 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <div className="feature-item-content-wrapper">
+                              <div className="margin-bottom margin-xsmall">
+                                <h3 className="heading-style-h5">{homepageT.editableAreas.feature1Title}</h3>
+                              </div>
+                              <p className="text-size-medium">{homepageT.editableAreas.feature1Text}</p>
+                            </div>
+                          </div>
+                          <div className="feature-item">
+                            <div className="feature-item-icon-wrapper">
+                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
+                                <path d="M20 12V20L26 26M20 28C15.5817 28 12 24.4183 12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28Z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                            <div className="feature-item-content-wrapper">
+                              <div className="margin-bottom margin-xsmall">
+                                <h3 className="heading-style-h5">{homepageT.editableAreas.feature2Title}</h3>
+                              </div>
+                              <p className="text-size-medium">{homepageT.editableAreas.feature2Text}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Pain Point Section - Why AI Struggles */}
+            <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="text-align-center" style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
+                      {homepageT.painPoints.title1} <span style={{ color: '#9333EA' }}>{homepageT.painPoints.title2}</span>
+                    </h2>
+                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
+                      {homepageT.painPoints.subtitle}
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 14H8M12 14H16M20 14H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M14 4V8M14 12V16M14 20V24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="14" cy="14" r="3" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card1.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card1.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card1.author}
+                        </p>
+                      </div>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="6" width="16" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M10 10H14M10 14H12M10 18H16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="20" cy="20" r="6" fill="white" />
+                            <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card2.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card2.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card2.author}
+                        </p>
+                      </div>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 14L12 14M12 14L16 14M12 14L12 10M12 14L12 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M16 10L20 10M20 10L20 14M20 10L24 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M16 18L20 18M20 18L20 14M20 18L24 22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <circle cx="12" cy="14" r="2" fill="#9333EA" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card3.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card3.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card3.author}
+                        </p>
+                      </div>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="14" cy="14" r="11" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card4.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card4.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card4.author}
+                        </p>
+                      </div>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" fill="none" />
+                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                            <path d="M8 14L14 14M14 8V20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M18 10L22 10M18 14L22 14M18 18L22 18" stroke="#9333EA" strokeWidth="1" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card5.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card5.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card5.author}
+                        </p>
+                      </div>
+                      <div style={{
+                        background: 'white',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                        textAlign: 'left'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <rect x="16" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <rect x="10" y="18" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
+                            <path d="M12 12L16 12M14 16L14 18" stroke="#9333EA" strokeWidth="1.5" />
+                            <circle cx="22" cy="6" r="4" fill="white" />
+                            <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5" />
+                          </svg>
+                        </div>
+                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{homepageT.painPoints.card6.title}</h3>
+                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
+                          {homepageT.painPoints.card6.text}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
+                          {homepageT.painPoints.card6.author}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '50px', textAlign: 'center' }}>
+                      <Link href={locale === 'en' ? '/why-ai-fails-at-math' : `/${locale}/why-ai-fails-at-math`} style={{
+                        fontSize: '20px',
+                        color: '#9333EA',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        display: 'inline-block',
+                        borderBottom: '2px solid #9333EA',
+                        paddingBottom: '2px',
+                        transition: 'all 0.2s ease'
+                      }}>
+                        {homepageT.painPoints.link}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Problem/Solution Section */}
             <section className="section-home-features">

@@ -170,7 +170,8 @@
 }
 
 .menu-icon.open .menu-icon-line-top {
-  transform: rotate(45deg) translateY(8px);
+  top: 8px;
+  transform: rotate(45deg);
 }
 
 .menu-icon.open .menu-icon-line-center {
@@ -178,7 +179,9 @@
 }
 
 .menu-icon.open .menu-icon-line-bottom {
-  transform: rotate(-45deg) translateY(-8px);
+  bottom: auto;
+  top: 8px;
+  transform: rotate(-45deg);
 }
 
 /* Mobile menu */

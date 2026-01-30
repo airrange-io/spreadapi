@@ -82,7 +82,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="header-image-wrapper">
                       <div className="header-illustration">
                         <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="800" height="400" fill="#F8F6FE"/>
+                          <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
                           {/* Spreadsheet on left */}
                           <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
                           <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
@@ -338,59 +338,6 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     </div>
                   </div>
 
-                  {/* API Flow Diagram */}
-                  <div className="margin-top margin-xlarge">
-                    <div className="api-flow-card">
-                      <h3 className="text-align-center margin-bottom margin-medium">{t.workflow.flowTitle}</h3>
-                      <div className="api-flow-diagram">
-                        <div className="api-flow-item" data-step="1">
-                          <div className="api-flow-icon">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M24 14V34M24 34L16 26M24 34L32 26" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <rect x="14" y="10" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
-                            </svg>
-                          </div>
-                          <h4>{t.workflow.flow1.title}</h4>
-                          <p>{t.workflow.flow1.description}</p>
-                        </div>
-                        <div className="api-flow-item" data-step="2">
-                          <div className="api-flow-icon">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <rect x="12" y="12" width="24" height="24" rx="3" stroke="#9333EA" strokeWidth="2"/>
-                              <path d="M18 20H30M18 24H30M18 28H26" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
-                              <path d="M32 32L36 36" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                          <h4>{t.workflow.flow2.title}</h4>
-                          <p>{t.workflow.flow2.description}</p>
-                        </div>
-                        <div className="api-flow-item" data-step="3">
-                          <div className="api-flow-icon">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M28 14L20 24H28L20 34" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <circle cx="24" cy="24" r="11" stroke="#9333EA" strokeWidth="2" strokeDasharray="3 3"/>
-                            </svg>
-                          </div>
-                          <h4>{t.workflow.flow3.title}</h4>
-                          <p>{t.workflow.flow3.description}</p>
-                        </div>
-                        <div className="api-flow-item" data-step="4">
-                          <div className="api-flow-icon">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="48" height="48" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                              <path d="M24 34V14M24 14L16 22M24 14L32 22" stroke="#9333EA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <rect x="14" y="34" width="20" height="4" rx="2" fill="#9333EA" fillOpacity="0.5"/>
-                            </svg>
-                          </div>
-                          <h4>{t.workflow.flow4.title}</h4>
-                          <p>{t.workflow.flow4.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

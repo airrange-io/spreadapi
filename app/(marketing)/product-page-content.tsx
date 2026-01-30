@@ -33,172 +33,128 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               locale={locale}
             />
 
-            {/* Pain Point Section */}
-            <section className="section-pain-point" style={{ background: '#f8f9fa', padding: '60px 0' }}>
+            {/* Excel API - How It Works Section */}
+            <section className="section-excel-api" style={{ background: '#f8f9fa', padding: '80px 0' }}>
               <div className="padding-global">
                 <div className="container-large">
                   <div className="text-align-center" style={{ maxWidth: '1000px', margin: '0 auto' }}>
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
-                      {t.painPoints.title1} <span style={{ color: '#9333EA' }}>{t.painPoints.title2}</span>
+                      {t.excelApi.title1} <span style={{ color: '#9333EA' }}>{t.excelApi.title2}</span>
                     </h2>
                     <p style={{ fontSize: '18px', color: '#666666', marginBottom: '50px' }}>
-                      {t.painPoints.subtitle}
+                      {t.excelApi.description}
                     </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '30px' }}>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4 14H8M12 14H16M20 14H24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M14 4V8M14 12V16M14 20V24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <circle cx="14" cy="14" r="3" stroke="#9333EA" strokeWidth="1.5" />
-                            <path d="M11 11L17 17M17 11L11 17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card1.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card1.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card1.author}
-                        </p>
+                  </div>
+
+                  {/* 3 Steps */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '30px',
+                    marginBottom: '50px',
+                    maxWidth: '1000px',
+                    margin: '0 auto 50px'
+                  }}>
+                    {/* Step 1 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">1</text>
+                        </svg>
                       </div>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="6" y="6" width="16" height="16" rx="2" stroke="#9333EA" strokeWidth="1.5" />
-                            <path d="M10 10H14M10 14H12M10 18H16" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <circle cx="20" cy="20" r="6" fill="white" />
-                            <path d="M20 17V20M20 23V23.01" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card2.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card2.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card2.author}
-                        </p>
-                      </div>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 14L12 14M12 14L16 14M12 14L12 10M12 14L12 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M16 10L20 10M20 10L20 14M20 10L24 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M16 18L20 18M20 18L20 14M20 18L24 22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <circle cx="12" cy="14" r="2" fill="#9333EA" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card3.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card3.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card3.author}
-                        </p>
-                      </div>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="14" cy="14" r="11" stroke="#9333EA" strokeWidth="1.5" />
-                            <path d="M14 7V14L18 18" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card4.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card4.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card4.author}
-                        </p>
-                      </div>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" fill="none" />
-                            <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                            <path d="M8 14L14 14M14 8V20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M18 10L22 10M18 14L22 14M18 18L22 18" stroke="#9333EA" strokeWidth="1" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card5.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card5.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card5.author}
-                        </p>
-                      </div>
-                      <div style={{
-                        background: 'white',
-                        padding: '30px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="4" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
-                            <rect x="16" y="8" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
-                            <rect x="10" y="18" width="8" height="8" rx="1" stroke="#9333EA" strokeWidth="1.5" />
-                            <path d="M12 12L16 12M14 16L14 18" stroke="#9333EA" strokeWidth="1.5" />
-                            <circle cx="22" cy="6" r="4" fill="white" />
-                            <path d="M22 4V8M20 6H24" stroke="#dc2626" strokeWidth="1.5" />
-                          </svg>
-                        </div>
-                        <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.painPoints.card6.title}</h3>
-                        <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5', marginBottom: '12px' }}>
-                          {t.painPoints.card6.text}
-                        </p>
-                        <p style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
-                          {t.painPoints.card6.author}
-                        </p>
-                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step1.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step1.description}</p>
                     </div>
 
-                    <div style={{ marginTop: '50px', textAlign: 'center' }}>
-                      <Link href={locale === 'en' ? '/why-ai-fails-at-math' : `/${locale}/why-ai-fails-at-math`} style={{
-                        fontSize: '20px',
-                        color: '#9333EA',
-                        textDecoration: 'none',
-                        fontWeight: '600',
-                        display: 'inline-block',
-                        borderBottom: '2px solid #9333EA',
-                        paddingBottom: '2px',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        {t.painPoints.link}
-                      </Link>
+                    {/* Step 2 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">2</text>
+                        </svg>
+                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step2.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step2.description}</p>
                     </div>
+
+                    {/* Step 3 */}
+                    <div style={{
+                      background: 'white',
+                      padding: '30px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                      textAlign: 'left'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="14" cy="14" r="12" stroke="#9333EA" strokeWidth="1.5" />
+                          <text x="14" y="18" textAnchor="middle" fill="#9333EA" fontSize="12" fontWeight="600">3</text>
+                        </svg>
+                      </div>
+                      <h3 style={{ marginBottom: '12px', fontSize: '18px', color: '#1f2937' }}>{t.excelApi.step3.title}</h3>
+                      <p style={{ color: '#4b5563', fontSize: '15px', lineHeight: '1.5' }}>{t.excelApi.step3.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Stats Row */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap',
+                    gap: '40px',
+                    marginBottom: '40px'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat1.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat1.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat2.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat2.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat3.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat3.label}</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: '700', color: '#9333EA' }}>{t.excelApi.stat4.value}</div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>{t.excelApi.stat4.label}</div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div style={{ textAlign: 'center' }}>
+                    <Link
+                      href="/how-excel-api-works"
+                      style={{
+                        color: '#9333EA',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {t.excelApi.cta}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -212,19 +168,47 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                     <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>
                       {t.solution.title1} <span style={{ color: '#9333EA' }}>{t.solution.title2}</span>
                     </h2>
-                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '10px', lineHeight: '1.6' }}>
+                    <p style={{ fontSize: '18px', color: '#666666', marginBottom: '30px', lineHeight: '1.6' }}>
                       {t.solution.description}
                     </p>
+                    <Link
+                      href={locale === 'en' ? '/excel-ai-integration' : `/${locale}/excel-ai-integration`}
+                      style={{
+                        color: '#9333EA',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {t.solution.link}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </Link>
                   </div>
                 </div>
               </div>
             </section>
 
+            {/* In Action Subheading */}
+            <div className="padding-global" style={{ paddingTop: '60px', paddingBottom: '20px' }}>
+              <div className="container-large">
+                <div className="text-align-center">
+                  <div className="subheading">
+                    <div>{t.inAction}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Feature Section 1 */}
             <section id="feature" className="section-home-feature">
               <div className="padding-global">
                 <div className="container-large">
-                  <div className="padding-section-large">
+                  <div className="padding-section-large" style={{ paddingTop: '0' }}>
                     <div className="feature-component">
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
@@ -557,300 +541,6 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               </div>
             </section>
 
-            {/* Technical Differentiators Section */}
-            <section className="section-home-feature" style={{ background: '#f8f9fa' }}>
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="text-align-center">
-                      <div className="margin-bottom margin-xsmall">
-                        <div className="subheading">
-                          <div>{t.differentiators.subheading}</div>
-                        </div>
-                      </div>
-                      <div className="margin-bottom margin-large">
-                        <h2>{t.differentiators.title1} <span className="text-color-primary">{t.differentiators.title2}</span></h2>
-                        <p style={{ fontSize: '18px', color: '#666666', marginTop: '20px', marginBottom: '0', maxWidth: '800px', margin: '20px auto 0' }}>
-                          {t.differentiators.description}
-                        </p>
-                      </div>
-
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: '30px',
-                        maxWidth: '1000px',
-                        margin: '0 auto',
-                        textAlign: 'left'
-                      }}>
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 6V14L20 20" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <circle cx="14" cy="14" r="10" stroke="#9333EA" strokeWidth="1.5" />
-                              <path d="M10 24L8 26M18 24L20 26" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card1.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card1.text}
-                          </p>
-                        </div>
-
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 9C11.2386 9 9 11.2386 9 14C9 16.7614 11.2386 19 14 19C16.7614 19 19 16.7614 19 14C19 11.2386 16.7614 9 14 9Z" stroke="#9333EA" strokeWidth="1.5" />
-                              <path d="M14 4V7M14 21V24M24 14H21M7 14H4M21.07 6.93L19 9M9 19L6.93 21.07M21.07 21.07L19 19M9 9L6.93 6.93" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card2.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card2.text}
-                          </p>
-                        </div>
-
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M16 4L10 14H18L12 24" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card3.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card3.text}
-                          </p>
-                        </div>
-
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="6" y="12" width="16" height="12" rx="2" stroke="#9333EA" strokeWidth="1.5" />
-                              <path d="M10 12V8C10 5.79086 11.7909 4 14 4C16.2091 4 18 5.79086 18 8V12" stroke="#9333EA" strokeWidth="1.5" />
-                              <circle cx="14" cy="17" r="1.5" fill="#9333EA" />
-                              <path d="M14 18.5V20" stroke="#9333EA" strokeWidth="1.5" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card4.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card4.text}
-                          </p>
-                        </div>
-
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="8" y="10" width="12" height="10" rx="2" stroke="#9333EA" strokeWidth="1.5" />
-                              <circle cx="11" cy="13" r="1" fill="#9333EA" />
-                              <circle cx="17" cy="13" r="1" fill="#9333EA" />
-                              <path d="M11 17H17" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                              <path d="M14 6V10M10 6L14 6M18 6L14 6" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                              <path d="M6 15H8M20 15H22" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card5.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card5.text}
-                          </p>
-                        </div>
-
-                        <div style={{
-                          background: 'white',
-                          padding: '30px',
-                          borderRadius: '12px',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                        }}>
-                          <div style={{ marginBottom: '15px' }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 4C8.477 4 4 8.477 4 14C4 19.523 8.477 24 14 24C19.523 24 24 19.523 24 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" />
-                              <path d="M14 14L20 8M20 8H16M20 8V12" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <circle cx="14" cy="14" r="2" fill="#9333EA" />
-                            </svg>
-                          </div>
-                          <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{t.differentiators.card6.title}</h3>
-                          <p style={{ color: '#6b7280', fontSize: '15px' }}>
-                            {t.differentiators.card6.text}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Feature Section 2 */}
-            <section className="section-home-feature">
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="feature-component reverse">
-                      <div className="feature-image-wrapper">
-                        <div className="feature-image-placeholder" style={{
-                          background: '#F8F6FE',
-                          borderRadius: '12px',
-                          padding: '30px',
-                          height: '400px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <svg viewBox="0 0 500 340" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            {/* Spreadsheet Container */}
-                            <rect x="10" y="10" width="480" height="320" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
-
-                            {/* Column Headers */}
-                            <rect x="10" y="10" width="480" height="40" fill="#F8F6FE" rx="8" />
-                            <line x1="90" y1="10" x2="90" y2="50" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="170" y1="10" x2="170" y2="50" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="250" y1="10" x2="250" y2="50" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="330" y1="10" x2="330" y2="50" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="410" y1="10" x2="410" y2="50" stroke="#E8E0FF" strokeWidth="1" />
-                            <text x="50" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">A</text>
-                            <text x="130" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">B</text>
-                            <text x="210" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">C</text>
-                            <text x="290" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">D</text>
-                            <text x="370" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">E</text>
-                            <text x="450" y="35" textAnchor="middle" fill="#6B7280" fontSize="14">F</text>
-
-                            {/* Row Numbers */}
-                            <rect x="10" y="50" width="80" height="280" fill="#F8F6FE" />
-                            <line x1="10" y1="90" x2="490" y2="90" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="10" y1="130" x2="490" y2="130" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="10" y1="170" x2="490" y2="170" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="10" y1="210" x2="490" y2="210" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="10" y1="250" x2="490" y2="250" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="10" y1="290" x2="490" y2="290" stroke="#E8E0FF" strokeWidth="1" />
-                            <text x="50" y="75" textAnchor="middle" fill="#6B7280" fontSize="14">1</text>
-                            <text x="50" y="115" textAnchor="middle" fill="#6B7280" fontSize="14">2</text>
-                            <text x="50" y="155" textAnchor="middle" fill="#6B7280" fontSize="14">3</text>
-                            <text x="50" y="195" textAnchor="middle" fill="#6B7280" fontSize="14">4</text>
-                            <text x="50" y="235" textAnchor="middle" fill="#6B7280" fontSize="14">5</text>
-                            <text x="50" y="275" textAnchor="middle" fill="#6B7280" fontSize="14">6</text>
-                            <text x="50" y="315" textAnchor="middle" fill="#6B7280" fontSize="14">7</text>
-
-                            {/* Grid Lines */}
-                            <line x1="170" y1="50" x2="170" y2="330" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="250" y1="50" x2="250" y2="330" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="330" y1="50" x2="330" y2="330" stroke="#E8E0FF" strokeWidth="1" />
-                            <line x1="410" y1="50" x2="410" y2="330" stroke="#E8E0FF" strokeWidth="1" />
-
-                            {/* AI Access Area 1 - Input Area (Green) */}
-                            <rect x="90" y="90" width="160" height="80" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2" rx="4" />
-                            <text x="170" y="75" textAnchor="middle" fill="#10B981" fontSize="12" fontWeight="600">AI Can Edit</text>
-
-                            {/* Sample Data in Input Area */}
-                            <text x="130" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">Quantity</text>
-                            <text x="210" y="115" textAnchor="middle" fill="#1F2937" fontSize="13">500</text>
-                            <text x="130" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">Discount</text>
-                            <text x="210" y="155" textAnchor="middle" fill="#1F2937" fontSize="13">15%</text>
-
-                            {/* AI Access Area 2 - Read-Only Area (Blue) */}
-                            <rect x="250" y="210" width="240" height="80" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4 2" rx="4" />
-                            <text x="370" y="195" textAnchor="middle" fill="#3B82F6" fontSize="12" fontWeight="600">AI Read-Only</text>
-
-                            {/* Sample Data in Read-Only Area */}
-                            <text x="290" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">Total</text>
-                            <text x="370" y="235" textAnchor="middle" fill="#1F2937" fontSize="13">$21,112</text>
-                            <text x="290" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">Tax</text>
-                            <text x="370" y="275" textAnchor="middle" fill="#1F2937" fontSize="13">$1,432</text>
-
-                            {/* Protected Area (Gray with Lock) */}
-                            <rect x="330" y="90" width="160" height="80" fill="#6B7280" fillOpacity="0.1" rx="4" />
-                            <g transform="translate(395, 120)">
-                              <rect x="-8" y="-4" width="16" height="12" rx="2" stroke="#6B7280" strokeWidth="1.5" fill="none" />
-                              <path d="M-5 -4V-7C-5 -9.76142 -2.76142 -12 0 -12C2.76142 -12 5 -9.76142 5 -7V-4" stroke="#6B7280" strokeWidth="1.5" fill="none" />
-                              <circle cx="0" cy="2" r="1.5" fill="#6B7280" />
-                            </g>
-                            <text x="410" y="155" textAnchor="middle" fill="#6B7280" fontSize="11">Protected</text>
-
-                            {/* Legend */}
-                            <g transform="translate(20, 340)">
-                              <rect x="0" y="0" width="15" height="15" fill="#10B981" fillOpacity="0.15" stroke="#10B981" strokeWidth="1.5" rx="2" />
-                              <text x="20" y="12" fill="#374151" fontSize="12">AI can modify values</text>
-
-                              <rect x="150" y="0" width="15" height="15" fill="#3B82F6" fillOpacity="0.15" stroke="#3B82F6" strokeWidth="1.5" rx="2" />
-                              <text x="170" y="12" fill="#374151" fontSize="12">AI can read only</text>
-
-                              <rect x="280" y="0" width="15" height="15" fill="#6B7280" fillOpacity="0.1" stroke="#6B7280" strokeWidth="1.5" rx="2" />
-                              <text x="300" y="12" fill="#374151" fontSize="12">No AI access</text>
-                            </g>
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="feature-content-wrapper">
-                        <div className="margin-bottom margin-small">
-                          <h2>
-                            <span className="text-color-primary">{t.editableAreas.title1}</span> {t.editableAreas.title2}
-                          </h2>
-                        </div>
-                        <div className="margin-bottom margin-medium">
-                          <p className="text-size-medium">
-                            {t.editableAreas.description}
-                          </p>
-                        </div>
-                        <div className="feature-list">
-                          <div className="feature-item">
-                            <div className="feature-item-icon-wrapper">
-                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M20 14C20 14 16 14 14 16C12 18 12 20 12 20C12 20 12 22 14 24C16 26 20 26 20 26M20 26C20 26 24 26 26 24C28 22 28 20 28 20C28 20 28 18 26 16C24 14 20 14 20 14" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-                            <div className="feature-item-content-wrapper">
-                              <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">{t.editableAreas.feature1Title}</h3>
-                              </div>
-                              <p className="text-size-medium">{t.editableAreas.feature1Text}</p>
-                            </div>
-                          </div>
-                          <div className="feature-item">
-                            <div className="feature-item-icon-wrapper">
-                              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="8" fill="#9333EA" fillOpacity="0.1" />
-                                <path d="M20 12V20L26 26M20 28C15.5817 28 12 24.4183 12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28Z" stroke="#9333EA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </div>
-                            <div className="feature-item-content-wrapper">
-                              <div className="margin-bottom margin-xsmall">
-                                <h3 className="heading-style-h5">{t.editableAreas.feature2Title}</h3>
-                              </div>
-                              <p className="text-size-medium">{t.editableAreas.feature2Text}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
             {/* Tools Section */}
             <section className="section-home-tools">
               <div className="padding-global">
@@ -967,7 +657,7 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                             {t.tools.description}
                           </p>
                         </div>
-                        <a href="/" className="button">{t.tools.cta}</a>
+                        <a href="/app" className="button">{t.tools.cta}</a>
                       </div>
                     </div>
                   </div>

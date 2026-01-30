@@ -73,8 +73,10 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
                               {t.hero.description}
                             </p>
-                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
                               <a href="/app" className="button is-primary" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 background: '#502D80',
                                 color: 'white',
                                 padding: '14px 28px',
@@ -86,6 +88,8 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
                                 {t.hero.cta}
                               </a>
                               <a href="#how-it-works" style={{
+                                flex: '1 1 auto',
+                                textAlign: 'center',
                                 padding: '14px 28px',
                                 borderRadius: '8px',
                                 textDecoration: 'none',
@@ -98,6 +102,55 @@ export function StopRewritingExcelContent({ locale = 'en' }: StopRewritingExcelC
                               </a>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                      <div className="header-image-wrapper">
+                        <div className="header-illustration">
+                          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
+
+                            {/* Excel spreadsheet on left */}
+                            <rect x="50" y="120" width="180" height="160" rx="12" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <rect x="65" y="135" width="150" height="22" fill="#F8F6FE"/>
+                            <text x="140" y="150" textAnchor="middle" fill="#666" fontSize="10" fontWeight="500">Your Excel</text>
+                            <rect x="65" y="168" width="150" height="16" fill="#E6F4FF"/>
+                            <rect x="65" y="188" width="150" height="16" fill="#F8F6FE"/>
+                            <rect x="65" y="208" width="150" height="16" fill="#E6F4FF"/>
+                            <rect x="65" y="228" width="150" height="16" fill="#D4EDDA"/>
+                            <text x="140" y="240" textAnchor="middle" fill="#28a745" fontSize="9">=formulas</text>
+                            <text x="140" y="265" textAnchor="middle" fill="#28a745" fontSize="10" fontWeight="500">It works ✓</text>
+
+                            {/* Arrow 1 */}
+                            <path d="M250 200 L310 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M300 190 L310 200 L300 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Middle: Code rewrite crossed out */}
+                            <rect x="330" y="130" width="140" height="140" rx="12" fill="white" stroke="#FFCDD2" strokeWidth="2"/>
+                            <text x="400" y="160" textAnchor="middle" fill="#666" fontSize="10">Rewrite in code?</text>
+                            <rect x="355" y="175" width="90" height="12" fill="#f5f5f5" rx="2"/>
+                            <rect x="355" y="192" width="70" height="12" fill="#f5f5f5" rx="2"/>
+                            <rect x="355" y="209" width="80" height="12" fill="#f5f5f5" rx="2"/>
+                            <rect x="355" y="226" width="60" height="12" fill="#f5f5f5" rx="2"/>
+
+                            {/* Red X */}
+                            <line x1="345" y1="145" x2="455" y2="255" stroke="#F44336" strokeWidth="4" strokeLinecap="round"/>
+                            <line x1="455" y1="145" x2="345" y2="255" stroke="#F44336" strokeWidth="4" strokeLinecap="round"/>
+
+                            {/* Arrow 2 */}
+                            <path d="M490 200 L550 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+                            <path d="M540 190 L550 200 L540 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+
+                            {/* Right: Simple API */}
+                            <rect x="570" y="120" width="180" height="160" rx="12" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+                            <text x="660" y="150" textAnchor="middle" fill="#666" fontSize="10" fontWeight="500">Just call the API</text>
+
+                            <rect x="590" y="165" width="140" height="50" fill="#F8F6FE" rx="6"/>
+                            <text x="660" y="185" textAnchor="middle" fill="#9333EA" fontSize="10" fontFamily="monospace">GET /api/calc</text>
+                            <text x="660" y="202" textAnchor="middle" fill="#666" fontSize="9">?input=value</text>
+
+                            <rect x="590" y="225" width="140" height="35" fill="#D4EDDA" rx="6"/>
+                            <text x="660" y="248" textAnchor="middle" fill="#28a745" fontSize="11" fontWeight="500">→ Result ✓</text>
+                          </svg>
                         </div>
                       </div>
                     </div>

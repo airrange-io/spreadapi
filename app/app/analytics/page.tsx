@@ -320,7 +320,7 @@ export default function AnalyticsPage() {
   if (authLoading || loading) {
     return (
       <Layout style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" />
+        <Spin size="default" />
       </Layout>
     );
   }
