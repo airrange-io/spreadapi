@@ -370,7 +370,7 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
             </section>
 
             {/* The Solution */}
-            <section id="how-it-works" className="section-home-feature" style={{ background: '#f8f6fe' }}>
+            <section id="how-it-works" className="section-home-feature">
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -452,7 +452,7 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
             </section>
 
             {/* 3 Simple Steps */}
-            <section className="section-home-feature">
+            <section className="section-home-feature" style={{ background: '#f8f6fe' }}>
               <div className="padding-global">
                 <div className="container-large">
                   <div className="padding-section-large">
@@ -497,109 +497,6 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                         <p style={{ color: '#666', fontSize: '15px' }}>
                           Use a simple HTTP/Webhook action to call your API. Works with Zapier, Make, n8n, Power Automate, and more.
                         </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Platform-Specific Examples */}
-            <section className="section-home-feature" style={{ background: '#f8f9fa' }}>
-              <div className="padding-global">
-                <div className="container-large">
-                  <div className="padding-section-large">
-                    <div className="margin-bottom margin-large">
-                      <div className="text-align-center">
-                        <div className="max-width-large align-center">
-                          <div className="margin-bottom margin-xsmall">
-                            <div className="subheading">
-                              <div>Platform Integration</div>
-                            </div>
-                          </div>
-                          <h2>
-                            Works With <span className="text-color-primary">Every Platform</span>
-                          </h2>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', maxWidth: '1000px', margin: '0 auto' }}>
-                      {/* Zapier */}
-                      <div style={{ background: 'white', padding: '28px', borderRadius: '12px', border: '2px solid #FF4A00' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#FFF4F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#FF4A00" strokeWidth="2"/>
-                              <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="#FF4A00" strokeWidth="2"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ margin: 0, fontSize: '18px' }}>Zapier</h3>
-                        </div>
-                        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                          Use the <strong>Webhooks by Zapier</strong> action to call your SpreadAPI endpoint between any trigger and action.
-                        </p>
-                        <div style={{ background: '#f8f8f8', padding: '12px', borderRadius: '6px', fontSize: '12px', color: '#666' }}>
-                          Trigger → Webhook (POST to SpreadAPI) → Use result in next step
-                        </div>
-                      </div>
-
-                      {/* Make */}
-                      <div style={{ background: 'white', padding: '28px', borderRadius: '12px', border: '2px solid #6D00CC' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#F5F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="#6D00CC" strokeWidth="2"/>
-                              <path d="M12 6V12L16 14" stroke="#6D00CC" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ margin: 0, fontSize: '18px' }}>Make (Integromat)</h3>
-                        </div>
-                        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                          Add an <strong>HTTP module</strong> to your scenario. Route based on the calculated result using Make's powerful filters.
-                        </p>
-                        <div style={{ background: '#f8f8f8', padding: '12px', borderRadius: '6px', fontSize: '12px', color: '#666' }}>
-                          Module → HTTP Request → Router (based on result)
-                        </div>
-                      </div>
-
-                      {/* n8n */}
-                      <div style={{ background: 'white', padding: '28px', borderRadius: '12px', border: '2px solid #EA4B71' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#FFF0F3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                              <rect x="3" y="3" width="7" height="7" rx="1" stroke="#EA4B71" strokeWidth="2"/>
-                              <rect x="14" y="3" width="7" height="7" rx="1" stroke="#EA4B71" strokeWidth="2"/>
-                              <rect x="3" y="14" width="7" height="7" rx="1" stroke="#EA4B71" strokeWidth="2"/>
-                              <rect x="14" y="14" width="7" height="7" rx="1" stroke="#EA4B71" strokeWidth="2"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ margin: 0, fontSize: '18px' }}>n8n</h3>
-                        </div>
-                        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                          Use the <strong>HTTP Request node</strong> in your workflow. Branch logic based on SpreadAPI's calculated output.
-                        </p>
-                        <div style={{ background: '#f8f8f8', padding: '12px', borderRadius: '6px', fontSize: '12px', color: '#666' }}>
-                          Node → HTTP Request → IF node (branch on result)
-                        </div>
-                      </div>
-
-                      {/* Power Automate */}
-                      <div style={{ background: 'white', padding: '28px', borderRadius: '12px', border: '2px solid #0066FF' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#F0F6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#0066FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                          <h3 style={{ margin: 0, fontSize: '18px' }}>Power Automate</h3>
-                        </div>
-                        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-                          Add an <strong>HTTP connector</strong> action. Use the response in conditions to drive your flow logic.
-                        </p>
-                        <div style={{ background: '#f8f8f8', padding: '12px', borderRadius: '6px', fontSize: '12px', color: '#666' }}>
-                          Trigger → HTTP → Condition → Actions
-                        </div>
                       </div>
                     </div>
                   </div>
