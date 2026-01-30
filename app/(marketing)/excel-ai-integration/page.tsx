@@ -84,7 +84,7 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
                       <div className="header-image-wrapper">
                         <div className="header-illustration">
                           <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="800" height="400" fill="#F8F6FE"/>
+                            <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
 
                             {/* AI Chat Bubble on left */}
                             <rect x="50" y="120" width="200" height="160" rx="16" fill="white" stroke="#E8E0FF" strokeWidth="2"/>

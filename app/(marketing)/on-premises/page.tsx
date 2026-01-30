@@ -104,7 +104,7 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                       <div className="header-image-wrapper">
                         <div className="header-illustration">
                           <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="800" height="400" fill="#F8F6FE"/>
+                            <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
 
                             {/* Your Infrastructure - secure boundary */}
                             <rect x="100" y="80" width="400" height="240" rx="16" fill="white" stroke="#28a745" strokeWidth="3" strokeDasharray="8,4"/>

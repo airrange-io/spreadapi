@@ -103,7 +103,7 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
                       <div className="header-image-wrapper">
                         <div className="header-illustration">
                           <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="800" height="400" fill="#F8F6FE"/>
+                            <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
 
                             {/* Automation Workflow on left */}
                             <rect x="40" y="110" width="200" height="180" rx="12" fill="white" stroke="#E8E0FF" strokeWidth="2"/>

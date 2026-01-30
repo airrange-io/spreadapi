@@ -82,7 +82,7 @@ export function HowItWorksContent({ locale = 'en' }: HowItWorksContentProps) {
                     <div className="header-image-wrapper">
                       <div className="header-illustration">
                         <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect width="800" height="400" fill="#F8F6FE"/>
+                          <rect width="800" height="400" rx="8" fill="#F8F6FE"/>
                           {/* Spreadsheet on left */}
                           <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
                           <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
