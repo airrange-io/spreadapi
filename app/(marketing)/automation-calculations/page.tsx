@@ -190,11 +190,10 @@ export function AutomationCalculationsContent({ locale = 'en' }: AutomationCalcu
             </header>
 
             {/* Platform Logos */}
-            <section style={{ background: '#f8f9fa', padding: '32px 0' }}>
+            <section style={{ paddingBottom: '32px', marginTop: '-40px' }}>
               <div className="padding-global">
                 <div className="container-large">
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>Works with your favorite automation platforms</p>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '48px', flexWrap: 'wrap' }}>
                       {/* Zapier */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666' }}>
