@@ -5,6 +5,8 @@ import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 import { getStopRewritingTranslations } from '@/lib/translations/marketing';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'Stop Rewriting Excel in Code | SpreadAPI',
   description: 'Stop wasting months converting Excel spreadsheets to JavaScript. Turn your Excel models into APIs instantly. 100% accuracy, zero formula translation.',

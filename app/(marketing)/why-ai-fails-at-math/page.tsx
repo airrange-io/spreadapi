@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import WhyAIFailsClient from './why-ai-fails-client';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'Why AI Fails at Excel Math | SpreadAPI',
   description: 'Discover why AI struggles with spreadsheet calculations and how SpreadAPI solves this by combining AI conversation with Excel precision.',

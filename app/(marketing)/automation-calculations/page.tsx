@@ -5,6 +5,8 @@ import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 import { getAutomationTranslations } from '@/lib/translations/marketing';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'When Your Automation Needs to Think | SpreadAPI',
   description: 'Zapier moves data. Make triggers actions. But who does the math? Add Excel-powered calculations to your automations without code.',

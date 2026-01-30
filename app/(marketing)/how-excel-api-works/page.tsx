@@ -6,6 +6,8 @@ import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 import { getHowItWorksTranslations } from '@/lib/translations/marketing';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'How Excel API Works - SpreadAPI | Transform Spreadsheets to APIs',
   description: 'Learn how SpreadAPI transforms your Excel spreadsheets into powerful REST APIs. No coding required. Perfect for AI integration with ChatGPT and Claude.',

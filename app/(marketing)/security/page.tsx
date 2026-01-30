@@ -3,6 +3,8 @@ import '../product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'Security & Compliance | SpreadAPI',
   description: 'Learn how SpreadAPI protects your data. Built on certified infrastructure, minimal data storage, GDPR compliance, and on-premises options for regulated industries.',

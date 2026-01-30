@@ -3,6 +3,8 @@ import ProductPageContent from './product-page-content';
 import FAQSchema from '@/components/seo/FAQSchema';
 import { productFAQs } from '@/data/faq';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'SpreadAPI - Transform Excel Spreadsheets into Powerful APIs',
   description: 'Turn your Excel files into REST APIs instantly. No coding required. Perfect for AI integration with ChatGPT, Claude, and more.',

@@ -3,6 +3,8 @@ import '../../product.css';
 import Footer from '@/components/product/Footer';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'Enterprise Technical Whitepaper | SpreadAPI',
   description: 'Technical documentation for SpreadAPI On-Premises deployment. Architecture, security model, deployment options, and compliance checklist for enterprise IT teams.',

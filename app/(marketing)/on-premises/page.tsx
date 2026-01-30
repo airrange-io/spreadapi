@@ -5,6 +5,8 @@ import Navigation from '@/components/Navigation';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
 import { getOnPremisesTranslations } from '@/lib/translations/marketing';
 
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'On-Premises & Enterprise | SpreadAPI',
   description: 'Deploy SpreadAPI in your own infrastructure. Full data sovereignty, zero external dependencies. Perfect for financial services, consulting firms, and regulated industries.',
