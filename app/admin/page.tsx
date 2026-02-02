@@ -123,8 +123,13 @@ export default function AdminDashboardPage() {
       setLoading(true);
       setError(null);
       const response = await fetch('/api/admin');
+      if (response.status === 401) {
+        // Redirect to login
+        window.location.href = '/login?returnTo=/admin';
+        return;
+      }
       if (response.status === 403) {
-        setError('Access denied. Admin dashboard is only available from localhost.');
+        setError('Access denied. You do not have admin privileges.');
         return;
       }
       if (!response.ok) {

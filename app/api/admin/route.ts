@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import redis from '@/lib/redis';
 import { getLicenseType, type LicenseType } from '@/lib/licensing';
+
+// Admin email allowlist - can also be set via ADMIN_EMAILS env var
+const DEFAULT_ADMIN_EMAILS = [
+  's.methner@mac.com',
+  'stephan@airrange.io',
+];
+
+function getAdminEmails(): string[] {
+  const envEmails = process.env.ADMIN_EMAILS;
+  if (envEmails) {
+    return envEmails.split(',').map(e => e.trim().toLowerCase());
+  }
+  return DEFAULT_ADMIN_EMAILS.map(e => e.toLowerCase());
+}
 
 interface UserSummary {
   id: string;
@@ -44,36 +59,69 @@ interface AdminDashboardData {
   topServices: TopService[];
 }
 
-function isLocalhostRequest(request: NextRequest): boolean {
-  // Check if running in development mode
-  if (process.env.NODE_ENV !== 'production') {
-    return true;
-  }
+const hankoApiUrl = process.env.NEXT_PUBLIC_HANKO_API_URL!;
 
+function isLocalhostRequest(request: NextRequest): boolean {
   // Check request headers for localhost access
   const host = request.headers.get('host') || '';
   const forwardedHost = request.headers.get('x-forwarded-host') || '';
   const forwardedFor = request.headers.get('x-forwarded-for') || '';
 
-  const isLocalhost =
+  return (
     host.startsWith('localhost') ||
     host.startsWith('127.0.0.1') ||
     host.startsWith('::1') ||
     forwardedHost.startsWith('localhost') ||
     forwardedHost.startsWith('127.0.0.1') ||
     forwardedFor.startsWith('127.0.0.1') ||
-    forwardedFor.startsWith('::1');
+    forwardedFor.startsWith('::1')
+  );
+}
 
-  return isLocalhost;
+async function getAuthenticatedUserEmail(request: NextRequest): Promise<string | null> {
+  try {
+    const hanko = request.cookies.get('hanko')?.value;
+    if (!hanko) return null;
+
+    const JWKS = createRemoteJWKSet(
+      new URL(`${hankoApiUrl}/.well-known/jwks.json`)
+    );
+    const verifiedJWT = await jwtVerify(hanko, JWKS);
+    const userId = verifiedJWT.payload.sub as string;
+
+    // Get user email from Redis
+    const email = await redis.hGet(`user:${userId}`, 'email');
+    return email ? String(email).toLowerCase() : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
-  // Check if request is from localhost or development mode
-  if (!isLocalhostRequest(request)) {
-    return NextResponse.json(
-      { error: 'Forbidden - Admin access only available from localhost' },
-      { status: 403 }
-    );
+  const adminEmails = getAdminEmails();
+  const isDev = process.env.NODE_ENV !== 'production';
+  const isLocalhost = isLocalhostRequest(request);
+
+  // In development + localhost, allow access without auth
+  if (isDev && isLocalhost) {
+    // Continue to data fetching
+  } else {
+    // In production, require authenticated admin user
+    const userEmail = await getAuthenticatedUserEmail(request);
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Please log in' },
+        { status: 401 }
+      );
+    }
+
+    if (!adminEmails.includes(userEmail)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
   }
 
   try {
