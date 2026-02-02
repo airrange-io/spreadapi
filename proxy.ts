@@ -103,8 +103,11 @@ export async function proxy(req: NextRequest) {
   // Check if this is a view route (embeddable views - should be public or token-protected)
   const isViewRoute = pathname.match(/^\/app\/v1\/services\/[^\/]+\/view\/[^\/]+$/);
 
+  // Admin routes - localhost protection is handled by the API endpoint itself
+  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+
   // Skip auth for public routes
-  if (!isProtectedRoute || isBlobCallback || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute) {
+  if (!isProtectedRoute || isBlobCallback || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute || isAdminRoute) {
     // For web app requests, add header to indicate public access
     if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);
