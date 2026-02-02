@@ -34,6 +34,10 @@ const PWAInstallPrompt = dynamic(() => import('../components/PWAInstallPrompt').
   ssr: false
 });
 
+const TawkTo = dynamic(() => import('../components/TawkTo').then(mod => ({ default: mod.TawkTo })), {
+  ssr: false
+});
+
 // MCP Settings Modal removed - now using service-specific MCP Integration
 
 
@@ -1011,6 +1015,10 @@ const ListsPage: React.FC = observer(() => {
           <IntercomProvider />
           <IntercomScript />
           <PWAInstallPrompt />
+          <TawkTo
+            propertyId={process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID}
+            widgetId={process.env.NEXT_PUBLIC_TAWK_WIDGET_ID}
+          />
         </>
       )}
 

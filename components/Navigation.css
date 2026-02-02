@@ -78,18 +78,28 @@
   padding: 8px;
 }
 
+/* Mobile Login button - hidden by default, shows when burger menu is visible */
+.show-mobile-only {
+  display: none;
+}
+
 /* Mobile styles */
 @media (max-width: 768px) {
   .navigation-menu {
     display: none;
   }
-  
+
   .navigation-menu-button {
     display: block;
   }
-  
+
   .navigation-container {
     padding: 1rem;
+  }
+
+  /* Show Login button when burger menu is visible */
+  .show-mobile-only {
+    display: inline-flex;
   }
 }
 

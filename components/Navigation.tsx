@@ -88,6 +88,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
             <LanguageSwitcher currentLocale={locale} />
           </div>
           <Link href="/app" ref={getStartedRef} className="header-button hide-mobile-portrait">{t.nav.getStarted}</Link>
+          <Link href="/app" className="header-button show-mobile-only">{t.nav.login || 'Login'}</Link>
           <button
             className="navigation-menu-button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
