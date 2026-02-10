@@ -48,6 +48,10 @@ const StatusBar = dynamic(() => import('./StatusBar'), {
   ssr: false
 });
 
+const UpgradeModal = dynamic(() => import('@/components/UpgradeModal'), {
+  ssr: false
+});
+
 // Lazy load ApiDefinitionModal as it's only shown on demand
 const ApiDefinitionModal = dynamic(() => import('./components/ApiDefinitionModal'), {
   loading: () => null,
@@ -72,7 +76,7 @@ import { getSavedView, saveViewPreference, getSmartDefaultView } from '@/lib/vie
 import { useTranslation } from '@/lib/i18n';
 import { loadLocalService } from '@/lib/localServiceStorage';
 import { useAuth } from '@/components/auth/AuthContext';
-import { getLimitsForUser } from '@/lib/licensing';
+import { getLimitsForUser, type LicenseType } from '@/lib/licensing';
 
 const { Text } = Typography;
 
@@ -85,6 +89,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const { user } = useAuth();
   const licenseLimits = getLimitsForUser(user?.licenseType);
   const [serviceMode, setServiceMode] = useState<'cloud' | 'private' | null>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const ENTERPRISE_HIDDEN_VIEWS = ['Agents', 'Apps', 'Usage'];
   const [isMobile, setIsMobile] = useState(false);
   const [isCompactNav, setIsCompactNav] = useState(false);
@@ -2147,7 +2152,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check file size against license limit
       if (file.size > MAX_FILE_SIZE) {
-        notification.error({ message: t('service.fileSizeExceeds', { size: String(licenseLimits.maxFileSizeMB) }) });
+        const isUpgradeable = user?.licenseType !== 'premium';
+        notification.error({
+          message: t('service.fileSizeExceeds', { size: String(licenseLimits.maxFileSizeMB) }),
+          description: isUpgradeable ? t('service.fileSizeUpgrade') : undefined,
+          btn: isUpgradeable ? (
+            <Button type="primary" size="small" onClick={() => { setUpgradeModalOpen(true); notification.destroy(); }}>
+              {t('service.upgrade')}
+            </Button>
+          ) : undefined,
+        });
         setSavingWorkbook(false);
         return;
       }
@@ -2537,6 +2551,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   }
 
   return (
+    <>
     <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div style={{
@@ -3119,5 +3134,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         </>
       )}
     </Layout>
+    <UpgradeModal
+      open={upgradeModalOpen}
+      onClose={() => setUpgradeModalOpen(false)}
+      currentLicense={(user?.licenseType || 'free') as LicenseType}
+      userEmail={user?.email}
+    />
+    </>
   );
 }
