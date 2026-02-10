@@ -943,6 +943,7 @@ export const marketing = {
       getStarted: 'Get Started',
       home: 'Home',
       pricing: 'Pricing',
+      login: 'Login',
     },
     // Footer
     footer: {
@@ -989,6 +990,7 @@ export const marketing = {
       getStarted: 'Loslegen',
       home: 'Start',
       pricing: 'Preise',
+      login: 'Login',
     },
     footer: {
       product: 'Produkt',
@@ -1033,6 +1035,7 @@ export const marketing = {
       getStarted: 'Commencer',
       home: 'Accueil',
       pricing: 'Tarifs',
+      login: 'Connexion',
     },
     footer: {
       product: 'Produit',
@@ -1077,6 +1080,7 @@ export const marketing = {
       getStarted: 'Empezar',
       home: 'Inicio',
       pricing: 'Precios',
+      login: 'Iniciar sesión',
     },
     footer: {
       product: 'Producto',
@@ -1123,6 +1127,7 @@ export type MarketingTranslations = {
     getStarted: string;
     home: string;
     pricing?: string;
+    login?: string;
   };
   footer: {
     product: string;
