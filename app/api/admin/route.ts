@@ -345,3 +345,51 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+const VALID_LICENSE_TYPES: LicenseType[] = ['free', 'pro', 'premium'];
+
+export async function PATCH(request: NextRequest) {
+  const adminEmails = getAdminEmails();
+  const isDev = process.env.NODE_ENV !== 'production';
+  const isLocalhost = isLocalhostRequest(request);
+
+  if (isDev && isLocalhost) {
+    // Allow access
+  } else {
+    const userEmail = await getAuthenticatedUserEmail(request);
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!adminEmails.includes(userEmail)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
+
+  try {
+    const body = await request.json();
+    const { userId, licenseType } = body;
+
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+    }
+    if (!VALID_LICENSE_TYPES.includes(licenseType)) {
+      return NextResponse.json({ error: 'Invalid licenseType' }, { status: 400 });
+    }
+
+    // Verify user exists
+    const exists = await redis.exists(`user:${userId}`);
+    if (!exists) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    await redis.hSet(`user:${userId}`, 'licenseType', licenseType);
+
+    return NextResponse.json({ success: true, userId, licenseType });
+  } catch (error) {
+    console.error('Error updating user license:', error);
+    return NextResponse.json(
+      { error: 'Failed to update license' },
+      { status: 500 }
+    );
+  }
+}

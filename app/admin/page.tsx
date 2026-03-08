@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Layout, Typography, Card, Table, Spin, Statistic, Tag, Empty, Alert } from 'antd';
+import { Layout, Typography, Card, Table, Spin, Statistic, Tag, Empty, Alert, Input, Select, message } from 'antd';
 import {
   UserOutlined,
   CloudOutlined,
   ApiOutlined,
   ThunderboltOutlined,
   DashboardOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import {
   LineChart,
@@ -113,6 +114,7 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userSearch, setUserSearch] = useState('');
 
   useEffect(() => {
     fetchAdminData();
@@ -142,6 +144,32 @@ export default function AdminDashboardPage() {
       setError('Failed to load admin data. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateLicense = async (userId: string, licenseType: LicenseType) => {
+    try {
+      const response = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, licenseType }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update license');
+      }
+      // Update local state
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === userId ? { ...u, licenseType } : u
+          ),
+        };
+      });
+      message.success(`License updated to ${licenseType}`);
+    } catch {
+      message.error('Failed to update license');
     }
   };
 
@@ -177,14 +205,32 @@ export default function AdminDashboardPage() {
       title: 'License',
       dataIndex: 'licenseType',
       key: 'licenseType',
-      width: 100,
-      render: (license: LicenseType) => {
+      width: 130,
+      render: (license: LicenseType, record: UserSummary) => {
         const colors: Record<LicenseType, string> = {
           free: 'default',
           pro: 'purple',
           premium: 'gold',
         };
-        return <Tag color={colors[license]}>{license.charAt(0).toUpperCase() + license.slice(1)}</Tag>;
+        return (
+          <Select
+            value={license}
+            size="small"
+            variant="borderless"
+            style={{ width: '100%' }}
+            onChange={(value: LicenseType) => updateLicense(record.id, value)}
+            options={[
+              { value: 'free', label: <Tag color={colors.free}>Free</Tag> },
+              { value: 'pro', label: <Tag color={colors.pro}>Pro</Tag> },
+              { value: 'premium', label: <Tag color={colors.premium}>Premium</Tag> },
+            ]}
+            labelRender={({ value }) => (
+              <Tag color={colors[value as LicenseType]} style={{ margin: 0 }}>
+                {(value as string).charAt(0).toUpperCase() + (value as string).slice(1)}
+              </Tag>
+            )}
+          />
+        );
       },
       filters: [
         { text: 'Free', value: 'free' },
@@ -436,11 +482,31 @@ export default function AdminDashboardPage() {
               {/* Users Table */}
               <Card
                 variant="borderless"
-                title={`Users (${data.users.length})`}
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <span>Users ({data.users.length})</span>
+                    <Input
+                      placeholder="Search users..."
+                      prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                      allowClear
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      style={{ width: 240 }}
+                      size="small"
+                    />
+                  </div>
+                }
                 style={{ background: '#fff', overflow: 'hidden', marginBottom: 16 }}
               >
                 <Table
-                  dataSource={data.users}
+                  dataSource={data.users.filter((u) => {
+                    if (!userSearch) return true;
+                    const q = userSearch.toLowerCase();
+                    return (
+                      u.email.toLowerCase().includes(q) ||
+                      u.licenseType.toLowerCase().includes(q)
+                    );
+                  })}
                   columns={userColumns}
                   rowKey="id"
                   pagination={data.users.length > 10 ? { pageSize: 10 } : false}

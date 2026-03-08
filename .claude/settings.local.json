@@ -85,7 +85,8 @@
       "WebFetch(domain:linearstatus.com)",
       "WebFetch(domain:www.notion-status.com)",
       "WebFetch(domain:spreadapi.instatus.com)",
-      "WebFetch(domain:spreadapi.run)"
+      "WebFetch(domain:spreadapi.run)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
