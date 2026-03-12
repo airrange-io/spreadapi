@@ -107,13 +107,11 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         ref={ref}
         storeLocal={{ spread: spreadsheetData }}
         readOnly={isDemoMode}
-        workbookLayout="default"
+
         initialZoom={zoomLevel}
         actionHandlerProc={(action, data) => {
         if (action === 'spread-changed') {
           onWorkbookInit(data);
-        } else if (action === 'designer-initialized' && data && typeof data.getWorkbook === 'function') {
-          onWorkbookInit(data.getWorkbook());
         } else if (action === 'workbook-loaded' || action === 'file-loaded') {
           onWorkbookDataLoaded?.(data);
         } else if (action === 'zoom-handler') {

@@ -1974,11 +1974,6 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // This is the workbook/spread instance
       setSpreadInstance(data);
       // Don't set visibility here - wait for file-loaded or workbook-loaded
-    } else if (action === 'designer-initialized') {
-      // This is the designer instance, get the workbook from it
-      if (data && typeof data.getWorkbook === 'function') {
-        setSpreadInstance(data.getWorkbook());
-      }
     } else if (action === 'zoom-handler') {
       zoomHandlerRef.current = data;
     } else if (action === 'edit-ended' || action === 'selection-changed' ||
@@ -2106,7 +2101,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             storeLocal={{ spread: spreadsheetData }}
             readOnly={false}
             ref={workbookRef}
-            workbookLayout="default"
+
             initialZoom={zoomLevel}
             actionHandlerProc={handleWorkbookAction}
           // createNewShareProc={(selection) => {

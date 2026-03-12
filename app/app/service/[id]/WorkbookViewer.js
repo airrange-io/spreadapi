@@ -3,40 +3,22 @@ import React, {
   useState,
   useRef,
   useCallback,
-  useMemo,
   useImperativeHandle,
   forwardRef,
 } from "react";
 import { Spin } from "antd";
 import * as GC from "@mescius/spread-sheets";
-// Note: Excel IO module is not needed - we use spread.import(file) directly
-// import "@mescius/spread-sheets-io";
-// import "@mescius/spread-sheets-charts";
-// import "@mescius/spread-sheets-shapes";
 import "@mescius/spread-sheets-tablesheet";
-// import "@mescius/spread-sheets-languagepackages";
-import "@mescius/spread-sheets-designer-resources-en";
-// import "@mescius/spread-sheets-formula-panel";
-import { Designer } from "@mescius/spread-sheets-designer-react";
-import "@mescius/spread-sheets-designer/styles/gc.spread.sheets.designer.min.css";
 import "@mescius/spread-sheets/styles/gc.spread.sheets.excel2013white.css";
 
-// Set license keys from environment variables
+// Set license key from environment variable
 if (typeof window !== "undefined") {
   if (process.env.NEXT_PUBLIC_SPREADJS18_KEY) {
     GC.Spread.Sheets.LicenseKey = process.env.NEXT_PUBLIC_SPREADJS18_KEY;
   }
-  if (process.env.NEXT_PUBLIC_SPREADJS18_DESIGNER_KEY) {
-    GC.Spread.Sheets.Designer.LicenseKey =
-      process.env.NEXT_PUBLIC_SPREADJS18_DESIGNER_KEY;
-  }
 }
 
-// Note: Excel IO module code removed - we now use spread.import(file) directly
-// which is part of the core SpreadJS API and doesn't require the Excel IO module
-
 export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
-  const [designer, setDesigner] = useState(null);
   const [spread, setSpread] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [selectedCellCount, setSelectedCellCount] = useState(0);
@@ -46,180 +28,113 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [isLoading, setIsLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
+  const hostRef = useRef(null);
   const handleZoomChangeRef = useRef(null);
   const isLoadingData = useRef(false);
   const changeCountRef = useRef(0);
-  const lastLoadedDataRef = useRef(null); // Track last loaded data to prevent re-loads
+  const lastLoadedDataRef = useRef(null);
 
-  // Initialize ribbon configuration
-  const initRibbon = useCallback((showRibbon) => {
-    const config = GC.Spread.Sheets.Designer.ToolBarModeConfig;
+  // Initialize workbook on mount
+  useEffect(() => {
+    if (!hostRef.current || isInitialized) return;
 
-    // Set compact ribbon height
-    config.ribbon.ribbonHeight = 45;
+    const workbook = new GC.Spread.Sheets.Workbook(hostRef.current, {
+      sheetCount: 1,
+    });
 
-    if (!showRibbon) {
-      config.ribbon.panels = [];
-      return config;
+    setIsInitialized(true);
+    setSpread(workbook);
+
+    // Configure workbook options
+    workbook.options.allowDynamicArray = true;
+    workbook.options.scrollbarMaxAlign = true;
+    workbook.options.scrollbarShowMax = true;
+    workbook.options.calcOnDemand = true;
+    workbook.options.allowUserResize = true;
+    workbook.options.allowUserZoom = true;
+    workbook.options.scrollPixel = true;
+
+    // Set read-only mode if specified
+    if (props.readOnly) {
+      workbook.options.protect = true;
     }
 
-    // Remove settings and pageLayout tabs
-    config.ribbon.panels = config.ribbon.panels.filter(
-      (rb) => rb.id !== "settings" && rb.id !== "pageLayout"
-    );
-
-    // Filter out the status bar from sidePanels
-    config.sidePanels = config.sidePanels.filter(
-      (panel) => panel.command !== "statusBarPanel"
-    );
-
-    // Hide the file menu
-    config.fileMenu = null;
-
-    // Hide barcode button in INSERT tab
-    const insertTab = config.ribbon.panels.find((r) => r.id === "insert");
-    if (insertTab) {
-      const chartsGroup = insertTab.buttonGroups.find(
-        (bg) => bg.buttonGroupName === "Charts"
-      );
-      if (chartsGroup?.commandGroup?.children) {
-        chartsGroup.commandGroup.children =
-          chartsGroup.commandGroup.children.filter(
-            (ch) => ch !== "insertBarCode"
-          );
-      }
+    // Notify parent component
+    if (props.actionHandlerProc) {
+      props.actionHandlerProc("spread-changed", workbook);
     }
 
-    // Customize DATA tab
-    const dataTab = config.ribbon.panels.find((r) => r.id === "data");
-    if (dataTab?.buttonGroups[0]?.commandGroup?.children) {
-      dataTab.buttonGroups[0].commandGroup.children =
-        dataTab.buttonGroups[0].commandGroup.children.filter(
-          (ch) => ch === "insertDataManager"
-        );
-    }
-    return config;
-  }, []);
-
-  const initDesigner = useCallback(
-    (designerInstance) => {
-      if (isInitialized) return;
-
-      setIsInitialized(true);
-      setDesigner(designerInstance);
-
-      const workbook = designerInstance.getWorkbook();
-      setSpread(workbook);
-      // Don't set isLoading to false here - wait for data to load
-      // Configure workbook options
-      workbook.options.allowDynamicArray = true;
-      workbook.options.scrollbarMaxAlign = true;
-      workbook.options.scrollbarShowMax = true;
-      workbook.options.calcOnDemand = true;
-      workbook.options.allowUserResize = true;
-      workbook.options.allowUserZoom = true;
-      workbook.options.scrollPixel = true;
-
-      // Set read-only mode if specified
-      if (props.readOnly) {
-        workbook.options.protect = true;
-      }
-
-      // Apply minimal layout if specified
-      if (props.workbookLayout === "minimum") {
-        workbook.options.showHorizontalScrollbar = true;
-        workbook.options.showVerticalScrollbar = true;
-        workbook.options.tabStripVisible = false;
-        workbook.options.newTabVisible = false;
-      }
-
-      // Notify parent component
+    // Add event listeners
+    workbook.bind(GC.Spread.Sheets.Events.SelectionChanged, (e, info) => {
       if (props.actionHandlerProc) {
-        props.actionHandlerProc("spread-changed", workbook);
-        props.actionHandlerProc("designer-initialized", designerInstance);
+        props.actionHandlerProc("selection-changed", info);
       }
 
-      // Add event listeners
-      workbook.bind(GC.Spread.Sheets.Events.SelectionChanged, (e, info) => {
-        if (props.actionHandlerProc) {
-          props.actionHandlerProc("selection-changed", info);
-        }
+      const sheet = workbook.getActiveSheet();
+      if (sheet) {
+        const selections = sheet.getSelections();
+        let count = 0;
+        selections.forEach((sel) => {
+          count += sel.rowCount * sel.colCount;
+        });
+        setSelectedCellCount(count);
+      }
+    });
 
-        // Update selected cell count
-        const sheet = workbook.getActiveSheet();
-        if (sheet) {
-          const selections = sheet.getSelections();
-          let count = 0;
-          selections.forEach((sel) => {
-            count += sel.rowCount * sel.colCount;
-          });
-          setSelectedCellCount(count);
-        }
+    workbook.bind(GC.Spread.Sheets.Events.EditEnded, (e, info) => {
+      if (props.actionHandlerProc) {
+        props.actionHandlerProc("edit-ended", info);
+      }
+      setChangeCount((prev) => {
+        const newCount = prev + 1;
+        changeCountRef.current = newCount;
+        return newCount;
       });
+    });
 
-      workbook.bind(GC.Spread.Sheets.Events.EditEnded, (e, info) => {
-        if (props.actionHandlerProc) {
-          props.actionHandlerProc("edit-ended", info);
-        }
+    workbook.bind(GC.Spread.Sheets.Events.RangeChanged, (e, args) => {
+      if (isLoadingData.current) return;
+      if (args.action === GC.Spread.Sheets.RangeChangedAction.clear) {
         setChangeCount((prev) => {
           const newCount = prev + 1;
           changeCountRef.current = newCount;
           return newCount;
         });
-      });
-
-      // Track range changes to detect DELETE key
-      workbook.bind(GC.Spread.Sheets.Events.RangeChanged, (e, args) => {
-        // Ignore changes during data loading
-        if (isLoadingData.current) return;
-        
-        // Check if this is a clear action (delete key)
-        if (args.action === GC.Spread.Sheets.RangeChangedAction.clear) {
-          setChangeCount((prev) => {
-            const newCount = prev + 1;
-            changeCountRef.current = newCount;
-            return newCount;
-          });
-          if (props.actionHandlerProc) {
-            props.actionHandlerProc("range-cleared", args);
-          }
+        if (props.actionHandlerProc) {
+          props.actionHandlerProc("range-cleared", args);
         }
-      });
-
-      // Track cell changes for format changes
-      workbook.bind(GC.Spread.Sheets.Events.CellChanged, (e, args) => {
-        // Ignore changes during data loading
-        if (isLoadingData.current) return;
-        
-        // Only track specific user-initiated property changes
-        // Ignore styleinfo which fires during load, focus on actual formatting changes
-        const trackedProperties = [
-          'style', 'formatter', 'font', 'backColor', 'foreColor', 
-          'borderLeft', 'borderTop', 'borderRight', 'borderBottom',
-          'locked', 'textIndent', 'wordWrap', 'shrinkToFit',
-          'backgroundImage', 'cellType', 'validator'
-        ];
-        
-        if (args.propertyName && trackedProperties.includes(args.propertyName)) {
-          setChangeCount((prev) => {
-            const newCount = prev + 1;
-            changeCountRef.current = newCount;
-            return newCount;
-          });
-          if (props.actionHandlerProc) {
-            props.actionHandlerProc("cell-changed", args);
-          }
-        }
-      });
-
-      // Update record count
-      const sheet = workbook.getActiveSheet();
-      if (sheet) {
-        setRecordCount(sheet.getRowCount());
       }
-    },
-    [isInitialized, props]
-  );
+    });
+
+    workbook.bind(GC.Spread.Sheets.Events.CellChanged, (e, args) => {
+      if (isLoadingData.current) return;
+      const trackedProperties = [
+        'style', 'formatter', 'font', 'backColor', 'foreColor',
+        'borderLeft', 'borderTop', 'borderRight', 'borderBottom',
+        'locked', 'textIndent', 'wordWrap', 'shrinkToFit',
+        'backgroundImage', 'cellType', 'validator'
+      ];
+      if (args.propertyName && trackedProperties.includes(args.propertyName)) {
+        setChangeCount((prev) => {
+          const newCount = prev + 1;
+          changeCountRef.current = newCount;
+          return newCount;
+        });
+        if (props.actionHandlerProc) {
+          props.actionHandlerProc("cell-changed", args);
+        }
+      }
+    });
+
+    const sheet = workbook.getActiveSheet();
+    if (sheet) {
+      setRecordCount(sheet.getRowCount());
+    }
+
+    return () => {
+      workbook.destroy();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Define the zoom handler
   const applyZoom = useCallback((newZoom) => {
@@ -227,7 +142,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       const zoomFactor = newZoom / 100;
       spread.options.zoomFactor = zoomFactor;
 
-      // Apply zoom to all sheets
       const sheetCount = spread.getSheetCount();
       for (let i = 0; i < sheetCount; i++) {
         const sheet = spread.getSheet(i);
@@ -243,28 +157,14 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   useEffect(() => {
     handleZoomChangeRef.current = applyZoom;
 
-    // Notify parent that zoom handler is ready (only once when spread is available)
     if (props.actionHandlerProc && spread && handleZoomChangeRef.current) {
       props.actionHandlerProc("zoom-handler", handleZoomChangeRef.current);
     }
   }, [spread, props, applyZoom]);
 
-  const clearSelection = () => {
-    if (spread) {
-      const sheet = spread.getActiveSheet();
-      if (sheet) {
-        sheet.clearSelection();
-      }
-    }
-  };
-
-  // Note: Initial zoom is now applied immediately when data loads,
-  // so we don't need a separate effect for it
-
   // Handle fade-in effect after loading completes
   useEffect(() => {
     if (!isLoading && spread) {
-      // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setFadeIn(true);
       }, 50);
@@ -272,15 +172,14 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     }
   }, [isLoading, spread]);
 
+  // Load spreadsheet data
   useEffect(() => {
-    if (!designer || !spread) return;
-    
-    // Don't load if spreadsheet data is null (still loading)
+    if (!spread) return;
+
     if (!props.storeLocal?.spread) {
       return;
     }
-    
-    // Check if we've already loaded this data to prevent re-initialization
+
     const currentDataKey = JSON.stringify({
       type: props.storeLocal.spread.type,
       hasBlob: !!props.storeLocal.spread.blob,
@@ -288,37 +187,30 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       fileName: props.storeLocal.spread.fileName,
       sheetCount: props.storeLocal.spread.sheets ? Object.keys(props.storeLocal.spread.sheets).length : 0
     });
-    
+
     if (dataLoaded && lastLoadedDataRef.current === currentDataKey) {
       return;
     }
-    
-    // Check if this is just the default empty workbook
+
     const isDefaultWorkbook = props.storeLocal.spread.version &&
                              props.storeLocal.spread.sheets &&
                              Object.keys(props.storeLocal.spread.sheets).length === 1 &&
                              !props.storeLocal.spread.type;
 
     try {
-      // Set loading flag to ignore change events during load
       isLoadingData.current = true;
       lastLoadedDataRef.current = currentDataKey;
-      
-      // Load spreadsheet data if provided
+
       if (
         props.storeLocal.spread.type === "sjs" &&
         props.storeLocal.spread.blob
       ) {
-        // Load SJS binary format
         spread.open(
           props.storeLocal.spread.blob,
           () => {
-            // Apply initial zoom immediately after loading
             if (props.initialZoom && props.initialZoom !== 100) {
               const zoomFactor = props.initialZoom / 100;
               spread.options.zoomFactor = zoomFactor;
-              
-              // Apply zoom to all sheets
               const sheetCount = spread.getSheetCount();
               for (let i = 0; i < sheetCount; i++) {
                 const sheet = spread.getSheet(i);
@@ -328,10 +220,10 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               }
               setZoomLevel(props.initialZoom);
             }
-            
+
             setDataLoaded(true);
             setIsLoading(false);
-            isLoadingData.current = false; // Clear loading flag
+            isLoadingData.current = false;
             if (props.actionHandlerProc) {
               props.actionHandlerProc("workbook-loaded", spread);
             }
@@ -340,20 +232,16 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             console.error("Error loading SJS file:", error);
             setDataLoaded(true);
             setIsLoading(false);
-            isLoadingData.current = false; // Clear loading flag
+            isLoadingData.current = false;
           },
           {
-            openMode: 1 // 1 = normal
+            openMode: 1
           }
         );
       } else if (
-        // Note: Excel import from ArrayBuffer removed - we now use spread.import(file)
-        // directly via the importExcel() method, which works reliably
         props.storeLocal.spread.type === "excel" &&
         props.storeLocal.spread.data
       ) {
-        // This code path is no longer used - Excel files are now imported via
-        // the importExcel() method exposed on the workbook ref
         console.warn("Excel import via spreadsheetData is deprecated - use importExcel() method instead");
         setDataLoaded(true);
         setIsLoading(false);
@@ -361,15 +249,11 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       } else if (
         typeof props.storeLocal.spread === "object"
       ) {
-        // Load JSON data - don't check for specific properties, just try to load
         spread.fromJSON(props.storeLocal.spread);
 
-        // Apply initial zoom immediately after loading data
         if (props.initialZoom && props.initialZoom !== 100) {
           const zoomFactor = props.initialZoom / 100;
           spread.options.zoomFactor = zoomFactor;
-          
-          // Apply zoom to all sheets
           const sheetCount = spread.getSheetCount();
           for (let i = 0; i < sheetCount; i++) {
             const sheet = spread.getSheet(i);
@@ -382,7 +266,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
 
         setDataLoaded(true);
         setIsLoading(false);
-        isLoadingData.current = false; // Clear loading flag
+        isLoadingData.current = false;
         if (props.actionHandlerProc) {
           props.actionHandlerProc("file-loaded", spread);
         }
@@ -391,32 +275,24 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       console.error("Error loading spreadsheet data:", error);
       setDataLoaded(true);
       setIsLoading(false);
-      isLoadingData.current = false; // Clear loading flag
+      isLoadingData.current = false;
     }
 
-    // If it's a default workbook, immediately mark as loaded
     if (isDefaultWorkbook) {
       setDataLoaded(true);
       setIsLoading(false);
-      isLoadingData.current = false; // Clear loading flag
+      isLoadingData.current = false;
     }
-  }, [designer, spread, props.storeLocal?.spread, dataLoaded]);
-
-  const getDesignerConfig = useMemo(() => {
-    const showRibbon = props.workbookLayout !== "minimum";
-    return initRibbon(showRibbon);
-  }, [props.workbookLayout, initRibbon]);
+  }, [spread, props.storeLocal?.spread, dataLoaded]);
 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
-    // Get current workbook state as JSON
     getWorkbookJSON: () => {
       if (spread) {
         return spread.toJSON();
       }
       return null;
     },
-    // Load workbook from JSON
     loadWorkbookJSON: (jsonData) => {
       if (spread && jsonData) {
         try {
@@ -432,24 +308,18 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       }
       return false;
     },
-    // Get designer instance
-    getDesigner: () => designer,
-    // Get spread instance
+    getDesigner: () => null,
     getSpread: () => spread,
-    // Check if workbook has changes
     hasChanges: () => {
       return changeCountRef.current > 0;
     },
-    // Reset change count
     resetChangeCount: () => {
       setChangeCount(0);
       changeCountRef.current = 0;
     },
-    // Save workbook as SJS format (binary)
     saveWorkbookSJS: () => {
       return new Promise((resolve, reject) => {
         if (spread) {
-          // Check if workbook contains TableSheets
           let hasTableSheets = false;
           const sheetCount = spread.getSheetCount();
 
@@ -461,7 +331,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             }
           }
 
-          // Optimize save options for TableSheets
           const saveOptions = {
             includeStyles: true,
             includeFormulas: true,
@@ -470,21 +339,17 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             includeBindingSource: false
           };
 
-          // If workbook has TableSheets, try to optimize by saving without data
           if (hasTableSheets) {
-            // First try: Save with minimal data inclusion
-            saveOptions.includeData = false; // Try to exclude TableSheet data
-            saveOptions.fullRecalc = false; // Skip recalculation
+            saveOptions.includeData = false;
+            saveOptions.fullRecalc = false;
           }
 
           spread.save(
             (blob) => {
-              // If TableSheet workbook is still large, warn about it
-              if (hasTableSheets && blob.size > 5 * 1024 * 1024) { // > 5MB
+              if (hasTableSheets && blob.size > 5 * 1024 * 1024) {
                 console.warn(`⚠️  Large TableSheet workbook detected (${(blob.size / 1024 / 1024).toFixed(2)}MB).
    Consider using external data sources instead of embedded data for better performance.`);
               }
-
               resolve(blob);
             },
             (error) => {
@@ -498,38 +363,27 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
       });
     },
-    // Save workbook structure only (for TableSheets)
     saveWorkbookStructureOnly: () => {
       return new Promise((resolve, reject) => {
         if (spread) {
           try {
-            // Get workbook JSON but process it to remove TableSheet data
             const workbookJSON = spread.toJSON();
-            
-            // Process each sheet to remove TableSheet data
+
             if (workbookJSON.sheets) {
               Object.keys(workbookJSON.sheets).forEach(sheetName => {
                 const sheet = workbookJSON.sheets[sheetName];
-                
-                // Check if this is a TableSheet
                 if (sheet.dataTable) {
-                  // Keep the TableSheet configuration but remove the data
                   if (sheet.dataTable.table) {
-                    // Preserve table structure but clear data
                     sheet.dataTable.table.data = [];
                   }
                 }
               });
             }
-            
-            // Convert processed JSON to SJS
+
             spread.fromJSON(workbookJSON);
-            
-            // Now save the modified workbook
+
             spread.save(
               (blob) => {
-                // Restore original workbook state
-                // Note: In production, you'd want to save the original state first
                 resolve(blob);
               },
               (error) => {
@@ -553,7 +407,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
       });
     },
-    // Load workbook from SJS format (binary)
     loadWorkbookSJS: (blob) => {
       return new Promise((resolve, reject) => {
         if (spread && blob) {
@@ -570,7 +423,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               reject(error);
             },
             {
-              openMode: 1 // 1 = normal
+              openMode: 1
             }
           );
         } else {
@@ -578,14 +431,12 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
       });
     },
-    // Import Excel file
     importExcel: (file) => {
       return new Promise((resolve, reject) => {
         if (spread && spread.import) {
           spread.import(
             file,
             () => {
-                // Mark workbook as changed after import
               setChangeCount((prev) => {
                 const newCount = prev + 1;
                 changeCountRef.current = newCount;
@@ -597,7 +448,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               resolve(true);
             },
             (error) => {
-              // Error importing Excel
               reject(error);
             },
             {
@@ -609,7 +459,7 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
         }
       });
     }
-  }), [spread, designer, props]);
+  }), [spread, props]);
 
   return (
     <div
@@ -623,19 +473,14 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     >
       <div style={{ flex: 1, position: "relative", marginTop: 8 }}>
         <div
+          ref={hostRef}
           style={{
             width: "100%",
             height: "100%",
             opacity: fadeIn ? 1 : 0,
             transition: "opacity 0.5s ease-in-out",
           }}
-        >
-          <Designer
-            styleInfo={{ width: "100%", height: "100%" }}
-            config={getDesignerConfig}
-            designerInitialized={initDesigner}
-          />
-        </div>
+        />
         {/* Loading overlay */}
         {isLoading && (
           <div
@@ -645,7 +490,6 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               left: 0,
               right: 0,
               bottom: 0,
-              // backgroundColor: "rgba(255, 255, 255, 0.9)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
