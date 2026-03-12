@@ -734,6 +734,7 @@ const ListsPage: React.FC = observer(() => {
                   loading={isCreatingService}
                   onClick={handleNewService}
                   className="new-list-button"
+                  style={{ backgroundColor: '#4F2D7F', borderColor: '#4F2D7F' }}
                 >
                   <span className="desktop-text">{t('app.newService')}</span>
                   <span className="mobile-text">{t('app.new')}</span>
@@ -984,7 +985,7 @@ const ListsPage: React.FC = observer(() => {
               {/* Service List */}
               <div ref={serviceListRef} style={{ flex: 1, padding: '4px 0' }}>
                 {isClient ? (
-                  <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} localServices={localServices} onLocalServicesChange={refreshLocalServices} activeFolderId={activeFolderId} onFolderOpen={(id, name) => { setActiveFolderId(id); setActiveFolderName(name); }} onFolderClose={() => { setActiveFolderId(null); setActiveFolderName(''); }} />
+                  <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} onCreateService={(e?: any) => handleNewService(e || { preventDefault: () => {}, stopPropagation: () => {} } as any)} localServices={localServices} onLocalServicesChange={refreshLocalServices} activeFolderId={activeFolderId} onFolderOpen={(id, name) => { setActiveFolderId(id); setActiveFolderName(name); }} onFolderClose={() => { setActiveFolderId(null); setActiveFolderName(''); }} />
                 ) : (
                   <ServiceListSkeleton viewMode={viewMode} />
                 )}
@@ -997,7 +998,7 @@ const ListsPage: React.FC = observer(() => {
         <>
           <IntercomProvider />
           <IntercomScript />
-          <PWAInstallPrompt />
+
           <TawkTo
             propertyId={process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID}
             widgetId={process.env.NEXT_PUBLIC_TAWK_WIDGET_ID}

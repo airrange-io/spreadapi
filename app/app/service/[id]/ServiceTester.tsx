@@ -166,7 +166,12 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
       urlParams.append('token', 'REPLACE_WITH_YOUR_TOKEN');
     }
 
-    const finalUrl = `${baseUrl}?${urlParams.toString()}`;
+    const queryString = urlParams.toString();
+    const finalUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    // For localhost, prepend origin so the displayed URL is complete and copyable
+    if (isLocalDev && finalUrl.startsWith('/')) {
+      return `${window.location.origin}${finalUrl}`;
+    }
     return finalUrl;
   };
 

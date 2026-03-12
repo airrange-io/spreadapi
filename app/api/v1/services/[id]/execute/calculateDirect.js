@@ -395,6 +395,18 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     let actualSheet = spread.getActiveSheet();
     let actualSheetName = actualSheet.name();
 
+    // Debug: log all available sheet names in the workbook
+    const sheetCount = spread.getSheetCount();
+    const availableSheets = [];
+    for (let i = 0; i < sheetCount; i++) {
+      availableSheets.push(spread.getSheet(i).name());
+    }
+    console.log(`[calculateDirect] Workbook has ${sheetCount} sheets:`, availableSheets);
+    console.log(`[calculateDirect] Active sheet: "${actualSheetName}"`);
+    console.log(`[calculateDirect] fromProcessCache: ${fromProcessCache}`);
+    console.log(`[calculateDirect] API inputs:`, apiInputs.map(i => ({ name: i.name, address: i.address })));
+    console.log(`[calculateDirect] API outputs:`, apiOutputs.map(o => ({ name: o.name, address: o.address })));
+
     // Process inputs (validation and type coercion already done - just set cell values)
     const answerInputs = [];
     const inputList = Object.entries(finalInputs).map(([key, value]) => ({
@@ -422,10 +434,12 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           cellValue = null;
         }
 
-        let inputSheetName = getSheetNameFromAddress(inputDef.address);
+        let inputSheetName = getSheetNameFromAddress(inputDef.address).replace(/^'|'$/g, '');
+        console.log(`[calculateDirect] Input "${input.name}": looking for sheet "${inputSheetName}" (address: ${inputDef.address})`);
         if (inputSheetName !== actualSheetName) {
           actualSheet = spread.getSheetFromName(inputSheetName);
           if (!actualSheet) {
+            console.error(`[calculateDirect] Sheet NOT FOUND: "${inputSheetName}". Available: [${availableSheets.map(s => `"${s}"`).join(', ')}]`);
             return { error: `sheet not found: ${inputSheetName}` };
           }
           actualSheetName = actualSheet.name();
@@ -443,10 +457,12 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     // Get outputs
     const answerOutputs = [];
     for (const output of apiOutputs) {
-      let outputSheetName = getSheetNameFromAddress(output.address);
+      let outputSheetName = getSheetNameFromAddress(output.address).replace(/^'|'$/g, '');
       if (outputSheetName !== actualSheetName) {
+        console.log(`[calculateDirect] Output "${output.name}": looking for sheet "${outputSheetName}" (address: ${output.address})`);
         actualSheet = spread.getSheetFromName(outputSheetName);
         if (!actualSheet) {
+          console.error(`[calculateDirect] Output sheet NOT FOUND: "${outputSheetName}". Available: [${availableSheets.map(s => `"${s}"`).join(', ')}]`);
           return { error: `output sheet not found: ${outputSheetName}` };
         }
         actualSheetName = actualSheet.name();

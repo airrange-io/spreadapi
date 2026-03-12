@@ -353,7 +353,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           cellValue = null;
         }
 
-        let inputSheetName = getSheetNameFromAddress(inputDef.address);
+        let inputSheetName = getSheetNameFromAddress(inputDef.address).replace(/^'|'$/g, '');
         if (inputSheetName !== actualSheetName) {
           actualSheet = spread.getSheetFromName(inputSheetName);
           if (!actualSheet) {
@@ -381,7 +381,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     // Get outputs
     const answerOutputs = [];
     for (const output of apiOutputs) {
-      let outputSheetName = getSheetNameFromAddress(output.address);
+      let outputSheetName = getSheetNameFromAddress(output.address).replace(/^'|'$/g, '');
       if (outputSheetName !== actualSheetName) {
         actualSheet = spread.getSheetFromName(outputSheetName);
         if (!actualSheet) {

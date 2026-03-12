@@ -41,6 +41,7 @@ interface ServiceListProps {
   isAuthenticated?: boolean | null;
   onServiceCount?: (count: number) => void;
   onUseSample?: () => void;
+  onCreateService?: () => void;
   localServices?: LocalService[];
   onLocalServicesChange?: () => void;
   activeFolderId?: string | null;
@@ -48,7 +49,7 @@ interface ServiceListProps {
   onFolderClose?: () => void;
 }
 
-export default function ServiceList({ searchQuery = '', viewMode = 'list', isAuthenticated = null, onServiceCount, onUseSample, localServices, onLocalServicesChange, activeFolderId, onFolderOpen, onFolderClose }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'list', isAuthenticated = null, onServiceCount, onUseSample, onCreateService, localServices, onLocalServicesChange, activeFolderId, onFolderOpen, onFolderClose }: ServiceListProps) {
   const router = useRouter();
   const { notification } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
@@ -267,13 +268,19 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
 
   const handleRenameFolder = useCallback((folderId: string, newName: string) => {
     renameFolder(folderId, newName);
+    if (folderId === activeFolderId) {
+      onFolderOpen?.(folderId, newName);
+    }
     refreshFolders();
-  }, [refreshFolders]);
+  }, [refreshFolders, activeFolderId, onFolderOpen]);
 
   const handleDeleteFolder = useCallback((folderId: string) => {
     deleteFolder(folderId);
+    if (folderId === activeFolderId) {
+      onFolderClose?.();
+    }
     refreshFolders();
-  }, [refreshFolders]);
+  }, [refreshFolders, activeFolderId, onFolderClose]);
 
   const handleMoveToFolder = useCallback((serviceId: string, folderId: string) => {
     addServiceToFolder(folderId, serviceId);
@@ -366,36 +373,14 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 'calc(100vh - 260px)',
-        padding: '24px',
+        padding: '40px 24px 32px',
         maxWidth: '560px',
         margin: '0 auto',
       }}>
-        <p style={{
-          fontSize: 14,
-          color: '#bfbfbf',
-          textAlign: 'center',
-          margin: '0 0 20px',
-          lineHeight: '1.6',
-          maxWidth: '360px',
-          userSelect: 'none',
-        }}>
-          {t('serviceList.emptyDescription')}
-        </p>
-
-        <div
-          onClick={onUseSample}
-          style={{
-            width: '100%',
-            maxWidth: 480,
-            borderRadius: 12,
-            overflow: 'hidden',
-            cursor: onUseSample ? 'pointer' : undefined,
-          }}
-        >
+        {/* Small illustration */}
+        <div style={{ maxWidth: 280, marginBottom: 24 }}>
           <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
-            <rect width="800" height="400" fill="#F8F6FE" rx="12"/>
+            <rect width="800" height="400" fill="#F9F9FB" rx="12"/>
             <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
             <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
             <rect x="70" y="160" width="80" height="30" fill="#E6F4FF"/>
@@ -420,11 +405,55 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
           </svg>
         </div>
 
+        {/* Title */}
+        <h3 style={{
+          fontSize: 18,
+          fontWeight: 600,
+          color: '#262626',
+          margin: '0 0 8px',
+          textAlign: 'center',
+        }}>
+          {t('serviceList.emptyTitle')}
+        </h3>
+
+        {/* Description */}
         <p style={{
           fontSize: 14,
-          color: '#bfbfbf',
+          color: '#8c8c8c',
           textAlign: 'center',
-          margin: '20px 0 0',
+          margin: '0 0 24px',
+          lineHeight: '1.6',
+          maxWidth: '360px',
+        }}>
+          {t('serviceList.emptyDescription')}
+        </p>
+
+        {/* CTA Button */}
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          size="large"
+          onClick={onCreateService}
+          style={{
+            borderRadius: 10,
+            height: 44,
+            paddingLeft: 24,
+            paddingRight: 24,
+            fontWeight: 500,
+            marginBottom: 20,
+            backgroundColor: '#7B3AED',
+            borderColor: '#7B3AED',
+          }}
+        >
+          {t('serviceList.emptyCreateButton')}
+        </Button>
+
+        {/* On-premises hint */}
+        <p style={{
+          fontSize: 14,
+          color: '#8c8c8c',
+          textAlign: 'center',
+          margin: 0,
           lineHeight: '1.6',
         }}>
           {t('serviceList.onPremisesHint')} <a href="/on-premises" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>

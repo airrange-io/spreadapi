@@ -120,13 +120,10 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
           cancelText={t('common.no')}
           okButtonProps={{ danger: true }}
         >
-          <span onClick={(e) => e.stopPropagation()}>{t('common.delete')}</span>
+          {t('common.delete')}
         </Popconfirm>
       ),
       danger: true,
-      onClick: (e: any) => {
-        e.domEvent.stopPropagation();
-      },
     },
   ];
 
