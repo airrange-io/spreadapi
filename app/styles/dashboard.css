@@ -1,0 +1,71 @@
+/* Section labels - uppercase, small, bold, gray */
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c8c8c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0;
+}
+
+/* Projects/folders grid */
+.projects-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Projects/folders list */
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Services grid */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Services list (full-width rows) */
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1100px) {
+  .projects-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .services-grid,
+  .projects-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Onboarding cards grid */
+.onboarding-cards-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 732px) {
+  .onboarding-cards-grid > *:nth-child(3) {
+    display: none;
+  }
+  .onboarding-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}

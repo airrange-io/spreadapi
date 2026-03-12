@@ -4,10 +4,10 @@ import React from 'react';
 import { Spin } from 'antd';
 
 interface ServiceListSkeletonProps {
-  viewMode?: 'card' | 'table';
+  viewMode?: 'grid' | 'list';
 }
 
-export default function ServiceListSkeleton({ viewMode = 'card' }: ServiceListSkeletonProps) {
+export default function ServiceListSkeleton({ viewMode = 'list' }: ServiceListSkeletonProps) {
   return (
     <div style={{ 
       display: 'flex',

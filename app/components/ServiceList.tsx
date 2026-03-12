@@ -1,16 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Card, Empty, Button, Space, Typography, Tag, Spin, Popconfirm, Row, Col, App, Table, Dropdown, Badge } from 'antd';
-import { EditOutlined, DeleteOutlined, CalendarOutlined, BarChartOutlined, MoreOutlined, CopyOutlined, ApiOutlined, LoadingOutlined } from '@ant-design/icons';
+import '@/styles/dashboard.css';
+import { Empty, Button, Spin, App } from 'antd';
+import { PlusOutlined, FolderOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { deleteLocalService } from '@/lib/localServiceStorage';
 import type { LocalService } from '@/lib/localServiceStorage';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useRealtimeCallCounts } from '@/hooks/useRealtimeCallCounts';
-
-const { Text, Paragraph } = Typography;
+import { ServiceCardCompact } from '@/components/ServiceCardCompact';
+import { FolderCard } from '@/components/FolderCard';
+import {
+  listFolders,
+  createFolder,
+  renameFolder,
+  deleteFolder,
+  addServiceToFolder,
+  removeServiceFromFolder,
+  getServiceFolderId,
+} from '@/lib/folderStorage';
+import type { Folder } from '@/lib/folderStorage';
+import type { MenuProps } from 'antd';
 
 interface Service {
   id: string;
@@ -25,15 +37,18 @@ interface Service {
 
 interface ServiceListProps {
   searchQuery?: string;
-  viewMode?: 'table' | 'card';
+  viewMode?: 'grid' | 'list';
   isAuthenticated?: boolean | null;
   onServiceCount?: (count: number) => void;
   onUseSample?: () => void;
   localServices?: LocalService[];
   onLocalServicesChange?: () => void;
+  activeFolderId?: string | null;
+  onFolderOpen?: (folderId: string, folderName: string) => void;
+  onFolderClose?: () => void;
 }
 
-export default function ServiceList({ searchQuery = '', viewMode = 'card', isAuthenticated = null, onServiceCount, onUseSample, localServices, onLocalServicesChange }: ServiceListProps) {
+export default function ServiceList({ searchQuery = '', viewMode = 'list', isAuthenticated = null, onServiceCount, onUseSample, localServices, onLocalServicesChange, activeFolderId, onFolderOpen, onFolderClose }: ServiceListProps) {
   const router = useRouter();
   const { notification } = App.useApp();
   const [services, setServices] = useState<Service[]>([]);
@@ -42,6 +57,16 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   const loadingRef = useRef(false);
   const { t, locale } = useTranslation();
   const { user } = useAuth();
+  const [folders, setFolders] = useState<Folder[]>([]);
+
+  // Load folders
+  useEffect(() => {
+    setFolders(listFolders());
+  }, []);
+
+  const refreshFolders = useCallback(() => {
+    setFolders(listFolders());
+  }, []);
 
   // Real-time call count updates via Pusher
   const { getCallCount } = useRealtimeCallCounts({
@@ -61,10 +86,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       calls: 0,
       lastUsed: null,
     }));
-    return [...localList, ...services];
+    return [...localList, ...services].sort((a, b) => {
+      const toTime = (s: Service) => new Date(s.updatedAt || s.createdAt || 0).getTime();
+      return toTime(b) - toTime(a);
+    });
   }, [services, localServices]);
 
-  // Derive filtered services from mergedServices + searchQuery (no separate state needed)
+  // Derive filtered services from mergedServices + searchQuery
   const filteredServices = useMemo(() => {
     if (!searchQuery.trim()) return mergedServices;
     const query = searchQuery.toLowerCase();
@@ -75,17 +103,24 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     );
   }, [searchQuery, mergedServices]);
 
+  // Split services by folder assignment
+  const unassignedServices = useMemo(() => {
+    return filteredServices.filter(s => !getServiceFolderId(s.id));
+  }, [filteredServices, folders]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const folderServices = useCallback((folderId: string) => {
+    const folder = folders.find(f => f.id === folderId);
+    if (!folder) return [];
+    return filteredServices.filter(s => folder.serviceIds.includes(s.id));
+  }, [filteredServices, folders]);
+
   const loadServices = useCallback(async () => {
-    // Prevent duplicate calls
-    if (loadingRef.current) {
-      return;
-    }
+    if (loadingRef.current) return;
 
     try {
       loadingRef.current = true;
       setLoading(true);
 
-      // If not authenticated, clear cloud services (local services still show via mergedServices)
       if (isAuthenticated === false) {
         setServices([]);
         setLoading(false);
@@ -93,14 +128,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         return;
       }
 
-      // If authentication state is still being checked, wait
       if (isAuthenticated === null) {
         setLoading(false);
         loadingRef.current = false;
         return;
       }
 
-      // Double-check we have a hanko cookie before making the API call
       const hankoCookie = document.cookie.split('; ').find(row => row.startsWith('hanko='));
       if (!hankoCookie) {
         setServices([]);
@@ -110,15 +143,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
       }
 
       const response = await fetch('/api/services', {
-        credentials: 'include' // Ensure cookies are sent
+        credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        const loadedServices = data.services || [];
-        setServices(loadedServices);
+        setServices(data.services || []);
       } else {
-        // Handle 401 errors
         if (response.status === 401) {
           setServices([]);
           if (isAuthenticated) {
@@ -129,7 +160,6 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         }
       }
     } catch (error: any) {
-      // Only log non-401 errors
       if (error?.status !== 401) {
         notification.error({ message: t('serviceList.loadFailed') });
       }
@@ -140,21 +170,15 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }, [isAuthenticated, notification, t]);
 
   useEffect(() => {
-    // Only load services once when auth state is determined
     if (isAuthenticated !== null) {
       loadServices();
     }
   }, [isAuthenticated, loadServices]);
 
-  // Listen for storage events to refresh when services are published/unpublished
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'refreshServiceList') {
-        loadServices();
-      }
+      if (e.key === 'refreshServiceList') loadServices();
     };
-
-    // Check on focus if we need to refresh
     const handleFocus = () => {
       const lastRefresh = window.localStorage.getItem('refreshServiceList');
       if (lastRefresh) {
@@ -162,10 +186,8 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
         loadServices();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('focus', handleFocus);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('focus', handleFocus);
@@ -177,12 +199,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
   }, [mergedServices.length, onServiceCount]);
 
   const handleDelete = useCallback(async (serviceId: string, serviceName: string) => {
-    // Check if this is a private (local) service
     const isPrivate = (localServices || []).some(ls => ls.id === serviceId);
 
     if (isPrivate) {
       try {
         await deleteLocalService(serviceId);
+        removeServiceFromFolder(serviceId);
+        refreshFolders();
         notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
         onLocalServicesChange?.();
       } catch {
@@ -192,18 +215,15 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     }
 
     try {
-      const response = await fetch(`/api/services?id=${serviceId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`/api/services?id=${serviceId}`, { method: 'DELETE' });
 
       if (response.ok) {
+        removeServiceFromFolder(serviceId);
+        refreshFolders();
         notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
-        // Remove the deleted service from state immediately for better UX
-        setServices(prevServices => prevServices.filter(s => s.id !== serviceId));
-        // Then reload to ensure consistency with backend
+        setServices(prev => prev.filter(s => s.id !== serviceId));
         loadServices();
       } else {
-        // Check for specific error message
         const errorData = await response.json().catch(() => null);
         if (errorData?.error?.includes('published')) {
           notification.warning({
@@ -218,152 +238,113 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
           notification.error({ message: t('serviceList.deleteFailed') });
         }
       }
-    } catch (error) {
-      // Error deleting service
+    } catch {
       notification.error({ message: t('serviceList.deleteFailed') });
     }
-  }, [notification, t, locale, localServices, onLocalServicesChange, loadServices]);
+  }, [notification, t, locale, localServices, onLocalServicesChange, loadServices, refreshFolders]);
 
   const handleEdit = useCallback((serviceId: string) => {
     setClickedServiceId(serviceId);
     router.push(`/app/service/${serviceId}`);
   }, [router]);
 
-  const formatDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(locale, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }, [locale]);
+  const handleCopyId = useCallback((serviceId: string) => {
+    navigator.clipboard.writeText(serviceId);
+    notification.success({ message: t('serviceList.idCopied') });
+  }, [notification, t]);
 
-  const tableColumns = useMemo(() => [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      ellipsis: true,
-      onCell: () => ({ style: { color: '#4F2D7F', cursor: 'pointer' } }),
-      render: (text: string, record: Service) => (
-        <span onClick={() => handleEdit(record.id)}>
-          {text}
-          {clickedServiceId === record.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
-        </span>
-      ),
-      sorter: (a: Service, b: Service) => a.name.localeCompare(b.name),
-    },
-    {
-      title: t('serviceList.description'),
-      dataIndex: 'description',
-      key: 'description',
-      ellipsis: true,
-      responsive: ['md' as const] as any,
-      render: (text: string) => text || <Text type="secondary">{t('serviceList.noDescription')}</Text>,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      align: 'center' as const,
-      width: 100,
-      render: (status: string) => (
-        <Tag color={status === 'published' ? 'purple' : status === 'private' ? 'blue' : 'orange'}>
-          {status === 'published' ? t('serviceList.statusActive') : status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
-        </Tag>
-      ),
-      filters: [
-        { text: t('serviceList.filterPublished'), value: 'published' },
-        { text: t('serviceList.filterDraft'), value: 'draft' },
-        { text: t('serviceList.filterPrivate'), value: 'private' },
-      ],
-      onFilter: (value: string, record: Service) => record.status === value,
-    },
-    {
-      title: t('serviceList.calls'),
-      dataIndex: 'calls',
-      key: 'calls',
-      align: 'center' as const,
-      width: 100,
-      render: (calls: number, record: Service) => {
-        if (record.status === 'private') return '–';
-        // Use real-time count if available, otherwise fall back to initial count
-        const realtimeCount = getCallCount(record.id);
-        const displayCount = realtimeCount !== undefined ? realtimeCount : (calls || 0);
+  const handleCopyEndpoint = useCallback((serviceId: string) => {
+    const endpoint = `${window.location.origin}/api/v1/services/${serviceId}/execute`;
+    navigator.clipboard.writeText(endpoint);
+    notification.success({ message: t('serviceList.endpointCopied') });
+  }, [notification, t]);
+
+  // Folder handlers
+  const handleCreateFolder = useCallback(() => {
+    createFolder(t('folders.defaultName'));
+    refreshFolders();
+  }, [t, refreshFolders]);
+
+  const handleRenameFolder = useCallback((folderId: string, newName: string) => {
+    renameFolder(folderId, newName);
+    refreshFolders();
+  }, [refreshFolders]);
+
+  const handleDeleteFolder = useCallback((folderId: string) => {
+    deleteFolder(folderId);
+    refreshFolders();
+  }, [refreshFolders]);
+
+  const handleMoveToFolder = useCallback((serviceId: string, folderId: string) => {
+    addServiceToFolder(folderId, serviceId);
+    refreshFolders();
+  }, [refreshFolders]);
+
+  const handleRemoveFromFolder = useCallback((serviceId: string) => {
+    removeServiceFromFolder(serviceId);
+    refreshFolders();
+  }, [refreshFolders]);
+
+  // Build folder menu items for a service's kebab menu
+  const getFolderMenuItems = useCallback((serviceId: string): MenuProps['items'] => {
+    if (folders.length === 0) return [];
+    const currentFolderId = getServiceFolderId(serviceId);
+
+    const items: MenuProps['items'] = [
+      {
+        key: 'folder-submenu',
+        icon: <FolderOutlined />,
+        label: t('folders.moveToFolder'),
+        children: [
+          ...folders.map(f => ({
+            key: `move-to-${f.id}`,
+            icon: <FolderOutlined />,
+            label: f.name,
+            onClick: (e: any) => {
+              e.domEvent.stopPropagation();
+              handleMoveToFolder(serviceId, f.id);
+            },
+          })),
+          ...(currentFolderId ? [
+            { type: 'divider' as const },
+            {
+              key: 'remove-from-folder',
+              label: t('folders.removeFromFolder'),
+              onClick: (e: any) => {
+                e.domEvent.stopPropagation();
+                handleRemoveFromFolder(serviceId);
+              },
+            },
+          ] : []),
+        ],
+      },
+    ];
+    return items;
+  }, [folders, t, handleMoveToFolder, handleRemoveFromFolder]);
+
+  // Render service cards
+  const renderServices = (serviceList: Service[]) => (
+    <div className={viewMode === 'grid' ? 'services-grid' : 'services-list'}>
+      {serviceList.map(service => {
+        const realtimeCount = getCallCount(service.id);
+        const displayCount = realtimeCount !== undefined ? realtimeCount : service.calls;
         return (
-          <Badge
-            count={displayCount}
-            showZero
-            overflowCount={999999}
-            style={{ backgroundColor: '#b0b0b0' }}
+          <ServiceCardCompact
+            key={service.id}
+            service={service}
+            onClick={() => handleEdit(service.id)}
+            onDelete={handleDelete}
+            onCopyId={handleCopyId}
+            onCopyEndpoint={handleCopyEndpoint}
+            isNavigating={clickedServiceId === service.id}
+            callCount={displayCount}
+            locale={locale}
+            folderMenuItems={getFolderMenuItems(service.id)}
           />
         );
-      },
-      sorter: (a: Service, b: Service) => a.calls - b.calls,
-    },
-    {
-      title: '',
-      key: 'actions',
-      width: 60,
-      align: 'left' as const,
-      render: (_: any, record: Service) => (
-        <Space size="middle">
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: 'copy',
-                  icon: <CopyOutlined />,
-                  label: t('serviceList.copyId'),
-                  onClick: () => {
-                    navigator.clipboard.writeText(record.id);
-                    notification.success({ message: t('serviceList.idCopied') });
-                  },
-                },
-                {
-                  key: 'endpoint',
-                  icon: <ApiOutlined />,
-                  label: t('serviceList.copyEndpoint'),
-                  onClick: () => {
-                    const endpoint = `${window.location.origin}/api/v1/services/${record.id}/execute`;
-                    navigator.clipboard.writeText(endpoint);
-                    notification.success({ message: t('serviceList.endpointCopied') });
-                  },
-                  disabled: record.status === 'draft' || record.status === 'private',
-                },
-                { type: 'divider' },
-                {
-                  key: 'delete',
-                  icon: <DeleteOutlined />,
-                  label: (
-                    <Popconfirm
-                      title={t('serviceList.deleteConfirmTitle')}
-                      description={t('serviceList.deleteConfirmDescription')}
-                      onConfirm={(e) => {
-                        e?.stopPropagation();
-                        handleDelete(record.id, record.name);
-                      }}
-                      okText={t('common.yes')}
-                      cancelText={t('common.no')}
-                      okButtonProps={{ danger: true }}
-                    >
-                      {t('common.delete')}
-                    </Popconfirm>
-                  ),
-                  danger: true,
-                },
-              ],
-            }}
-            trigger={['click']}
-          >
-            <Button type="text" icon={<MoreOutlined />} />
-          </Dropdown>
-        </Space>
-      ),
-    },
-  ], [clickedServiceId, formatDate, handleDelete, handleEdit, notification, t, locale, getCallCount]);
+      })}
+    </div>
+  );
 
   if (loading) {
     return (
@@ -381,80 +362,74 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
 
   if (mergedServices.length === 0 && !searchQuery) {
     return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 'calc(100vh - 260px)',
-          padding: '24px',
-          maxWidth: '560px',
-          margin: '0 auto',
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 'calc(100vh - 260px)',
+        padding: '24px',
+        maxWidth: '560px',
+        margin: '0 auto',
+      }}>
+        <p style={{
+          fontSize: 14,
+          color: '#bfbfbf',
+          textAlign: 'center',
+          margin: '0 0 20px',
+          lineHeight: '1.6',
+          maxWidth: '360px',
+          userSelect: 'none',
         }}>
-          {/* Description */}
-          <p style={{
-            fontSize: 14,
-            color: '#bfbfbf',
-            textAlign: 'center',
-            margin: '0 0 20px',
-            lineHeight: '1.6',
-            maxWidth: '360px',
-            userSelect: 'none',
-          }}>
-            {t('serviceList.emptyDescription')}
-          </p>
+          {t('serviceList.emptyDescription')}
+        </p>
 
-          {/* Hero illustration: Spreadsheet → API */}
-          <div
-            onClick={onUseSample}
-            style={{
-              width: '100%',
-              maxWidth: 480,
-              borderRadius: 12,
-              overflow: 'hidden',
-              cursor: onUseSample ? 'pointer' : undefined,
-            }}
-          >
-            <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
-              <rect width="800" height="400" fill="#F8F6FE" rx="12"/>
-              {/* Spreadsheet on left */}
-              <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-              <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
-              <rect x="70" y="160" width="80" height="30" fill="#E6F4FF"/>
-              <rect x="160" y="160" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="250" y="160" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="70" y="200" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="160" y="200" width="80" height="30" fill="#E6F4FF"/>
-              <rect x="250" y="200" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="70" y="240" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="160" y="240" width="80" height="30" fill="#F8F6FE"/>
-              <rect x="250" y="240" width="80" height="30" fill="#FFE4E1"/>
-              {/* Arrow */}
-              <path d="M370 200 L430 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
-              <path d="M420 190 L430 200 L420 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
-              {/* API on right */}
-              <rect x="450" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-              <rect x="470" y="120" width="260" height="40" fill="#F8F6FE"/>
-              <text x="600" y="145" textAnchor="middle" fill="#0a0a0a" fontSize="16" fontWeight="500">API Endpoint</text>
-              <rect x="470" y="180" width="260" height="100" rx="4" fill="#F8F6FE"/>
-              <text x="490" y="210" fill="#5a5a5a" fontSize="14">{"{"}</text>
-              <text x="510" y="230" fill="#5a5a5a" fontSize="14">{'"inputs": [...],'}</text>
-              <text x="510" y="250" fill="#5a5a5a" fontSize="14">{'"outputs": [...]'}</text>
-              <text x="490" y="270" fill="#5a5a5a" fontSize="14">{"}"}</text>
-            </svg>
-          </div>
-
-          {/* On-premises hint */}
-          <p style={{
-            fontSize: 14,
-            color: '#bfbfbf',
-            textAlign: 'center',
-            margin: '20px 0 0',
-            lineHeight: '1.6',
-          }}>
-            {t('serviceList.onPremisesHint')} <a href="/on-premises" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>
-          </p>
+        <div
+          onClick={onUseSample}
+          style={{
+            width: '100%',
+            maxWidth: 480,
+            borderRadius: 12,
+            overflow: 'hidden',
+            cursor: onUseSample ? 'pointer' : undefined,
+          }}
+        >
+          <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <rect width="800" height="400" fill="#F8F6FE" rx="12"/>
+            <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+            <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
+            <rect x="70" y="160" width="80" height="30" fill="#E6F4FF"/>
+            <rect x="160" y="160" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="250" y="160" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="70" y="200" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="160" y="200" width="80" height="30" fill="#E6F4FF"/>
+            <rect x="250" y="200" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="70" y="240" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="160" y="240" width="80" height="30" fill="#F8F6FE"/>
+            <rect x="250" y="240" width="80" height="30" fill="#FFE4E1"/>
+            <path d="M370 200 L430 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
+            <path d="M420 190 L430 200 L420 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
+            <rect x="450" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
+            <rect x="470" y="120" width="260" height="40" fill="#F8F6FE"/>
+            <text x="600" y="145" textAnchor="middle" fill="#0a0a0a" fontSize="16" fontWeight="500">API Endpoint</text>
+            <rect x="470" y="180" width="260" height="100" rx="4" fill="#F8F6FE"/>
+            <text x="490" y="210" fill="#5a5a5a" fontSize="14">{"{"}</text>
+            <text x="510" y="230" fill="#5a5a5a" fontSize="14">{'"inputs": [...],'}</text>
+            <text x="510" y="250" fill="#5a5a5a" fontSize="14">{'"outputs": [...]'}</text>
+            <text x="490" y="270" fill="#5a5a5a" fontSize="14">{"}"}</text>
+          </svg>
         </div>
+
+        <p style={{
+          fontSize: 14,
+          color: '#bfbfbf',
+          textAlign: 'center',
+          margin: '20px 0 0',
+          lineHeight: '1.6',
+        }}>
+          {t('serviceList.onPremisesHint')} <a href="/on-premises" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>
+        </p>
+      </div>
     );
   }
 
@@ -467,131 +442,103 @@ export default function ServiceList({ searchQuery = '', viewMode = 'card', isAut
     );
   }
 
-  if (viewMode === 'table') {
+  const activeFolder = activeFolderId ? folders.find(f => f.id === activeFolderId) : null;
+  const activeFolderServices = activeFolderId ? folderServices(activeFolderId) : [];
+
+  // Inside a folder — header shows back button + name (controlled by parent)
+  if (activeFolder && activeFolderId) {
     return (
-      <div style={{ marginTop: 20, border: '1px solid #E7E7E7', borderRadius: 8, overflow: 'hidden' }}>
-        <Table
-          columns={tableColumns}
-          dataSource={filteredServices}
-          rowKey="id"
-          pagination={false}
-          onRow={(record) => ({
-            style: { cursor: 'pointer' },
-            onClick: (e) => {
-              // Don't navigate if clicking on buttons or links
-              const target = e.target as HTMLElement;
-              if (target.closest('button') || target.closest('a') || target.closest('.ant-dropdown')) {
-                return;
-              }
-              handleEdit(record.id);
-            },
-          })}
-        />
+      <div style={{ padding: '4px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+          <div className="section-label">{t('sections.yourServices')}</div>
+          <span style={{ fontSize: 12, color: '#8c8c8c', fontWeight: 400 }}>
+            {activeFolderServices.length}
+          </span>
+        </div>
+        {activeFolderServices.length > 0 ? (
+          renderServices(activeFolderServices)
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={t('serviceList.noApisFound', { query: '' })}
+          />
+        )}
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px 0' }}>
-      <Row gutter={[16, 16]}>
-        {filteredServices.map((service) => (
-          <Col xs={24} sm={24} md={12} lg={8} xl={6} key={service.id}>
-            <Card
-              hoverable
-              onClick={() => handleEdit(service.id)}
-              style={{ cursor: 'pointer' }}
-              styles={{ body: { paddingTop: 24, paddingBottom: 24, paddingLeft: 24, paddingRight: 16 } }}
-              actions={[
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    type="text"
-                    icon={<EditOutlined />}
-                    onClick={() => handleEdit(service.id)}
-                  >
-                    {t('common.edit')}
-                  </Button>
-                </div>,
-                <div onClick={(e) => e.stopPropagation()}>
-                </div>
-              ]}
+    <div style={{ padding: '4px 0' }}>
+      {/* PROJECTS section */}
+      {!searchQuery && (folders.length > 0 || isAuthenticated) && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 6,
+            marginBottom: 8,
+          }}>
+            <div className="section-label">{t('folders.title')}</div>
+            <Button
+              type="text"
+              size="small"
+              onClick={handleCreateFolder}
+              style={{ fontSize: 12, color: '#8c8c8c', padding: '2px 8px' }}
             >
-              <Card.Meta
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <Text strong>{service.name}</Text>
-                      {clickedServiceId === service.id && <LoadingOutlined style={{ marginLeft: 8 }} />}
-                    </div>
-                    <Tag color={service.status === 'published' ? 'purple' : service.status === 'private' ? 'blue' : 'orange'} style={{ marginInlineEnd: 4 }}>
-                      {service.status === 'published' ? t('serviceList.statusActive') : service.status === 'private' ? t('serviceList.statusPrivate') : t('serviceList.statusDraft')}
-                    </Tag>
-                  </div>
-                }
-                description={
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Paragraph
-                      ellipsis={{ rows: 2 }}
-                      style={{ marginBottom: 8 }}
-                    >
-                      {service.description || t('serviceList.noDescription')}
-                    </Paragraph>
+              {t('folders.newFolder')}
+            </Button>
+          </div>
+          {folders.length > 0 ? (
+            <div className={viewMode === 'grid' ? 'projects-row' : 'projects-list'}>
+              {folders.map(folder => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  serviceCount={folderServices(folder.id).length}
+                  variant={viewMode === 'grid' ? 'card' : 'row'}
+                  onClick={() => onFolderOpen?.(folder.id, folder.name)}
+                  onRename={(name) => handleRenameFolder(folder.id, name)}
+                  onDelete={() => handleDeleteFolder(folder.id)}
+                  onDropService={(serviceId) => handleMoveToFolder(serviceId, folder.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: '#bfbfbf' }}>
+              {t('folders.noProjectsHint')}
+            </div>
+          )}
+        </div>
+      )}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
-                        <CalendarOutlined />
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                          {formatDate(service.updatedAt)}
-                        </Text>
-                      </Space>
+      {/* Services in folders (when searching) */}
+      {searchQuery && folders.map(folder => {
+        const matching = folderServices(folder.id);
+        if (matching.length === 0) return null;
+        return (
+          <div key={folder.id} style={{ marginBottom: 20 }}>
+            <div className="section-label" style={{ marginBottom: 8 }}>{folder.name}</div>
+            {renderServices(matching)}
+          </div>
+        );
+      })}
 
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Popconfirm
-                          title={t('serviceList.deleteConfirmTitle')}
-                          description={t('serviceList.deleteConfirmDescription')}
-                          onConfirm={() => handleDelete(service.id, service.name)}
-                          okText={t('common.yes')}
-                          cancelText={t('common.no')}
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            size="small"
-                          />
-                        </Popconfirm>
-                      </div>
-                    </div>
-
-                    {(() => {
-                      // Use real-time count if available, otherwise fall back to initial count
-                      const realtimeCount = getCallCount(service.id);
-                      const displayCount = realtimeCount !== undefined ? realtimeCount : service.calls;
-                      if (service.status !== 'private') {
-                        return (
-                          <Space size="small" style={{ fontSize: '12px', color: '#888' }}>
-                            <BarChartOutlined />
-                            <Badge
-                              count={displayCount}
-                              showZero
-                              overflowCount={999999}
-                              style={{ backgroundColor: '#b0b0b0' }}
-                            />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {t('serviceList.calls').toLowerCase()}
-                            </Text>
-                          </Space>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </Space>
-                }
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+      {/* YOUR SERVICES / UNASSIGNED section */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 8,
+        marginBottom: 8,
+      }}>
+        <div className="section-label">
+          {folders.length > 0 && !searchQuery ? t('sections.unassigned') : t('sections.yourServices')}
+        </div>
+        <span style={{ fontSize: 12, color: '#8c8c8c', fontWeight: 400 }}>
+          {(searchQuery ? filteredServices : unassignedServices).length}
+        </span>
+      </div>
+      {renderServices(searchQuery ? filteredServices.filter(s => !folders.some(f => f.serviceIds.includes(s.id))) : unassignedServices)}
     </div>
   );
 }

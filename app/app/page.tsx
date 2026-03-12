@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import '@/styles/listcard.css';
+import '@/styles/dashboard.css';
 import '../main.css'; // Critical CSS for preventing layout shifts
 import { Layout, Button, Input, App, Breadcrumb, Typography, Segmented, Dropdown, Avatar, Modal, Spin, Tag } from 'antd';
-import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreAddOutlined, TableOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, GlobalOutlined, CheckOutlined, CloudOutlined, CrownOutlined, BarChartOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, InboxOutlined, AppstoreOutlined, BarsOutlined, UserOutlined, LogoutOutlined, SettingOutlined, LoadingOutlined, MessageOutlined, PlayCircleOutlined, FileExcelOutlined, ArrowRightOutlined, ArrowLeftOutlined, GlobalOutlined, CheckOutlined, CloudOutlined, CrownOutlined, BarChartOutlined, DownOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/shared/hooks/useAppStore';
@@ -61,7 +62,7 @@ const ListsPage: React.FC = observer(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isCreatingService, setIsCreatingService] = useState(false);
   const [serviceCount, setServiceCount] = useState(0);
@@ -73,6 +74,14 @@ const ListsPage: React.FC = observer(() => {
   const { isEnterpriseMode, setEnterpriseMode } = useEnterpriseMode();
   const [localServices, setLocalServices] = useState<LocalService[]>([]);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [activeFolderName, setActiveFolderName] = useState<string>('');
+  const [onboardingCollapsed, setOnboardingCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('spreadapi_onboarding_collapsed') === 'true';
+    }
+    return false;
+  });
 
   // Load local services from IndexedDB
   const refreshLocalServices = useCallback(() => {
@@ -160,12 +169,15 @@ const ListsPage: React.FC = observer(() => {
   useEffect(() => {
     setIsClient(true);
     // Load saved view mode only once on client
-    const savedViewMode = localStorage.getItem('serviceViewMode');
-    if (savedViewMode === 'table' || savedViewMode === 'card') {
+    let savedViewMode = localStorage.getItem('serviceViewMode');
+    // Migrate old values
+    if (savedViewMode === 'table') savedViewMode = 'list';
+    if (savedViewMode === 'card') savedViewMode = 'grid';
+    if (savedViewMode === 'grid' || savedViewMode === 'list') {
       setViewMode(savedViewMode);
+      localStorage.setItem('serviceViewMode', savedViewMode);
     } else {
-      // If no saved preference, save the default
-      localStorage.setItem('serviceViewMode', 'table');
+      localStorage.setItem('serviceViewMode', 'list');
     }
   }, []);
 
@@ -653,18 +665,34 @@ const ListsPage: React.FC = observer(() => {
             <div className="lists-page-header">
               {/* Left side */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto' }}>
-                <img
-                  src="/icons/logo.svg"
-                  alt="SpreadAPI"
-                  style={{ width: 18, height: 18, borderRadius: 3, cursor: 'pointer' }}
-                  onClick={() => router.push('/')}
-                />
-                {/* Breadcrumb */}
-                <Breadcrumb
-                  items={[{
-                    title: <span style={{ marginLeft: 0 }}>{t('app.breadcrumb')}</span>,
-                  }]}
-                />
+                {activeFolderId ? (
+                  <>
+                    <Button
+                      type="text"
+                      icon={<ArrowLeftOutlined />}
+                      onClick={() => { setActiveFolderId(null); setActiveFolderName(''); }}
+                      style={{ color: '#8c8c8c', padding: '4px 8px' }}
+                    />
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#262626' }}>
+                      {activeFolderName}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      src="/icons/logo.svg"
+                      alt="SpreadAPI"
+                      style={{ width: 18, height: 18, borderRadius: 3, cursor: 'pointer' }}
+                      onClick={() => router.push('/')}
+                    />
+                    {/* Breadcrumb */}
+                    <Breadcrumb
+                      items={[{
+                        title: <span style={{ marginLeft: 0 }}>{t('app.breadcrumb')}</span>,
+                      }]}
+                    />
+                  </>
+                )}
               </div>
 
               {/* Right side - Action Buttons */}
@@ -750,262 +778,217 @@ const ListsPage: React.FC = observer(() => {
             </div>
 
             {/* Main content */}
-            <div style={{ flex: 1, background: '#fdfdfd', padding: '16px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              {/* Page Title and Search */}
-              <div style={{ width: '100%' }}>
+            <div style={{ flex: 1, background: '#fdfdfd', padding: '12px 16px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: 960, margin: '0 auto', width: '100%' }}>
 
-                {/* Search Bar and View Toggle — hidden when no services */}
-                {serviceCount > 0 && (
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 0 }}>
-                  <Input
-                    placeholder={t('app.searchPlaceholder')}
-                    disabled={appStore.loading}
-                    prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    allowClear
-                    // size="large"
-                    style={{
-                      flex: 1,
-                      borderRadius: '8px',
-                      fontSize: '14px'
-                    }}
-                    className="search-input"
-                  />
-                  <Segmented
-                    options={[
-                      { label: <AppstoreAddOutlined />, value: 'card' },
-                      { label: <TableOutlined />, value: 'table' }
-                    ]}
-                    value={viewMode}
-                    onChange={(value) => {
-                      setViewMode(value as 'card' | 'table');
-                      localStorage.setItem('serviceViewMode', value);
-                    }}
-                  />
-                </div>
-                )}
-                {/* Service List */}
-                <div ref={serviceListRef}>
-                  {isClient ? (
-                    <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} localServices={localServices} onLocalServicesChange={refreshLocalServices} />
+              {/* Onboarding Panel — collapsible, shown for users with < 7 services, hidden inside folders */}
+              {!searchQuery && serviceCount < 7 && !activeFolderId && (
+                <div style={{
+                  background: '#F0F4FB',
+                  border: '1px solid #DFEAF5',
+                  borderRadius: 10,
+                  margin: '4px 0 12px',
+                  ...(onboardingCollapsed
+                    ? { padding: '14px 12px' }
+                    : { padding: '24px 24px 16px', position: 'relative' as const }),
+                }}>
+                  {onboardingCollapsed ? (
+                    /* Collapsed bar */
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <svg width="14" height="16" viewBox="0 0 14 16" fill="none" style={{ flexShrink: 0 }}>
+                        <path d="M2 2L12 8L2 14V2Z" stroke="#7c5cc4" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+                      </svg>
+                      <span style={{ fontWeight: 500, fontSize: 13, color: '#1a1a1a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                        {t('onboarding.title')}
+                      </span>
+                      <span
+                        onClick={() => {
+                          setOnboardingCollapsed(false);
+                          localStorage.setItem('spreadapi_onboarding_collapsed', 'false');
+                        }}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#7c5cc4', cursor: 'pointer', fontWeight: 500 }}
+                      >
+                        {t('onboarding.showVideos')}
+                        <DownOutlined style={{ fontSize: 10 }} />
+                      </span>
+                      <span style={{ width: 1, height: 16, background: '#DFEAF5' }} />
+                      <span
+                        onClick={() => window.open('mailto:support@spreadapi.com', '_blank')}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#999', cursor: 'pointer' }}
+                      >
+                        <MessageOutlined style={{ fontSize: 13 }} />
+                        {t('onboarding.contactSupport')}
+                      </span>
+                    </div>
                   ) : (
-                    <ServiceListSkeleton viewMode={viewMode} />
+                    /* Expanded view */
+                    <>
+                      {/* Collapse chevron */}
+                      <span
+                        onClick={() => {
+                          setOnboardingCollapsed(true);
+                          localStorage.setItem('spreadapi_onboarding_collapsed', 'true');
+                        }}
+                        style={{ position: 'absolute', top: 20, right: 20, cursor: 'pointer', lineHeight: 1 }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                          <path d="M4 10L8 6L12 10" stroke="#bfbfbf" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+
+                      {/* Title + description */}
+                      <div style={{ fontWeight: 700, fontSize: 18, color: '#1a1a1a', marginBottom: 4 }}>
+                        {t('onboarding.title')}
+                      </div>
+                      <div style={{ fontSize: 13, color: '#999', lineHeight: 1.5, marginBottom: 20, maxWidth: 560 }}>
+                        {t('onboarding.description')}
+                      </div>
+
+                      {/* Video cards */}
+                      <div style={{ display: 'grid', gap: 14, marginBottom: 16, maxWidth: 860 }} className="onboarding-cards-grid">
+                        {[
+                          { titleKey: 'onboarding.card1Title' as const, descKey: 'onboarding.card1Desc' as const, durationKey: 'onboarding.card1Duration' as const, gradient: 'linear-gradient(135deg, #7c5cc4 0%, #9b7ae8 50%, #b49cfa 100%)', disabled: false },
+                          { titleKey: 'onboarding.card2Title' as const, descKey: 'onboarding.card2Desc' as const, durationKey: 'onboarding.card2Duration' as const, gradient: 'linear-gradient(135deg, #4a8bb5 0%, #6ba3cc 50%, #8bbde0 100%)', disabled: true },
+                          { titleKey: 'onboarding.card3Title' as const, descKey: 'onboarding.card3Desc' as const, durationKey: 'onboarding.card3Duration' as const, gradient: 'linear-gradient(135deg, #3d9e70 0%, #5cb88a 50%, #7dd0a5 100%)', disabled: true },
+                        ].map((card) => (
+                          <div
+                            key={card.titleKey}
+                            ref={card.titleKey === 'onboarding.card1Title' ? watchVideoCardRef : undefined}
+                            onClick={card.disabled ? undefined : () => setIsVideoModalOpen(true)}
+                            style={{
+                              cursor: card.disabled ? 'default' : 'pointer',
+                              borderRadius: 12,
+                              overflow: 'hidden',
+                              border: '1px solid #eeeef2',
+                              background: '#fff',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              height: '100%',
+                              transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+                              opacity: card.disabled ? 0.45 : 1,
+                              pointerEvents: card.disabled ? 'none' : undefined,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.boxShadow = 'none';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            {/* Gradient thumbnail */}
+                            <div style={{
+                              background: card.gradient,
+                              padding: '10px 14px 8px',
+                              position: 'relative',
+                              aspectRatio: '2/1',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              overflow: 'hidden',
+                              flexShrink: 0,
+                            }}>
+                              {/* Decorative shapes */}
+                              <div style={{ position: 'absolute', inset: 0, opacity: 0.05, overflow: 'hidden' }}>
+                                {[0, 1, 2, 3].map((i) => (
+                                  <div key={i} style={{
+                                    position: 'absolute',
+                                    left: `${20 + i * 22}%`,
+                                    top: '25%',
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: 6,
+                                    border: '1.5px solid white',
+                                    transform: `rotate(${-8 + i * 5}deg)`,
+                                  }} />
+                                ))}
+                              </div>
+                              {/* Top row: brand + duration */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em' }}>
+                                  <BarChartOutlined style={{ fontSize: 9 }} />
+                                  SPREADAPI
+                                </div>
+                                <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.7)', background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 4 }}>
+                                  {card.disabled ? 'Coming soon' : t(card.durationKey)}
+                                </span>
+                              </div>
+                              {/* Play button */}
+                              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                                <div style={{ width: '20%', aspectRatio: '1', maxWidth: 40, minWidth: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <svg width="50%" viewBox="0 0 24 24" fill="none">
+                                    <polygon points="8 5 19 12 8 19 8 5" fill="white" />
+                                  </svg>
+                                </div>
+                              </div>
+                              {/* Card title */}
+                              <div style={{ fontWeight: 600, fontSize: 13, color: 'rgba(255,255,255,0.9)', whiteSpace: 'pre-line' }}>
+                                {t(card.titleKey)}
+                              </div>
+                            </div>
+                            {/* Description area */}
+                            <div style={{ padding: '10px 12px 12px', fontSize: 11.5, color: '#5b5b75', lineHeight: 1.35, flex: 1 }}>
+                              {t(card.descKey)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Support link */}
+                      <div style={{ paddingTop: 10, borderTop: '1px solid #e8e8e8' }}>
+                        <span
+                          onClick={() => window.open('mailto:support@spreadapi.com', '_blank')}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#999', cursor: 'pointer' }}
+                        >
+                          <MessageOutlined style={{ fontSize: 13 }} />
+                          {t('onboarding.contactSupport')}
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
-                {/* New here? Cards - show for users with less than 5 lists */}
-                {!searchQuery && serviceCount < 7 && (
-                  <div style={{
-                    position: 'fixed',
-                    bottom: '40px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    textAlign: 'center',
-                    marginTop: '0',
-                    paddingBottom: '0',
-                    width: '100%',
-                    maxWidth: '700px',
-                    transition: 'all 0.3s ease',
-                    zIndex: 1
-                  }}>
-                    <div ref={onboardingCardsRef} style={{
-                      display: 'flex',
-                      gap: '12px',
-                      justifyContent: 'center',
-                      flexWrap: 'wrap'
-                    }}>
-                      {/* Watch Video Card */}
-                      <div
-                        ref={watchVideoCardRef}
-                        onClick={() => setIsVideoModalOpen(true)}
-                        style={{
-                          background: 'white',
-                          border: '1px solid #e8e8e8',
-                          borderRadius: '8px',
-                          padding: '16px 20px',
-                          cursor: 'pointer',
-                          color: '#262626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          flex: '1 1 0',
-                          minWidth: '140px',
-                          maxWidth: '220px',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(80, 45, 128, 0.15)';
-                          e.currentTarget.style.borderColor = '#502D80';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.04)';
-                          e.currentTarget.style.borderColor = '#e8e8e8';
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '8px',
-                          overflow: 'hidden',
-                          flexShrink: 0,
-                          position: 'relative',
-                          background: '#f0f0f0'
-                        }}>
-                          <img
-                            src={`https://fast.wistia.com/embed/medias/${selectedVideoId}/swatch`}
-                            alt="Video thumbnail"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                          <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'rgba(0, 0, 0, 0.3)'
-                          }}>
-                            <PlayCircleOutlined style={{ fontSize: '14px', color: 'white' }} />
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {t('app.watchVideo')}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {t('app.fiveMinTutorial')}
-                          </div>
-                        </div>
-                      </div>
+              )}
 
-                      {/* Use a Sample Card */}
-                      <div
-                        ref={useSampleCardRef}
-                        onClick={() => setIsTemplateModalOpen(true)}
-                        style={{
-                          background: 'white',
-                          border: '1px solid #e8e8e8',
-                          borderRadius: '8px',
-                          padding: '16px 20px',
-                          cursor: 'pointer',
-                          color: '#262626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          flex: '1 1 0',
-                          minWidth: '140px',
-                          maxWidth: '220px',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(80, 45, 128, 0.15)';
-                          e.currentTarget.style.borderColor = '#502D80';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.04)';
-                          e.currentTarget.style.borderColor = '#e8e8e8';
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          background: '#f9f0ff',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="#722ed1" strokeWidth="2" fill="none"/>
-                            <line x1="3" y1="12" x2="21" y2="12" stroke="#722ed1" strokeWidth="2"/>
-                            <line x1="12" y1="3" x2="12" y2="21" stroke="#722ed1" strokeWidth="2"/>
-                          </svg>
-                        </div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {t('app.useSample')}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {t('app.testImmediately')}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* How it Works Card — hidden on small screens */}
-                      <a
-                        href="/how-excel-api-works"
-                        className="how-it-works-card"
-                        style={{
-                          background: 'white',
-                          border: '1px solid #e8e8e8',
-                          borderRadius: '8px',
-                          padding: '16px 20px',
-                          textDecoration: 'none',
-                          color: '#262626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          flex: '1 1 0',
-                          minWidth: '140px',
-                          maxWidth: '220px',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(80, 45, 128, 0.15)';
-                          e.currentTarget.style.borderColor = '#502D80';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.04)';
-                          e.currentTarget.style.borderColor = '#e8e8e8';
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          background: '#e6f7ff',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9.4 16.6L4.8 12L9.4 7.4L8 6L2 12L8 18L9.4 16.6ZM14.6 16.6L19.2 12L14.6 7.4L16 6L22 12L16 18L14.6 16.6Z" fill="#1890ff"/>
-                            <rect x="11" y="4" width="2" height="16" rx="1" fill="#1890ff"/>
-                          </svg>
-                        </div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '2px' }}>
-                            {t('app.howItWorks')}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {t('app.seeInAction')}
-                          </div>
-                        </div>
-                      </a>
-
-                    </div>
-                  </div>
+              {/* Search Bar and View Toggle */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, paddingLeft: 0, paddingRight: 0 }}>
+                {serviceCount > 0 && (
+                  <>
+                    <Input
+                      placeholder={t('app.searchPlaceholder')}
+                      disabled={appStore.loading}
+                      prefix={<SearchOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      allowClear
+                      size="large"
+                      style={{ flex: 1, borderRadius: 10, fontSize: '14px' }}
+                      className="search-input"
+                    />
+                    <Segmented
+                      options={[
+                        { label: <AppstoreOutlined />, value: 'grid' },
+                        { label: <BarsOutlined />, value: 'list' }
+                      ]}
+                      value={viewMode}
+                      onChange={(value) => {
+                        setViewMode(value as 'grid' | 'list');
+                        localStorage.setItem('serviceViewMode', value);
+                      }}
+                      size="large"
+                      style={{ flexShrink: 0, borderRadius: 10 }}
+                    />
+                  </>
                 )}
-
               </div>
 
+              {/* Service List */}
+              <div ref={serviceListRef} style={{ flex: 1, padding: '4px 0' }}>
+                {isClient ? (
+                  <ServiceList searchQuery={searchQuery} viewMode={viewMode} isAuthenticated={isAuthenticated} onServiceCount={setServiceCount} onUseSample={handleUseSample} localServices={localServices} onLocalServicesChange={refreshLocalServices} activeFolderId={activeFolderId} onFolderOpen={(id, name) => { setActiveFolderId(id); setActiveFolderName(name); }} onFolderClose={() => { setActiveFolderId(null); setActiveFolderName(''); }} />
+                ) : (
+                  <ServiceListSkeleton viewMode={viewMode} />
+                )}
+              </div>
             </div>
           </Content>
         </Layout>

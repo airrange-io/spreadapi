@@ -109,9 +109,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [loading, setLoading] = useState(false);
   const [savingWorkbook, setSavingWorkbook] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true); // New state for initial load
-  const [loadingMessage, setLoadingMessage] = useState(
-    typeof navigator !== 'undefined' && navigator.language?.startsWith('de') ? 'Service wird geladen...' : 'Loading service...'
-  );
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
   const [workbookSize, setWorkbookSize] = useState<number | null>(null);
   const [apiConfig, setApiConfig] = useState({
@@ -208,6 +206,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setActiveView('Workbook');
     }
   }, [serviceMode, activeView]);
+
+  // Set initial loading message on client to avoid hydration mismatch
+  useEffect(() => {
+    if (!loadingMessage) setLoadingMessage(t('service.loadingServiceData'));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lazy-load template config only when templateId is present (rare — only on template creation)
   useEffect(() => {

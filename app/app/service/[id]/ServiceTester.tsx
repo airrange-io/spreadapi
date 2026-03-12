@@ -10,10 +10,11 @@ import { useTranslation } from '@/lib/i18n';
 const { Text } = Typography;
 const { TextArea } = Input;
 
-// Available API endpoints
+// Available API endpoints — use current origin in dev to avoid CORS issues
+const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const API_ENDPOINTS = [
-  { key: 'main', label: 'spreadapi.io', url: 'https://spreadapi.io/api/v1/services/{serviceId}/execute' },
-  { key: 'run', label: 'spreadapi.run', url: 'https://spreadapi.run/{serviceId}' },
+  { key: 'main', label: 'spreadapi.io', url: isLocalDev ? '/api/v1/services/{serviceId}/execute' : 'https://spreadapi.io/api/v1/services/{serviceId}/execute' },
+  { key: 'run', label: 'spreadapi.run', url: isLocalDev ? '/api/v1/services/{serviceId}/execute' : 'https://spreadapi.run/{serviceId}' },
 ];
 
 interface ServiceTesterProps {
