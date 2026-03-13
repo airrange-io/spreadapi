@@ -45,7 +45,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
     >
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Spin size="default" />
+          <Spin size="medium" />
           <p style={{ marginTop: 16, color: '#666' }}>{t('apiDef.loading')}</p>
         </div>
       ) : data ? (

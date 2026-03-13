@@ -7,7 +7,7 @@ import { Layout, Spin } from 'antd';
 const ChatWrapperBubbles = dynamic(() => import('./ChatWrapperBubbles'), {
   loading: () => (
     <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Spin size="default" />
+      <Spin size="medium" />
     </Layout>
   ),
   ssr: false

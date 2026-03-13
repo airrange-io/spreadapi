@@ -179,7 +179,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
         justifyContent: 'center',
         padding: '40px'
       }}>
-        <Spin size="default" />
+        <Spin size="medium" />
       </div>
     );
   }

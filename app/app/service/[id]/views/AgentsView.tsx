@@ -21,7 +21,7 @@ const ChatLoadingFallback: React.FC = () => {
       justifyContent: 'center',
       gap: '12px'
     }}>
-      <Spin size="default" />
+      <Spin size="medium" />
       <div style={{ color: '#999', fontSize: '14px' }}>{t('agentsView.loadingChat')}</div>
     </div>
   );

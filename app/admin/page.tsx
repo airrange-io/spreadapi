@@ -291,7 +291,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="default" />
+        <Spin size="medium" />
       </Layout>
     );
   }

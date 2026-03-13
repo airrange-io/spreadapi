@@ -43,7 +43,7 @@ export default function CacheStatsPage() {
   const fetchStats = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/cache-stats');
       if (!response.ok) {
@@ -85,13 +85,13 @@ export default function CacheStatsPage() {
       }
     >
       {loading && !stats ? (
-        <div style={{ 
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '400px'
         }}>
-          <Spin size="default" />
+          <Spin size="medium" />
         </div>
       ) : error ? (
         <Alert
@@ -193,13 +193,13 @@ export default function CacheStatsPage() {
               <span>{t('cacheStats.redisCache')}</span>
             </Space>
           }
-          extra={
-            stats.redisCache.connected ? (
-              <Text type="success">{t('cacheStats.connected')}</Text>
-            ) : (
-              <Text type="danger">{t('cacheStats.disconnected')}</Text>
-            )
-          }>
+            extra={
+              stats.redisCache.connected ? (
+                <Text type="success">{t('cacheStats.connected')}</Text>
+              ) : (
+                <Text type="danger">{t('cacheStats.disconnected')}</Text>
+              )
+            }>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={6}>
                 <Statistic

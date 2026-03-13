@@ -378,7 +378,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
         minHeight: '400px',
         padding: '20px 0'
       }}>
-        <Spin size="default" />
+        <Spin size="medium" />
       </div>
     );
   }
@@ -396,24 +396,24 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
         {/* Small illustration */}
         <div style={{ maxWidth: 280, marginBottom: 24 }}>
           <svg viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
-            <rect width="800" height="400" fill="#F9F9FB" rx="12"/>
-            <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-            <rect x="70" y="120" width="260" height="30" fill="#F8F6FE"/>
-            <rect x="70" y="160" width="80" height="30" fill="#E6F4FF"/>
-            <rect x="160" y="160" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="250" y="160" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="70" y="200" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="160" y="200" width="80" height="30" fill="#E6F4FF"/>
-            <rect x="250" y="200" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="70" y="240" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="160" y="240" width="80" height="30" fill="#F8F6FE"/>
-            <rect x="250" y="240" width="80" height="30" fill="#FFE4E1"/>
-            <path d="M370 200 L430 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5"/>
-            <path d="M420 190 L430 200 L420 210" stroke="#9333EA" strokeWidth="3" fill="none"/>
-            <rect x="450" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2"/>
-            <rect x="470" y="120" width="260" height="40" fill="#F8F6FE"/>
+            <rect width="800" height="400" fill="#F9F9FB" rx="12" />
+            <rect x="50" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
+            <rect x="70" y="120" width="260" height="30" fill="#F8F6FE" />
+            <rect x="70" y="160" width="80" height="30" fill="#E6F4FF" />
+            <rect x="160" y="160" width="80" height="30" fill="#F8F6FE" />
+            <rect x="250" y="160" width="80" height="30" fill="#F8F6FE" />
+            <rect x="70" y="200" width="80" height="30" fill="#F8F6FE" />
+            <rect x="160" y="200" width="80" height="30" fill="#E6F4FF" />
+            <rect x="250" y="200" width="80" height="30" fill="#F8F6FE" />
+            <rect x="70" y="240" width="80" height="30" fill="#F8F6FE" />
+            <rect x="160" y="240" width="80" height="30" fill="#F8F6FE" />
+            <rect x="250" y="240" width="80" height="30" fill="#FFE4E1" />
+            <path d="M370 200 L430 200" stroke="#9333EA" strokeWidth="3" strokeDasharray="5,5" />
+            <path d="M420 190 L430 200 L420 210" stroke="#9333EA" strokeWidth="3" fill="none" />
+            <rect x="450" y="100" width="300" height="200" rx="8" fill="white" stroke="#E8E0FF" strokeWidth="2" />
+            <rect x="470" y="120" width="260" height="40" fill="#F8F6FE" />
             <text x="600" y="145" textAnchor="middle" fill="#0a0a0a" fontSize="16" fontWeight="500">API Endpoint</text>
-            <rect x="470" y="180" width="260" height="100" rx="4" fill="#F8F6FE"/>
+            <rect x="470" y="180" width="260" height="100" rx="4" fill="#F8F6FE" />
             <text x="490" y="210" fill="#5a5a5a" fontSize="14">{"{"}</text>
             <text x="510" y="230" fill="#5a5a5a" fontSize="14">{'"inputs": [...],'}</text>
             <text x="510" y="250" fill="#5a5a5a" fontSize="14">{'"outputs": [...]'}</text>

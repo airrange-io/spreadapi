@@ -11,10 +11,10 @@ interface AuthGuardProps {
   redirectTo?: string;
 }
 
-export default function AuthGuard({ 
-  children, 
+export default function AuthGuard({
+  children,
   fallback = null,
-  redirectTo = '/login' 
+  redirectTo = '/login'
 }: AuthGuardProps) {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
@@ -29,13 +29,13 @@ export default function AuthGuard({
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '200px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '200px'
       }}>
-        <Spin size="default" />
+        <Spin size="medium" />
       </div>
     );
   }

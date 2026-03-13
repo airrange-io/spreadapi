@@ -20,7 +20,7 @@ const WorkbookViewer = dynamic(
         background: '#ffffff'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <Spin size="default" />
+          <Spin size="medium" />
           <div style={{ marginTop: 16, color: '#666' }}>Loading spreadsheet...</div>
         </div>
       </div>
@@ -88,7 +88,7 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         background: '#ffffff'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <Spin size="default" />
+          <Spin size="medium" />
           <div style={{ marginTop: 16, color: '#666' }}>Initializing spreadsheet...</div>
         </div>
       </div>
@@ -110,25 +110,25 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
 
         initialZoom={zoomLevel}
         actionHandlerProc={(action, data) => {
-        if (action === 'spread-changed') {
-          onWorkbookInit(data);
-        } else if (action === 'workbook-loaded' || action === 'file-loaded') {
-          onWorkbookDataLoaded?.(data);
-        } else if (action === 'zoom-handler') {
-          onZoomHandlerReady?.(data);
-        } else if (action === 'edit-ended' || action === 'cell-changed' || action === 'range-cleared') {
-          onWorkbookChange?.();
-        } else if (action === 'editable-area-add') {
-          onEditableAreaAdd?.(data);
-        } else if (action === 'editable-area-update') {
-          onEditableAreaUpdate?.(data);
-        } else if (action === 'editable-area-remove') {
-          onEditableAreaRemove?.(data);
-        } else if (action === 'import-excel') {
-          onImportExcel?.(data);
-        }
-      }}
-    />
+          if (action === 'spread-changed') {
+            onWorkbookInit(data);
+          } else if (action === 'workbook-loaded' || action === 'file-loaded') {
+            onWorkbookDataLoaded?.(data);
+          } else if (action === 'zoom-handler') {
+            onZoomHandlerReady?.(data);
+          } else if (action === 'edit-ended' || action === 'cell-changed' || action === 'range-cleared') {
+            onWorkbookChange?.();
+          } else if (action === 'editable-area-add') {
+            onEditableAreaAdd?.(data);
+          } else if (action === 'editable-area-update') {
+            onEditableAreaUpdate?.(data);
+          } else if (action === 'editable-area-remove') {
+            onEditableAreaRemove?.(data);
+          } else if (action === 'import-excel') {
+            onImportExcel?.(data);
+          }
+        }}
+      />
     </div>
   );
 });

@@ -309,7 +309,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           {/* Tokens list */}
           {loading ? (
             <div style={{ textAlign: 'center', padding: '10% 20px 20px 20px' }}>
-              <Spin size="default" />
+              <Spin size="medium" />
             </div>
           ) : tokens.length === 0 ? (
             <Empty
@@ -345,22 +345,24 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             <Text type="secondary" style={{ fontSize: 13 }}>
               <InfoCircleOutlined style={{ marginRight: 8 }} />
               {tokens.length > 0 ? (
-                ({ en: <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
+                ({
+                  en: <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
                     Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
                     The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>,
                   de: <>Um die API mit Authentifizierung zu nutzen, fügen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzu.
                     Ersetzen Sie YOUR_TOKEN_VALUE durch den tatsächlichen Token, den Sie beim Erstellen kopiert haben.
                     Die Test-URL enthält einen Platzhalter-<Text code>token</Text>-Parameter, den Sie mit Ihrem Token aktualisieren müssen.</>
                 } as Record<string, React.ReactNode>)[locale] ?? <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
-                    Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
-                    The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
+                  Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
+                  The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
               ) : (
-                ({ en: <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
+                ({
+                  en: <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
                     to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>,
                   de: <>Wenn Sie API-Tokens erstellen, müssen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzufügen,
                     um Ihre API-Aufrufe zu authentifizieren. Der Test wird automatisch den Token-Parameter-Platzhalter enthalten. Alle Service-Anfragen sind auf 1.000 Anfragen pro Minute begrenzt.</>
                 } as Record<string, React.ReactNode>)[locale] ?? <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
-                    to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
+                  to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
               )}
             </Text>
           </div>

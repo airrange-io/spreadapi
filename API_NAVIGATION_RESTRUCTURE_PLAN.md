@@ -212,11 +212,13 @@ const renderContent = () => {
 #### Phase 2: Sub-Component Lazy Loading
 
 **For ApiDocumentation** (split into 3 separate components):
+
 - `SwaggerUIWrapper.tsx` - Only loads swagger-ui-react when mounted
 - `QuickStartGuide.tsx` - Lightweight, loads immediately
 - `ErrorCodesReference.tsx` - Lightweight, loads immediately
 
 **For IntegrationExamples** (split into 9 separate components):
+
 - `CodeExample.tsx` - Generic wrapper that loads syntax highlighter on mount
 - Each language gets its own lazy-loaded component
 
@@ -227,11 +229,11 @@ const renderContent = () => {
 const handleMenuItemHover = (key: string) => {
   // Dynamically import component for smooth transition
   switch (key) {
-    case 'docs-interactive':
-      import('./components/SwaggerUIWrapper');
+    case "docs-interactive":
+      import("./components/SwaggerUIWrapper");
       break;
-    case 'example-curl':
-      import('./components/CodeExample');
+    case "example-curl":
+      import("./components/CodeExample");
       break;
     // ... etc
   }
@@ -240,14 +242,15 @@ const handleMenuItemHover = (key: string) => {
 
 ### Bundle Size Impact
 
-| Component | Current (All Loaded) | New (Lazy Loaded) | Savings |
-|-----------|---------------------|-------------------|---------|
-| **Initial page load** | 1.2MB | 300KB | **-75%** |
-| Swagger UI | 600KB (always) | 600KB (on-demand) | Deferred |
-| Syntax Highlighter | 400KB (always) | 400KB (on-demand) | Deferred |
-| Integration Examples | 200KB (all 9) | 22KB (per example) | Deferred |
+| Component             | Current (All Loaded) | New (Lazy Loaded)  | Savings  |
+| --------------------- | -------------------- | ------------------ | -------- |
+| **Initial page load** | 1.2MB                | 300KB              | **-75%** |
+| Swagger UI            | 600KB (always)       | 600KB (on-demand)  | Deferred |
+| Syntax Highlighter    | 400KB (always)       | 400KB (on-demand)  | Deferred |
+| Integration Examples  | 200KB (all 9)        | 22KB (per example) | Deferred |
 
 **Expected Performance:**
+
 - Initial render: **-900KB** (1.2MB → 300KB)
 - Time to Interactive: **-1.2s** improvement
 - Mobile performance: Significantly better
@@ -259,17 +262,20 @@ const handleMenuItemHover = (key: string) => {
 ### Step 1: Create New Components (Split Existing)
 
 **1.1 Split ApiDocumentation.tsx**
+
 - Create `/components/documentation/SwaggerUIWrapper.tsx`
 - Create `/components/documentation/QuickStartGuide.tsx`
 - Create `/components/documentation/ErrorCodesReference.tsx`
 - Keep existing ApiDocumentation.tsx logic in these new files
 
 **1.2 Split IntegrationExamples.tsx**
+
 - Create `/components/integration/CodeExample.tsx` (generic wrapper)
 - Create `/components/integration/StandaloneUIExample.tsx`
 - Extract code generation functions to `/lib/codeExamples.ts`
 
 **1.3 Create Menu Navigation Component**
+
 - Create `/components/ApiNavigationMenu.tsx`
 - Contains menu items, state management, content routing
 
@@ -511,7 +517,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <Spin size="default" />
+        <Spin size="medium" />
         <div style={{ marginTop: 16 }}>Loading interactive documentation...</div>
       </div>
     );
@@ -804,12 +810,12 @@ const isMobile = containerWidth < 768;
 
 ### Performance Goals
 
-| Metric | Current | Target | Improvement |
-|--------|---------|--------|-------------|
-| Initial bundle size | 1.2MB | 300KB | **-75%** |
-| Time to Interactive | 2.5s | 1.0s | **-60%** |
-| Swagger UI load time | 0ms (preloaded) | 400ms (on-demand) | Deferred |
-| Menu response time | N/A | <50ms | New feature |
+| Metric               | Current         | Target            | Improvement |
+| -------------------- | --------------- | ----------------- | ----------- |
+| Initial bundle size  | 1.2MB           | 300KB             | **-75%**    |
+| Time to Interactive  | 2.5s            | 1.0s              | **-60%**    |
+| Swagger UI load time | 0ms (preloaded) | 400ms (on-demand) | Deferred    |
+| Menu response time   | N/A             | <50ms             | New feature |
 
 ### User Experience Goals
 
@@ -825,6 +831,7 @@ const isMobile = containerWidth < 768;
 ### Risk 1: Breaking Existing User Workflows
 
 **Mitigation:**
+
 - Add feature flag for gradual rollout
 - Provide in-app tour on first visit
 - Keep URL structure similar (e.g., `?section=tokens`)
@@ -832,6 +839,7 @@ const isMobile = containerWidth < 768;
 ### Risk 2: Increased Component Complexity
 
 **Mitigation:**
+
 - Clear component organization in folders
 - Shared types in `/lib/types.ts`
 - Comprehensive JSDoc comments
@@ -839,6 +847,7 @@ const isMobile = containerWidth < 768;
 ### Risk 3: Lazy Loading Flash (FOUC)
 
 **Mitigation:**
+
 - Use Skeleton loaders for smooth transitions
 - Pre-load next likely section on hover
 - Keep lightweight sections (tokens, webhooks) in main bundle
@@ -903,37 +912,37 @@ export interface MenuContentProps {
 }
 
 export type MenuSection =
-  | 'test'
-  | 'tokens'
-  | 'webhooks'
-  | 'docs-interactive'
-  | 'docs-quickstart'
-  | 'docs-errors'
-  | 'example-curl'
-  | 'example-javascript'
-  | 'example-python'
-  | 'example-nodejs'
-  | 'example-php'
-  | 'example-excel'
-  | 'example-googlesheets'
-  | 'example-postman'
-  | 'example-standalone';
+  | "test"
+  | "tokens"
+  | "webhooks"
+  | "docs-interactive"
+  | "docs-quickstart"
+  | "docs-errors"
+  | "example-curl"
+  | "example-javascript"
+  | "example-python"
+  | "example-nodejs"
+  | "example-php"
+  | "example-excel"
+  | "example-googlesheets"
+  | "example-postman"
+  | "example-standalone";
 ```
 
 ### State Management
 
 ```typescript
 // ApiTestView.tsx
-const [selectedKey, setSelectedKey] = useState<MenuSection>('test');
+const [selectedKey, setSelectedKey] = useState<MenuSection>("test");
 
 // Persist selection to localStorage
 useEffect(() => {
-  localStorage.setItem('api-menu-selection', selectedKey);
+  localStorage.setItem("api-menu-selection", selectedKey);
 }, [selectedKey]);
 
 // Restore on mount
 useEffect(() => {
-  const saved = localStorage.getItem('api-menu-selection') as MenuSection;
+  const saved = localStorage.getItem("api-menu-selection") as MenuSection;
   if (saved) setSelectedKey(saved);
 }, []);
 ```
@@ -944,15 +953,15 @@ useEffect(() => {
 // Read from URL on mount
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
-  const section = params.get('section') as MenuSection;
+  const section = params.get("section") as MenuSection;
   if (section) setSelectedKey(section);
 }, []);
 
 // Update URL when selection changes
 useEffect(() => {
   const params = new URLSearchParams(window.location.search);
-  params.set('section', selectedKey);
-  window.history.replaceState({}, '', `?${params.toString()}`);
+  params.set("section", selectedKey);
+  window.history.replaceState({}, "", `?${params.toString()}`);
 }, [selectedKey]);
 ```
 

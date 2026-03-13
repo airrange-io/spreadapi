@@ -10,7 +10,7 @@ import { useTranslation } from '@/lib/i18n';
 // Dynamically import Swagger UI to avoid SSR issues
 const SwaggerUI = dynamic<any>(() => import('swagger-ui-react'), {
   ssr: false,
-  loading: () => <div style={{ padding: 40, textAlign: 'center' }}><Spin size="default" /></div>
+  loading: () => <div style={{ padding: 40, textAlign: 'center' }}><Spin size="medium" /></div>
 });
 
 const { Text, Paragraph } = Typography;
@@ -85,7 +85,7 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
   if (loading) {
     return (
       <div style={{ padding: '20% 40px 40px 40px', textAlign: 'center' }}>
-        <Spin size="default" />
+        <Spin size="medium" />
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">{t('swagger.loadingDocs')}</Text>
         </div>

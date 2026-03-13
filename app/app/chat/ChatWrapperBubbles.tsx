@@ -35,10 +35,10 @@ const md = markdownit({
 });
 
 // Custom markdown renderer for Bubble component
-const renderMarkdown: BubbleProps['messageRender'] = (content) => {
+const renderMarkdown: BubbleProps['contentRender'] = (content) => {
   return (
     <Typography>
-      <div 
+      <div
         dangerouslySetInnerHTML={{ __html: md.render(content) }}
         style={{
           // Style for markdown content
@@ -130,10 +130,10 @@ export default function ChatWrapperBubbles() {
       console.error('Chat error:', error);
     },
   });
-  
+
   // Derive isLoading from status
   const isLoading = status === 'submitted' || status === 'streaming';
-  
+
 
   // OPTIMIZATION: Auto-greeting disabled for faster initial load
   // Users can start conversation by typing or clicking "Get AI Examples" button
@@ -159,7 +159,7 @@ export default function ChatWrapperBubbles() {
         const res = await fetch('/api/services', {
           credentials: 'include'
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           let loadedServices = (data.services || [])
@@ -169,7 +169,7 @@ export default function ChatWrapperBubbles() {
               name: s.name,
               description: s.description || t('chat.defaultServiceDesc')
             }));
-          
+
           setUserServices(loadedServices);
 
           // Auto-select if only one service available
@@ -198,7 +198,7 @@ export default function ChatWrapperBubbles() {
       const res = await fetch(`/api/services/${serviceId}/full`, {
         credentials: 'include'
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         console.log('[Chat] Full service details received:', data.service);
@@ -221,14 +221,14 @@ export default function ChatWrapperBubbles() {
     name: t('chat.selectService'),
     description: t('chat.selectServiceDesc')
   };
-  
+
   const availableServices = [
     generalAIOption,
     ...userServices
   ];
-  
-  const currentService = selectedService === 'general' 
-    ? generalAIOption 
+
+  const currentService = selectedService === 'general'
+    ? generalAIOption
     : availableServices.find(s => s.id === selectedService) || generalAIOption;
 
   const handleSend = async (nextMessage: string) => {
@@ -260,7 +260,7 @@ export default function ChatWrapperBubbles() {
 
     // Add event listener for bubble content clicks
     document.addEventListener('click', handleExampleClick);
-    
+
     return () => {
       document.removeEventListener('click', handleExampleClick);
     };
@@ -269,7 +269,7 @@ export default function ChatWrapperBubbles() {
   if (authLoading || loadingServices) {
     return (
       <Layout style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="default" />
+        <Spin size="medium" />
       </Layout>
     );
   }
@@ -301,7 +301,7 @@ export default function ChatWrapperBubbles() {
           </div>
 
           <Dropdown
-            menu={{ 
+            menu={{
               items: isAuthenticated ? [
                 {
                   key: 'profile',
@@ -352,7 +352,7 @@ export default function ChatWrapperBubbles() {
           </Dropdown>
         </div>
 
-        <Content style={{ 
+        <Content style={{
           maxWidth: 900,
           width: '100%',
           margin: '0 auto',
@@ -518,73 +518,73 @@ export default function ChatWrapperBubbles() {
                   return !isLoading || !isLastMessage || !isAssistantMessage;
                 })
                 .map((m, index) => {
-                const isUser = m.role === 'user';
-                // Extract content from message parts
-                let content = '';
-                
-                if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
-                  const textParts = [];
-                  
-                  // Process each part
-                  m.parts.forEach((part) => {
-                    if (part.type === 'text' && part.text) {
-                      textParts.push(part.text);
-                    }
-                  });
-                  
-                  if (textParts.length > 0) {
-                    content = textParts.join('\n');
-                  }
-                }
-                
-                
-                
-                
-                // Skip empty messages and greeting trigger
-                if (!content || content === '[GREETING]') return null;
-                
-                return (
-                  <div
-                    key={m.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: isUser ? 'flex-end' : 'flex-start',
-                      width: '100%',
-                      animation: 'fadeInUp 0.3s ease-out',
-                    }}
-                  >
-                    <Bubble
-                      placement={isUser ? 'end' : 'start'}
-                      content={content}
-                      messageRender={!isUser ? renderMarkdown : undefined}
-                      avatar={
-                        isUser ? (
-                          <Avatar
-                            style={{ backgroundColor: '#502D80', color: '#fff' }}
-                            size={32}
-                          >
-                            {user?.email?.charAt(0).toUpperCase() || 'U'}
-                          </Avatar>
-                        ) : (
-                          <Avatar
-                            style={{ backgroundColor: '#f0f0f0' }}
-                            size={32}
-                            icon={<RobotOutlined style={{ color: '#502D80' }} />}
-                          />
-                        )
+                  const isUser = m.role === 'user';
+                  // Extract content from message parts
+                  let content = '';
+
+                  if (m.parts && Array.isArray(m.parts) && m.parts.length > 0) {
+                    const textParts = [];
+
+                    // Process each part
+                    m.parts.forEach((part) => {
+                      if (part.type === 'text' && part.text) {
+                        textParts.push(part.text);
                       }
-                      styles={{
-                        content: {
-                          background: isUser ? '#502D80' : '#f0f0f0',
-                          color: isUser ? 'white' : 'black',
-                          maxWidth: '70%',
-                        }
+                    });
+
+                    if (textParts.length > 0) {
+                      content = textParts.join('\n');
+                    }
+                  }
+
+
+
+
+                  // Skip empty messages and greeting trigger
+                  if (!content || content === '[GREETING]') return null;
+
+                  return (
+                    <div
+                      key={m.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: isUser ? 'flex-end' : 'flex-start',
+                        width: '100%',
+                        animation: 'fadeInUp 0.3s ease-out',
                       }}
-                    />
-                  </div>
-                );
-              })}
-              
+                    >
+                      <Bubble
+                        placement={isUser ? 'end' : 'start'}
+                        content={content}
+                        contentRender={!isUser ? renderMarkdown : undefined}
+                        avatar={
+                          isUser ? (
+                            <Avatar
+                              style={{ backgroundColor: '#502D80', color: '#fff' }}
+                              size={32}
+                            >
+                              {user?.email?.charAt(0).toUpperCase() || 'U'}
+                            </Avatar>
+                          ) : (
+                            <Avatar
+                              style={{ backgroundColor: '#f0f0f0' }}
+                              size={32}
+                              icon={<RobotOutlined style={{ color: '#502D80' }} />}
+                            />
+                          )
+                        }
+                        styles={{
+                          content: {
+                            background: isUser ? '#502D80' : '#f0f0f0',
+                            color: isUser ? 'white' : 'black',
+                            maxWidth: '70%',
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+
               {isLoading && (
                 <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   <Bubble
@@ -607,12 +607,12 @@ export default function ChatWrapperBubbles() {
                   />
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input with Sender component */}
-            <div style={{ 
+            <div style={{
               padding: '16px 24px',
               borderTop: '1px solid #f0f0f0'
             }}>

@@ -33,9 +33,6 @@ const nextConfig = {
     '@mescius/spread-sheets',
     '@mescius/spread-sheets-tablesheet',
     '@mescius/spread-sheets-charts',
-    '@mescius/spread-sheets-designer',
-    '@mescius/spread-sheets-designer-react',
-    '@mescius/spread-sheets-designer-resources-en',
     '@mescius/spread-sheets-io',
   ],
   

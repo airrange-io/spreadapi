@@ -278,7 +278,7 @@ export default function OAuthAuthorizePage() {
     <Suspense
       fallback={
         <div style={{ textAlign: 'center', marginTop: 200 }}>
-          <Spin size="default" />
+          <Spin size="medium" />
           <div style={{ marginTop: 20 }}>
             <Typography.Text>Loading authorization...</Typography.Text>
           </div>

@@ -110,10 +110,22 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     workbook.bind(GC.Spread.Sheets.Events.CellChanged, (e, args) => {
       if (isLoadingData.current) return;
       const trackedProperties = [
-        'style', 'formatter', 'font', 'backColor', 'foreColor',
-        'borderLeft', 'borderTop', 'borderRight', 'borderBottom',
-        'locked', 'textIndent', 'wordWrap', 'shrinkToFit',
-        'backgroundImage', 'cellType', 'validator'
+        "style",
+        "formatter",
+        "font",
+        "backColor",
+        "foreColor",
+        "borderLeft",
+        "borderTop",
+        "borderRight",
+        "borderBottom",
+        "locked",
+        "textIndent",
+        "wordWrap",
+        "shrinkToFit",
+        "backgroundImage",
+        "cellType",
+        "validator",
       ];
       if (args.propertyName && trackedProperties.includes(args.propertyName)) {
         setChangeCount((prev) => {
@@ -138,22 +150,25 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Define the zoom handler
-  const applyZoom = useCallback((newZoom) => {
-    if (spread) {
-      const zoomFactor = newZoom / 100;
-      spread.options.zoomFactor = zoomFactor;
+  const applyZoom = useCallback(
+    (newZoom) => {
+      if (spread) {
+        const zoomFactor = newZoom / 100;
+        spread.options.zoomFactor = zoomFactor;
 
-      const sheetCount = spread.getSheetCount();
-      for (let i = 0; i < sheetCount; i++) {
-        const sheet = spread.getSheet(i);
-        if (sheet) {
-          sheet.zoom(zoomFactor);
+        const sheetCount = spread.getSheetCount();
+        for (let i = 0; i < sheetCount; i++) {
+          const sheet = spread.getSheet(i);
+          if (sheet) {
+            sheet.zoom(zoomFactor);
+          }
         }
-      }
 
-      setZoomLevel(newZoom);
-    }
-  }, [spread]);
+        setZoomLevel(newZoom);
+      }
+    },
+    [spread],
+  );
 
   useEffect(() => {
     handleZoomChangeRef.current = applyZoom;
@@ -186,17 +201,20 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       hasBlob: !!props.storeLocal.spread.blob,
       hasData: !!props.storeLocal.spread.data,
       fileName: props.storeLocal.spread.fileName,
-      sheetCount: props.storeLocal.spread.sheets ? Object.keys(props.storeLocal.spread.sheets).length : 0
+      sheetCount: props.storeLocal.spread.sheets
+        ? Object.keys(props.storeLocal.spread.sheets).length
+        : 0,
     });
 
     if (dataLoaded && lastLoadedDataRef.current === currentDataKey) {
       return;
     }
 
-    const isDefaultWorkbook = props.storeLocal.spread.version &&
-                             props.storeLocal.spread.sheets &&
-                             Object.keys(props.storeLocal.spread.sheets).length === 1 &&
-                             !props.storeLocal.spread.type;
+    const isDefaultWorkbook =
+      props.storeLocal.spread.version &&
+      props.storeLocal.spread.sheets &&
+      Object.keys(props.storeLocal.spread.sheets).length === 1 &&
+      !props.storeLocal.spread.type;
 
     try {
       isLoadingData.current = true;
@@ -236,20 +254,20 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             isLoadingData.current = false;
           },
           {
-            openMode: 1
-          }
+            openMode: 1,
+          },
         );
       } else if (
         props.storeLocal.spread.type === "excel" &&
         props.storeLocal.spread.data
       ) {
-        console.warn("Excel import via spreadsheetData is deprecated - use importExcel() method instead");
+        console.warn(
+          "Excel import via spreadsheetData is deprecated - use importExcel() method instead",
+        );
         setDataLoaded(true);
         setIsLoading(false);
         isLoadingData.current = false;
-      } else if (
-        typeof props.storeLocal.spread === "object"
-      ) {
+      } else if (typeof props.storeLocal.spread === "object") {
         spread.fromJSON(props.storeLocal.spread);
 
         if (props.initialZoom && props.initialZoom !== 100) {
@@ -287,180 +305,188 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   }, [spread, props.storeLocal?.spread, dataLoaded]);
 
   // Expose methods to parent component
-  useImperativeHandle(ref, () => ({
-    getWorkbookJSON: () => {
-      if (spread) {
-        return spread.toJSON();
-      }
-      return null;
-    },
-    loadWorkbookJSON: (jsonData) => {
-      if (spread && jsonData) {
-        try {
-          spread.fromJSON(jsonData);
-          if (props.actionHandlerProc) {
-            props.actionHandlerProc("workbook-loaded", spread);
-          }
-          return true;
-        } catch (error) {
-          console.error("Error loading workbook JSON:", error);
-          return false;
-        }
-      }
-      return false;
-    },
-    getDesigner: () => null,
-    getSpread: () => spread,
-    hasChanges: () => {
-      return changeCountRef.current > 0;
-    },
-    resetChangeCount: () => {
-      setChangeCount(0);
-      changeCountRef.current = 0;
-    },
-    saveWorkbookSJS: () => {
-      return new Promise((resolve, reject) => {
+  useImperativeHandle(
+    ref,
+    () => ({
+      getWorkbookJSON: () => {
         if (spread) {
-          let hasTableSheets = false;
-          const sheetCount = spread.getSheetCount();
-
-          for (let i = 0; i < sheetCount; i++) {
-            const sheet = spread.getSheet(i);
-            if (sheet && sheet.getDataView && sheet.getDataView()) {
-              hasTableSheets = true;
-              break;
-            }
-          }
-
-          const saveOptions = {
-            includeStyles: true,
-            includeFormulas: true,
-            includeUnusedNames: false,
-            saveAsView: false,
-            includeBindingSource: false
-          };
-
-          if (hasTableSheets) {
-            saveOptions.includeData = false;
-            saveOptions.fullRecalc = false;
-          }
-
-          spread.save(
-            (blob) => {
-              if (hasTableSheets && blob.size > 5 * 1024 * 1024) {
-                console.warn(`⚠️  Large TableSheet workbook detected (${(blob.size / 1024 / 1024).toFixed(2)}MB).
-   Consider using external data sources instead of embedded data for better performance.`);
-              }
-              resolve(blob);
-            },
-            (error) => {
-              console.error("Error saving workbook as SJS:", error);
-              reject(error);
-            },
-            saveOptions
-          );
-        } else {
-          reject(new Error("Spread instance not available"));
+          return spread.toJSON();
         }
-      });
-    },
-    saveWorkbookStructureOnly: () => {
-      return new Promise((resolve, reject) => {
-        if (spread) {
+        return null;
+      },
+      loadWorkbookJSON: (jsonData) => {
+        if (spread && jsonData) {
           try {
-            const workbookJSON = spread.toJSON();
+            spread.fromJSON(jsonData);
+            if (props.actionHandlerProc) {
+              props.actionHandlerProc("workbook-loaded", spread);
+            }
+            return true;
+          } catch (error) {
+            console.error("Error loading workbook JSON:", error);
+            return false;
+          }
+        }
+        return false;
+      },
+      getDesigner: () => null,
+      getSpread: () => spread,
+      hasChanges: () => {
+        return changeCountRef.current > 0;
+      },
+      resetChangeCount: () => {
+        setChangeCount(0);
+        changeCountRef.current = 0;
+      },
+      saveWorkbookSJS: () => {
+        return new Promise((resolve, reject) => {
+          if (spread) {
+            let hasTableSheets = false;
+            const sheetCount = spread.getSheetCount();
 
-            if (workbookJSON.sheets) {
-              Object.keys(workbookJSON.sheets).forEach(sheetName => {
-                const sheet = workbookJSON.sheets[sheetName];
-                if (sheet.dataTable) {
-                  if (sheet.dataTable.table) {
-                    sheet.dataTable.table.data = [];
-                  }
-                }
-              });
+            for (let i = 0; i < sheetCount; i++) {
+              const sheet = spread.getSheet(i);
+              if (sheet && sheet.getDataView && sheet.getDataView()) {
+                hasTableSheets = true;
+                break;
+              }
             }
 
-            spread.fromJSON(workbookJSON);
+            const saveOptions = {
+              includeStyles: true,
+              includeFormulas: true,
+              includeUnusedNames: false,
+              saveAsView: false,
+              includeBindingSource: false,
+            };
+
+            if (hasTableSheets) {
+              saveOptions.includeData = false;
+              saveOptions.fullRecalc = false;
+            }
 
             spread.save(
               (blob) => {
+                if (hasTableSheets && blob.size > 5 * 1024 * 1024) {
+                  console.warn(`⚠️  Large TableSheet workbook detected (${(blob.size / 1024 / 1024).toFixed(2)}MB).
+   Consider using external data sources instead of embedded data for better performance.`);
+                }
                 resolve(blob);
               },
               (error) => {
-                console.error("Error saving workbook structure:", error);
+                console.error("Error saving workbook as SJS:", error);
+                reject(error);
+              },
+              saveOptions,
+            );
+          } else {
+            reject(new Error("Spread instance not available"));
+          }
+        });
+      },
+      saveWorkbookStructureOnly: () => {
+        return new Promise((resolve, reject) => {
+          if (spread) {
+            try {
+              const workbookJSON = spread.toJSON();
+
+              if (workbookJSON.sheets) {
+                Object.keys(workbookJSON.sheets).forEach((sheetName) => {
+                  const sheet = workbookJSON.sheets[sheetName];
+                  if (sheet.dataTable) {
+                    if (sheet.dataTable.table) {
+                      sheet.dataTable.table.data = [];
+                    }
+                  }
+                });
+              }
+
+              spread.fromJSON(workbookJSON);
+
+              spread.save(
+                (blob) => {
+                  resolve(blob);
+                },
+                (error) => {
+                  console.error("Error saving workbook structure:", error);
+                  reject(error);
+                },
+                {
+                  includeStyles: true,
+                  includeFormulas: true,
+                  includeUnusedNames: false,
+                  saveAsView: false,
+                  includeBindingSource: false,
+                },
+              );
+            } catch (error) {
+              console.error("Error processing workbook structure:", error);
+              reject(error);
+            }
+          } else {
+            reject(new Error("Spread instance not available"));
+          }
+        });
+      },
+      loadWorkbookSJS: (blob) => {
+        return new Promise((resolve, reject) => {
+          if (spread && blob) {
+            spread.open(
+              blob,
+              () => {
+                if (props.actionHandlerProc) {
+                  props.actionHandlerProc("workbook-loaded", spread);
+                }
+                resolve(true);
+              },
+              (error) => {
+                console.error("Error loading workbook SJS:", error);
                 reject(error);
               },
               {
-                includeStyles: true,
-                includeFormulas: true,
-                includeUnusedNames: false,
-                saveAsView: false,
-                includeBindingSource: false
-              }
+                openMode: 1,
+              },
             );
-          } catch (error) {
-            console.error("Error processing workbook structure:", error);
-            reject(error);
+          } else {
+            reject(new Error("Spread instance or blob not available"));
           }
-        } else {
-          reject(new Error("Spread instance not available"));
-        }
-      });
-    },
-    loadWorkbookSJS: (blob) => {
-      return new Promise((resolve, reject) => {
-        if (spread && blob) {
-          spread.open(
-            blob,
-            () => {
-              if (props.actionHandlerProc) {
-                props.actionHandlerProc("workbook-loaded", spread);
-              }
-              resolve(true);
-            },
-            (error) => {
-              console.error("Error loading workbook SJS:", error);
-              reject(error);
-            },
-            {
-              openMode: 1
-            }
-          );
-        } else {
-          reject(new Error("Spread instance or blob not available"));
-        }
-      });
-    },
-    importExcel: (file) => {
-      return new Promise((resolve, reject) => {
-        if (spread && spread.import) {
-          spread.import(
-            file,
-            () => {
-              setChangeCount((prev) => {
-                const newCount = prev + 1;
-                changeCountRef.current = newCount;
-                return newCount;
-              });
-              if (props.actionHandlerProc) {
-                props.actionHandlerProc("workbook-loaded", spread);
-              }
-              resolve(true);
-            },
-            (error) => {
-              reject(error);
-            },
-            {
-              fileType: GC.Spread.Sheets.FileType.excel
-            }
-          );
-        } else {
-          reject(new Error("Spread instance not available or import not supported"));
-        }
-      });
-    }
-  }), [spread, props]);
+        });
+      },
+      importExcel: (file) => {
+        return new Promise((resolve, reject) => {
+          if (spread && spread.import) {
+            spread.import(
+              file,
+              () => {
+                setChangeCount((prev) => {
+                  const newCount = prev + 1;
+                  changeCountRef.current = newCount;
+                  return newCount;
+                });
+                if (props.actionHandlerProc) {
+                  props.actionHandlerProc("workbook-loaded", spread);
+                }
+                resolve(true);
+              },
+              (error) => {
+                reject(error);
+              },
+              {
+                fileType: GC.Spread.Sheets.FileType.excel,
+              },
+            );
+          } else {
+            reject(
+              new Error(
+                "Spread instance not available or import not supported",
+              ),
+            );
+          }
+        });
+      },
+    }),
+    [spread, props],
+  );
 
   return (
     <div
@@ -497,9 +523,11 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
               zIndex: 9999,
             }}
           >
-            <div style={{ textAlign: 'center' }}>
-              <Spin size="default" />
-              <div style={{ marginTop: 8, color: '#666' }}>Loading spreadsheet...</div>
+            <div style={{ textAlign: "center" }}>
+              <Spin size="medium" />
+              <div style={{ marginTop: 8, color: "#666" }}>
+                Loading spreadsheet...
+              </div>
             </div>
           </div>
         )}

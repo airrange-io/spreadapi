@@ -34,7 +34,7 @@ const openai = createOpenAI({
   organization: process.env.OPENAI_ORGANIZATION_ID || undefined,
 });
 
-// Create Groq instance (OpenAI-compatible)
+// Create Groq instance (using OpenAI-compatible Chat Completions API)
 const groq = createOpenAI({
   apiKey: process.env.GROQ_API_KEY || '',
   baseURL: 'https://api.groq.com/openai/v1',
@@ -1155,35 +1155,38 @@ The button text should clearly show what calculation will be performed with the 
     }
 
     // Use streamText with v5 features for better tool handling
+    const isGroq = model.startsWith('groq/');
+    const selectedModel = isGroq
+      ? (process.env.GROQ_API_KEY ? groq.chat(model.replace('groq/', '')) : (() => { throw new Error('Groq API key not configured'); })())
+      : openai(model, {
+          streamOptions: {
+            includeUsage: false,
+          }
+        });
+    const hasTools = Object.keys(tools).length > 0;
     const result = streamText({
-      model: model.startsWith('groq/')
-        ? (process.env.GROQ_API_KEY ? groq(model.replace('groq/', '')) : (() => { throw new Error('Groq API key not configured'); })())
-        : openai(model, {
-            streamOptions: {
-              includeUsage: false,
-            }
-          }),
+      model: selectedModel,
       messages: recentMessages,
       system: systemPrompt,
       temperature: 0.3,
-      maxTokens: initialGreeting ? 500 : 2000, // Shorter response for greeting
-      reasoningEffort: 'low', // Optimize for speed while maintaining quality
-      tools: Object.keys(tools).length > 0 ? tools : undefined,
-      toolChoice: Object.keys(tools).length > 0 ? 'auto' : undefined,
-      maxSteps: 5,
+      maxTokens: initialGreeting ? 500 : 2000,
+      ...(isGroq ? {} : { reasoningEffort: 'low' }), // reasoningEffort is OpenAI-only
+      ...(hasTools ? { tools, toolChoice: 'auto' } : {}),
+      maxSteps: isGroq ? 2 : 5, // Groq: allow 1 tool call + response
       // Add experimental speed optimizations
       experimental_telemetry: {
-        isEnabled: false // Disable telemetry for faster response
+        isEnabled: false
       },
       // Use stopWhen to ensure the AI continues after tool calls
-      stopWhen: ({ finishReason, stepCount }) => {
-        // Don't stop after tool calls - continue to generate a response
-        if (finishReason === 'tool-calls' && stepCount < 3) {
-          return false; // Continue
-        }
-        // Stop after we've had a chance to respond with the tool results
-        return finishReason === 'stop' || stepCount >= 3;
-      },
+      ...(hasTools ? {
+        stopWhen: ({ finishReason, stepCount }) => {
+          const maxStepsForModel = isGroq ? 2 : 3;
+          if (finishReason === 'tool-calls' && stepCount < maxStepsForModel) {
+            return false;
+          }
+          return finishReason === 'stop' || stepCount >= maxStepsForModel;
+        },
+      } : {}),
     });
     
     // Return the stream response in the format expected by useChat

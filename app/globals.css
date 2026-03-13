@@ -49,3 +49,55 @@ a {
 .workbook-spinner {
   animation: workbook-spin 1s linear infinite;
 }
+
+/* Custom view switcher - transparent bg with purple pill for active tab */
+.view-switcher.ant-segmented {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.view-switcher .ant-segmented-group {
+  gap: 4px;
+}
+
+.view-switcher .ant-segmented-item {
+  border-radius: 8px !important;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.view-switcher .ant-segmented-item-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.view-switcher .ant-segmented-item:not(.ant-segmented-item-selected) {
+  color: #555;
+  background: transparent !important;
+}
+
+.view-switcher .ant-segmented-item:not(.ant-segmented-item-selected):hover {
+  color: #9233E9;
+  background: transparent !important;
+}
+
+.view-switcher .ant-segmented-item-selected {
+  background: #9233E9 !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.view-switcher .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #fff !important;
+}
+
+.view-switcher .ant-segmented-thumb {
+  background: #9233E9 !important;
+  border-radius: 8px !important;
+}

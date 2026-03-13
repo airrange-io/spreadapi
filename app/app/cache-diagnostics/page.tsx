@@ -161,7 +161,7 @@ export default function CacheDiagnosticsPage() {
 
         {loading && (
           <Card>
-            <div style={{ 
+            <div style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -169,7 +169,7 @@ export default function CacheDiagnosticsPage() {
               minHeight: '200px',
               padding: '40px'
             }}>
-              <Spin size="default" />
+              <Spin size="medium" />
               <Paragraph style={{ marginTop: 16 }}>{t('cacheDiag.running')}</Paragraph>
             </div>
           </Card>
