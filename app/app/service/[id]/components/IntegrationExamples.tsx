@@ -30,7 +30,7 @@ const IntegrationExamples: React.FC<IntegrationExamplesProps> = ({
   const { t, locale } = useTranslation();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    notification.success({ message: t('integration.copiedToClipboard') });
+    notification.success({ title: t('integration.copiedToClipboard') });
   };
 
   // Build V1 API URL
@@ -728,7 +728,7 @@ function SPREADAPI(serviceId, ...args) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    notification.success({ message: t('integration.htmlDownloaded') });
+    notification.success({ title: t('integration.htmlDownloaded') });
   };
 
   const openHtmlInNewTab = () => {
@@ -738,11 +738,11 @@ function SPREADAPI(serviceId, ...args) {
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      notification.success({ message: t('integration.calculatorOpened') });
+      notification.success({ title: t('integration.calculatorOpened') });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      notification.error({ message: t('integration.allowPopups') });
+      notification.error({ title: t('integration.allowPopups') });
     }
   };
 

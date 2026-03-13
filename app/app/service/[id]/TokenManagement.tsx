@@ -121,7 +121,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Handle 403 for demo mode as expected
         // Handle 404 for new services that don't exist yet
         if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
-          notification.error({ message: t('tokens.failedToLoad') });
+          notification.error({ title: t('tokens.failedToLoad') });
         }
         // Still update count to 0 on error
         if (onTokenCountChange) {
@@ -131,7 +131,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
     } catch (error: any) {
       // Only log unexpected errors (not 401/unauthorized)
       if (error?.status !== 401 && error?.code !== 'unauthorized') {
-        notification.error({ message: t('tokens.errorLoading') });
+        notification.error({ title: t('tokens.errorLoading') });
       }
       if (onTokenCountChange) {
         onTokenCountChange(0);
@@ -165,14 +165,14 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
         // Auto-enable token requirement when first token is created
         if (tokens.length === 0 && !requireToken) {
           onRequireTokenChange(true);
-          notification.info({ message: t('tokens.authAutoEnabled') });
+          notification.info({ title: t('tokens.authAutoEnabled') });
         }
       } else {
         const error = await response.json();
-        notification.error({ message: error.error || t('tokens.failedToCreate') });
+        notification.error({ title: error.error || t('tokens.failedToCreate') });
       }
     } catch (error) {
-      notification.error({ message: t('tokens.failedToCreate') });
+      notification.error({ title: t('tokens.failedToCreate') });
     } finally {
       setCreating(false);
     }
@@ -185,26 +185,26 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
       });
 
       if (response.ok) {
-        notification.success({ message: t('tokens.revokedSuccess') });
+        notification.success({ title: t('tokens.revokedSuccess') });
         await loadTokens();
 
         // Auto-disable token requirement when last token is deleted
         if (tokens.length === 1 && requireToken) {
           onRequireTokenChange(false);
-          notification.info({ message: t('tokens.authAutoDisabled') });
+          notification.info({ title: t('tokens.authAutoDisabled') });
         }
       } else {
         const error = await response.json();
-        notification.error({ message: error.error || t('tokens.failedToRevoke') });
+        notification.error({ title: error.error || t('tokens.failedToRevoke') });
       }
     } catch (error) {
-      notification.error({ message: t('tokens.failedToRevoke') });
+      notification.error({ title: t('tokens.failedToRevoke') });
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    notification.success({ message: t('tokens.copiedToClipboard') });
+    notification.success({ title: t('tokens.copiedToClipboard') });
   };
 
   const columns = [

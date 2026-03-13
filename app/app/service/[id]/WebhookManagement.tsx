@@ -29,7 +29,7 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
 
   const handleTest = async () => {
     if (!webhookUrl) {
-      notification.error({ message: t('webhook.enterUrl') });
+      notification.error({ title: t('webhook.enterUrl') });
       return;
     }
 
@@ -50,16 +50,16 @@ const WebhookManagement: React.FC<WebhookManagementProps> = ({
       setTestResult(result);
 
       if (result.success) {
-        notification.success({ message: t('webhook.testSuccess') });
+        notification.success({ title: t('webhook.testSuccess') });
       } else {
-        notification.error({ message: t('webhook.testFailed', { error: result.error }) });
+        notification.error({ title: t('webhook.testFailed', { error: result.error }) });
       }
     } catch (error: any) {
       setTestResult({
         success: false,
         error: error.message || t('webhook.testError')
       });
-      notification.error({ message: t('webhook.testError') });
+      notification.error({ title: t('webhook.testError') });
     } finally {
       setTesting(false);
     }

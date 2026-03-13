@@ -342,7 +342,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   icon={<CopyOutlined />}
                   onClick={() => {
                     navigator.clipboard.writeText(wizardUrl);
-                    notification.success({ message: t('tester.urlCopied') });
+                    notification.success({ title: t('tester.urlCopied') });
                   }}
                   style={{ color: '#8c8c8c' }}
                 />

@@ -16,7 +16,7 @@ export default function ApiDefinitionModal({ visible, onClose, data, loading }: 
 
   const handleCopyJson = () => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    notification.success({ message: t('apiDef.definitionCopied') });
+    notification.success({ title: t('apiDef.definitionCopied') });
   };
 
   return (

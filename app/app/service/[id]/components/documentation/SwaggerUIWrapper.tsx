@@ -62,13 +62,13 @@ const SwaggerUIWrapper: React.FC<SwaggerUIWrapperProps> = ({ serviceId, isPublis
     link.href = url;
     link.download = `${serviceId}-openapi.${format}`;
     link.click();
-    notification.success({ message: t('swagger.downloadedSpec', { format: format.toUpperCase() }) });
+    notification.success({ title: t('swagger.downloadedSpec', { format: format.toUpperCase() }) });
   };
 
   const copySpecUrl = (format: 'json' | 'yaml') => {
     const url = `${window.location.origin}/api/v1/services/${serviceId}/openapi?format=${format}`;
     navigator.clipboard.writeText(url);
-    notification.success({ message: t('swagger.copiedSpecUrl') });
+    notification.success({ title: t('swagger.copiedSpecUrl') });
   };
 
   if (!isPublished) {

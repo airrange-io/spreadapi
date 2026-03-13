@@ -34,7 +34,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
     // Generate a URL-safe random token
     const token = crypto.randomUUID().replace(/-/g, '');
     onWebAppTokenChange(token);
-    notification.success({ message: t('webApp.tokenGenerated') });
+    notification.success({ title: t('webApp.tokenGenerated') });
   };
 
   const handleDeleteToken = () => {
@@ -46,7 +46,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
       cancelText: t('common.cancel'),
       onOk: () => {
         onWebAppTokenChange('');
-        notification.success({ message: t('webApp.webAppDisabled') });
+        notification.success({ title: t('webApp.webAppDisabled') });
       }
     });
   };
@@ -54,7 +54,7 @@ const WebAppSection: React.FC<WebAppSectionProps> = ({
   const handleCopyLink = () => {
     const appUrl = `${window.location.origin}/app/v1/services/${serviceId}?token=${webAppToken}`;
     navigator.clipboard.writeText(appUrl);
-    notification.success({ message: t('webApp.linkCopied') });
+    notification.success({ title: t('webApp.linkCopied') });
   };
 
   const handleConfigChange = (value: string) => {

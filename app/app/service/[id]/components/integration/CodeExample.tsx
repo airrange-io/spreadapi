@@ -63,7 +63,7 @@ const CodeExample: React.FC<CodeExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
-    notification.success({ message: t('codeExample.copiedToClipboard') });
+    notification.success({ title: t('codeExample.copiedToClipboard') });
   };
 
   // Map language names to syntax highlighter language identifiers

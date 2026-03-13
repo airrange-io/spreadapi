@@ -98,7 +98,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
 
   const handleSave = () => {
     if (!editingArea?.name || !editingArea?.address) {
-      notification.error({ message: t('areaModal.nameAndAddressRequired') });
+      notification.error({ title: t('areaModal.nameAndAddressRequired') });
       return;
     }
     onSave(editingArea);

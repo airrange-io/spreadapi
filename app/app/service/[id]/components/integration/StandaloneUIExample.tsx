@@ -59,7 +59,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(htmlContent);
-    notification.success({ message: t('standalone.copiedToClipboard') });
+    notification.success({ title: t('standalone.copiedToClipboard') });
   };
 
   const downloadHtml = () => {
@@ -72,7 +72,7 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    notification.success({ message: t('standalone.htmlDownloaded') });
+    notification.success({ title: t('standalone.htmlDownloaded') });
   };
 
   const openHtmlInNewTab = () => {
@@ -81,11 +81,11 @@ const StandaloneUIExample: React.FC<StandaloneUIExampleProps> = ({
     const newWindow = window.open(url, '_blank');
 
     if (newWindow) {
-      notification.success({ message: t('standalone.calculatorOpened') });
+      notification.success({ title: t('standalone.calculatorOpened') });
       // Clean up the blob URL after a short delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      notification.error({ message: t('standalone.allowPopups') });
+      notification.error({ title: t('standalone.allowPopups') });
     }
   };
 

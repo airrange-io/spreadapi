@@ -192,7 +192,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const statusBarRef = useRef<HTMLDivElement>(null);
   const testButtonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const templateParamsPromptedRef = useRef(false);
-  const handleSaveRef = useRef<() => Promise<void>>();
+  const handleSaveRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   // Lazy load tour only when needed
   const [tourState, setTourState] = useState<{
@@ -594,7 +594,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setConfigHasChanges(true);
         const totalParams = result.inputs.length + result.outputs.length;
         notification.success({
-          message: t('service.paramsAutoConfigured', { total: String(totalParams), inputs: String(result.inputs.length), outputs: String(result.outputs.length) })
+          title: t('service.paramsAutoConfigured', { total: String(totalParams), inputs: String(result.inputs.length), outputs: String(result.outputs.length) })
         });
 
         // Auto-save workbook + parameters after template setup
@@ -1575,7 +1575,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
-      notification.open({ message: t('service.exportingExcel'), key: 'export-excel', duration: 0 });
+      notification.open({ title: t('service.exportingExcel'), key: 'export-excel', duration: 0 });
 
       await workbookManager.exportToExcel(
         spreadInstance,
@@ -1597,7 +1597,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
-      notification.open({ message: t('service.exportingPackage'), key: 'export-package', duration: 0 });
+      notification.open({ title: t('service.exportingPackage'), key: 'export-package', duration: 0 });
 
       // Get workbook JSON
       const workbookJSON = spreadInstance.toJSON();
@@ -1678,7 +1678,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         return;
       }
 
-      notification.open({ message: t('service.exportingRuntime'), key: 'export-runtime', duration: 0 });
+      notification.open({ title: t('service.exportingRuntime'), key: 'export-runtime', duration: 0 });
 
       // Get workbook JSON (this is the fileJson for calculations)
       const fileJson = spreadInstance.toJSON();
@@ -1783,12 +1783,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Show specific loading message
       if (shouldSaveWorkbook && configHasChanges) {
         setSavingWorkbook(true);
-        notification.open({ message: t('service.savingConfigAndWorkbook'), key: 'save', duration: 0 });
+        notification.open({ title: t('service.savingConfigAndWorkbook'), key: 'save', duration: 0 });
       } else if (shouldSaveWorkbook) {
         setSavingWorkbook(true);
-        notification.open({ message: t('service.savingWorkbook'), key: 'save', duration: 0 });
+        notification.open({ title: t('service.savingWorkbook'), key: 'save', duration: 0 });
       } else if (configHasChanges) {
-        notification.open({ message: t('service.savingConfig'), key: 'save', duration: 0 });
+        notification.open({ title: t('service.savingConfig'), key: 'save', duration: 0 });
       }
 
       let workbookBlob = null;
@@ -2271,7 +2271,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
           try {
             // Show loading message
-            notification.open({ message: t('service.importingExcel'), key: 'import-excel', duration: 0 });
+            notification.open({ title: t('service.importingExcel'), key: 'import-excel', duration: 0 });
 
             // Use existing import function
             await handleImportExcel(file);
@@ -2309,7 +2309,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // Set importing flag to prevent config from being overwritten by API load
       setIsImporting(true);
-      notification.open({ message: t('service.importingPackage'), key: 'import-package', duration: 0 });
+      notification.open({ title: t('service.importingPackage'), key: 'import-package', duration: 0 });
 
       const reader = new FileReader();
       reader.onload = async (e) => {

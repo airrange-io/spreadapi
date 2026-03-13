@@ -346,7 +346,7 @@ export default function AnalyticsPage() {
               />
               <Breadcrumb
                 items={[
-                  { title: 'Analytics' },
+                  { title: <span style={{ cursor: 'pointer' }} onClick={() => router.push('/app')}>Analytics</span> },
                 ]}
               />
             </div>

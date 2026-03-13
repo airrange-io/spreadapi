@@ -1157,7 +1157,7 @@ The button text should clearly show what calculation will be performed with the 
     // Use streamText with v5 features for better tool handling
     const result = streamText({
       model: model.startsWith('groq/')
-        ? groq(model.replace('groq/', ''))
+        ? (process.env.GROQ_API_KEY ? groq(model.replace('groq/', '')) : (() => { throw new Error('Groq API key not configured'); })())
         : openai(model, {
             streamOptions: {
               includeUsage: false,

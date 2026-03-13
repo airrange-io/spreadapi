@@ -27,7 +27,7 @@ export default function ApiEndpointPreview({
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(endpoint);
-    notification.success({ message: t('apiPreview.endpointCopied') });
+    notification.success({ title: t('apiPreview.endpointCopied') });
   };
 
   return (

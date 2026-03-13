@@ -59,7 +59,7 @@ export default function PrivateHeaderActions({
     if (isSavingRef.current) return;
 
     if (!hasAnyChanges) {
-      notification.info({ message: t('private.noChanges') });
+      notification.info({ title: t('private.noChanges') });
       return;
     }
 
@@ -67,7 +67,7 @@ export default function PrivateHeaderActions({
       isSavingRef.current = true;
       setLoading(true);
 
-      notification.open({ message: t('private.savingLocally'), key: 'local-save', duration: 0 });
+      notification.open({ title: t('private.savingLocally'), key: 'local-save', duration: 0 });
 
       const workbookJSON = spreadInstance?.toJSON?.() ?? null;
       // JSON round-trip strips non-serializable values (functions, etc.)
@@ -81,11 +81,11 @@ export default function PrivateHeaderActions({
       onSaveSuccess({ ...apiConfig });
       onWorkbookSaveReset();
 
-      notification.success({ message: t('private.savedLocally') });
+      notification.success({ title: t('private.savedLocally') });
     } catch (error: any) {
       notification.destroy('local-save');
       notification.error({
-        message: t('private.saveFailed', { error: error?.message || 'Unknown error' }),
+        title: t('private.saveFailed', { error: error?.message || 'Unknown error' }),
       });
     } finally {
       isSavingRef.current = false;

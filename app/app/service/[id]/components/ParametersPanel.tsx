@@ -415,7 +415,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   // Add parameter from selection
   const handleAddParameterFromSelection = useCallback(async () => {
     if (!currentSelection || !spreadInstance) {
-      notification.warning({ message: t('paramsPanel.selectCellFirst') });
+      notification.warning({ title: t('paramsPanel.selectCellFirst') });
       return;
     }
 
@@ -771,7 +771,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       };
       
       if (checkRangeOverlap(newRange, paramRange)) {
-        notification.warning({ message: t('paramsPanel.overlapWarning', { name: param.name }) });
+        notification.warning({ title: t('paramsPanel.overlapWarning', { name: param.name }) });
         return;
       }
     }
@@ -803,12 +803,12 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   // Add area from selection
   const handleAddAreaFromSelection = useCallback(async () => {
     if (!currentSelection || !spreadInstance) {
-      notification.warning({ message: t('paramsPanel.selectRangeFirst') });
+      notification.warning({ title: t('paramsPanel.selectRangeFirst') });
       return;
     }
 
     if (currentSelection.rowCount === 1 && currentSelection.colCount === 1) {
-      notification.warning({ message: t('paramsPanel.selectMultipleCells') });
+      notification.warning({ title: t('paramsPanel.selectMultipleCells') });
       return;
     }
 

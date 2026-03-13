@@ -15,7 +15,7 @@ export interface Template {
   id: string;
   name: { en: string; de: string };
   description: { en: string; de: string };
-  category: { label: string; color: string };
+  category?: { label: string; color: string };
   fileUrl: string;        // Vercel Blob URL for the workbook (.xlsx)
   cells: string[];        // Cell addresses for auto-detection, e.g. ["Sheet1!B2", "Sheet1!C5:C10"]
 }

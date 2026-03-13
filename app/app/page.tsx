@@ -261,7 +261,7 @@ const ListsPage: React.FC = observer(() => {
 
     // In cloud mode, check authentication
     if (!isEnterpriseMode && !isAuthenticated) {
-      notification.warning({ message: t('app.pleaseSignIn') });
+      notification.warning({ title: t('app.pleaseSignIn') });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -278,7 +278,7 @@ const ListsPage: React.FC = observer(() => {
     const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
     if (!isCSV && !isJSON && !isExcel) {
-      notification.error({ message: t('app.selectFileType') });
+      notification.error({ title: t('app.selectFileType') });
       return;
     }
 
@@ -348,12 +348,12 @@ const ListsPage: React.FC = observer(() => {
           // Handle error
           const errorData = await createResponse.json().catch(() => ({}));
           console.error('Failed to create service:', errorData);
-          notification.error({ message: t('app.failedToCreateService') });
+          notification.error({ title: t('app.failedToCreateService') });
           delete (window as any).__draggedFile; // Clean up the global variable
         }
       } catch (error) {
         console.error('Error processing file:', error);
-        notification.error({ message: t('app.errorProcessingFile') });
+        notification.error({ title: t('app.errorProcessingFile') });
         delete (window as any).__draggedFile; // Clean up the global variable
       }
     };
@@ -469,7 +469,7 @@ const ListsPage: React.FC = observer(() => {
         router.push(`/app/service/${newId}`);
       } catch (error) {
         console.error('Error creating private service:', error);
-        notification.error({ message: t('app.failedToCreateService') });
+        notification.error({ title: t('app.failedToCreateService') });
         setIsCreatingService(false);
       }
       return;
@@ -519,13 +519,13 @@ const ListsPage: React.FC = observer(() => {
         if (errorData.code === 'SERVICE_LIMIT_REACHED') {
           setUpgradeModalOpen(true);
         } else {
-          notification.error({ message: t('app.failedToCreateService') });
+          notification.error({ title: t('app.failedToCreateService') });
         }
         setIsCreatingService(false);
       }
     } catch (error) {
       console.error('Error creating service:', error);
-      notification.error({ message: t('app.failedToCreateService') });
+      notification.error({ title: t('app.failedToCreateService') });
       setIsCreatingService(false);
     }
   }, [isAuthenticated, router, user?.id, notification, t, isEnterpriseMode, refreshLocalServices]);
@@ -534,7 +534,7 @@ const ListsPage: React.FC = observer(() => {
   const handleTemplateSelect = useCallback(async (template: Template) => {
     // In cloud mode, check authentication
     if (!isEnterpriseMode && !isAuthenticated) {
-      notification.warning({ message: t('app.pleaseSignInTemplates') });
+      notification.warning({ title: t('app.pleaseSignInTemplates') });
       router.push('/login?returnTo=/app');
       return;
     }
@@ -596,7 +596,7 @@ const ListsPage: React.FC = observer(() => {
       }
     } catch (error) {
       console.error('Error creating service from template:', error);
-      notification.error({ message: t('app.failedToCreateFromTemplate') });
+      notification.error({ title: t('app.failedToCreateFromTemplate') });
       delete (window as any).__draggedFile;
       setIsCreatingService(false);
     }
@@ -947,13 +947,15 @@ const ListsPage: React.FC = observer(() => {
                           <MessageOutlined style={{ fontSize: 13 }} />
                           {t('onboarding.contactSupport')}
                         </span>
-                        <span
-                          className="onboarding-sample-link"
-                          onClick={() => setIsTemplateModalOpen(true)}
-                          style={{ fontSize: 13, color: '#7c5cc4', cursor: 'pointer', fontWeight: 500 }}
-                        >
-                          {locale === 'de' ? 'Beispielberechnung ausprobieren' : 'Try a sample calculation'}
-                        </span>
+                        {isAuthenticated && (
+                          <span
+                            className="onboarding-sample-link"
+                            onClick={() => setIsTemplateModalOpen(true)}
+                            style={{ fontSize: 13, color: '#7c5cc4', cursor: 'pointer', fontWeight: 500 }}
+                          >
+                            {locale === 'de' ? 'Beispielberechnung ausprobieren' : 'Try a sample calculation'}
+                          </span>
+                        )}
                         <span
                           onClick={() => {
                             setOnboardingHidden(true);

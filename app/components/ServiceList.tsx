@@ -157,12 +157,12 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
             window.location.href = '/login';
           }
         } else {
-          notification.error({ message: t('serviceList.loadFailed') });
+          notification.error({ title: t('serviceList.loadFailed') });
         }
       }
     } catch (error: any) {
       if (error?.status !== 401) {
-        notification.error({ message: t('serviceList.loadFailed') });
+        notification.error({ title: t('serviceList.loadFailed') });
       }
     } finally {
       setLoading(false);
@@ -207,10 +207,10 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
         await deleteLocalService(serviceId);
         removeServiceFromFolder(serviceId);
         refreshFolders();
-        notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
+        notification.success({ title: t('serviceList.serviceDeleted', { name: serviceName }) });
         onLocalServicesChange?.();
       } catch {
-        notification.error({ message: t('serviceList.deleteFailed') });
+        notification.error({ title: t('serviceList.deleteFailed') });
       }
       return;
     }
@@ -221,7 +221,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
       if (response.ok) {
         removeServiceFromFolder(serviceId);
         refreshFolders();
-        notification.success({ message: t('serviceList.serviceDeleted', { name: serviceName }) });
+        notification.success({ title: t('serviceList.serviceDeleted', { name: serviceName }) });
         setServices(prev => prev.filter(s => s.id !== serviceId));
         loadServices();
       } else {
@@ -236,11 +236,11 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
             ),
           });
         } else {
-          notification.error({ message: t('serviceList.deleteFailed') });
+          notification.error({ title: t('serviceList.deleteFailed') });
         }
       }
     } catch {
-      notification.error({ message: t('serviceList.deleteFailed') });
+      notification.error({ title: t('serviceList.deleteFailed') });
     }
   }, [notification, t, locale, localServices, onLocalServicesChange, loadServices, refreshFolders]);
 
@@ -251,13 +251,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
 
   const handleCopyId = useCallback((serviceId: string) => {
     navigator.clipboard.writeText(serviceId);
-    notification.success({ message: t('serviceList.idCopied') });
+    notification.success({ title: t('serviceList.idCopied') });
   }, [notification, t]);
 
   const handleCopyEndpoint = useCallback((serviceId: string) => {
     const endpoint = `${window.location.origin}/api/v1/services/${serviceId}/execute`;
     navigator.clipboard.writeText(endpoint);
-    notification.success({ message: t('serviceList.endpointCopied') });
+    notification.success({ title: t('serviceList.endpointCopied') });
   }, [notification, t]);
 
   const handleDuplicate = useCallback(async (serviceId: string, serviceName: string) => {
@@ -265,13 +265,13 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
       const res = await fetch(`/api/services/${serviceId}/duplicate`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
-        notification.error({ message: data.message || t('serviceList.duplicateFailed') });
+        notification.error({ title: data.error || t('serviceList.duplicateFailed') });
         return;
       }
-      notification.success({ message: t('serviceList.duplicated', { name: serviceName }) });
+      notification.success({ title: t('serviceList.duplicated', { name: serviceName }) });
       loadServices();
     } catch {
-      notification.error({ message: t('serviceList.duplicateFailed') });
+      notification.error({ title: t('serviceList.duplicateFailed') });
     }
   }, [notification, t, loadServices]);
 
@@ -472,7 +472,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
           margin: 0,
           lineHeight: '1.6',
         }}>
-          {t('serviceList.onPremisesHint')} <a href="/on-premises" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>
+          {t('serviceList.onPremisesHint')} <a href="/on-premises" target="_blank" rel="noopener noreferrer" style={{ color: '#9333EA' }}>{t('serviceList.learnMore')}</a>
         </p>
       </div>
     );

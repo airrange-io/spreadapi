@@ -33,7 +33,7 @@ export function PWAInstallPrompt() {
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setInstallPrompt(null);
-      notification.success({ message: t('pwa.installSuccess') });
+      notification.success({ title: t('pwa.installSuccess') });
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

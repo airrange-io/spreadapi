@@ -295,7 +295,7 @@ export default function ChatWrapperBubbles() {
             />
             <Breadcrumb
               items={[
-                { title: t('chat.breadcrumbChat') }
+                { title: <span style={{ cursor: 'pointer' }} onClick={() => router.push('/app')}>{t('chat.breadcrumbChat')}</span> }
               ]}
             />
           </div>
