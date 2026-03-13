@@ -839,7 +839,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        notification.error({ message: t('service.failedLoadWorkbook') });
+        notification.error({ title: t('service.failedLoadWorkbook') });
       }
       setWorkbookLoading(false);
     } finally {
@@ -1199,18 +1199,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 data: arrayBuffer,
                 fileName: info.file.name
               });
-              notification.success({ message: t('service.fileLoadedSuccess', { name: info.file.name }) });
+              notification.success({ title: t('service.fileLoadedSuccess', { name: info.file.name }) });
             }
           } catch (error) {
-            notification.error({ message: t('service.failedProcessFile') });
+            notification.error({ title: t('service.failedProcessFile') });
           }
         };
         reader.readAsArrayBuffer(originFileObj);
       } catch (error) {
-        notification.error({ message: t('service.failedReadFile') });
+        notification.error({ title: t('service.failedReadFile') });
       }
     } else if (status === 'error') {
-      notification.error({ message: t('service.fileUploadFailed', { name: info.file.name }) });
+      notification.error({ title: t('service.fileUploadFailed', { name: info.file.name }) });
     }
   };
 
@@ -1255,7 +1255,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        notification.warning({ message: t('service.saveBeforePublishing') });
+        notification.warning({ title: t('service.saveBeforePublishing') });
         return;
       }
 
@@ -1265,7 +1265,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          notification.error({ message: t('service.cannotPublishNoParams') });
+          notification.error({ title: t('service.cannotPublishNoParams') });
           return;
         }
 
@@ -1277,7 +1277,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           cancelText: t('common.cancel'),
           onOk: () => {
             setActiveView('Workbook');
-            notification.info({ message: t('service.waitForWorkbookThenPublish') });
+            notification.info({ title: t('service.waitForWorkbookThenPublish') });
           }
         });
 
@@ -1285,12 +1285,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        notification.error({ message: t('service.defineAtLeastOneParam') });
+        notification.error({ title: t('service.defineAtLeastOneParam') });
         return;
       }
 
       setLoading(true);
-      notification.info({ message: t('service.preparingPublish'), key: 'publish', duration: 0 });
+      notification.info({ title: t('service.preparingPublish'), key: 'publish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1337,7 +1337,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      notification.success({ message: t('service.publishedSuccess') });
+      notification.success({ title: t('service.publishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1362,7 +1362,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to publish service:', error);
-      notification.error({ message: t('service.publishFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.publishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1372,7 +1372,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     try {
       // First ensure everything is saved
       if (hasAnyChanges) {
-        notification.warning({ message: t('service.saveBeforeRepublishing') });
+        notification.warning({ title: t('service.saveBeforeRepublishing') });
         return;
       }
 
@@ -1382,7 +1382,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         const hasWorkbook = apiConfig.inputs?.length > 0 || apiConfig.outputs?.length > 0;
 
         if (!hasWorkbook) {
-          notification.error({ message: t('service.cannotRepublishNoParams') });
+          notification.error({ title: t('service.cannotRepublishNoParams') });
           return;
         }
 
@@ -1394,7 +1394,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           cancelText: t('common.cancel'),
           onOk: () => {
             setActiveView('Workbook');
-            notification.info({ message: t('service.waitForWorkbookThenRepublish') });
+            notification.info({ title: t('service.waitForWorkbookThenRepublish') });
           }
         });
 
@@ -1402,12 +1402,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }
 
       if (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)) {
-        notification.error({ message: t('service.defineAtLeastOneParam') });
+        notification.error({ title: t('service.defineAtLeastOneParam') });
         return;
       }
 
       setLoading(true);
-      notification.info({ message: t('service.republishing'), key: 'republish', duration: 0 });
+      notification.info({ title: t('service.republishing'), key: 'republish', duration: 0 });
 
       // Prepare the publish data
       const publishData = await prepareServiceForPublish(
@@ -1454,7 +1454,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
-      notification.success({ message: t('service.republishedSuccess') });
+      notification.success({ title: t('service.republishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
       if (typeof window !== 'undefined') {
@@ -1479,7 +1479,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to republish service:', error);
-      notification.error({ message: t('service.republishFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.republishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
     }
@@ -1488,7 +1488,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleUnpublish = async () => {
     try {
       if (hasAnyChanges) {
-        notification.warning({ message: t('service.saveBeforeUnpublishing') });
+        notification.warning({ title: t('service.saveBeforeUnpublishing') });
         return;
       }
 
@@ -1504,7 +1504,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(error.error || 'Failed to unpublish service');
       }
 
-      notification.success({ message: t('service.unpublishedSuccess') });
+      notification.success({ title: t('service.unpublishedSuccess') });
 
       // Update the service status
       setServiceStatus(prevStatus => ({
@@ -1515,7 +1515,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       }));
 
     } catch (error) {
-      notification.error({ message: t('service.unpublishFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.unpublishFailed', { error: error.message || t('service.unknownError') }) });
     } finally {
       setLoading(false);
     }
@@ -1531,7 +1531,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       if (!response.ok) {
         if (response.status === 404) {
-          notification.error({ message: t('service.notPublishedYet') });
+          notification.error({ title: t('service.notPublishedYet') });
           setShowApiDefinitionModal(false);
           return;
         }
@@ -1542,7 +1542,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setApiDefinitionData(data);
 
     } catch (error) {
-      notification.error({ message: t('service.failedLoadApiDef', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.failedLoadApiDef', { error: error.message || t('service.unknownError') }) });
       setShowApiDefinitionModal(false);
     } finally {
       setLoadingApiDefinition(false);
@@ -1552,7 +1552,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleExportToExcel = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: t('service.spreadsheetNotLoaded') });
+        notification.error({ title: t('service.spreadsheetNotLoaded') });
         return;
       }
 
@@ -1564,17 +1564,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       );
 
       notification.destroy('export-excel');
-      notification.success({ message: t('service.excelExportSuccess') });
+      notification.success({ title: t('service.excelExportSuccess') });
     } catch (error) {
       notification.destroy('export-excel');
-      notification.error({ message: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
   const handleExportServicePackage = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: t('service.spreadsheetNotLoaded') });
+        notification.error({ title: t('service.spreadsheetNotLoaded') });
         return;
       }
 
@@ -1622,10 +1622,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       URL.revokeObjectURL(url);
 
       notification.destroy('export-package');
-      notification.success({ message: t('service.packageExportSuccess') });
+      notification.success({ title: t('service.packageExportSuccess') });
     } catch (error) {
       notification.destroy('export-package');
-      notification.error({ message: t('service.packageExportFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.packageExportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
@@ -1655,7 +1655,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleExportForRuntime = async () => {
     try {
       if (!spreadInstance) {
-        notification.error({ message: t('service.spreadsheetNotLoaded') });
+        notification.error({ title: t('service.spreadsheetNotLoaded') });
         return;
       }
 
@@ -1726,10 +1726,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       URL.revokeObjectURL(url);
 
       notification.destroy('export-runtime');
-      notification.success({ message: t('service.runtimeExportSuccess') });
+      notification.success({ title: t('service.runtimeExportSuccess') });
     } catch (error: any) {
       notification.destroy('export-runtime');
-      notification.error({ message: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.exportFailed', { error: error.message || t('service.unknownError') }) });
     }
   };
 
@@ -1738,7 +1738,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleSave = async () => {
     // Prevent concurrent saves
     if (isSavingRef.current) {
-      notification.warning({ message: t('service.saveInProgress') });
+      notification.warning({ title: t('service.saveInProgress') });
       return;
     }
 
@@ -1756,7 +1756,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Check if there are any changes to save
       if (!configHasChanges && !shouldSaveWorkbook) {
-        notification.info({ message: t('service.noChanges') });
+        notification.info({ title: t('service.noChanges') });
         setLoading(false);
         return;
       }
@@ -1778,7 +1778,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
       // Additional safety check for workbookRef
       if (!workbookRef.current && shouldSaveWorkbook) {
-        notification.error({ message: t('service.waitForWorkbookBeforeSaving') });
+        notification.error({ title: t('service.waitForWorkbookBeforeSaving') });
         setLoading(false);
         setSavingWorkbook(false);
         return;
@@ -1930,11 +1930,11 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setSaveProgress({ visible: false, percent: 0, status: '' });
 
       if (shouldSaveWorkbook && configHasChanges) {
-        notification.success({ message: t('service.savedConfigAndWorkbook') });
+        notification.success({ title: t('service.savedConfigAndWorkbook') });
       } else if (shouldSaveWorkbook) {
-        notification.success({ message: t('service.savedWorkbook') });
+        notification.success({ title: t('service.savedWorkbook') });
       } else {
-        notification.success({ message: t('service.savedConfig') });
+        notification.success({ title: t('service.savedConfig') });
       }
 
       // Update saved state to match current state
@@ -1951,7 +1951,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         setWorkbookChangeCount(0);
       }
     } catch (error) {
-      notification.error({ message: t('service.saveFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.saveFailed', { error: error.message || t('service.unknownError') }) });
     } finally {
       isSavingRef.current = false;
       setLoading(false);
@@ -2167,14 +2167,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       // Check file type and extension
       const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       if (!ALLOWED_EXTENSIONS.includes(fileExtension) && !ALLOWED_EXCEL_TYPES.includes(file.type)) {
-        notification.error({ message: t('service.onlyExcelSupported') });
+        notification.error({ title: t('service.onlyExcelSupported') });
         setSavingWorkbook(false);
         return;
       }
 
       // Check for macro-enabled files
       if (fileExtension === '.xlsm' || file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12') {
-        notification.warning({ message: t('service.macrosNotSupported') });
+        notification.warning({ title: t('service.macrosNotSupported') });
       }
 
       if (workbookRef.current) {
@@ -2197,15 +2197,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             successMessage = t('service.excelImportRenamed', { filename });
           }
 
-          notification.success({ message: successMessage });
+          notification.success({ title: successMessage });
         } catch (error: any) {
-          notification.error({ message: t('service.excelImportFailed', { error: error.message || t('service.unknownError') }) });
+          notification.error({ title: t('service.excelImportFailed', { error: error.message || t('service.unknownError') }) });
         }
       } else {
-        notification.error({ message: t('service.spreadsheetNotInitialized') });
+        notification.error({ title: t('service.spreadsheetNotInitialized') });
       }
     } catch (error) {
-      notification.error({ message: t('service.excelImportFailedGeneric') });
+      notification.error({ title: t('service.excelImportFailedGeneric') });
     } finally {
       setSavingWorkbook(false);
     }
@@ -2215,7 +2215,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const handleImportExcelUpdate = useCallback(() => {
     // Check if workbook is available
     if (!workbookRef.current) {
-      notification.error({ message: t('service.waitForWorkbook') });
+      notification.error({ title: t('service.waitForWorkbook') });
       return;
     }
 
@@ -2258,13 +2258,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
             // Clear loading and show success
             notification.destroy('import-excel');
-            notification.success({ message: t('service.excelImportedRememberSave') });
+            notification.success({ title: t('service.excelImportedRememberSave') });
 
             // Mark as having changes so save button is enabled
             setWorkbookChangeCount(prev => prev + 1);
           } catch (error: any) {
             notification.destroy('import-excel');
-            notification.error({ message: t('service.importFailed', { error: error.message || t('service.unknownError') }) });
+            notification.error({ title: t('service.importFailed', { error: error.message || t('service.unknownError') }) });
           }
         };
         input.click();
@@ -2375,18 +2375,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           justImportedRef.current = true; // Prevent API reload after import
 
           notification.destroy('import-package');
-          notification.success({ message: t('service.packageImportedRememberSave') });
+          notification.success({ title: t('service.packageImportedRememberSave') });
         } catch (error: any) {
           console.error('[Import] Error:', error);
           notification.destroy('import-package');
-          notification.error({ message: t('service.packageParseFailed', { error: error.message || t('service.invalidJson') }) });
+          notification.error({ title: t('service.packageParseFailed', { error: error.message || t('service.invalidJson') }) });
           setIsImporting(false);
         }
       };
 
       reader.onerror = () => {
         notification.destroy('import-package');
-        notification.error({ message: t('service.failedReadFile') });
+        notification.error({ title: t('service.failedReadFile') });
         setIsImporting(false);
       };
 
@@ -2394,7 +2394,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     } catch (error: any) {
       console.error('[Import] Outer error:', error);
       notification.destroy('import-package');
-      notification.error({ message: t('service.packageImportFailed', { error: error.message || t('service.unknownError') }) });
+      notification.error({ title: t('service.packageImportFailed', { error: error.message || t('service.unknownError') }) });
       setIsImporting(false);
     }
   }, []);

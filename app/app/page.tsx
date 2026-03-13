@@ -737,7 +737,7 @@ const ListsPage: React.FC = observer(() => {
                   loading={isCreatingService}
                   onClick={handleNewService}
                   className="new-list-button"
-                  style={{ backgroundColor: '#4F2D7F', borderColor: '#4F2D7F' }}
+                  style={{ backgroundColor: '#9233E9', borderColor: '#9233E9' }}
                 >
                   <span className="desktop-text">{t('app.newService')}</span>
                   <span className="mobile-text">{t('app.new')}</span>
@@ -938,7 +938,7 @@ const ListsPage: React.FC = observer(() => {
                         ))}
                       </div>
 
-                      {/* Support link and dismiss */}
+                      {/* Support link, sample, and dismiss */}
                       <div style={{ paddingTop: 10, borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span
                           onClick={() => window.open('mailto:support@spreadapi.com?subject=' + encodeURIComponent('SpreadAPI Support Request') + '&body=' + encodeURIComponent('Hi SpreadAPI Team,\n\nI need help with:\n\n\n---\nAccount: ' + (appStore.user.email || 'Not logged in') + '\nURL: ' + window.location.href), '_blank')}
@@ -946,6 +946,13 @@ const ListsPage: React.FC = observer(() => {
                         >
                           <MessageOutlined style={{ fontSize: 13 }} />
                           {t('onboarding.contactSupport')}
+                        </span>
+                        <span
+                          className="onboarding-sample-link"
+                          onClick={() => setIsTemplateModalOpen(true)}
+                          style={{ fontSize: 13, color: '#7c5cc4', cursor: 'pointer', fontWeight: 500 }}
+                        >
+                          {locale === 'de' ? 'Beispielberechnung ausprobieren' : 'Try a sample calculation'}
                         </span>
                         <span
                           onClick={() => {
@@ -1079,68 +1086,89 @@ const ListsPage: React.FC = observer(() => {
         <p style={{ color: '#8c8c8c', margin: '4px 0 20px' }}>
           {t('app.pickTemplate')}
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {loadedTemplates.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <Spin size="small" />
             </div>
           )}
-          {loadedTemplates.map((template) => (
+          {loadedTemplates.map((template, index) => (
+            <React.Fragment key={template.id}>
             <div
-              key={template.id}
               onClick={() => handleTemplateSelect(template)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '16px',
-                padding: '16px',
-                borderRadius: '10px',
-                border: '1px solid #f0f0f0',
+                padding: '16px 12px',
+                borderRadius: '12px',
+                border: '2px solid transparent',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 background: '#fff',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#faf5ff';
                 e.currentTarget.style.borderColor = '#d3adf7';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 45, 127, 0.08)';
+                e.currentTarget.style.background = '#faf5ff';
               }}
               onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'transparent';
                 e.currentTarget.style.background = '#fff';
-                e.currentTarget.style.borderColor = '#f0f0f0';
-                e.currentTarget.style.boxShadow = 'none';
               }}
             >
               <div style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '10px',
-                background: '#f9f0ff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: '#f3ecff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <FileExcelOutlined style={{ fontSize: '22px', color: '#722ed1' }} />
+                <FileExcelOutlined style={{ fontSize: '18px', color: '#722ed1' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px', color: '#262626' }}>
+                <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '3px', color: '#1a1a1a' }}>
                   {(template.name as Record<string, string>)[locale] ?? template.name.en}
                 </div>
                 <div style={{
                   fontSize: '13px',
-                  color: '#8c8c8c',
+                  color: '#999',
                   lineHeight: '1.4',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical' as const,
+                  whiteSpace: 'nowrap',
                   overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}>
                   {(template.description as Record<string, string>)[locale] ?? template.description.en}
                 </div>
               </div>
-              <ArrowRightOutlined style={{ fontSize: '14px', color: '#d9d9d9', flexShrink: 0 }} />
+              {template.category?.label && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: template.category.color,
+                  backgroundColor: (() => {
+                    const c = template.category.color;
+                    const r = parseInt(c.slice(1, 3), 16);
+                    const g = parseInt(c.slice(3, 5), 16);
+                    const b = parseInt(c.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, 0.12)`;
+                  })(),
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}>
+                  {template.category.label}
+                </span>
+              )}
+              <ArrowRightOutlined style={{ fontSize: '13px', color: '#ccc', flexShrink: 0 }} />
             </div>
+            {index < loadedTemplates.length - 1 && (
+              <div style={{ height: 1, background: '#f0f0f0', margin: '0 16px' }} />
+            )}
+            </React.Fragment>
           ))}
         </div>
       </Modal>

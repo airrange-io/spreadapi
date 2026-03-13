@@ -23,6 +23,7 @@ const AI_MODELS = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Very fast & cost-effective' },
   { id: 'gpt-5-nano', name: 'GPT-5 Nano', description: 'Cheapest & lowest latency' },
   { id: 'gpt-4o', name: 'GPT-4o', description: 'Previous generation flagship' },
+  { id: 'groq/openai/gpt-oss-20b', name: 'GPT-OSS 20B', description: 'Open-source model via Groq' },
 ] as const;
 
 // Initialize markdown renderer

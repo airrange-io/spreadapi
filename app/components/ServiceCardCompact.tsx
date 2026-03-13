@@ -116,14 +116,20 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
           onCancel={(e) => {
             e?.stopPropagation();
           }}
+          onPopupClick={(e) => {
+            e.stopPropagation();
+          }}
           okText={t('common.yes')}
           cancelText={t('common.no')}
           okButtonProps={{ danger: true }}
         >
-          {t('common.delete')}
+          <span onClick={(e) => e.stopPropagation()}>{t('common.delete')}</span>
         </Popconfirm>
       ),
       danger: true,
+      onClick: (e: any) => {
+        e.domEvent.stopPropagation();
+      },
     },
   ];
 

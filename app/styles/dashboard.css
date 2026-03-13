@@ -55,6 +55,12 @@
   grid-template-columns: repeat(3, 1fr);
 }
 
+@media (max-width: 700px) {
+  .onboarding-sample-link {
+    display: none;
+  }
+}
+
 @media (max-width: 732px) {
   .onboarding-cards-grid > *:nth-child(3) {
     display: none;

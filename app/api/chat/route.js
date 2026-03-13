@@ -34,6 +34,12 @@ const openai = createOpenAI({
   organization: process.env.OPENAI_ORGANIZATION_ID || undefined,
 });
 
+// Create Groq instance (OpenAI-compatible)
+const groq = createOpenAI({
+  apiKey: process.env.GROQ_API_KEY || '',
+  baseURL: 'https://api.groq.com/openai/v1',
+});
+
 
 export async function POST(req) {
   try {
@@ -1150,13 +1156,13 @@ The button text should clearly show what calculation will be performed with the 
 
     // Use streamText with v5 features for better tool handling
     const result = streamText({
-      model: openai(model, {
-        // Add streaming optimizations
-        streamOptions: {
-          // Use HTTP/2 for better performance
-          includeUsage: false, // Don't include token usage to reduce overhead
-        }
-      }),
+      model: model.startsWith('groq/')
+        ? groq(model.replace('groq/', ''))
+        : openai(model, {
+            streamOptions: {
+              includeUsage: false,
+            }
+          }),
       messages: recentMessages,
       system: systemPrompt,
       temperature: 0.3,
