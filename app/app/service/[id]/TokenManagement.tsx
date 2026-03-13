@@ -1,30 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
   Space,
-  Table,
   Button,
   Modal,
   Form,
   Input,
-  Select,
   DatePicker,
   Typography,
-  Tag,
   Tooltip,
   Popconfirm,
   Empty,
   Spin,
-  Card,
   Alert,
   App
 } from 'antd';
 import {
   PlusOutlined,
-  KeyOutlined,
-  CopyOutlined,
+  LockOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
-  ClockCircleOutlined
+  CopyOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -32,7 +27,7 @@ import { useTranslation } from '@/lib/i18n';
 
 dayjs.extend(relativeTime);
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 interface Token {
   id: string;
@@ -94,9 +89,7 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
   const loadTokens = async () => {
     setLoading(true);
     try {
-      const startTime = performance.now();
       const response = await fetch(`/api/services/${serviceId}/tokens`);
-      const endTime = performance.now();
 
       if (response.ok) {
         const data = await response.json();
@@ -112,24 +105,17 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           onTokenCountChange(tokenList.length);
         }
 
-        // Auto-enable token requirement if tokens exist
-        if (tokenList.length > 0 && !requireToken) {
-          onRequireTokenChange(true);
-        }
+        // Note: We no longer auto-enable requireToken here to avoid
+        // creating a false dirty state. The setting is managed explicitly by the user.
       } else {
-        // Handle 401 as expected - user not authenticated
-        // Handle 403 for demo mode as expected
-        // Handle 404 for new services that don't exist yet
         if (response.status !== 401 && response.status !== 404 && !(response.status === 403 && isDemoMode)) {
           notification.error({ title: t('tokens.failedToLoad') });
         }
-        // Still update count to 0 on error
         if (onTokenCountChange) {
           onTokenCountChange(0);
         }
       }
     } catch (error: any) {
-      // Only log unexpected errors (not 401/unauthorized)
       if (error?.status !== 401 && error?.code !== 'unauthorized') {
         notification.error({ title: t('tokens.errorLoading') });
       }
@@ -207,76 +193,9 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
     notification.success({ title: t('tokens.copiedToClipboard') });
   };
 
-  const columns = [
-    {
-      title: t('tokens.name'),
-      dataIndex: 'name',
-      key: 'name',
-      width: '35%',
-      render: (name: string) => (
-        <Space>
-          <KeyOutlined style={{ color: '#1890ff' }} />
-          <Text strong>{name}</Text>
-        </Space>
-      )
-    },
-    {
-      title: t('tokens.usage'),
-      dataIndex: 'usageCount',
-      key: 'usageCount',
-      render: (count: number, record: Token) => {
-        const lastUsedText = record.lastUsedAt
-          ? t('tokens.lastUsed', { date: dayjs(record.lastUsedAt).format('YYYY-MM-DD HH:mm:ss'), ago: dayjs(record.lastUsedAt).fromNow() })
-          : t('tokens.neverUsed');
-
-        return (
-          <Tooltip title={lastUsedText}>
-            <Text>{t('tokens.callCount', { count: count.toLocaleString() })}</Text>
-          </Tooltip>
-        );
-      }
-    },
-    {
-      title: t('tokens.expires'),
-      dataIndex: 'expiresAt',
-      key: 'expiresAt',
-      render: (date: string) => {
-        if (!date) return <Text type="secondary">{t('tokens.never')}</Text>;
-        const isExpired = dayjs(date).isBefore(dayjs());
-        return (
-          <Tooltip title={dayjs(date).format('YYYY-MM-DD HH:mm:ss')}>
-            <Text type={isExpired ? 'danger' : 'warning'}>
-              {isExpired ? t('tokens.expired') : dayjs(date).fromNow()}
-            </Text>
-          </Tooltip>
-        );
-      }
-    },
-    {
-      title: '',
-      key: 'actions',
-      width: 50,
-      align: 'center' as const,
-      render: (_: any, record: Token) => (
-        isDemoMode ? null : (
-          <Popconfirm
-            title={t('tokens.revokeConfirmTitle')}
-            description={t('tokens.revokeConfirmDesc')}
-            onConfirm={() => handleDeleteToken(record.id)}
-            okText={t('tokens.revoke')}
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              size="small"
-            />
-          </Popconfirm>
-        )
-      )
-    }
-  ];
+  const formatDate = (date: string) => {
+    return dayjs(date).format(locale === 'de' ? 'D. MMMM YYYY' : 'MMMM D, YYYY');
+  };
 
   return (
     <>
@@ -286,12 +205,11 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 16
+          marginBottom: 24
         }}>
           <Typography.Title level={4} style={{ margin: 0 }}>{t('tokens.apiTokens')}</Typography.Title>
           <Tooltip title={isDemoMode ? t('tokens.creationDisabledDemo') : t('tokens.createNewToken')}>
             <Button
-              type="primary"
               icon={<PlusOutlined />}
               onClick={() => {
                 if (!isDemoMode) {
@@ -299,74 +217,139 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
                 }
               }}
               disabled={isDemoMode}
+              style={{ borderRadius: 8 }}
             >
               {t('tokens.createToken')}
             </Button>
           </Tooltip>
         </div>
 
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
-          {/* Tokens list */}
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '10% 20px 20px 20px' }}>
-              <Spin size="medium" />
-            </div>
-          ) : tokens.length === 0 ? (
-            <Empty
-              description={t('tokens.noTokensYet')}
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ padding: '20px 0' }}
-            />
-          ) : (
-            <div style={{
-              maxHeight: '300px',
-              overflow: 'auto',
-              border: '1px solid #e8e8e8',
-              borderRadius: 4
-            }}>
-              <Table
-                columns={columns}
-                dataSource={tokens}
-                rowKey="id"
-                size="small"
-                pagination={false}
-                scroll={{ y: 250 }}
-              />
-            </div>
-          )}
-
-          {/* Info text about token usage */}
-          <div style={{
-            marginTop: 16,
-            padding: '12px',
-            // background: '#f5f5f5', 
-            borderRadius: 4
-          }}>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              <InfoCircleOutlined style={{ marginRight: 8 }} />
-              {tokens.length > 0 ? (
-                ({
-                  en: <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
-                    Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
-                    The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>,
-                  de: <>Um die API mit Authentifizierung zu nutzen, fügen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzu.
-                    Ersetzen Sie YOUR_TOKEN_VALUE durch den tatsächlichen Token, den Sie beim Erstellen kopiert haben.
-                    Die Test-URL enthält einen Platzhalter-<Text code>token</Text>-Parameter, den Sie mit Ihrem Token aktualisieren müssen.</>
-                } as Record<string, React.ReactNode>)[locale] ?? <>To use the API with authentication, add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL.
-                  Replace YOUR_TOKEN_VALUE with the actual token you copied when creating it.
-                  The test URL includes a placeholder <Text code>token</Text> parameter that you need to update with your token.</>
-              ) : (
-                ({
-                  en: <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
-                    to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>,
-                  de: <>Wenn Sie API-Tokens erstellen, müssen Sie <Text code>token=YOUR_TOKEN_VALUE</Text> zu Ihrer Anfrage-URL hinzufügen,
-                    um Ihre API-Aufrufe zu authentifizieren. Der Test wird automatisch den Token-Parameter-Platzhalter enthalten. Alle Service-Anfragen sind auf 1.000 Anfragen pro Minute begrenzt.</>
-                } as Record<string, React.ReactNode>)[locale] ?? <>When you create API tokens, you&apos;ll need to add <Text code>token=YOUR_TOKEN_VALUE</Text> to your request URL
-                  to authenticate your API calls. The test will automatically include the token parameter placeholder. All service requests are rate limited to 1,000 requests per minute.</>
-              )}
-            </Text>
+        {/* Tokens list */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '10% 20px 20px 20px' }}>
+            <Spin size="medium" />
           </div>
-        </Space>
+        ) : tokens.length === 0 ? (
+          <Empty
+            description={t('tokens.noTokensYet')}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            style={{ padding: '20px 0' }}
+          />
+        ) : (
+          <div>
+            {/* Table header */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr 1fr',
+              padding: '0 16px 10px',
+              borderBottom: '1px solid #f0f0f0',
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, color: '#aaa', textTransform: 'uppercase' }}>
+                {t('tokens.name')}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, color: '#aaa', textTransform: 'uppercase' }}>
+                {t('tokens.usage')}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, color: '#aaa', textTransform: 'uppercase' }}>
+                {t('tokens.created')}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, color: '#aaa', textTransform: 'uppercase' }}>
+                {t('tokens.expires')}
+              </span>
+            </div>
+
+            {/* Token rows */}
+            {tokens.map((token) => (
+              <div
+                key={token.id}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                  padding: '14px 16px',
+                  alignItems: 'center',
+                  borderBottom: '1px solid #f8f8f8',
+                }}
+              >
+                {/* Name */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <LockOutlined style={{ color: '#c4b5d9', fontSize: 14 }} />
+                  <span style={{ fontWeight: 600, fontSize: 14 }}>{token.name}</span>
+                </div>
+
+                {/* Usage */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: token.usageCount > 0 ? '#9133E8' : '#aaa',
+                  }} />
+                  <span style={{ fontSize: 14, color: '#666' }}>
+                    {token.usageCount.toLocaleString()} {t('tokens.calls')}
+                  </span>
+                </div>
+
+                {/* Created */}
+                <span style={{ fontSize: 14, color: '#666' }}>
+                  {formatDate(token.createdAt)}
+                </span>
+
+                {/* Expiry */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14, color: token.expiresAt && dayjs(token.expiresAt).isBefore(dayjs()) ? '#ff4d4f' : '#aaa', fontStyle: !token.expiresAt ? 'italic' : 'normal' }}>
+                    {token.expiresAt
+                      ? (dayjs(token.expiresAt).isBefore(dayjs())
+                        ? t('tokens.expired')
+                        : formatDate(token.expiresAt))
+                      : t('tokens.never')
+                    }
+                  </span>
+                  {!isDemoMode && (
+                    <Popconfirm
+                      title={t('tokens.revokeConfirmTitle')}
+                      description={t('tokens.revokeConfirmDesc')}
+                      onConfirm={() => handleDeleteToken(token.id)}
+                      okText={t('tokens.revoke')}
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        size="small"
+                        style={{ opacity: 0.5 }}
+                      />
+                    </Popconfirm>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Info text */}
+        <div style={{
+          marginTop: 24,
+          padding: '14px 16px',
+          background: '#fafafa',
+          borderRadius: 10,
+          border: '1px solid #f0f0f0',
+        }}>
+          <Text type="secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>
+            <InfoCircleOutlined style={{ marginRight: 8, color: '#c4b5d9' }} />
+            {tokens.length > 0 ? (
+              ({
+                en: <>Add <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> to your request URL. Replace the placeholder with the token you copied when creating it. Requests are limited to <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1,000 / minute</span>.</>,
+                de: <>Fügen Sie <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> zu Ihrer Anfrage-URL hinzu. Ersetzen Sie den Platzhalter durch den Token, den Sie beim Erstellen kopiert haben. Anfragen sind auf <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1.000 / Minute</span> begrenzt.</>
+              } as Record<string, React.ReactNode>)[locale] ?? <>Add <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> to your request URL. Replace the placeholder with the token you copied when creating it. Requests are limited to <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1,000 / minute</span>.</>
+            ) : (
+              ({
+                en: <>When you create API tokens, add <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> to your request URL to authenticate. Requests are limited to <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1,000 / minute</span>.</>,
+                de: <>Wenn Sie API-Tokens erstellen, fügen Sie <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> zu Ihrer Anfrage-URL hinzu. Anfragen sind auf <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1.000 / Minute</span> begrenzt.</>
+              } as Record<string, React.ReactNode>)[locale] ?? <>When you create API tokens, add <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>token=YOUR_TOKEN_VALUE</span> to your request URL to authenticate. Requests are limited to <span style={{ background: '#F0EEFF', color: '#7B3AED', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace', fontSize: 12 }}>1,000 / minute</span>.</>
+            )}
+          </Text>
+        </div>
       </div>
 
       {/* Create token modal */}

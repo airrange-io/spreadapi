@@ -38,9 +38,6 @@ importers:
       '@mescius/spread-sheets':
         specifier: ^18.2.5
         version: 18.2.5
-      '@mescius/spread-sheets-barcode':
-        specifier: ^18.2.5
-        version: 18.2.5
       '@mescius/spread-sheets-charts':
         specifier: ^18.2.5
         version: 18.2.5
@@ -459,9 +456,6 @@ packages:
 
   '@mermaid-js/parser@1.0.1':
     resolution: {integrity: sha512-opmV19kN1JsK0T6HhhokHpcVkqKpF+x2pPDKKM2ThHtZAB5F4PROopk0amuVYK5qMrIA4erzpNm8gmPNJgMDxQ==}
-
-  '@mescius/spread-sheets-barcode@18.2.5':
-    resolution: {integrity: sha512-+APkbodxs9NsVKi52K1GHaFDJld44Ree5FUhLtH/6OJmEqamLwsR19dTH5PFoj8HlwmaszE4RdT97OFMCKexzw==}
 
   '@mescius/spread-sheets-charts@18.2.5':
     resolution: {integrity: sha512-raBu3JOC5c2ZlfqFPw4IVCnsMbtMKst3CCPom2GygITf9Ss5saE1P9eLCIGjBF8/GYMwALTc7TQnfmc4mfaC6g==}
@@ -3093,10 +3087,6 @@ snapshots:
   '@mermaid-js/parser@1.0.1':
     dependencies:
       langium: 4.2.1
-
-  '@mescius/spread-sheets-barcode@18.2.5':
-    dependencies:
-      '@mescius/spread-sheets': 18.2.5
 
   '@mescius/spread-sheets-charts@18.2.5':
     dependencies:

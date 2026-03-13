@@ -33,112 +33,149 @@ const AddParameterButton: React.FC<AddParameterButtonProps> = ({
   const getCellAddress = (row: number, col: number) => {
     let columnLetter = '';
     let tempCol = col;
-
     while (tempCol >= 0) {
       columnLetter = String.fromCharCode(65 + (tempCol % 26)) + columnLetter;
       tempCol = Math.floor(tempCol / 26) - 1;
     }
-
     return `${columnLetter}${row + 1}`;
   };
 
-  const getAddButtonInfo = () => {
-    if (!spreadInstance) {
-      return {
-        text: isCompact
-          ? t('params.switchToWorkbookShort')
-          : t('params.switchToWorkbook'),
-        disabled: true
-      };
-    }
-
-    if (!spreadsheetReady) {
-      return { text: t('params.loadingSpreadsheet'), disabled: true };
-    }
-
-    if (!currentSelection) {
-      return { text: t('params.addSelectionAsParameter'), disabled: true };
+  const getSelectionInfo = () => {
+    if (!currentSelection || !spreadInstance || !spreadsheetReady) {
+      return { address: null, type: null, disabled: true };
     }
 
     const { isSingleCell, hasFormula, isRange, row, col, rowCount, colCount } = currentSelection;
     const cellRef = getCellAddress(row, col);
-
     const sheetName = currentSelection.sheetName || 'Sheet1';
 
-    const isAlreadyInParameters = () => {
-      if (isRange) {
-        const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
-        const rangeAddress = `${sheetName}!${cellRef}:${endCellRef}`;
-        return [...inputs, ...outputs].some(param => param.address === rangeAddress);
-      } else {
-        const cellAddress = `${sheetName}!${cellRef}`;
-        return [...inputs, ...outputs].some(param => param.address === cellAddress);
-      }
-    };
-
-    const alreadyExists = isAlreadyInParameters();
-
+    let fullAddress: string;
     if (isRange) {
       const endCellRef = getCellAddress(row + rowCount - 1, col + colCount - 1);
-      const rangeRef = `${cellRef}:${endCellRef}`;
-      return {
-        text: alreadyExists
-          ? t('params.rangeAlreadyAdded', { range: rangeRef })
-          : t('params.addRangeAsOutput', { range: rangeRef }),
-        type: 'output' as const,
-        disabled: alreadyExists
-      };
-    } else if (hasFormula) {
-      return {
-        text: alreadyExists
-          ? t('params.cellAlreadyAdded', { cell: cellRef })
-          : t('params.addCellAsOutput', { cell: cellRef }),
-        type: 'output' as const,
-        disabled: alreadyExists
-      };
+      fullAddress = `${sheetName}!${cellRef}:${endCellRef}`;
     } else {
-      return {
-        text: alreadyExists
-          ? t('params.cellAlreadyAdded', { cell: cellRef })
-          : t('params.addCellAsInput', { cell: cellRef }),
-        type: 'input' as const,
-        disabled: alreadyExists
-      };
+      fullAddress = `${sheetName}!${cellRef}`;
     }
+
+    const alreadyExists = [...inputs, ...outputs].some(param => param.address === fullAddress);
+
+    let type: 'input' | 'output';
+    if (isRange || hasFormula) {
+      type = 'output';
+    } else {
+      type = 'input';
+    }
+
+    return { address: fullAddress, type, disabled: alreadyExists, isRange };
   };
 
-  const buttonInfo = getAddButtonInfo();
-  const isRange = currentSelection && (currentSelection.rowCount > 1 || currentSelection.colCount > 1);
+  const info = getSelectionInfo();
+  const hasSelection = !!info.address;
 
   return (
     <div
       style={{
-        padding: '16px',
-        paddingTop: 0,
+        padding: '12px 12px',
         background: 'white',
-        flex: '0 0 auto'
+        flex: '0 0 auto',
+        borderTop: '1px solid #f0f0f0',
       }}
     >
-      <div ref={buttonRef} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div ref={buttonRef} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* Cell Selection Display */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 14px',
+          background: hasSelection ? '#F5F3FF' : '#f8f7fa',
+          borderRadius: 10,
+          border: '1px solid #eee',
+        }}>
+          {/* Status dot - only when selected */}
+          {hasSelection && (
+            <div style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: info.type === 'input' ? '#1665A1' : '#7B3AED',
+              flexShrink: 0,
+            }} />
+          )}
+
+          {/* Address */}
+          <div style={{
+            flex: 1,
+            fontSize: 14,
+            fontWeight: hasSelection ? 500 : 400,
+            color: hasSelection ? '#1a1a1a' : '#aaa',
+            textAlign: hasSelection ? 'left' : 'center',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {hasSelection ? info.address : t('params.noCellSelected')}
+          </div>
+
+          {/* IN/OUT Badge */}
+          {hasSelection && info.type && !info.disabled && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: info.type === 'input' ? '#1665A1' : '#7B3AED',
+              background: info.type === 'input' ? '#E8F2FB' : '#F0EEFF',
+              borderRadius: 6,
+              padding: '2px 8px',
+              flexShrink: 0,
+            }}>
+              {info.type === 'input' ? 'IN' : 'OUT'}
+            </span>
+          )}
+
+          {/* Already exists indicator */}
+          {hasSelection && info.disabled && (
+            <span style={{
+              fontSize: 11,
+              color: '#aaa',
+              flexShrink: 0,
+            }}>
+              {t('params.alreadyAdded')}
+            </span>
+          )}
+        </div>
+
+        {/* Add Button */}
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          style={{ width: '100%', height: 48 }}
+          style={{
+            width: '100%',
+            height: 42,
+            borderRadius: 10,
+            background: hasSelection && !info.disabled ? '#9233E9' : undefined,
+            borderColor: hasSelection && !info.disabled ? '#9233E9' : undefined,
+            boxShadow: 'none',
+          }}
           onClick={onAddFromSelection}
-          disabled={buttonInfo.disabled || !spreadInstance || !spreadsheetReady}
+          disabled={!hasSelection || info.disabled}
         >
-          {buttonInfo.text}
+          {t('params.addAsParameter')}
         </Button>
 
-        {isRange && !buttonInfo.disabled && (
+        {/* Editable Area Button (only for ranges) */}
+        {info.isRange && !info.disabled && (
           <Button
             type="default"
             icon={<TableOutlined />}
-            style={{ width: '100%', height: 40 }}
+            style={{
+              width: '100%',
+              height: 36,
+              borderRadius: 10,
+            }}
             onClick={onAddAsEditableArea}
-            disabled={!spreadInstance || !spreadsheetReady || process.env.NODE_ENV !== 'development'}
+            disabled={process.env.NODE_ENV !== 'development'}
           >
-            {`${t('params.addAsEditableArea')}${process.env.NODE_ENV !== 'development' ? ` - ${t('params.comingSoon')}` : ''}`}
+            {t('params.addAsEditableArea')}
           </Button>
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App, Segmented } from 'antd';
-import { PlayCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
+import { CaretRightOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
 import { useTranslation } from '@/lib/i18n';
@@ -308,7 +308,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                 t('tester.endpointDraft')
               }>
                 <span style={{
-                  background: isPublished ? '#52c41a' : '#faad14',
+                  background: isPublished ? '#1AA24A' : '#faad14',
                   color: 'white',
                   padding: '2px 8px',
                   borderRadius: 4,
@@ -381,14 +381,14 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           </div>
 
           {/* Test Buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 15, marginBottom: 15 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 15, marginBottom: 15, justifyContent: 'flex-end' }}>
             <Button
               type="primary"
-              icon={<PlayCircleOutlined />}
+              icon={<CaretRightOutlined />}
               onClick={handleWizardTest}
               loading={wizardTesting}
               disabled={!isPublished}
-              style={{ boxShadow: 'none', flex: 1 }}
+              style={{ boxShadow: 'none', background: '#9133E8', borderColor: '#9133E8' }}
             >
               {t('tester.runTest')}
             </Button>

@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Space, Tag, Button, Skeleton, Tooltip, Dropdown, Modal } from 'antd';
-import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons';
-import CollapsibleSection from './CollapsibleSection';
+import React, { useState } from 'react';
+import { Space, Button, Skeleton, Tooltip, Modal } from 'antd';
+import { EditOutlined, DeleteOutlined, InfoCircleOutlined, TableOutlined, LockOutlined, FunctionOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 import {
   DndContext,
@@ -23,8 +22,8 @@ import {
 import { SortableParameterItem } from './SortableParameterItem';
 
 // Drag & Drop Configuration
-const DRAG_ACTIVATION_DISTANCE_PX = 8; // Pixels of movement required before drag starts (prevents accidental drags)
-export const COMPACT_LAYOUT_BREAKPOINT_PX = 380; // Panel width below which compact layout is used
+const DRAG_ACTIVATION_DISTANCE_PX = 8;
+export const COMPACT_LAYOUT_BREAKPOINT_PX = 380;
 
 export interface InputDefinition {
   id: string;
@@ -41,7 +40,7 @@ export interface InputDefinition {
   max?: number;
   description?: string;
   format?: 'percentage';
-  formatString?: string; // Display format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.0%")
+  formatString?: string;
   aiExamples?: string[];
   allowedValues?: string[];
   allowedValuesRange?: string;
@@ -56,14 +55,14 @@ export interface OutputDefinition {
   title?: string;
   row: number;
   col: number;
-  rowCount?: number; // For cell ranges
-  colCount?: number; // For cell ranges
+  rowCount?: number;
+  colCount?: number;
   type: 'number' | 'string' | 'boolean';
   value?: any;
   direction: 'output';
   description?: string;
   aiPresentationHint?: string;
-  formatString?: string; // Simple, editable format string (e.g., "€#,##0.00", "#,##0.0 kg", "0.00%")
+  formatString?: string;
 }
 
 export interface AreaPermissions {
@@ -105,6 +104,7 @@ interface ParametersSectionProps {
   hasInitialized: boolean;
   isDemoMode?: boolean;
   panelWidth?: number;
+  activeTab?: string;
   onNavigateToParameter: (param: InputDefinition | OutputDefinition) => void;
   onEditParameter: (type: 'input' | 'output', parameter: InputDefinition | OutputDefinition) => void;
   onDeleteParameter: (type: 'input' | 'output', id: string) => void;
@@ -116,6 +116,40 @@ interface ParametersSectionProps {
   onReorderOutputs?: (newOrder: OutputDefinition[]) => void;
 }
 
+// Section header with count badge
+const SectionHeader: React.FC<{ title: string; count: number }> = ({ title, count }) => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px 8px 8px',
+  }}>
+    <span style={{
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.5,
+      color: '#aaa',
+      textTransform: 'uppercase',
+    }}>
+      {title}
+    </span>
+    {count > 0 && (
+      <span style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#CFC8F9',
+        background: '#F0EEFF',
+        borderRadius: 6,
+        padding: '2px 8px',
+        minWidth: 22,
+        textAlign: 'center',
+      }}>
+        {count}
+      </span>
+    )}
+  </div>
+);
+
 const ParametersSection: React.FC<ParametersSectionProps> = ({
   inputs,
   outputs,
@@ -124,6 +158,7 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
   hasInitialized,
   isDemoMode,
   panelWidth,
+  activeTab = 'parameters',
   onNavigateToParameter,
   onEditParameter,
   onDeleteParameter,
@@ -136,49 +171,35 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Check if we can interact with parameters (requires workbook to be loaded)
-  const canInteract = !!onNavigateToParameter;
-
-  // Determine if cards should use compact layout
   const useCompactLayout = panelWidth && panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX;
 
-  // Sensors for drag & drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: DRAG_ACTIVATION_DISTANCE_PX,
-      },
+      activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  // Handle drag end for inputs
   const handleInputDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = inputs.findIndex((item) => item.id === active.id);
       const newIndex = inputs.findIndex((item) => item.id === over.id);
-
-      const newOrder = arrayMove(inputs, oldIndex, newIndex);
-      onReorderInputs?.(newOrder);
+      onReorderInputs?.(arrayMove(inputs, oldIndex, newIndex));
     }
   };
 
-  // Handle drag end for outputs
   const handleOutputDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = outputs.findIndex((item) => item.id === active.id);
       const newIndex = outputs.findIndex((item) => item.id === over.id);
-
-      const newOrder = arrayMove(outputs, oldIndex, newIndex);
-      onReorderOutputs?.(newOrder);
+      onReorderOutputs?.(arrayMove(outputs, oldIndex, newIndex));
     }
   };
+
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'readonly': return t('params.modeReadonly');
@@ -188,189 +209,82 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
     }
   };
 
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      marginTop: '8px',
-    }}>
-      <Space orientation="vertical" size={12} style={{ width: '100%' }}>
-        {/* Input Parameters */}
-        <CollapsibleSection title={t('params.inputParameters')} defaultOpen={true}>
+  if (activeTab === 'areas') {
+    // KI-Bereiche tab
+    return (
+      <div style={{ padding: '8px 4px' }}>
         {isLoading || !hasInitialized ? (
           <Skeleton active paragraph={{ rows: 2 }} />
-        ) : inputs.length === 0 ? (
-          <div style={{ color: '#999' }}>{t('params.emptyInputHint')}</div>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleInputDragEnd}
-          >
-            <SortableContext
-              items={inputs.map(i => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Space orientation="vertical" style={{ width: '100%' }}>
-                {inputs.map((input) => (
-                  <SortableParameterItem
-                    key={input.id}
-                    parameter={input}
-                    type="input"
-                    isDemoMode={isDemoMode}
-                    useCompactLayout={useCompactLayout}
-                    onNavigate={() => onNavigateToParameter(input)}
-                    onEdit={() => onEditParameter('input', input)}
-                    onDelete={() => {
-                      Modal.confirm({
-                        title: t('params.deleteParameter'),
-                        content: t('params.cannotUndo'),
-                        okText: t('common.yes'),
-                        cancelText: t('common.no'),
-                        okButtonProps: { danger: true },
-                        onOk: () => onDeleteParameter('input', input.id),
-                      });
-                    }}
-                  />
-                ))}
-              </Space>
-            </SortableContext>
-          </DndContext>
-        )}
-      </CollapsibleSection>
-
-      {/* Output Parameters */}
-      <CollapsibleSection title={t('params.outputParameters')} defaultOpen={true}>
-        {isLoading || !hasInitialized ? (
-          <Skeleton active paragraph={{ rows: 2 }} />
-        ) : outputs.length === 0 ? (
-          <div style={{ color: '#999' }}>{t('params.emptyOutputHint')}</div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleOutputDragEnd}
-          >
-            <SortableContext
-              items={outputs.map(o => o.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Space orientation="vertical" style={{ width: '100%' }}>
-                {outputs.map((output) => (
-                  <SortableParameterItem
-                    key={output.id}
-                    parameter={output}
-                    type="output"
-                    isDemoMode={isDemoMode}
-                    useCompactLayout={useCompactLayout}
-                    onNavigate={() => onNavigateToParameter(output)}
-                    onEdit={() => onEditParameter('output', output)}
-                    onDelete={() => {
-                      Modal.confirm({
-                        title: t('params.deleteParameter'),
-                        content: t('params.cannotUndo'),
-                        okText: t('common.yes'),
-                        cancelText: t('common.no'),
-                        okButtonProps: { danger: true },
-                        onOk: () => onDeleteParameter('output', output.id),
-                      });
-                    }}
-                  />
-                ))}
-              </Space>
-            </SortableContext>
-          </DndContext>
-        )}
-      </CollapsibleSection>
-
-      {/* Editable Areas for AI */}
-      <CollapsibleSection
-        title={`${t('params.editableAreas')}${process.env.NODE_ENV !== 'development' ? ` - ${t('params.comingSoon')}` : ''}`}
-        defaultOpen={false}
-        extra={
-          <Tooltip title={t('params.editableAreasTooltip')}>
-            <InfoCircleOutlined style={{ fontSize: 12 }} />
-          </Tooltip>
-        }
-      >
-        {isLoading || !hasInitialized ? (
-          <Skeleton active paragraph={{ rows: 2 }} />
-        ) : areas.length === 0 ? (
-          <div style={{ color: '#999' }}>
-            {t('params.emptyAreaHint')}
-          </div>
-        ) : (
-          <Space orientation="vertical" style={{ width: '100%' }}>
-            {areas.map((area, index) => (
-              <div
-                key={area.id || index}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px',
-                  backgroundColor: 'white',
-                  borderRadius: '4px',
-                  border: '1px solid #e8e8e8',
-                  cursor: 'pointer'
-                }}
-                onClick={() => onNavigateToArea(area)}
-              >
-                {area.mode === 'readonly' ? (
-                  <LockOutlined style={{ color: '#ff4d4f' }} />
-                ) : area.mode === 'interactive' ? (
-                  <TableOutlined style={{ color: '#52c41a' }} />
-                ) : (
-                  <EditOutlined style={{ color: '#1890ff' }} />
-                )}
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500 }}>
-                    {area.name}
-                  </div>
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#999',
-                    display: 'flex',
-                    gap: '12px'
-                  }}>
-                    <span>{area.address}</span>
-                    <span>•</span>
-                    <span>{getModeLabel(area.mode)}</span>
-                    {area.permissions.canWriteFormulas && (
-                      <>
-                        <span>•</span>
-                        <span style={{ color: '#fa8c16' }}>
-                          <FunctionOutlined style={{ fontSize: 10 }} /> Formulas
-                        </span>
-                      </>
-                    )}
-                  </div>
+          <>
+            {/* Info box with dashed border */}
+            {areas.length === 0 && (
+              <div style={{
+                margin: '8px 0 16px',
+                padding: '14px 16px',
+                border: '1.5px dashed #d9d9d9',
+                borderRadius: 10,
+                background: '#fafafa',
+              }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1a1a1a', marginBottom: 4 }}>
+                  {t('params.aiAreasInfoTitle')}
                 </div>
+                <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>
+                  {t('params.aiAreasInfoDesc')}
+                </div>
+              </div>
+            )}
 
-                <Space size="small">
-                  <Button
-                    size="small"
-                    type="text"
-                    icon={<EditOutlined />}
-                    disabled={process.env.NODE_ENV !== 'development'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditArea(area, index);
-                    }}
-                  />
-                  {!isDemoMode && (
-                    <Dropdown
-                      menu={{
-                        items: [
-                          {
-                            key: 'delete',
-                            label: t('common.delete'),
-                            icon: <DeleteOutlined />,
-                            danger: true,
-                            disabled: process.env.NODE_ENV !== 'development',
-                            onClick: () => {
+            {/* Area cards */}
+            {areas.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {areas.map((area, index) => {
+                  const [areaHovered, setAreaHovered] = useState(false);
+                  return (
+                    <div
+                      key={area.id || index}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: 10,
+                        background: areaHovered ? '#faf8ff' : '#f8f7fa',
+                        border: '1px solid #eee',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s',
+                      }}
+                      onClick={() => onNavigateToArea(area)}
+                      onMouseEnter={() => setAreaHovered(true)}
+                      onMouseLeave={() => setAreaHovered(false)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {/* Lightning icon */}
+                        <div style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: '#fff8e6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}>
+                          <ThunderboltOutlined style={{ color: '#faad14', fontSize: 16 }} />
+                        </div>
+
+                        {/* Name and address */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1a1a' }}>{area.name}</div>
+                          <div style={{ fontSize: 12, color: '#aaa' }}>{area.address}</div>
+                        </div>
+
+                        {/* Delete button */}
+                        {!isDemoMode && (
+                          <Button
+                            size="small"
+                            type="text"
+                            icon={<DeleteOutlined style={{ color: areaHovered ? '#888' : '#ccc' }} />}
+                            style={{ opacity: areaHovered ? 1 : 0, transition: 'opacity 0.15s' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
                               Modal.confirm({
                                 title: t('params.deleteArea'),
                                 content: t('params.cannotUndo'),
@@ -379,37 +293,102 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
                                 okButtonProps: { danger: true },
                                 onOk: () => onRemoveArea(index),
                               });
-                            },
-                          },
-                        ],
-                      }}
-                      trigger={['click']}
-                      placement="bottomRight"
-                    >
-                      <Button
-                        size="small"
-                        type="text"
-                        icon={<MoreOutlined />}
-                        disabled={process.env.NODE_ENV !== 'development'}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </Dropdown>
-                  )}
-                </Space>
-              </div>
-            ))}
-          </Space>
-        )}
-      </CollapsibleSection>
-      </Space>
+                            }}
+                          />
+                        )}
+                      </div>
 
-      <div style={{ marginLeft: '4px', marginTop: '8px', marginBottom: '20px', fontSize: '12px', color: '#666' }}>
+                      {/* Description */}
+                      {area.description && (
+                        <div style={{
+                          marginTop: 8,
+                          fontSize: 12,
+                          color: '#888',
+                          lineHeight: 1.5,
+                          paddingLeft: 42,
+                        }}>
+                          {area.description}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Parameters tab (default)
+  return (
+    <div style={{ padding: '0 4px' }}>
+      {/* Input Parameters */}
+      <SectionHeader title={t('params.inputParameters')} count={inputs.length} />
+      {isLoading || !hasInitialized ? (
+        <Skeleton active paragraph={{ rows: 2 }} style={{ padding: '0 8px' }} />
+      ) : inputs.length === 0 ? (
+        <div style={{ color: '#aaa', padding: '8px 8px 16px', fontSize: 13 }}>
+          {t('params.emptyInputHint')}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleInputDragEnd}>
+          <SortableContext items={inputs.map(i => i.id)} strategy={verticalListSortingStrategy}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {inputs.map((input) => (
+                <SortableParameterItem
+                  key={input.id}
+                  parameter={input}
+                  type="input"
+                  isDemoMode={isDemoMode}
+                  useCompactLayout={useCompactLayout}
+                  onNavigate={() => onNavigateToParameter(input)}
+                  onEdit={() => onEditParameter('input', input)}
+                  onDelete={() => onDeleteParameter('input', input.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      {/* Output Parameters */}
+      <SectionHeader title={t('params.outputParameters')} count={outputs.length} />
+      {isLoading || !hasInitialized ? (
+        <Skeleton active paragraph={{ rows: 2 }} style={{ padding: '0 8px' }} />
+      ) : outputs.length === 0 ? (
+        <div style={{ color: '#aaa', padding: '8px 8px 16px', fontSize: 13 }}>
+          {t('params.emptyOutputHint')}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleOutputDragEnd}>
+          <SortableContext items={outputs.map(o => o.id)} strategy={verticalListSortingStrategy}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {outputs.map((output) => (
+                <SortableParameterItem
+                  key={output.id}
+                  parameter={output}
+                  type="output"
+                  isDemoMode={isDemoMode}
+                  useCompactLayout={useCompactLayout}
+                  onNavigate={() => onNavigateToParameter(output)}
+                  onEdit={() => onEditParameter('output', output)}
+                  onDelete={() => onDeleteParameter('output', output.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      <div style={{ padding: '8px 8px 16px' }}>
         <Button
           type="link"
           size="small"
           icon={<InfoCircleOutlined />}
           onClick={onShowHowItWorks}
-          style={{ padding: 0, fontSize: '12px', color: '#4F2D7F' }}
+          style={{ padding: 0, fontSize: 12, color: '#9233E9' }}
         >
           {t('params.howItWorks')}
         </Button>

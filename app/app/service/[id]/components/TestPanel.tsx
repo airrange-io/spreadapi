@@ -494,6 +494,7 @@ const TestPanel: React.FC<TestPanelProps> = ({
             disabled={!hasChanges && !testing}
             block
             size="large"
+            style={{ background: '#9133E8', borderColor: '#9133E8', boxShadow: 'none' }}
           >
             {testing ? t('testPanel.calculating') : t('testPanel.calculate')}
           </Button>

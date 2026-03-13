@@ -82,11 +82,19 @@ export default function RootLayout({
             <ConfigProvider
               theme={{
                 token: {
-                  colorPrimary: '#502D80',
+                  colorPrimary: '#9133E8',
                   colorBgContainer: '#ffffff',
                   colorText: '#000000',
                   colorTextSecondary: '#666666',
                   borderRadius: 8,
+                },
+                components: {
+                  Button: {
+                    boxShadow: 'none',
+                    primaryShadow: 'none',
+                    dangerShadow: 'none',
+                    defaultShadow: 'none',
+                  },
                 },
               }}
             >

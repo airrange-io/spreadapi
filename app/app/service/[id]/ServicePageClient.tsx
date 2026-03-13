@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Layout, Button, Drawer, Space, Spin, Splitter, Breadcrumb, App, Typography, Dropdown, Segmented, Modal, Tooltip } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, DownOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, SaveOutlined, SettingOutlined, DownOutlined, CheckOutlined, CheckCircleOutlined, CloseCircleOutlined, MoreOutlined, FileExcelOutlined, MenuUnfoldOutlined, TableOutlined, CaretRightOutlined, CloseOutlined, BarChartOutlined, DownloadOutlined, AppstoreOutlined, RobotOutlined } from '@ant-design/icons';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { COLORS } from '@/constants/theme';
@@ -160,6 +160,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [isImporting, setIsImporting] = useState(false); // Track if we're importing a service package
   const justImportedRef = useRef(false); // Track if we just completed an import (prevents reload)
   const hasDragDropFileRef = useRef(false); // Track if we have a drag & drop file pending
+  const templateImportCompleteRef = useRef(!searchParams.get('templateId')); // true if no template (no import needed)
   const workbookLoadAbortControllerRef = useRef<AbortController | null>(null); // Cleanup for workbook loading
   const [availableTokens, setAvailableTokens] = useState<any[]>([]); // Available API tokens
   const [tokenCount, setTokenCount] = useState(0); // Total token count
@@ -579,7 +580,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       cancelText: t('service.noThanks'),
       onCancel: () => {
         // Auto-save just the workbook even if user skips parameter setup
-        setTimeout(() => handleSaveRef.current?.(), 500);
+        // Wait for template import to complete before saving
+        const waitAndSave = () => {
+          if (templateImportCompleteRef.current) {
+            setTimeout(() => handleSaveRef.current?.(), 5000);
+          } else {
+            setTimeout(waitAndSave, 500);
+          }
+        };
+        waitAndSave();
       },
       onOk: () => {
         const result = autoDetectTemplateParameters(spreadInstance, template.cells);
@@ -591,7 +600,15 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         });
 
         // Auto-save workbook + parameters after template setup
-        setTimeout(() => handleSaveRef.current?.(), 500);
+        // Wait for template import to complete before saving
+        const waitAndSave = () => {
+          if (templateImportCompleteRef.current) {
+            setTimeout(() => handleSaveRef.current?.(), 5000);
+          } else {
+            setTimeout(waitAndSave, 500);
+          }
+        };
+        waitAndSave();
 
         // After parameters are added, show a one-step tour highlighting the test button
         // Delay to let React render the test button (it's conditional on parameters existing)
@@ -933,7 +950,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             outputs: data.outputs || [],
             areas: data.areas || [],
             enableCaching: data.enableCaching !== false,
-            requireToken: data.requireToken === true,
+            requireToken: data.requireToken === true || data.requireToken === 'true',
             cacheTableSheetData: data.cacheTableSheetData !== false,
             tableSheetCacheTTL: data.tableSheetCacheTTL || 300,
             aiDescription: data.aiDescription || '',
@@ -1028,7 +1045,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               outputs: data.service.outputs || [],
               areas: data.service.areas || [],
               enableCaching: data.service.enableCaching !== false,
-              requireToken: data.service.requireToken === true,
+              requireToken: data.service.requireToken === true || data.service.requireToken === 'true',
               cacheTableSheetData: data.service.cacheTableSheetData !== false,
               tableSheetCacheTTL: data.service.tableSheetCacheTTL || 300,
               aiDescription: data.service.aiDescription || '',
@@ -1078,7 +1095,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               outputs: data.outputs || [],
               areas: data.areas || [],
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
-              requireToken: data.requireToken === 'true', // Redis stores as string
+              requireToken: data.requireToken === 'true' || data.requireToken === true, // Redis may store as string or boolean
               cacheTableSheetData: data.cacheTableSheetData !== 'false', // Default to true
               tableSheetCacheTTL: parseInt(data.tableSheetCacheTTL) || 300,
               aiDescription: data.aiDescription || '',
@@ -2430,6 +2447,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       const doImport = async () => {
         await handleImportExcel(fileToImport);
 
+        // Mark template import as complete — auto-save can now safely proceed
+        templateImportCompleteRef.current = true;
+
         // Clear the flag after import to allow normal loadWorkbook behavior
         hasDragDropFileRef.current = false;
       };
@@ -2644,7 +2664,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                   title: configLoaded ? (
                     <Text
                       ellipsis={{ tooltip: apiConfig.name || t('service.newService') }}
-                      style={{ margin: 0, maxWidth: isMobile ? 120 : 200, cursor: 'pointer' }}
+                      style={{ margin: 0, maxWidth: isMobile ? 120 : 200, cursor: 'pointer', fontWeight: 600 }}
                       onClick={() => {
                         setActiveView('Settings');
                         saveViewPreference(serviceId, 'Settings');
@@ -2750,97 +2770,111 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                 </Tooltip>
               )}
 
-              {hasAnyChanges && (
-                <Tooltip title={
-                  configHasChanges && workbookChangeCount > 0
-                    ? t('service.saveConfigAndWorkbookTooltip')
-                    : configHasChanges
-                      ? t('service.saveConfigTooltip')
-                      : t('service.saveWorkbookTooltip')
-                }>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    onClick={handleSave}
-                    loading={loading}
-                  >
-                    {t('common.save')}
-                  </Button>
-                </Tooltip>
-              )}
-
-              {/* Desktop Publish Button - Only visible on desktop */}
+              {/* Desktop Save/Publish Button - fixed width to prevent flicker */}
               {!isMobile && (
-                serviceStatus?.published ? (
-                  <Dropdown
-                    menu={{
-                      items: [
-                        {
-                          key: 'republish',
-                          label: t('service.republish'),
-                          icon: <CheckCircleOutlined />,
-                          onClick: handleRepublish,
-                          disabled: hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
-                        },
-                        {
-                          type: 'divider' as const
-                        },
-                        {
-                          key: 'unpublish',
-                          label: t('service.unpublish'),
-                          icon: <CloseCircleOutlined />,
-                          danger: true,
-                          onClick: handleUnpublish,
-                          disabled: hasAnyChanges
-                        }
-                      ]
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button
-                      icon={<CheckCircleOutlined />}
-                      style={{ ...headerButtonStyle, color: '#52c41a', borderColor: '#52c41a' }}
+                <div style={{ width: 150 }}>
+                  {hasAnyChanges ? (
+                    <Tooltip title={
+                      configHasChanges && workbookChangeCount > 0
+                        ? t('service.saveConfigAndWorkbookTooltip')
+                        : configHasChanges
+                          ? t('service.saveConfigTooltip')
+                          : t('service.saveWorkbookTooltip')
+                    }>
+                      <Button
+                        type="primary"
+
+                        onClick={handleSave}
+                        loading={loading}
+                        style={{
+                          ...headerButtonStyle,
+                          width: '100%',
+                          background: '#E8720C',
+                          borderColor: '#E8720C',
+                          boxShadow: 'none',
+                        }}
+                      >
+                        {t('common.save')}
+                      </Button>
+                    </Tooltip>
+                  ) : serviceStatus?.published ? (
+                    <Dropdown
+                      menu={{
+                        items: [
+                          {
+                            key: 'republish',
+                            label: t('service.republish'),
+                            icon: <CheckCircleOutlined />,
+                            onClick: handleRepublish,
+                            disabled: apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)
+                          },
+                          {
+                            type: 'divider' as const
+                          },
+                          {
+                            key: 'unpublish',
+                            label: t('service.unpublish'),
+                            icon: <CloseCircleOutlined />,
+                            danger: true,
+                            onClick: handleUnpublish,
+                          }
+                        ]
+                      }}
+                      trigger={['click']}
                     >
-                      {t('service.published')} <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                ) : (
-                  <Tooltip
-                    title={
-                      hasAnyChanges
-                        ? t('service.saveBeforePublishing')
-                        : (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
+                      <Button
+
+                        style={{
+                          ...headerButtonStyle,
+                          width: '100%',
+                          background: '#9133E8',
+                          borderColor: '#9133E8',
+                          color: '#fff',
+                          boxShadow: 'none',
+                        }}
+                        type="primary"
+                      >
+                        {t('service.published')} <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
+                      </Button>
+                    </Dropdown>
+                  ) : (
+                    <Tooltip
+                      title={
+                        (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))
                           ? t('service.defineParamsToPublish')
                           : ''
-                    }
-                  >
-                    <Button
-                      icon={<CheckCircleOutlined />}
-                      onClick={handlePublish}
-                      disabled={hasAnyChanges || (apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0))}
-                      style={headerButtonStyle}
+                      }
                     >
-                      {t('service.publish')}
-                    </Button>
-                  </Tooltip>
-                )
+                      <Button
+                        icon={<CheckCircleOutlined />}
+                        onClick={handlePublish}
+                        disabled={apiConfig.inputs.length === 0 && apiConfig.outputs.length === 0 && (!apiConfig.areas || apiConfig.areas.length === 0)}
+                        style={{ ...headerButtonStyle, width: '100%' }}
+                      >
+                        {t('service.publish')}
+                      </Button>
+                    </Tooltip>
+                  )}
+                </div>
               )}
 
               {/* Settings Button */}
-              <Button
-                icon={<SettingOutlined style={{ color: activeView === 'Settings' ? '#9233E9' : undefined }} />}
-                onClick={() => {
-                  setActiveView('Settings');
-                  saveViewPreference(serviceId, 'Settings');
-                }}
-                style={{
-                  ...headerButtonStyle,
-                  borderColor: activeView === 'Settings' ? '#9233E9' : undefined,
-                  color: activeView === 'Settings' ? '#9233E9' : undefined,
-                }}
-              >
-                {!isCompactNav && t('service.settings')}
-              </Button>
+              <Tooltip title={t('service.settings')}>
+                <Button
+                  type="text"
+                  icon={<SettingOutlined style={{ color: activeView === 'Settings' ? '#9233E9' : undefined, fontSize: 18 }} />}
+                  onClick={() => {
+                    if (activeView === 'Settings') {
+                      setActiveView('Workbook');
+                      saveViewPreference(serviceId, 'Workbook');
+                    } else {
+                      setActiveView('Settings');
+                      saveViewPreference(serviceId, 'Settings');
+                    }
+                  }}
+                  style={headerButtonStyle}
+                />
+              </Tooltip>
 
               <Dropdown
                 menu={{
@@ -3026,7 +3060,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           isLoading={!configLoaded}
                           hasUnsavedChanges={configHasChanges}
                           onRequireTokenChange={(value) => {
-                            handleConfigChange({ requireToken: value });
+                            if (apiConfig.requireToken !== value) {
+                              handleConfigChange({ requireToken: value });
+                            }
                           }}
                           onTokenCountChange={setTokenCount}
                           onTokensChange={setAvailableTokens}
@@ -3125,7 +3161,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         {/* Mobile Drawer */}
         <Drawer
-          title={t('service.parameters')}
+          title={t('service.workbook')}
           placement="left"
           onClose={() => setDrawerVisible(false)}
           open={drawerVisible}

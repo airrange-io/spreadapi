@@ -1,0 +1,43 @@
+/* SpreadJS purple accent override (replaces default green #217346) */
+:root {
+  --sjs-theme-accent: #502D80;
+}
+.gc-selection {
+  border-color: #502D80 !important;
+}
+.gc-drag-header-indicator,
+.gc-drag-indicator {
+  border-color: #502D80 !important;
+}
+.gc-columnHeader-selected,
+.gc-add-column-button-selected,
+.gc-columnHeader-highlight,
+.gc-add-column-button-highlight,
+.gc-rowHeader-selected,
+.gc-add-row-button-selected,
+.gc-rowHeader-highlight,
+.gc-add-row-button-highlight,
+.gc-tab-activeNotSelected,
+.gc-tab-active,
+.gc-spread-toolTip {
+  color: #502D80 !important;
+}
+.gc-corner-triangle-selected {
+  background-image: linear-gradient(to bottom, #502D80, #502D80) !important;
+  background-color: #502D80 !important;
+}
+.gc-tab-normal,
+.gc-tab-hover,
+.gc-tab-selected,
+.gc-tab-active {
+  border-bottom-color: #502D80 !important;
+}
+.gc-statusbar {
+  background: #502D80 !important;
+}
+.gc-statusbar-progress-item-wrapper {
+  background-color: #502D80 !important;
+}
+.gc-panel-area-item:hover {
+  border-color: #502D80 !important;
+}

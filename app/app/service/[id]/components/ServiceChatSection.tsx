@@ -33,7 +33,7 @@ const md = markdownit({
 });
 
 // Custom markdown renderer for Bubble component - matches existing chat styling
-const renderMarkdown: BubbleProps['messageRender'] = (content) => {
+const renderMarkdown: BubbleProps['contentRender'] = (content) => {
   return (
     <Typography>
       <div
@@ -313,7 +313,7 @@ const ServiceChatSection: React.FC<ServiceChatSectionProps> = ({
                     <Bubble
                       placement={isUser ? 'end' : 'start'}
                       content={content}
-                      messageRender={!isUser ? renderMarkdown : undefined}
+                      contentRender={!isUser ? renderMarkdown : undefined}
                       avatar={
                         isUser ? (
                           <Avatar

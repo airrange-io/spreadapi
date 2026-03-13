@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Space, Tag, Button, Dropdown, Tooltip } from 'antd';
-import { HolderOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import { Button, Tooltip, Modal } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { InputDefinition, OutputDefinition } from './ParametersSection';
 import { useTranslation } from '@/lib/i18n';
 
@@ -22,12 +22,13 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
   parameter,
   type,
   isDemoMode,
-  useCompactLayout,
   onNavigate,
   onEdit,
   onDelete,
 }) => {
   const { t } = useTranslation();
+  const [hovered, setHovered] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -43,152 +44,126 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const input = type === 'input' ? (parameter as InputDefinition) : null;
-  const output = type === 'output' ? (parameter as OutputDefinition) : null;
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="sortable-parameter-item"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div style={{
-        padding: '8px 12px',
-        background: 'white',
-        borderRadius: '8px',
-        border: '1px solid #e8e8e8',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '10px 8px',
         cursor: isDragging ? 'grabbing' : 'default',
+        borderRadius: 8,
+        background: hovered ? '#FAF9FF' : 'transparent',
+        transition: 'background 0.15s',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Drag Handle */}
-          <div
-            {...attributes}
-            {...listeners}
-            role="button"
-            aria-label={t('sortable.dragToReorder', { name: parameter.name })}
-            aria-describedby={`drag-hint-${parameter.id}`}
-            tabIndex={0}
-            style={{
-              cursor: 'grab',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              color: '#999',
-              transition: 'color 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#502D80';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#999';
-            }}
-            onKeyDown={(e) => {
-              // Improve keyboard accessibility
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-              }
-            }}
-          >
-            <HolderOutlined />
-            {/* Hidden hint for screen readers */}
-            <span id={`drag-hint-${parameter.id}`} style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}>
-              {t('sortable.dragHint')}
-            </span>
-          </div>
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          role="button"
+          tabIndex={0}
+          style={{
+            cursor: 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            color: '#ccc',
+            fontSize: 14,
+          }}
+        >
+          <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">
+            <circle cx="2" cy="1.5" r="1.2" />
+            <circle cx="6" cy="1.5" r="1.2" />
+            <circle cx="2" cy="6" r="1.2" />
+            <circle cx="6" cy="6" r="1.2" />
+            <circle cx="2" cy="10.5" r="1.2" />
+            <circle cx="6" cy="10.5" r="1.2" />
+          </svg>
+        </div>
 
-          {/* Parameter Content */}
-          <div
-            style={{ cursor: 'pointer', flex: 1, minWidth: 0, overflow: 'hidden' }}
-            onClick={onNavigate}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.8';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-          >
-            <div style={{
-              fontSize: '14px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              <strong style={{ color: input?.mandatory !== false ? '#4F2D7F' : 'inherit' }}>
-                {parameter.name}
-              </strong>
-            </div>
-            <div style={{
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
-              {useCompactLayout ? (
-                <span style={{ color: '#888', fontSize: '11px' }}>{parameter.address}</span>
-              ) : (
-                parameter.title && parameter.title !== parameter.name && (
-                  <span style={{ color: '#888', fontSize: '11px' }}>{parameter.title}</span>
-                )
-              )}
-              {input && (input.min !== undefined || input.max !== undefined) && (
-                <span style={{ fontSize: '11px', color: '#999', marginLeft: '8px' }}>
-                  {input.min !== undefined && `Min: ${input.min}`}
-                  {input.min !== undefined && input.max !== undefined && ' • '}
-                  {input.max !== undefined && `Max: ${input.max}`}
-                </span>
-              )}
-            </div>
-          </div>
+        {/* IN/OUT Badge */}
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: type === 'input' ? '#1665A1' : '#7B3AED',
+          background: type === 'input' ? '#E8F2FB' : '#F0EEFF',
+          borderRadius: 6,
+          padding: '2px 0',
+          margin: '0 4px',
+          width: 38,
+          textAlign: 'center',
+          flexShrink: 0,
+          lineHeight: '16px',
+        }}>
+          {type === 'input' ? 'IN' : 'OUT'}
+        </span>
 
-          {/* Actions */}
-          <Space size={4} style={{ flexShrink: 0 }}>
-            {!useCompactLayout && (
-              <Tooltip title={parameter.address} placement="top">
-                <Tag
-                  onClick={onNavigate}
-                  style={{
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    maxWidth: '150px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    background: '#E8F4FD',
-                    color: '#4F2D7F',
-                    borderColor: '#E8F4FD',
-                    margin: 0,
-                    marginTop: 4
-                  }}
-                >
-                  {parameter.address}
-                </Tag>
-              </Tooltip>
-            )}
+        {/* Parameter Content */}
+        <div
+          style={{ cursor: 'pointer', flex: 1, minWidth: 0 }}
+          onClick={onNavigate}
+        >
+          <div style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#1a1a1a',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {parameter.name}
+          </div>
+          <div style={{
+            fontSize: 12,
+            color: '#aaa',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {parameter.address}
+          </div>
+        </div>
+
+        {/* Hover Actions */}
+        <div style={{
+          display: 'flex',
+          gap: 2,
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.15s',
+          flexShrink: 0,
+        }}>
+          <Tooltip title={t('common.edit')}>
             <Button
               size="small"
               type="text"
-              icon={<EditOutlined />}
-              onClick={onEdit}
+              icon={<EditOutlined style={{ color: '#888' }} />}
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
             />
-            {!isDemoMode && (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: 'delete',
-                      label: t('sortable.delete'),
-                      icon: <DeleteOutlined />,
-                      danger: true,
-                      onClick: onDelete,
-                    },
-                  ],
+          </Tooltip>
+          {!isDemoMode && (
+            <Tooltip title={t('common.delete')}>
+              <Button
+                size="small"
+                type="text"
+                icon={<DeleteOutlined style={{ color: '#888' }} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  Modal.confirm({
+                    title: t('params.deleteParameter'),
+                    content: t('params.cannotUndo'),
+                    okText: t('common.yes'),
+                    cancelText: t('common.no'),
+                    okButtonProps: { danger: true },
+                    onOk: onDelete,
+                  });
                 }}
-                trigger={['click']}
-                placement="bottomRight"
-              >
-                <Button size="small" type="text" icon={<MoreOutlined />} />
-              </Dropdown>
-            )}
-          </Space>
+              />
+            </Tooltip>
+          )}
         </div>
       </div>
     </div>

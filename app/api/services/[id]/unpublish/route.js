@@ -55,19 +55,20 @@ export async function POST(request, { params }) {
         console.warn('Failed to delete blob:', error);
       }
     }
-    
+
     // Delete published data and caches in single round-trip
     const multi = redis.multi();
     multi.del(`service:${serviceId}:published`);
     multi.del(CACHE_KEYS.apiCache(serviceId));
     multi.del(CACHE_KEYS.resultCache(serviceId));
+    multi.del(CACHE_KEYS.workbookCache(serviceId));
     multi.hSet(`user:${userId}:services`, serviceId, 'draft');
     await multi.exec();
-    
+
     // Revalidate services cache
     await revalidateServicesCache();
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       success: true,
       message: 'Service unpublished successfully'
     });

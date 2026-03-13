@@ -11,6 +11,7 @@ import * as GC from "@mescius/spread-sheets";
 import "@mescius/spread-sheets-io";
 import "@mescius/spread-sheets-tablesheet";
 import "@mescius/spread-sheets/styles/gc.spread.sheets.excel2013white.css";
+import "@/styles/spreadjs-purple-override.css";
 
 // Set license key from environment variable
 if (typeof window !== "undefined") {

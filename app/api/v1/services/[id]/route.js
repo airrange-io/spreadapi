@@ -297,19 +297,25 @@ export async function DELETE(request, { params }) {
       }, { status: 409 });
     }
 
-    // Delete all service data
-    const keysToDelete = [
-      `service:${serviceId}:metadata`,
-      `service:${serviceId}:workbook`,
-      `service:${serviceId}:areas`,
-      `service:${serviceId}:cache`,
-      `service:${serviceId}:tokens`
-    ];
-
+    // Delete known service data
     await Promise.all([
-      ...keysToDelete.map(key => redis.del(key)),
+      redis.del(`service:${serviceId}:metadata`),
+      redis.del(`service:${serviceId}:workbook`),
+      redis.del(`service:${serviceId}:areas`),
+      redis.del(`service:${serviceId}:cache`),
+      redis.del(`service:${serviceId}:tokens`),
       redis.hDel(`user:${userId}:services`, serviceId)
     ]);
+
+    // Scan for any remaining keys (analytics, call tracking, etc.)
+    let cursor = 0;
+    do {
+      const scanResult = await redis.scan(cursor, { MATCH: `service:${serviceId}:*`, COUNT: 100 });
+      cursor = scanResult.cursor;
+      if (scanResult.keys.length > 0) {
+        await redis.del(scanResult.keys);
+      }
+    } while (cursor !== 0);
 
     return NextResponse.json({
       message: 'Service deleted successfully'

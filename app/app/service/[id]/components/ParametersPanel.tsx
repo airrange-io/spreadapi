@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { App, Skeleton } from 'antd';
+import { App, Skeleton, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import * as GC from '@mescius/spread-sheets';
@@ -112,6 +113,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const [selectedCellInfo, setSelectedCellInfo] = useState<any>(null);
   const [suggestedParamName, setSuggestedParamName] = useState<string>('');
   const [parameterType, setParameterType] = useState<'input' | 'output'>('input');
+  const [activeTab, setActiveTab] = useState<'parameters' | 'areas'>('parameters');
 
   // Helper function to check overlap between two ranges
   const checkRangeOverlap = (range1: any, range2: any) => {
@@ -943,6 +945,35 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       opacity: mounted ? 1 : 0,
       transition: 'opacity 0.3s ease-in-out'
     }}>
+      {/* Tab Bar */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid #f0f0f0',
+        flex: '0 0 auto',
+      }}>
+        {(['parameters', 'areas'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              padding: '12px 0',
+              fontSize: 14,
+              fontWeight: activeTab === tab ? 600 : 400,
+              color: activeTab === tab ? '#9233E9' : '#888',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === tab ? '2px solid #9233E9' : '2px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              textAlign: 'center',
+            }}
+          >
+            {tab === 'parameters' ? t('params.tabParameters') : t('params.tabAiAreas')}
+          </button>
+        ))}
+      </div>
+
       {/* Scrollable content area */}
       <div style={{
         flex: 1,
@@ -961,6 +992,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             hasInitialized={hasInitialized}
             isDemoMode={isDemoMode}
             panelWidth={panelWidth}
+            activeTab={activeTab}
             onNavigateToParameter={navigateToParameter}
             onEditParameter={handleEditParameter}
             onDeleteParameter={handleDeleteParameter}
@@ -977,17 +1009,42 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       {/* Fixed button at bottom */}
       <Suspense fallback={null}>
         <div ref={buttonAreaRef}>
-          <AddParameterButton
-            currentSelection={currentSelection}
-            spreadsheetReady={spreadsheetReady}
-            spreadInstance={spreadInstance}
-            inputs={inputs}
-            outputs={outputs}
-            isCompact={panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX}
-            onAddFromSelection={handleAddParameterFromSelection}
-            onAddAsEditableArea={handleAddAreaFromSelection}
-            buttonRef={addButtonRef}
-          />
+          {activeTab === 'parameters' ? (
+            <AddParameterButton
+              currentSelection={currentSelection}
+              spreadsheetReady={spreadsheetReady}
+              spreadInstance={spreadInstance}
+              inputs={inputs}
+              outputs={outputs}
+              isCompact={panelWidth < COMPACT_LAYOUT_BREAKPOINT_PX}
+              onAddFromSelection={handleAddParameterFromSelection}
+              onAddAsEditableArea={handleAddAreaFromSelection}
+              buttonRef={addButtonRef}
+            />
+          ) : (
+            <div style={{
+              padding: '12px',
+              background: 'white',
+              flex: '0 0 auto',
+              borderTop: '1px solid #f0f0f0',
+            }}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                style={{
+                  width: '100%',
+                  height: 42,
+                  borderRadius: 10,
+                  background: '#9233E9',
+                  borderColor: '#9233E9',
+                  boxShadow: 'none',
+                }}
+                onClick={handleAddAreaFromSelection}
+              >
+                {t('params.addAiArea')}
+              </Button>
+            </div>
+          )}
         </div>
       </Suspense>
 

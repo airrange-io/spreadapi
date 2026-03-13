@@ -306,20 +306,31 @@ export async function DELETE(request) {
       }
     }
     
-    // Delete service and all caches in single round-trip
+    // Delete known keys in single round-trip
     const multi = redis.multi();
     multi.del(`service:${serviceId}`);
     multi.del(CACHE_KEYS.apiCache(serviceId));
     multi.del(CACHE_KEYS.resultCache(serviceId));
+    multi.del(CACHE_KEYS.workbookCache(serviceId));
     multi.hDel(`user:${userId}:services`, serviceId);
     await multi.exec();
-    
+
+    // Scan for any remaining keys (analytics, call tracking, tokens, etc.)
+    let cursor = 0;
+    do {
+      const scanResult = await redis.scan(cursor, { MATCH: `service:${serviceId}:*`, COUNT: 100 });
+      cursor = scanResult.cursor;
+      if (scanResult.keys.length > 0) {
+        await redis.del(scanResult.keys);
+      }
+    } while (cursor !== 0);
+
     // Revalidate services cache
     await revalidateServicesCache();
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       success: true,
-      workbookDeleted 
+      workbookDeleted
     });
   } catch (error) {
     console.error('Error deleting service:', error);
