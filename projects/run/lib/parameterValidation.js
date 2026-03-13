@@ -128,9 +128,10 @@ export function validateParameters(inputs, inputDefinitions) {
     const inputDef = inputDefinitions.find(apiInput => {
       const apiName = apiInput.name?.toLowerCase();
       const apiTitle = apiInput.title?.toLowerCase();
+      const apiAddress = apiInput.address?.toLowerCase();
       const apiNameNoUnderscore = apiName?.replace(/[\s_-]/g, '');
       const apiTitleNoUnderscore = apiTitle?.replace(/[\s_-]/g, '');
-      return apiName === inputKey || apiTitle === inputKey || apiNameNoUnderscore === inputKeyNoUnderscore || apiTitleNoUnderscore === inputKeyNoUnderscore;
+      return apiName === inputKey || apiTitle === inputKey || apiAddress === inputKey || apiNameNoUnderscore === inputKeyNoUnderscore || apiTitleNoUnderscore === inputKeyNoUnderscore;
     });
 
     if (!inputDef) continue;
@@ -195,9 +196,10 @@ export function coerceTypes(inputs, inputDefinitions) {
     const inputDef = inputDefinitions.find(apiInput => {
       const apiName = apiInput.name?.toLowerCase();
       const apiTitle = apiInput.title?.toLowerCase();
+      const apiAddress = apiInput.address?.toLowerCase();
       const apiNameNoUnderscore = apiName?.replace(/[\s_-]/g, '');
       const apiTitleNoUnderscore = apiTitle?.replace(/[\s_-]/g, '');
-      return apiName === inputKey || apiTitle === inputKey || apiNameNoUnderscore === inputKeyNoUnderscore || apiTitleNoUnderscore === inputKeyNoUnderscore;
+      return apiName === inputKey || apiTitle === inputKey || apiAddress === inputKey || apiNameNoUnderscore === inputKeyNoUnderscore || apiTitleNoUnderscore === inputKeyNoUnderscore;
     });
 
     if (!inputDef) { result[key] = value; continue; }
@@ -230,4 +232,4 @@ export function coerceTypes(inputs, inputDefinitions) {
   return result;
 }
 
-export default { validateParameters, applyDefaults, coerceTypes };
+export default { validateParameters, applyDefaults, coerceTypes, validateSingleParameter, coerceToBoolean };

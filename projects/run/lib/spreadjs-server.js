@@ -115,5 +115,10 @@ module.exports = {
   getCachedWorkbook,
   loadTablesheetModule,
   needsTablesheetModule,
-  initializeSpreadJS
+  initializeSpreadJS,
+  getCacheStats: () => ({
+    size: workbookCache.size,
+    maxSize: CACHE_MAX_SIZE,
+    ttlMs: CACHE_TTL_MS
+  })
 };

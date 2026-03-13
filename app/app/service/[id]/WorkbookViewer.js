@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { Spin } from "antd";
 import * as GC from "@mescius/spread-sheets";
+import "@mescius/spread-sheets-io";
 import "@mescius/spread-sheets-tablesheet";
 import "@mescius/spread-sheets/styles/gc.spread.sheets.excel2013white.css";
 

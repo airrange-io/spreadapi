@@ -106,7 +106,7 @@ function trackAnalytics(serviceId, metric, value) {
  */
 export async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
   const timeAll = Date.now();
-  const { nocache = false, isWebAppAuthenticated = false } = options;
+  const { nocdn = false, nocache = false, isWebAppAuthenticated = false } = options;
 
   try {
     // Note: logCalls is now called from route.js with after() for Vercel compatibility
@@ -461,6 +461,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         fromRedisCache: fromRedisCache,
         cached: fromProcessCache || fromRedisCache,
         cacheLayer: cacheLayer,
+        processCacheStats: spreadjsModule && spreadjsModule.getCacheStats ? spreadjsModule.getCacheStats() : null,
         memoryUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`
       }
     };

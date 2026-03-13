@@ -35,9 +35,6 @@ const PWAInstallPrompt = dynamic(() => import('../components/PWAInstallPrompt').
   ssr: false
 });
 
-const TawkTo = dynamic(() => import('../components/TawkTo').then(mod => ({ default: mod.TawkTo })), {
-  ssr: false
-});
 
 // MCP Settings Modal removed - now using service-specific MCP Integration
 
@@ -79,6 +76,12 @@ const ListsPage: React.FC = observer(() => {
   const [onboardingCollapsed, setOnboardingCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('spreadapi_onboarding_collapsed') === 'true';
+    }
+    return false;
+  });
+  const [onboardingHidden, setOnboardingHidden] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('spreadapi_onboarding_hidden') === 'true';
     }
     return false;
   });
@@ -781,8 +784,8 @@ const ListsPage: React.FC = observer(() => {
             {/* Main content */}
             <div style={{ flex: 1, background: '#fdfdfd', padding: '12px 16px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: 960, margin: '0 auto', width: '100%' }}>
 
-              {/* Onboarding Panel — collapsible, shown for users with < 7 services, hidden inside folders */}
-              {!searchQuery && serviceCount < 7 && !activeFolderId && (
+              {/* Onboarding Panel — collapsible, hidden when searching or inside folders, deferred to client to avoid flash */}
+              {isClient && !searchQuery && !activeFolderId && !onboardingHidden && (
                 <div style={{
                   background: '#F0F4FB',
                   border: '1px solid #DFEAF5',
@@ -795,10 +798,10 @@ const ListsPage: React.FC = observer(() => {
                   {onboardingCollapsed ? (
                     /* Collapsed bar */
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <svg width="14" height="16" viewBox="0 0 14 16" fill="none" style={{ flexShrink: 0 }}>
+                      <svg onClick={() => { setOnboardingCollapsed(false); localStorage.setItem('spreadapi_onboarding_collapsed', 'false'); }} width="14" height="16" viewBox="0 0 14 16" fill="none" style={{ flexShrink: 0, cursor: 'pointer' }}>
                         <path d="M2 2L12 8L2 14V2Z" stroke="#7c5cc4" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
                       </svg>
-                      <span style={{ fontWeight: 500, fontSize: 13, color: '#1a1a1a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                      <span onClick={() => { setOnboardingCollapsed(false); localStorage.setItem('spreadapi_onboarding_collapsed', 'false'); }} style={{ fontWeight: 500, fontSize: 13, color: '#1a1a1a', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, cursor: 'pointer' }}>
                         {t('onboarding.title')}
                       </span>
                       <span
@@ -813,7 +816,7 @@ const ListsPage: React.FC = observer(() => {
                       </span>
                       <span style={{ width: 1, height: 16, background: '#DFEAF5' }} />
                       <span
-                        onClick={() => window.open('mailto:support@spreadapi.com', '_blank')}
+                        onClick={() => window.open('mailto:support@spreadapi.com?subject=' + encodeURIComponent('SpreadAPI Support Request') + '&body=' + encodeURIComponent('Hi SpreadAPI Team,\n\nI need help with:\n\n\n---\nAccount: ' + (appStore.user.email || 'Not logged in') + '\nURL: ' + window.location.href), '_blank')}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#999', cursor: 'pointer' }}
                       >
                         <MessageOutlined style={{ fontSize: 13 }} />
@@ -935,14 +938,23 @@ const ListsPage: React.FC = observer(() => {
                         ))}
                       </div>
 
-                      {/* Support link */}
-                      <div style={{ paddingTop: 10, borderTop: '1px solid #e8e8e8' }}>
+                      {/* Support link and dismiss */}
+                      <div style={{ paddingTop: 10, borderTop: '1px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span
-                          onClick={() => window.open('mailto:support@spreadapi.com', '_blank')}
+                          onClick={() => window.open('mailto:support@spreadapi.com?subject=' + encodeURIComponent('SpreadAPI Support Request') + '&body=' + encodeURIComponent('Hi SpreadAPI Team,\n\nI need help with:\n\n\n---\nAccount: ' + (appStore.user.email || 'Not logged in') + '\nURL: ' + window.location.href), '_blank')}
                           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#999', cursor: 'pointer' }}
                         >
                           <MessageOutlined style={{ fontSize: 13 }} />
                           {t('onboarding.contactSupport')}
+                        </span>
+                        <span
+                          onClick={() => {
+                            setOnboardingHidden(true);
+                            localStorage.setItem('spreadapi_onboarding_hidden', 'true');
+                          }}
+                          style={{ fontSize: 12, color: '#bbb', cursor: 'pointer' }}
+                        >
+                          {locale === 'de' ? 'Nicht mehr anzeigen' : "Don't show this again"}
                         </span>
                       </div>
                     </>
@@ -999,10 +1011,6 @@ const ListsPage: React.FC = observer(() => {
           <IntercomProvider />
           <IntercomScript />
 
-          <TawkTo
-            propertyId={process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID}
-            widgetId={process.env.NEXT_PUBLIC_TAWK_WIDGET_ID}
-          />
         </>
       )}
 
