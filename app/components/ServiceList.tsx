@@ -260,6 +260,21 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
     notification.success({ message: t('serviceList.endpointCopied') });
   }, [notification, t]);
 
+  const handleDuplicate = useCallback(async (serviceId: string, serviceName: string) => {
+    try {
+      const res = await fetch(`/api/services/${serviceId}/duplicate`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        notification.error({ message: data.message || t('serviceList.duplicateFailed') });
+        return;
+      }
+      notification.success({ message: t('serviceList.duplicated', { name: serviceName }) });
+      loadServices();
+    } catch {
+      notification.error({ message: t('serviceList.duplicateFailed') });
+    }
+  }, [notification, t, loadServices]);
+
   // Folder handlers
   const handleCreateFolder = useCallback(() => {
     createFolder(t('folders.defaultName'));
@@ -343,6 +358,7 @@ export default function ServiceList({ searchQuery = '', viewMode = 'list', isAut
             onDelete={handleDelete}
             onCopyId={handleCopyId}
             onCopyEndpoint={handleCopyEndpoint}
+            onDuplicate={handleDuplicate}
             isNavigating={clickedServiceId === service.id}
             callCount={displayCount}
             locale={locale}

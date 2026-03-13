@@ -192,6 +192,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const statusBarRef = useRef<HTMLDivElement>(null);
   const testButtonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const templateParamsPromptedRef = useRef(false);
+  const handleSaveRef = useRef<() => Promise<void>>();
 
   // Lazy load tour only when needed
   const [tourState, setTourState] = useState<{
@@ -233,7 +234,18 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     if (tourCompleted) return;
 
     // Only load tour code if user hasn't seen it
-    const timer = setTimeout(async () => {
+    // Wait for refs to be available (lazy-loaded components may not be mounted yet)
+    let attempts = 0;
+    const maxAttempts = 10;
+    const checkInterval = setInterval(async () => {
+      attempts++;
+      // Wait until all refs are mounted or give up
+      if (!parametersPanelRef.current || !addButtonRef.current || !viewSwitcherRef.current) {
+        if (attempts >= maxAttempts) clearInterval(checkInterval);
+        return;
+      }
+      clearInterval(checkInterval);
+
       try {
         // Dynamic imports - only loaded when needed
         const [{ getServiceDetailTourSteps }, { Tour }] = await Promise.all([
@@ -266,9 +278,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       } catch (error) {
         console.error('Failed to load tour:', error);
       }
-    }, 2000);
+    }, 1000);
 
-    return () => clearTimeout(timer);
+    return () => clearInterval(checkInterval);
   }, [template, activeView, workbookLoaded, isMobile, locale]);
 
   // Auto-detect parameters from template cell addresses using SpreadJS
@@ -572,6 +584,10 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       content: t('service.setupParametersContent', { count: String(template.cells.length) }),
       okText: t('service.yesSetUp'),
       cancelText: t('service.noThanks'),
+      onCancel: () => {
+        // Auto-save just the workbook even if user skips parameter setup
+        setTimeout(() => handleSaveRef.current?.(), 500);
+      },
       onOk: () => {
         const result = autoDetectTemplateParameters(spreadInstance, template.cells);
         setApiConfig(prev => ({ ...prev, inputs: result.inputs, outputs: result.outputs }));
@@ -580,6 +596,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         notification.success({
           message: t('service.paramsAutoConfigured', { total: String(totalParams), inputs: String(result.inputs.length), outputs: String(result.outputs.length) })
         });
+
+        // Auto-save workbook + parameters after template setup
+        setTimeout(() => handleSaveRef.current?.(), 500);
 
         // After parameters are added, show a one-step tour highlighting the test button
         // Delay to let React render the test button (it's conditional on parameters existing)
@@ -1959,6 +1978,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       setSaveProgress({ visible: false, percent: 0, status: '' });
     }
   };
+  handleSaveRef.current = handleSave;
 
   // Handle zoom level changes
   const handleZoomChange = useCallback((newZoom: number) => {

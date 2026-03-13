@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Dropdown, Popconfirm } from 'antd';
-import { MoreOutlined, DeleteOutlined, CopyOutlined, ApiOutlined, ClockCircleOutlined, BarChartOutlined, LoadingOutlined } from '@ant-design/icons';
+import { MoreOutlined, DeleteOutlined, CopyOutlined, ApiOutlined, ClockCircleOutlined, BarChartOutlined, LoadingOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 import type { MenuProps } from 'antd';
 
@@ -23,6 +23,7 @@ interface ServiceCardCompactProps {
   onDelete: (id: string, name: string) => void;
   onCopyId: (id: string) => void;
   onCopyEndpoint: (id: string) => void;
+  onDuplicate: (id: string, name: string) => void;
   isNavigating?: boolean;
   callCount?: number;
   locale?: string;
@@ -70,6 +71,7 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
   onDelete,
   onCopyId,
   onCopyEndpoint,
+  onDuplicate,
   isNavigating = false,
   callCount,
   locale = 'en',
@@ -99,6 +101,15 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
         onCopyEndpoint(service.id);
       },
       disabled: service.status === 'draft' || service.status === 'private',
+    },
+    {
+      key: 'duplicate',
+      icon: <SnippetsOutlined />,
+      label: t('serviceList.duplicate'),
+      onClick: (e: any) => {
+        e.domEvent.stopPropagation();
+        onDuplicate(service.id, service.name);
+      },
     },
     ...(folderMenuItems ? [{ type: 'divider' as const }, ...folderMenuItems] : []),
     { type: 'divider' as const },
