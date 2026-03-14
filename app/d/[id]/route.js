@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import redis from '@/lib/redis';
-import { calculateDirect } from '../../api/v1/services/[id]/execute/calculateDirect.js';
+import { calculateDirect, logCalls } from '../../api/v1/services/[id]/execute/calculateDirect.js';
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
@@ -340,7 +340,11 @@ async function handleCalculate(serviceDef, body, token) {
 
   try {
     const normalizedInputs = normalizeInputKeys(inputs);
-    const result = await calculateDirect(serviceId, normalizedInputs, token || body.token || null, {});
+    const effectiveToken = token || body.token || null;
+    const result = await calculateDirect(serviceId, normalizedInputs, effectiveToken, {});
+
+    // Log call after response (Vercel keeps function alive with after())
+    after(() => logCalls(serviceId, effectiveToken));
 
     if (result.error) {
       // Include details for self-correction
@@ -398,12 +402,13 @@ async function handleBatch(serviceDef, body, token) {
   }
 
   const results = [];
+  const effectiveToken = token || body.token || null;
 
   for (let i = 0; i < scenarios.length; i++) {
     const scenario = scenarios[i];
     try {
       const normalizedInputs = normalizeInputKeys(scenario.inputs || {});
-      const result = await calculateDirect(serviceId, normalizedInputs, token || body.token || null, {});
+      const result = await calculateDirect(serviceId, normalizedInputs, effectiveToken, {});
 
       if (result.error) {
         results.push({
@@ -429,6 +434,12 @@ async function handleBatch(serviceDef, body, token) {
       });
     }
   }
+
+  // Log each scenario as a separate call for billing accuracy
+  after(() => {
+    const logPromises = results.map(() => logCalls(serviceId, effectiveToken));
+    return Promise.all(logPromises);
+  });
 
   return NextResponse.json({
     success: true,
