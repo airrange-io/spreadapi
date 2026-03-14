@@ -4,7 +4,6 @@
 User-agent: *
 # Block app internals but allow strategic pages
 Disallow: /api/
-Allow: /api/d/
 Disallow: /admin/
 Disallow: /service/*/edit
 Disallow: /auth/
@@ -31,13 +30,11 @@ Sitemap: https://spreadapi.io/blog/feed.xml
 User-agent: Googlebot
 Allow: /
 Disallow: /api/
-Allow: /api/d/
 Disallow: /dashboard/
 Crawl-delay: 0
 
 User-agent: Bingbot
 Allow: /
 Disallow: /api/
-Allow: /api/d/
 Disallow: /dashboard/
 Crawl-delay: 1

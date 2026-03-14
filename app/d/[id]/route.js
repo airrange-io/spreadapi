@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { calculateDirect } from '../../v1/services/[id]/execute/calculateDirect.js';
+import { calculateDirect } from '@/app/api/v1/services/[id]/execute/calculateDirect.js';
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
@@ -499,13 +499,13 @@ export async function GET(request, { params }) {
     const origin = request.headers.get('x-forwarded-host')
       ? `https://${request.headers.get('x-forwarded-host')}`
       : new URL(request.url).origin;
-    const endpoint = `${origin}/api/d/${serviceId}`;
+    const endpoint = `${origin}/d/${serviceId}`;
 
     const discovery = buildDiscoveryResponse(serviceDef, endpoint, token);
 
     return NextResponse.json(discovery, { headers: CORS_HEADERS });
   } catch (error) {
-    console.error('[API/d] GET error:', error);
+    console.error('[/d] GET error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500, headers: CORS_HEADERS }
@@ -532,7 +532,7 @@ export async function POST(request, { params }) {
 
     return handleAction(serviceDef, body, token);
   } catch (error) {
-    console.error('[API/d] POST error:', error);
+    console.error('[/d] POST error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500, headers: CORS_HEADERS }

@@ -88,7 +88,8 @@
       "WebFetch(domain:spreadapi.run)",
       "Bash(sed:*)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(find /Users/stephanmethner/AR/repos/spreadapi/app -type f \\\\\\( -name \"*token*\" -o -name \"*api*\" \\\\\\) 2>/dev/null | head -20)"
+      "Bash(find /Users/stephanmethner/AR/repos/spreadapi/app -type f \\\\\\( -name \"*token*\" -o -name \"*api*\" \\\\\\) 2>/dev/null | head -20)",
+      "Bash(rm \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d/[id]/route.js\" && rmdir \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d/[id]\" && rmdir \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d\")"
     ],
     "deny": []
   }

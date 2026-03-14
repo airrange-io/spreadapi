@@ -45,8 +45,8 @@ const AiConnectionPanel: React.FC<AiConnectionPanelProps> = ({
   // Build the URL
   const connectionUrl = useMemo(() => {
     const base = typeof window !== 'undefined'
-      ? `${window.location.origin}/api/d/${serviceId}`
-      : `https://spreadapi.io/api/d/${serviceId}`;
+      ? `${window.location.origin}/d/${serviceId}`
+      : `https://spreadapi.io/d/${serviceId}`;
 
     if (requireToken && selectedToken?.token) {
       return `${base}?token=${selectedToken.token}`;

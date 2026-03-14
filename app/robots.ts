@@ -33,10 +33,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/api/d/'],
+        allow: '/',
         disallow: [
           '/app/',        // User dashboard/app area
-          '/api/',        // API endpoints (except /api/d/ for AI discovery)
+          '/api/',        // API endpoints
           '/auth/',       // Authentication pages
           '/_next/',      // Next.js internal
           '/admin/',      // Admin area if any
@@ -44,7 +44,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'GPTBot',
-        allow: [...allMarketingPages, '/api/d/'],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',
@@ -52,7 +52,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'ChatGPT-User',
-        allow: [...allMarketingPages, '/api/d/'],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',
@@ -60,7 +60,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Claude-Web',
-        allow: [...allMarketingPages, '/api/d/'],
+        allow: allMarketingPages,
         disallow: [
           '/app/',
           '/api/',
