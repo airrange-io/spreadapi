@@ -275,18 +275,181 @@ const AppsView: React.FC<AppsViewProps> = ({
 
   // Render content based on selected menu item
   const renderContent = () => {
-    // Intro & Token Management
+    // Intro
     if (selectedKey === 'intro') {
-      return (
-        <div>
-          <h3 style={{ marginTop: 0, marginBottom: 16 }}>{t('apps.tokenManagement')}</h3>
+      const useCaseIcons = ['💰', '📋', '🔍', '📝', '📊'];
+      const useCaseKeys = ['apps.introUseCase1', 'apps.introUseCase2', 'apps.introUseCase3', 'apps.introUseCase4', 'apps.introUseCase5'] as const;
 
-          {apiConfig.requireToken ? (
-            // Token-protected service: show token management
-            <>
+      return (
+        <div style={{ maxWidth: 800 }}>
+          {/* Header */}
+          <h2 style={{ marginTop: 0, marginBottom: 8, fontSize: 24, fontWeight: 700 }}>
+            {t('apps.introTitle')}
+          </h2>
+          <p style={{ color: '#666', fontSize: 14, marginBottom: 32, lineHeight: 1.6 }}>
+            {t('apps.introSubtitle')}
+          </p>
+
+          {/* Feature Cards */}
+          <Row gutter={16} style={{ marginBottom: 40 }}>
+            <Col xs={24} sm={12}>
+              <div
+                onClick={() => setSelectedKey('webapp')}
+                style={{
+                  border: '1px solid #e8e0ff',
+                  borderRadius: 12,
+                  padding: 24,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  height: '100%',
+                  position: 'relative',
+                  background: '#fff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#7B3AED';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(123, 58, 237, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e8e0ff';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ position: 'absolute', top: 12, right: 16 }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#52c41a',
+                  }}>
+                    {t('apps.introAvailable')}
+                  </span>
+                </div>
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: '#f0eeff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 16,
+                  fontSize: 20,
+                  color: '#7B3AED',
+                }}>
+                  <AppstoreOutlined />
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+                  {t('apps.introWebAppTitle')}
+                </div>
+                <div style={{ fontSize: 13, color: '#666', lineHeight: 1.5, marginBottom: 16 }}>
+                  {t('apps.introWebAppDescription')}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#7B3AED' }}>
+                  {t('apps.introConfigure')} →
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} sm={12}>
+              <div
+                onClick={() => {
+                  const firstTemplate = Object.values(SYSTEM_TEMPLATES)[0];
+                  if (firstTemplate) setSelectedKey(firstTemplate.id);
+                }}
+                style={{
+                  border: '1px solid #e8e0ff',
+                  borderRadius: 12,
+                  padding: 24,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  height: '100%',
+                  position: 'relative',
+                  background: '#fff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#7B3AED';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(123, 58, 237, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e8e0ff';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{ position: 'absolute', top: 12, right: 16 }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#52c41a',
+                  }}>
+                    {t('apps.introAvailable')}
+                  </span>
+                </div>
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: '#f0eeff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 16,
+                  fontSize: 20,
+                  color: '#7B3AED',
+                }}>
+                  <FolderOutlined />
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+                  {t('apps.introWebSnippetTitle')}
+                </div>
+                <div style={{ fontSize: 13, color: '#666', lineHeight: 1.5, marginBottom: 16 }}>
+                  {t('apps.introWebSnippetDescription')}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#7B3AED' }}>
+                  {t('apps.introCreateSnippet')} →
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Use Cases */}
+          <div>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#999',
+              letterSpacing: '0.05em',
+              marginBottom: 12,
+            }}>
+              {t('apps.introUseCasesTitle')}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {useCaseKeys.map((key, i) => (
+                <span
+                  key={key}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    border: '1px solid #e8e8e8',
+                    fontSize: 13,
+                    color: '#444',
+                    background: '#fafafa',
+                  }}
+                >
+                  <span>{useCaseIcons[i]}</span>
+                  {t(key)}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Token Management (if needed) */}
+          {apiConfig.requireToken && (
+            <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid #f0f0f0' }}>
+              <h3 style={{ marginTop: 0, marginBottom: 16, fontSize: 16 }}>{t('apps.tokenManagement')}</h3>
               {!webAppToken ? (
                 <div>
-                  <p style={{ color: '#666', marginBottom: 16 }}>
+                  <p style={{ color: '#666', marginBottom: 16, fontSize: 13 }}>
                     {t('apps.generateTokenDescription')}
                   </p>
                   <Button
@@ -303,49 +466,38 @@ const AppsView: React.FC<AppsViewProps> = ({
                   )}
                 </div>
               ) : (
-                <Space orientation="vertical" style={{ width: '100%' }} size={16}>
-                  <div>
-                    <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                      {t('apps.webAppToken')}
-                    </div>
-                    <Space.Compact style={{ display: 'flex', width: '100%', flexWrap: 'nowrap' }}>
-                      <Input
-                        value={webAppToken}
-                        readOnly
-                        style={{ flex: 1, minWidth: 0, height: 32, overflow: 'hidden' }}
-                      />
-                      <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
-                        <Button
-                          icon={<ReloadOutlined />}
-                          onClick={handleGenerateToken}
-                          disabled={isDemoMode}
-                        />
-                      </Tooltip>
-                      <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.disableWebAppTooltip')}>
-                        <Button
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={handleDeleteToken}
-                          disabled={isDemoMode}
-                        />
-                      </Tooltip>
-                    </Space.Compact>
-
-                    <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                      {t('apps.regenerateHint')}
-                    </div>
+                <div>
+                  <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
+                    {t('apps.webAppToken')}
                   </div>
-                </Space>
+                  <Space.Compact style={{ display: 'flex', width: '100%', maxWidth: 500, flexWrap: 'nowrap' }}>
+                    <Input
+                      value={webAppToken}
+                      readOnly
+                      style={{ flex: 1, minWidth: 0, height: 32, overflow: 'hidden' }}
+                    />
+                    <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
+                      <Button
+                        icon={<ReloadOutlined />}
+                        onClick={handleGenerateToken}
+                        disabled={isDemoMode}
+                      />
+                    </Tooltip>
+                    <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.disableWebAppTooltip')}>
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={handleDeleteToken}
+                        disabled={isDemoMode}
+                      />
+                    </Tooltip>
+                  </Space.Compact>
+                  <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                    {t('apps.regenerateHint')}
+                  </div>
+                </div>
               )}
-            </>
-          ) : (
-            // Public service: no token needed
-            <Alert
-              title={t('apps.buildWebAppsTitle')}
-              description={t('apps.buildWebAppsDescription')}
-              type="info"
-              style={{ marginBottom: 24, padding: '10px 10px 10px 15px' }}
-            />
+            </div>
           )}
         </div>
       );
@@ -896,6 +1048,11 @@ const AppsView: React.FC<AppsViewProps> = ({
       icon: <FileTextOutlined />,
       label: t('apps.menuIntro')
     },
+    {
+      key: 'theme',
+      icon: <BgColorsOutlined />,
+      label: t('apps.menuTheme')
+    },
     ...(!apiConfig.requireToken || webAppToken || isDemoMode ? [
       {
         key: 'webapp-folder',
@@ -917,12 +1074,7 @@ const AppsView: React.FC<AppsViewProps> = ({
           label: template.name
         }))
       }
-    ] : []),
-    {
-      key: 'theme',
-      icon: <BgColorsOutlined />,
-      label: t('apps.menuTheme')
-    }
+    ] : [])
   ];
 
   return (
