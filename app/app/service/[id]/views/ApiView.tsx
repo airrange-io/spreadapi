@@ -54,6 +54,11 @@ const StandaloneUIExample = dynamic(() => import('../components/integration/Stan
   ssr: false
 });
 
+const AiConnectionPanel = dynamic(() => import('../components/integration/AiConnectionPanel'), {
+  loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
+  ssr: false
+});
+
 interface ApiViewProps {
   serviceId: string;
   apiConfig: {
@@ -237,6 +242,17 @@ const ApiView: React.FC<ApiViewProps> = ({
             />
           </div>
         </div>
+      ),
+      'ai-connection': (
+        <AiConnectionPanel
+          serviceId={serviceId}
+          serviceName={apiConfig.name}
+          isPublished={serviceStatus?.published || false}
+          requireToken={apiConfig.requireToken}
+          availableTokens={availableTokens}
+          inputs={apiConfig.inputs || []}
+          outputs={apiConfig.outputs || []}
+        />
       ),
       'tokens': (
         <TokenManagement

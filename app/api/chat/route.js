@@ -796,7 +796,7 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
                 // Build a detailed error message so the AI can self-correct
                 let errorMsg = data.error;
                 if (data.details?.errors?.length) {
-                  const details = data.details.errors.map((e: any) => {
+                  const details = data.details.errors.map((e) => {
                     let detail = `${e.parameter}: ${e.error}`;
                     if (e.allowedValues) {
                       detail += `. Allowed values: ${e.allowedValues.join(', ')}`;
