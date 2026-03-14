@@ -921,10 +921,12 @@ const AppsView: React.FC<AppsViewProps> = ({
     <div ref={containerRef} style={{ height: '100%' }}>
       <style jsx global>{`
         .apps-navigation-menu .ant-menu-item-selected {
-          background-color: #f0f0f0 !important;
+          background-color: #F0EEFF !important;
+          color: #7B3AED !important;
         }
         .apps-navigation-menu .ant-menu-item-selected:hover {
-          background-color: #e8e8e8 !important;
+          background-color: #E8E0FF !important;
+          color: #7B3AED !important;
         }
       `}</style>
 

@@ -129,6 +129,16 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
           return {
             ...cachedResult,
+            // Normalize to new service node format (handles old cached data)
+            service: cachedResult.service || {
+              id: cachedResult.apiId || serviceId,
+              name: cachedResult.serviceName || null,
+              description: cachedResult.serviceDescription || null,
+            },
+            // Remove old top-level fields
+            apiId: undefined,
+            serviceName: undefined,
+            serviceDescription: undefined,
             metadata: {
               executionTime: totalTime,
               timestamp: new Date().toISOString(),
@@ -444,9 +454,11 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     const executionTime = Date.now() - timeAll;
     const result = {
-      apiId: serviceId,
-      serviceName: apiJson?.name || apiJson?.title || null,
-      serviceDescription: apiJson?.description || null,
+      service: {
+        id: serviceId,
+        name: apiDefinition?.serviceName || apiJson?.name || apiJson?.title || null,
+        description: apiDefinition?.description || apiJson?.description || null,
+      },
       inputs: answerInputs,
       outputs: answerOutputs,
       metadata: {

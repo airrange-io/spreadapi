@@ -67,7 +67,8 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
     {
       key: 'webhooks',
       icon: <CloudUploadOutlined />,
-      label: 'Webhooks'
+      label: 'Webhooks',
+      disabled: true
     },
     {
       key: 'docs-folder',
@@ -101,10 +102,12 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
     <>
       <style jsx global>{`
         .api-navigation-menu .ant-menu-item-selected {
-          background-color: #f0f0f0 !important;
+          background-color: #F0EEFF !important;
+          color: #7B3AED !important;
         }
         .api-navigation-menu .ant-menu-item-selected:hover {
-          background-color: #e8e8e8 !important;
+          background-color: #E8E0FF !important;
+          color: #7B3AED !important;
         }
       `}</style>
       <Menu

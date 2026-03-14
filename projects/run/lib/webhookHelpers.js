@@ -53,7 +53,7 @@ function isRateLimited(serviceId) {
 export function triggerWebhook(serviceConfig, calculationResult) {
   if (!serviceConfig.webhookUrl) return;
 
-  const serviceId = calculationResult.apiId;
+  const serviceId = calculationResult.service?.id || calculationResult.apiId;
   const webhookUrl = serviceConfig.webhookUrl;
   const webhookSecret = serviceConfig.webhookSecret;
 

@@ -143,16 +143,22 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
           return {
             ...cachedResult,
+            // Normalize to new service node format (handles old cached data)
+            service: cachedResult.service || {
+              id: cachedResult.apiId || serviceId,
+              name: cachedResult.serviceName || null,
+              description: cachedResult.serviceDescription || null,
+            },
+            apiId: undefined,
+            serviceName: undefined,
+            serviceDescription: undefined,
             metadata: {
-              // Clear timing metadata - not relevant for cached results
               executionTime: totalTime,
               timestamp: new Date().toISOString(),
               fromResultCache: true,
               cached: true,
-              // Preserve non-timing metadata
               useCaching: cachedResult.metadata?.useCaching,
               hasTableSheets: cachedResult.metadata?.hasTableSheets,
-              // Indicate this was served from result cache
               cacheLayer: 'L1:Result'
             }
           };
@@ -529,9 +535,11 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     }
 
     const result = {
-      apiId: serviceId,
-      serviceName: apiJson?.name || apiJson?.title || null,
-      serviceDescription: apiJson?.description || null,
+      service: {
+        id: serviceId,
+        name: apiDefinition?.serviceName || apiJson?.name || apiJson?.title || null,
+        description: apiDefinition?.description || apiJson?.description || null,
+      },
       inputs: answerInputs,
       outputs: answerOutputs,
       metadata: {

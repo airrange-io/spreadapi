@@ -301,7 +301,7 @@ export default function AdminDashboardPage() {
       <Layout style={{ minHeight: '100vh', padding: 24 }}>
         <Content style={{ maxWidth: 600, margin: '100px auto' }}>
           <Alert
-            message="Access Denied"
+            title="Access Denied"
             description={error}
             type="error"
             showIcon

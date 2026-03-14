@@ -1031,17 +1031,15 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
+                disabled
                 style={{
                   width: '100%',
                   height: 42,
                   borderRadius: 10,
-                  background: '#9233E9',
-                  borderColor: '#9233E9',
                   boxShadow: 'none',
                 }}
-                onClick={handleAddAreaFromSelection}
               >
-                {t('params.addAiArea')}
+                {t('params.addAiArea')} — coming soon
               </Button>
             </div>
           )}

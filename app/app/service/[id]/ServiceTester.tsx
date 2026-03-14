@@ -1,11 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input, Space, Splitter, Alert, Form, Row, Col, Tooltip, App, Segmented } from 'antd';
+import { Button, Input, Splitter, Alert, Form, Row, Col, App } from 'antd';
 import { CaretRightOutlined, CopyOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
 import { useTranslation } from '@/lib/i18n';
+import { JsonView, defaultStyles } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
+
+// Custom JSON viewer styles matching app color scheme
+const jsonViewStyles: typeof defaultStyles = {
+  ...defaultStyles,
+  stringValue: 'json-view-string',
+  numberValue: 'json-view-number',
+  booleanValue: 'json-view-boolean',
+  nullValue: 'json-view-null',
+  label: 'json-view-label',
+  punctuation: 'json-view-punctuation',
+  collapseIcon: `${defaultStyles.collapseIcon} json-view-collapse`,
+  expandIcon: `${defaultStyles.expandIcon} json-view-expand`,
+};
 
 const { TextArea } = Input;
 
@@ -262,42 +277,23 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     return 12; // 2 columns
   };
 
-  // Alternative: CSS Grid approach (for future refactoring)
-  // <div style={{
-  //   display: 'grid',
-  //   gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-  //   gap: '16px'
-  // }}>
-  //   {inputs.map(input => <div key={input.id}>...</div>)}
-  // </div>
-
-  // Format JSON with syntax highlighting
-  const formatJsonValue = (value: string) => {
-    return value.replace(
-      /("(?:[^"\\]|\\.)*")\s*:/g,
-      '<span style="color:#8c8c8c">$1</span>:'
-    ).replace(
-      /:\s*("(?:[^"\\]|\\.)*")/g,
-      ': <span style="color:#9133E8">$1</span>'
-    ).replace(
-      /:\s*(true|false)/g,
-      ': <span style="color:#d4880f">$1</span>'
-    ).replace(
-      /:\s*(\d+\.?\d*)/g,
-      ': <span style="color:#1AA24A">$1</span>'
-    );
+  const sectionHeaderStyle: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 600,
+    color: '#bfbfbf',
+    textTransform: 'uppercase',
+    letterSpacing: '0.8px',
+    marginBottom: 8,
   };
 
   return (
     <Splitter style={{ width: '100%', height: '100%' }}>
-      <Splitter.Panel defaultSize="50%" min="30%" max="70%" style={{ paddingRight: 16 }}>
-        <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+      <Splitter.Panel defaultSize="50%" min="30%" max="70%" style={{ paddingRight: 16, paddingLeft: 16, paddingTop: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Input Parameters Form */}
           {inputs.length > 0 && (
-            <div style={{
-              padding: '0 0 6px 0',
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div>
+              <div style={sectionHeaderStyle}>
                 {t('tester.inputParameters')}
               </div>
               <Form
@@ -330,9 +326,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {/* Token input */}
           {requireToken && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
-                Token
-              </div>
+              <div style={sectionHeaderStyle}>Token</div>
               <Input
                 value={tokenValue}
                 onChange={(e) => {
@@ -349,9 +343,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {/* Method & Domain selectors */}
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
-                {t('tester.method')}
-              </div>
+              <div style={sectionHeaderStyle}>{t('tester.method')}</div>
               <div style={{ display: 'inline-flex', borderRadius: 6, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
                 {(['GET', 'POST'] as const).map((method) => {
                   const isActive = httpMethod === method;
@@ -381,9 +373,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
-                {t('tester.domain')}
-              </div>
+              <div style={sectionHeaderStyle}>{t('tester.domain')}</div>
               <div style={{ display: 'inline-flex', borderRadius: 6, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
                 {API_ENDPOINTS.map((ep) => {
                   const isActive = selectedEndpoint === ep.key;
@@ -415,11 +405,9 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
           {/* POST Request Body */}
           {httpMethod === 'POST' && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('tester.requestBody') || 'Request Body'}
-                </span>
-                <span style={{ fontSize: 11, color: '#bfbfbf' }}>application/json</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={sectionHeaderStyle}>{t('tester.requestBody') || 'Request Body'}</span>
+                <span style={{ fontSize: 10, color: '#d9d9d9' }}>application/json</span>
               </div>
               <TextArea
                 value={postBody}
@@ -456,7 +444,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
 
           {/* Request URL */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+            <div style={sectionHeaderStyle}>
               {t('tester.requestUrl') || 'Anfrage-URL'}
             </div>
             <div style={{
@@ -531,17 +519,17 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             loading={wizardTesting}
             disabled={!isPublished}
             block
-            style={{ boxShadow: 'none', background: '#9133E8', borderColor: '#9133E8', marginTop: 8, height: 40 }}
+            style={{ boxShadow: 'none', background: '#9133E8', borderColor: '#9133E8', height: 40 }}
           >
             {t('tester.runTest')}
           </Button>
-        </Space>
+        </div>
       </Splitter.Panel>
 
-      <Splitter.Panel style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff' }}>
+      <Splitter.Panel style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 16, display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff' }}>
         {/* Response header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={sectionHeaderStyle}>
             {t('tester.response')}
           </div>
           {wizardResult && !wizardError && (
@@ -580,7 +568,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
         {/* Response body */}
         {wizardError && (
           <Alert
-            message={wizardError}
+            title={wizardError}
             type="error"
             showIcon
             style={{ marginBottom: 8 }}
@@ -590,20 +578,22 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
         {wizardResult && (
           <div
             ref={responseBoxRef}
+            className="json-viewer-container"
             style={{
               flex: 1,
-              background: '#fafafa',
-              borderRadius: 6,
-              padding: 16,
               overflow: 'auto',
               maxHeight: responseBoxHeight,
               opacity: wizardTesting ? 0.5 : 1,
-              transition: 'opacity 0.15s ease-in-out'
+              transition: 'opacity 0.15s ease-in-out',
             }}
           >
-            <pre
-              style={{ margin: 0, fontSize: 13, lineHeight: 1.6, fontFamily: "SF Mono, Fira Code, Fira Mono, Menlo, monospace" }}
-              dangerouslySetInnerHTML={{ __html: formatJsonValue(JSON.stringify(wizardResult, null, 2)) }}
+            <JsonView
+              data={wizardResult}
+              shouldExpandNode={(level, _value, field) => {
+                if (field === 'metadata' || field === 'service') return false;
+                return level < 4;
+              }}
+              style={jsonViewStyles}
             />
           </div>
         )}

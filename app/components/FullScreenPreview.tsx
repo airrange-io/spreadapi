@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { CloseOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, ConfigProvider } from 'antd';
 
 interface FullScreenPreviewProps {
   open: boolean;
@@ -17,10 +17,13 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
   title,
   children
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   if (!open) return null;
 
   return (
     <div
+      ref={containerRef}
       style={{
         position: 'fixed',
         top: 0,
@@ -67,7 +70,9 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({
           backgroundColor: '#fff'
         }}
       >
-        {children}
+        <ConfigProvider getPopupContainer={() => containerRef.current || document.body}>
+          {children}
+        </ConfigProvider>
       </div>
     </div>
   );

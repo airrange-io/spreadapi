@@ -101,3 +101,31 @@ a {
   background: #9233E9 !important;
   border-radius: 8px !important;
 }
+
+/* JSON viewer custom styles */
+.json-viewer-container {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  padding: 4px 0;
+}
+
+.json-viewer-container ul {
+  padding-left: 20px !important;
+}
+
+.json-viewer-container * {
+  background: transparent !important;
+}
+
+.json-view-string { color: #9133E8; }
+.json-view-number { color: #1AA24A; font-weight: 500; }
+.json-view-boolean { color: #d4880f; font-weight: 500; }
+.json-view-null { color: #bfbfbf; font-style: italic; }
+.json-view-label { font-weight: 500; margin-right: 4px; color: #434343; }
+.json-view-punctuation { color: #a0a0a0; }
+
+.json-view-collapse,
+.json-view-expand {
+  color: #d0d0d0 !important;
+}

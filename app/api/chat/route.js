@@ -790,9 +790,24 @@ ${serviceDetails.aiUsageExamples.map(example => `- ${example}`).join('\n')}`;
               if (data.error) {
                 console.error('[Chat API] Calculation failed:', {
                   error: data.error,
+                  details: data.details,
                   serviceId
                 });
-                throw new Error(data.error);
+                // Build a detailed error message so the AI can self-correct
+                let errorMsg = data.error;
+                if (data.details?.errors?.length) {
+                  const details = data.details.errors.map((e: any) => {
+                    let detail = `${e.parameter}: ${e.error}`;
+                    if (e.allowedValues) {
+                      detail += `. Allowed values: ${e.allowedValues.join(', ')}`;
+                    }
+                    return detail;
+                  }).join('; ');
+                  errorMsg += `: ${details}`;
+                } else if (data.message) {
+                  errorMsg += `: ${data.message}`;
+                }
+                throw new Error(errorMsg);
               }
               
               // Format results

@@ -198,9 +198,20 @@ const ApiView: React.FC<ApiViewProps> = ({
     // Content mapping
     const contentMap: Record<ApiMenuSection, React.ReactNode> = {
       'test': (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {alertBanner}
-          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{
+            marginBottom: 0,
+            paddingBottom: 12,
+            borderBottom: '1px solid #f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginLeft: -16,
+            marginRight: -16,
+            paddingLeft: 16,
+            paddingRight: 16,
+          }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
               API Tester
             </div>
@@ -212,18 +223,20 @@ const ApiView: React.FC<ApiViewProps> = ({
               style={{ fontSize: 14 }}
             />
           </div>
-          <ServiceTester
-            serviceId={serviceId}
-            serviceName={apiConfig.name}
-            isPublished={serviceStatus?.published || false}
-            inputs={apiConfig.inputs || []}
-            outputs={apiConfig.outputs || []}
-            requireToken={apiConfig.requireToken}
-            existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
-            containerWidth={containerWidth}
-            onTestComplete={handleTestComplete}
-          />
-        </>
+          <div style={{ flex: 1, marginLeft: -16, marginRight: -16 }}>
+            <ServiceTester
+              serviceId={serviceId}
+              serviceName={apiConfig.name}
+              isPublished={serviceStatus?.published || false}
+              inputs={apiConfig.inputs || []}
+              outputs={apiConfig.outputs || []}
+              requireToken={apiConfig.requireToken}
+              existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
+              containerWidth={containerWidth}
+              onTestComplete={handleTestComplete}
+            />
+          </div>
+        </div>
       ),
       'tokens': (
         <TokenManagement
