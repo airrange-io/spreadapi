@@ -239,7 +239,7 @@ export async function PUT(request, { params }) {
     
     // Update user's service index with the new workbook URL
     const isPublished = await redis.exists(`service:${id}:published`);
-    const publishedData = isPublished ? await redis.hGetAll(`service:${id}:published`) : null;
+    const publishedData = isPublished > 0 ? await redis.hGetAll(`service:${id}:published`) : null;
     
     const indexData = {
       id: id,
@@ -301,7 +301,7 @@ export async function DELETE(request, { params }) {
     
     // Check if service is published
     const isPublished = await redis.exists(`service:${id}:published`);
-    if (isPublished) {
+    if (isPublished > 0) {
       return NextResponse.json({ 
         error: 'Cannot delete workbook from published service. Unpublish first.' 
       }, { status: 400 });

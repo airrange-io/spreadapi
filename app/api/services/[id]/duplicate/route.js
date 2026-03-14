@@ -103,7 +103,7 @@ export async function POST(request, { params }) {
       success: true,
       service: {
         ...newServiceData,
-        inputs: JSON.parse(newServiceData.inputs || '[]'),
+        inputs: JSON.parse(newServiceData.inputs || '[]').map(i => ({ ...i, mandatory: i.mandatory !== false })),
         outputs: JSON.parse(newServiceData.outputs || '[]'),
         areas: JSON.parse(newServiceData.areas || '[]'),
       },

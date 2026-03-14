@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     
     // If no user ID and service is not published, require auth
-    if (!userId && !isPublished) {
+    if (!userId && isPublished === 0) {
       return NextResponse.json({
         error: 'Unauthorized',
         message: 'User authentication required'
@@ -26,7 +26,7 @@ export async function GET(request, { params }) {
     }
     
     // For public access, only show published services
-    if (isPublicAccess && !isPublished) {
+    if (isPublicAccess && isPublished === 0) {
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'
@@ -36,7 +36,7 @@ export async function GET(request, { params }) {
     // For authenticated users, check ownership
     if (userId) {
       const userServices = await redis.hGetAll(`user:${userId}:services`);
-      if (!userServices[serviceId] && !isPublished) {
+      if (!userServices[serviceId] && isPublished === 0) {
         return NextResponse.json({
           error: 'Not found',
           message: 'Service not found or you do not have access to it'
@@ -94,7 +94,7 @@ export async function GET(request, { params }) {
     if (publishedData?.inputs && publishedData?.outputs) {
       try {
         apiDefinition = {
-          inputs: JSON.parse(publishedData.inputs),
+          inputs: JSON.parse(publishedData.inputs).map(i => ({ ...i, mandatory: i.mandatory !== false })),
           outputs: JSON.parse(publishedData.outputs)
         };
       } catch (e) {
@@ -135,13 +135,13 @@ export async function GET(request, { params }) {
         id: serviceId,
         name: metadata.name || publishedData?.title || 'Untitled Service',
         description: metadata.description || publishedData?.description || '',
-        status: isPublished ? 'published' : 'draft',
+        status: isPublished > 0 ? 'published' : 'draft',
         createdAt: metadata.createdAt || metadata.created,
         updatedAt: metadata.updatedAt || metadata.modified,
         tags: metadata.tags ? JSON.parse(metadata.tags) : [],
         
         // Published-specific data
-        ...(isPublished && {
+        ...(isPublished > 0 && {
           published: {
             url: publishedData.urlData,
             needsToken: publishedData.needsToken === 'true',
@@ -251,7 +251,7 @@ export async function PUT(request, { params }) {
       id: serviceId,
       name: metadata.name,
       description: metadata.description,
-      status: isPublished ? 'published' : 'draft',
+      status: isPublished > 0 ? 'published' : 'draft',
       createdAt: metadata.createdAt,
       updatedAt: metadata.updatedAt,
       tags: metadata.tags ? JSON.parse(metadata.tags) : []
@@ -290,7 +290,7 @@ export async function DELETE(request, { params }) {
 
     // Check if service is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (isPublished) {
+    if (isPublished > 0) {
       return NextResponse.json({
         error: 'Conflict',
         message: 'Cannot delete published service. Unpublish it first.'
@@ -308,14 +308,13 @@ export async function DELETE(request, { params }) {
     ]);
 
     // Scan for any remaining keys (analytics, call tracking, etc.)
-    let cursor = 0;
-    do {
-      const scanResult = await redis.scan(cursor, { MATCH: `service:${serviceId}:*`, COUNT: 100 });
-      cursor = scanResult.cursor;
-      if (scanResult.keys.length > 0) {
-        await redis.del(scanResult.keys);
+    try {
+      for await (const key of redis.scanIterator({ MATCH: `service:${serviceId}:*`, COUNT: 100 })) {
+        await redis.del(key);
       }
-    } while (cursor !== 0);
+    } catch (scanError) {
+      console.warn('Scan cleanup failed (non-critical):', scanError.message);
+    }
 
     return NextResponse.json({
       message: 'Service deleted successfully'

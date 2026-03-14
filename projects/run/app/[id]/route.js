@@ -94,13 +94,13 @@ export async function POST(request, { params }) {
 
     // Check service exists
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (!isPublished) {
-      let serviceExists = false;
+    if (isPublished === 0) {
+      let serviceExists = 0;
       try {
         serviceExists = await redis.exists(`service:${serviceId}`);
       } catch (e) {}
 
-      const message = serviceExists ? 'Service exists but is not published' : 'Service not found';
+      const message = serviceExists > 0 ? 'Service exists but is not published' : 'Service not found';
       return NextResponse.json({
         error: 'Not found',
         message,
@@ -211,7 +211,7 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
 
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (!isPublished) {
+    if (isPublished === 0) {
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'

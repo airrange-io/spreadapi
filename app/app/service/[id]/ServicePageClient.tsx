@@ -947,7 +947,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           const loadedConfig = {
             name: data.name || '',
             description: data.description || '',
-            inputs: data.inputs || [],
+            inputs: (data.inputs || []).map((i: any) => ({ ...i, mandatory: i.mandatory !== false })),
             outputs: data.outputs || [],
             areas: data.areas || [],
             enableCaching: data.enableCaching !== false,
@@ -1033,6 +1033,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
             const sanitizedInputs = (data.service.inputs || []).map((input: any) => ({
               ...input,
+              mandatory: input.mandatory !== false, // Normalize to proper boolean
               min: normalizeNumeric(input.min),
               max: normalizeNumeric(input.max),
               defaultValue: normalizeNumeric(input.defaultValue),
@@ -1083,6 +1084,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
             const sanitizedInputs = (data.inputs || []).map((input: any) => ({
               ...input,
+              mandatory: input.mandatory !== false, // Normalize to proper boolean
               min: normalizeNumeric(input.min),
               max: normalizeNumeric(input.max),
               defaultValue: normalizeNumeric(input.defaultValue),
@@ -1699,11 +1701,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       const fileJson = spreadInstance.toJSON();
 
       // Build apiJson with input/output definitions
-      const apiJson = {
-        name: (apiConfig.name || 'service').replace(/[^a-z0-9]/gi, '-').toLowerCase(),
-        title: apiConfig.name || 'Untitled Service',
-        description: apiConfig.description || '',
-        inputs: (apiConfig.inputs || []).map((inp: any) => ({
+      const publishInputs = (apiConfig.inputs || []).map((inp: any) => ({
           name: inp.name,
           title: inp.title || inp.name,
           address: inp.address,
@@ -1717,7 +1715,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           allowedValues: inp.allowedValues,
           description: inp.description,
           formatString: inp.formatString,
-        })),
+        }));
+      const apiJson = {
+        name: (apiConfig.name || 'service').replace(/[^a-z0-9]/gi, '-').toLowerCase(),
+        title: apiConfig.name || 'Untitled Service',
+        description: apiConfig.description || '',
+        inputs: publishInputs,
         outputs: (apiConfig.outputs || []).map((out: any) => ({
           name: out.name,
           title: out.title || out.name,

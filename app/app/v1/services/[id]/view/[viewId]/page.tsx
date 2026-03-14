@@ -68,7 +68,7 @@ export default async function WebViewPage({ params, searchParams }: PageProps) {
   }
 
   // Parse inputs metadata for enhanced editors (allowedValues, min, max, etc.)
-  const inputsMetadata = JSON.parse(serviceData.inputs || '[]');
+  const inputsMetadata = JSON.parse(serviceData.inputs || '[]').map((i: any) => ({ ...i, mandatory: i.mandatory !== false }));
 
   return (
     <WebViewRenderer

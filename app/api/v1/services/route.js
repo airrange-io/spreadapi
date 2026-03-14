@@ -72,12 +72,12 @@ export async function GET(request) {
       const isPublished = await redis.exists(`service:${serviceId}:published`);
       
       // For non-authenticated users, only show published services
-      if (!userId && !isPublished) {
+      if (!userId && isPublished === 0) {
         continue;
       }
       
       // For authenticated users, skip draft services unless includeAll is true
-      if (userId && !isPublished && !includeAll) {
+      if (userId && isPublished === 0 && !includeAll) {
         continue;
       }
       
@@ -89,10 +89,10 @@ export async function GET(request) {
 
       // For published services, get API definition
       let apiDefinition = null;
-      if (isPublished && publishedData.inputs && publishedData.outputs) {
+      if (isPublished > 0 && publishedData.inputs && publishedData.outputs) {
         try {
           apiDefinition = {
-            inputs: JSON.parse(publishedData.inputs),
+            inputs: JSON.parse(publishedData.inputs).map(i => ({ ...i, mandatory: i.mandatory !== false })),
             outputs: JSON.parse(publishedData.outputs)
           };
         } catch (e) {}

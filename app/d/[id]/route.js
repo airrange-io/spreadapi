@@ -36,7 +36,7 @@ function extractToken(request, searchParams) {
 // ── Helper: Load service definition from Redis ──
 async function loadServiceDefinition(serviceId) {
   const isPublished = await redis.exists(`service:${serviceId}:published`);
-  if (!isPublished) return null;
+  if (isPublished === 0) return null;
 
   const serviceData = await redis.hGetAll(`service:${serviceId}:published`);
   if (!serviceData || Object.keys(serviceData).length === 0) return null;
@@ -46,7 +46,7 @@ async function loadServiceDefinition(serviceId) {
   let outputs = [];
   let aiUsageExamples = [];
   let aiTags = [];
-  try { inputs = JSON.parse(serviceData.inputs || '[]'); } catch (e) {}
+  try { inputs = JSON.parse(serviceData.inputs || '[]').map(i => ({ ...i, mandatory: i.mandatory !== false })); } catch (e) {}
   try { outputs = JSON.parse(serviceData.outputs || '[]'); } catch (e) {}
   try { aiUsageExamples = JSON.parse(serviceData.aiUsageExamples || '[]'); } catch (e) {}
   try { aiTags = JSON.parse(serviceData.aiTags || '[]'); } catch (e) {}

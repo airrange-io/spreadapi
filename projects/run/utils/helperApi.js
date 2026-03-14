@@ -64,7 +64,7 @@ export async function getApiDefinition(apiId, apiToken) {
     if (!serviceInfo || !serviceInfo[0]) {
       try {
         const serviceExists = await redis.exists(`service:${apiId}`);
-        if (serviceExists) {
+        if (serviceExists > 0) {
           console.error(`[Service Error] Service ${apiId} exists but is not published`);
           return getError("Service not published. Please publish the service before making API calls.");
         }
@@ -107,7 +107,7 @@ export async function getApiDefinition(apiId, apiToken) {
       try {
         const cacheKey = CACHE_KEYS.apiCache(apiId);
         const cacheExists = await redis.exists(cacheKey);
-        if (cacheExists) {
+        if (cacheExists > 0) {
           result = await redis.json.get(cacheKey);
           if (result) {
             const cacheData = {

@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Check if service is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (!isPublished) {
+    if (isPublished === 0) {
       return NextResponse.json({
         error: 'NOT_FOUND',
         message: 'Service not found or not published'
@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const definition = {
       name: publishedData.title || 'Untitled Service',
       description: publishedData.description || '',
-      inputs: JSON.parse(publishedData.inputs || '[]'),
+      inputs: JSON.parse(publishedData.inputs || '[]').map((i: any) => ({ ...i, mandatory: i.mandatory !== false })),
       outputs: JSON.parse(publishedData.outputs || '[]'),
       requiresToken: publishedData.needsToken === 'true'
     };

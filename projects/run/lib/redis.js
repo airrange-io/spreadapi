@@ -8,7 +8,12 @@ const redis = createClient({
     port: process.env.REDIS_PORT,
     // tls: true,
     connectTimeout: 10000,
-    keepAlive: 5000,
+    keepAlive: true,
+    keepAliveInitialDelay: 5000,
+    reconnectStrategy: (retries) => {
+      if (retries > 10) return false;
+      return Math.min(retries * 100, 3000);
+    },
   },
   commandsQueueMaxLength: 10000,
   disableOfflineQueue: false,

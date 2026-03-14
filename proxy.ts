@@ -67,7 +67,6 @@ export async function proxy(req: NextRequest) {
     '/api/debug-service',
     '/api/diagnose-cache',
     '/api/performance-diagnostic',
-    '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
     '/api/analytics', // Analytics dashboard requires auth
@@ -236,7 +235,6 @@ export const config = {
     '/api/debug-service',
     '/api/diagnose-cache',
     '/api/performance-diagnostic',
-    '/api/redis-pool-stats',
     '/api/timing-breakdown',
     '/api/test-cache',
     '/api/analytics',

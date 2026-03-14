@@ -37,14 +37,15 @@ export async function GET(request, { params }) {
     // Check if published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     let publishedData = null;
-    if (isPublished) {
+    if (isPublished > 0) {
       publishedData = await redis.hGetAll(`service:${serviceId}:published`);
     }
     
-    // Parse JSON fields
+    // Parse JSON fields - normalize mandatory to proper boolean
+    const parsedInputs = JSON.parse(serviceData.inputs || '[]').map(i => ({ ...i, mandatory: i.mandatory !== false }));
     const response = {
       ...serviceData,
-      inputs: JSON.parse(serviceData.inputs || '[]'),
+      inputs: parsedInputs,
       outputs: JSON.parse(serviceData.outputs || '[]'),
       areas: JSON.parse(serviceData.areas || '[]'),
       tags: serviceData.tags ? serviceData.tags.split(',').filter(t => t) : [],
@@ -131,6 +132,7 @@ export async function PUT(request, { params }) {
     
     // Update JSON fields
     if (body.inputs !== undefined) {
+      console.log('[INPUT DEBUG] SAVE - inputs to Redis:', JSON.stringify(body.inputs, null, 2));
       updateData.inputs = JSON.stringify(body.inputs);
     }
     if (body.outputs !== undefined) {

@@ -200,6 +200,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       const inputDef = serviceData.inputs.find(i => i.name === fieldKey);
       if (inputDef) {
         currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
+        if (currentValue === '__SPREADAPI_NULL__') currentValue = null;
       }
     }
 
@@ -230,6 +231,7 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       const inputDef = serviceData.inputs.find(i => i.name === fieldKey);
       if (inputDef) {
         currentValue = inputDef.value !== undefined && inputDef.value !== null ? inputDef.value : inputDef.defaultValue;
+        if (currentValue === '__SPREADAPI_NULL__') currentValue = null;
       }
     }
 
@@ -245,6 +247,11 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
 
       // Get the value (prefer input.value over defaultValue)
       let value = input.value !== undefined && input.value !== null ? input.value : input.defaultValue;
+
+      // Treat __SPREADAPI_NULL__ sentinel as empty (means "no default value")
+      if (value === '__SPREADAPI_NULL__') {
+        value = null;
+      }
 
       // Handle boolean conversion (Redis returns strings, Excel returns "TRUE"/"FALSE")
       if (input.type === 'boolean') {

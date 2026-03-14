@@ -22,7 +22,7 @@ export async function getServiceDetails(serviceId, userId = null) {
     
     // Get the appropriate data source for inputs/outputs/areas
     let serviceData;
-    if (isPublished) {
+    if (isPublished > 0) {
       // For published services, use published data for inputs/outputs but merge with base metadata
       const publishedData = await redis.hGetAll(`service:${serviceId}:published`);
       serviceData = {
@@ -90,7 +90,7 @@ export async function getServiceDetails(serviceId, userId = null) {
     };
     
     // Add published status info
-    if (isPublished) {
+    if (isPublished > 0) {
       const publishedData = serviceData; // We already have it from above
       serviceDetails.published = {
         status: true,
@@ -123,7 +123,7 @@ export async function getServiceDetails(serviceId, userId = null) {
 export async function getPublishedServiceDetails(serviceId) {
   try {
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (!isPublished) {
+    if (isPublished === 0) {
       return null;
     }
     

@@ -69,7 +69,7 @@ export async function DELETE(request, { params }) {
     
     // Check if user exists
     const userExists = await redis.exists(`user:${userId}`);
-    if (!userExists) {
+    if (userExists === 0) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }

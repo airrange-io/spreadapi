@@ -51,7 +51,8 @@ export async function GET(request, { params }) {
     let areas = [];
     
     try {
-      inputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
+      const rawInputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
+      inputs = rawInputs.map(i => ({ ...i, mandatory: i.mandatory !== false }));
     } catch (e) {
       console.error('Error parsing inputs:', e);
     }

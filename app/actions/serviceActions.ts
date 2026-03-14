@@ -25,7 +25,7 @@ export async function deleteServiceAction(serviceId: string, userId?: string): P
     
     // Check if published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (isPublished) {
+    if (isPublished > 0) {
       return { success: false, error: 'Cannot delete published service. Unpublish first.' };
     }
     

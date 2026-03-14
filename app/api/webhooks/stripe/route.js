@@ -29,14 +29,14 @@ async function findUserByEmail(email) {
   // Scan for user keys
   let cursor = '0';
   do {
-    const [nextCursor, keys] = await redis.scan(cursor, {
+    const scanResult = await redis.scan(cursor, {
       MATCH: 'user:*',
       COUNT: 100,
     });
-    cursor = nextCursor;
+    cursor = scanResult.cursor;
 
     // Filter out index keys (user:xxx:services, etc.)
-    const userKeys = keys.filter(k => !k.includes(':services') && !k.includes(':activity'));
+    const userKeys = scanResult.keys.filter(k => !k.includes(':services') && !k.includes(':activity'));
 
     for (const key of userKeys) {
       const userData = await redis.hGetAll(key);
@@ -148,13 +148,13 @@ export async function POST(request) {
       // Find user by Stripe customer ID
       let cursor = '0';
       do {
-        const [nextCursor, keys] = await redis.scan(cursor, {
+        const scanResult = await redis.scan(cursor, {
           MATCH: 'user:*',
           COUNT: 100,
         });
-        cursor = nextCursor;
+        cursor = scanResult.cursor;
 
-        const userKeys = keys.filter(k => !k.includes(':services') && !k.includes(':activity'));
+        const userKeys = scanResult.keys.filter(k => !k.includes(':services') && !k.includes(':activity'));
 
         for (const key of userKeys) {
           const userData = await redis.hGetAll(key);

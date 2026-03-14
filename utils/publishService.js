@@ -296,6 +296,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     return transformedInput;
   });
 
+  console.log('[INPUT DEBUG] PUBLISH - inputs:', JSON.stringify(transformedInputs, null, 2));
+
   // Transform output definitions
   const transformedOutputs = service.outputs.map(output => {
     // Parse the address to get sheet name and cell reference

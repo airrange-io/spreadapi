@@ -60,7 +60,10 @@ export async function GET(request, { params }) {
     let areas = [];
     
     try {
-      inputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
+      const rawInputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
+      // Normalize mandatory to a proper boolean (legacy data may have undefined)
+      inputs = rawInputs.map(i => ({ ...i, mandatory: i.mandatory !== false }));
+      console.log('[INPUT DEBUG] LOAD - inputs from Redis:', JSON.stringify(inputs, null, 2));
     } catch (e) {
       console.error('Error parsing inputs:', e);
     }

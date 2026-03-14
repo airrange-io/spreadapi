@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
     // Check if service is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
 
-    if (!isPublished) {
+    if (isPublished === 0) {
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'
@@ -45,7 +45,8 @@ export async function GET(request, { params }) {
     let aiTags = [];
 
     try {
-      inputs = publishedData.inputs ? JSON.parse(publishedData.inputs) : [];
+      const rawInputs = publishedData.inputs ? JSON.parse(publishedData.inputs) : [];
+      inputs = rawInputs.map(i => ({ ...i, mandatory: i.mandatory !== false }));
     } catch (e) {
       console.error('Error parsing inputs:', e);
     }

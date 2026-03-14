@@ -54,7 +54,7 @@ export async function GET(request, { params }) {
     }
 
     // Parse JSON fields
-    const inputs = JSON.parse(serviceData.inputs || '[]');
+    const inputs = JSON.parse(serviceData.inputs || '[]').map(i => ({ ...i, mandatory: i.mandatory !== false }));
     const outputs = JSON.parse(serviceData.outputs || '[]');
 
     // Note: inputs and outputs include format information:

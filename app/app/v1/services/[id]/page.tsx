@@ -142,7 +142,7 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
     }
 
     // Parse inputs and outputs
-    const inputs = JSON.parse(serviceData.inputs || '[]');
+    const inputs = JSON.parse(serviceData.inputs || '[]').map((i: any) => ({ ...i, mandatory: i.mandatory !== false }));
     const outputs = JSON.parse(serviceData.outputs || '[]');
 
     // Detect user's language from Accept-Language header

@@ -158,7 +158,7 @@ export async function POST(request) {
 
     // Check if service already exists
     const exists = await redis.exists(`service:${id}`);
-    if (exists) {
+    if (exists > 0) {
       return NextResponse.json(
         { error: 'Service already exists' },
         { status: 409 }
@@ -218,7 +218,7 @@ export async function POST(request) {
       success: true,
       service: {
         ...serviceData,
-        inputs: JSON.parse(serviceData.inputs),
+        inputs: JSON.parse(serviceData.inputs).map(i => ({ ...i, mandatory: i.mandatory !== false })),
         outputs: JSON.parse(serviceData.outputs)
       }
     });
@@ -276,7 +276,7 @@ export async function DELETE(request) {
     
     // Check if published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (isPublished) {
+    if (isPublished > 0) {
       return NextResponse.json(
         { error: 'Cannot delete published service. Unpublish first.' },
         { status: 400 }
@@ -306,24 +306,35 @@ export async function DELETE(request) {
       }
     }
     
-    // Delete known keys in single round-trip
-    const multi = redis.multi();
-    multi.del(`service:${serviceId}`);
-    multi.del(CACHE_KEYS.apiCache(serviceId));
-    multi.del(CACHE_KEYS.resultCache(serviceId));
-    multi.del(CACHE_KEYS.workbookCache(serviceId));
-    multi.hDel(`user:${userId}:services`, serviceId);
-    await multi.exec();
+    // Delete known keys
+    const keysToDelete = [
+      `service:${serviceId}`,
+      `service:${serviceId}:published`,
+      `service:${serviceId}:analytics`,
+      `service:${serviceId}:calls`,
+      `service:${serviceId}:tokens`,
+      CACHE_KEYS.apiCache(serviceId),
+      CACHE_KEYS.resultCache(serviceId),
+      CACHE_KEYS.workbookCache(serviceId),
+    ];
+
+    for (const key of keysToDelete) {
+      try {
+        await redis.del(key);
+      } catch (e) {
+        // Key might not exist, that's fine
+      }
+    }
+    await redis.hDel(`user:${userId}:services`, serviceId);
 
     // Scan for any remaining keys (analytics, call tracking, tokens, etc.)
-    let cursor = 0;
-    do {
-      const scanResult = await redis.scan(cursor, { MATCH: `service:${serviceId}:*`, COUNT: 100 });
-      cursor = scanResult.cursor;
-      if (scanResult.keys.length > 0) {
-        await redis.del(scanResult.keys);
+    try {
+      for await (const key of redis.scanIterator({ MATCH: `service:${serviceId}:*`, COUNT: 100 })) {
+        await redis.del(key);
       }
-    } while (cursor !== 0);
+    } catch (scanError) {
+      console.warn('Scan cleanup failed (non-critical):', scanError.message);
+    }
 
     // Revalidate services cache
     await revalidateServicesCache();

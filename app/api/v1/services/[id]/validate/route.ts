@@ -25,7 +25,7 @@ export async function POST(
 
     // Check if service exists
     const isPublished = await redis.exists(`service:${serviceId}:published`);
-    if (!isPublished) {
+    if (isPublished === 0) {
       const { body: errorBody, status } = createErrorResponse('NOT_FOUND');
       return NextResponse.json(errorBody, { status });
     }
@@ -33,7 +33,7 @@ export async function POST(
     // Get input definitions
     const publishedDataRaw = await redis.hGetAll(`service:${serviceId}:published`);
     const publishedData: any = publishedDataRaw;
-    const inputDefs = JSON.parse(publishedData.inputs || '[]');
+    const inputDefs = JSON.parse(publishedData.inputs || '[]').map((i: any) => ({ ...i, mandatory: i.mandatory !== false }));
 
     // Validate each input
     const errors: any[] = [];

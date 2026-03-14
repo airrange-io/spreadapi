@@ -38,7 +38,7 @@ export async function POST(request, { params }) {
     // Check if service is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     
-    if (!isPublished) {
+    if (isPublished === 0) {
       return NextResponse.json(
         { error: 'Service is not published' },
         { status: 400 }
