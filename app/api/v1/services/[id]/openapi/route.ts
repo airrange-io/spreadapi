@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const format = searchParams.get('format') || 'json'; // json or yaml
 
     // Check if service is published
-    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    const isPublished = await redis.exists(`service:${serviceId}:published`) as number;
     if (isPublished === 0) {
       return NextResponse.json({
         error: 'NOT_FOUND',

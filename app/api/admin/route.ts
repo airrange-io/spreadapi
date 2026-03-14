@@ -377,7 +377,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify user exists
-    const exists = await redis.exists(`user:${userId}`);
+    const exists = await redis.exists(`user:${userId}`) as number;
     if (exists === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }

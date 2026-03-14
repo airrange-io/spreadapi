@@ -57,7 +57,7 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
     // Accept: explicit flag, legacy token, or published service (check separate Redis key)
     let webAppEnabled = serviceData.webAppEnabled === 'true' || !!serviceData.webAppToken;
     if (!webAppEnabled) {
-      const isPublished = await redis.exists(`service:${serviceId}:published`);
+      const isPublished = await redis.exists(`service:${serviceId}:published`) as number;
       webAppEnabled = isPublished === 1;
     }
     if (!webAppEnabled) {

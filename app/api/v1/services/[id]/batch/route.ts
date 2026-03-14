@@ -55,7 +55,7 @@ export async function POST(
     }
 
     // Check service exists
-    const isPublished = await redis.exists(`service:${serviceId}:published`);
+    const isPublished = await redis.exists(`service:${serviceId}:published`) as number;
     if (isPublished === 0) {
       const { body: errorBody, status } = createErrorResponse('NOT_FOUND');
       return NextResponse.json(errorBody, { status });
