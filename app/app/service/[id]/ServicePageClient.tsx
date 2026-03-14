@@ -3018,19 +3018,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               style={{ height: '100%' }}
               onResize={!isMobile ? handlePanelResize : undefined}
             >
-              {(activeView === 'Workbook') && (
-              <Splitter.Panel collapsible size={isMobile ? '0%' : panelSizes[0] + '%'} min={isMobile ? '0%' : '20%'} max={isMobile ? '0%' : '50%'} resizable={!isMobile} style={{ backgroundColor: '#ffffff', ...(isMobile ? { overflow: 'hidden', padding: 0 } : {}) }}>
+              <Splitter.Panel collapsible size={activeView === 'Workbook' ? (isMobile ? '0%' : panelSizes[0] + '%') : '0%'} min={activeView === 'Workbook' ? (isMobile ? '0%' : '20%') : '0%'} max={activeView === 'Workbook' ? (isMobile ? '0%' : '50%') : '0%'} resizable={activeView === 'Workbook' && !isMobile} style={{ backgroundColor: '#ffffff', ...(isMobile || activeView !== 'Workbook' ? { overflow: 'hidden', padding: 0 } : {}) }}>
                 <div style={{
                   height: '100%',
                   background: 'white',
                   overflow: 'hidden',
-                  display: isMobile ? 'none' : 'flex',
+                  display: isMobile || activeView !== 'Workbook' ? 'none' : 'flex',
                   flexDirection: 'column'
                 }}>
                   {parametersPanel}
                 </div>
               </Splitter.Panel>
-              )}
               <Splitter.Panel collapsible style={{ paddingLeft: (isMobile || (activeView !== 'Workbook' && activeView !== 'Settings')) ? 0 : 10, backgroundColor: '#ffffff' }} size={(isMobile || (activeView !== 'Workbook' && activeView !== 'Settings')) ? '100%' : panelSizes[1] + '%'} min={(isMobile || (activeView !== 'Workbook' && activeView !== 'Settings')) ? '100%' : '50%'} max={(isMobile || (activeView !== 'Workbook' && activeView !== 'Settings')) ? '100%' : '80%'}>
                 <ErrorBoundary>
                   <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
