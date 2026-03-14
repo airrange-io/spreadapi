@@ -91,7 +91,9 @@
       "Bash(find /Users/stephanmethner/AR/repos/spreadapi/app -type f \\\\\\( -name \"*token*\" -o -name \"*api*\" \\\\\\) 2>/dev/null | head -20)",
       "Bash(rm \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d/[id]/route.js\" && rmdir \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d/[id]\" && rmdir \"/Users/stephanmethner/AR/repos/spreadapi/app/api/d\")",
       "WebFetch(domain:spreadapi.io)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(grep -r \"redis\\\\.\\\\\\(set\\\\|hSet\\\\|sAdd\\\\|zAdd\\\\|del\\\\|expire\\\\\\)\" /Users/stephanmethner/AR/repos/spreadapi --include=\"*.js\" --include=\"*.ts\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\" ! -path \"*/dist/*\" | grep -oE \"[\\\\\"\\\\`]\\([^\\\\\"]+\\)[:\\\\\\)]\" | head -100)",
+      "Bash(ls \"/Users/stephanmethner/AR/repos/spreadapi/app/[locale]/\\(marketing\\)/\")"
     ],
     "deny": []
   }

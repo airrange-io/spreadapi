@@ -36,6 +36,16 @@ const nextConfig = {
     '@mescius/spread-sheets-io',
   ],
   
+  // Rewrite locale-prefixed admin routes to the actual admin page
+  async rewrites() {
+    return [
+      {
+        source: '/:locale/admin',
+        destination: '/admin',
+      },
+    ];
+  },
+
   experimental: {
     // Optimize package imports (removed @mescius packages as they're in serverExternalPackages)
     optimizePackageImports: ['antd', '@ant-design/icons', 'rc-slider', 'react-syntax-highlighter'],

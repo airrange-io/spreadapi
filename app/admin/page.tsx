@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Layout, Typography, Card, Table, Spin, Statistic, Tag, Empty, Alert, Input, Select, message } from 'antd';
+import { Layout, Typography, Card, Table, Spin, Statistic, Tag, Empty, Alert, Input, Select, Button, App, Space, Badge, Popconfirm } from 'antd';
 import {
   UserOutlined,
   CloudOutlined,
@@ -9,6 +9,11 @@ import {
   ThunderboltOutlined,
   DashboardOutlined,
   SearchOutlined,
+  DeleteOutlined,
+  ScanOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import {
   LineChart,
@@ -110,11 +115,45 @@ function getRelativeTime(dateStr: string): string {
   return `${Math.floor(diffDays / 30)} months ago`;
 }
 
+interface CleanupIssue {
+  key: string;
+  type: string;
+  reason: string;
+  safe_to_delete: boolean;
+}
+
+interface CategoryBreakdown {
+  total: number;
+  valid: number;
+  issues: number;
+}
+
+interface CleanupReport {
+  scanned_keys: number;
+  valid_keys: number;
+  issues: CleanupIssue[];
+  summary: Record<string, number>;
+  categories: Record<string, CategoryBreakdown>;
+  entity_counts: {
+    users_in_index: number;
+    valid_users: number;
+    services_in_indexes: number;
+    valid_services: number;
+    valid_tokens: number;
+  };
+  scan_duration_ms: number;
+}
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
+  const [cleanupReport, setCleanupReport] = useState<CleanupReport | null>(null);
+  const [cleanupScanning, setCleanupScanning] = useState(false);
+  const [cleanupDeleting, setCleanupDeleting] = useState(false);
+  const [selectedCleanupKeys, setSelectedCleanupKeys] = useState<Set<string>>(new Set());
+  const { message: msg, modal } = App.useApp();
 
   useEffect(() => {
     fetchAdminData();
@@ -167,10 +206,91 @@ export default function AdminDashboardPage() {
           ),
         };
       });
-      message.success(`License updated to ${licenseType}`);
+      msg.success(`License updated to ${licenseType}`);
     } catch {
-      message.error('Failed to update license');
+      msg.error('Failed to update license');
     }
+  };
+
+  const runCleanupScan = async () => {
+    try {
+      setCleanupScanning(true);
+      setCleanupReport(null);
+      setSelectedCleanupKeys(new Set());
+      const response = await fetch('/api/admin/cleanup');
+      if (!response.ok) throw new Error('Scan failed');
+      const report: CleanupReport = await response.json();
+      setCleanupReport(report);
+      if (report.issues.length === 0) {
+        msg.success(`Scanned ${report.scanned_keys} keys — no issues found`);
+      } else {
+        // Auto-select safe-to-delete keys
+        const safe = new Set(report.issues.filter(i => i.safe_to_delete).map(i => i.key));
+        setSelectedCleanupKeys(safe);
+      }
+    } catch (err: any) {
+      msg.error(`Scan failed: ${err.message}`);
+    } finally {
+      setCleanupScanning(false);
+    }
+  };
+
+  const executeCleanup = async () => {
+    if (!cleanupReport || selectedCleanupKeys.size === 0) return;
+
+    const keysToDelete: string[] = [];
+    const staleIndexEntries: { type: string; value: string; userId?: string }[] = [];
+
+    for (const issue of cleanupReport.issues) {
+      if (!selectedCleanupKeys.has(issue.key)) continue;
+
+      if (issue.type === 'stale_user_index') {
+        // Parse the key to determine what kind of index entry it is
+        const usersIndexMatch = issue.key.match(/^users:index member "(.+)"$/);
+        const userServicesMatch = issue.key.match(/^user:([^:]+):services field "(.+)"$/);
+        if (usersIndexMatch) {
+          staleIndexEntries.push({ type: 'users_index', value: usersIndexMatch[1] });
+        } else if (userServicesMatch) {
+          staleIndexEntries.push({ type: 'user_services', userId: userServicesMatch[1], value: userServicesMatch[2] });
+        } else {
+          keysToDelete.push(issue.key);
+        }
+      } else {
+        keysToDelete.push(issue.key);
+      }
+    }
+
+    try {
+      setCleanupDeleting(true);
+      const response = await fetch('/api/admin/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys: keysToDelete, stale_index_entries: staleIndexEntries }),
+      });
+      if (!response.ok) throw new Error('Cleanup failed');
+      const result = await response.json();
+      msg.success(`Cleaned up ${result.deleted} keys${result.failed > 0 ? `, ${result.failed} failed` : ''}`);
+      // Re-scan to show updated state
+      await runCleanupScan();
+    } catch (err: any) {
+      msg.error(`Cleanup failed: ${err.message}`);
+    } finally {
+      setCleanupDeleting(false);
+    }
+  };
+
+  const issueTypeLabels: Record<string, { label: string; color: string }> = {
+    orphan_service: { label: 'Orphan Service', color: 'red' },
+    orphan_published: { label: 'Orphan Published', color: 'red' },
+    orphan_analytics: { label: 'Orphan Analytics', color: 'orange' },
+    orphan_cache: { label: 'Orphan Cache', color: 'gold' },
+    orphan_token: { label: 'Orphan Token', color: 'red' },
+    orphan_token_hash: { label: 'Orphan Token Hash', color: 'red' },
+    stale_user_index: { label: 'Stale Index', color: 'orange' },
+    orphan_mcp_state: { label: 'Orphan MCP State', color: 'orange' },
+    orphan_mcp_token: { label: 'Orphan MCP Token', color: 'red' },
+    orphan_tenant: { label: 'Orphan Tenant', color: 'orange' },
+    unknown_key: { label: 'Unknown Key', color: 'purple' },
   };
 
   const userColumns = [
@@ -535,6 +655,212 @@ export default function AdminDashboardPage() {
                     description="No services with API calls"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
+                )}
+              </Card>
+
+              {/* Redis Cleanup Section */}
+              <Card
+                variant="borderless"
+                title={
+                  <Space>
+                    <DeleteOutlined />
+                    <span>Redis Cleanup</span>
+                    {cleanupReport && cleanupReport.issues.length > 0 && (
+                      <Badge count={cleanupReport.issues.length} style={{ backgroundColor: '#fa8c16' }} />
+                    )}
+                  </Space>
+                }
+                extra={
+                  <Space>
+                    <Button
+                      icon={<ScanOutlined />}
+                      onClick={runCleanupScan}
+                      loading={cleanupScanning}
+                    >
+                      Scan Redis
+                    </Button>
+                    {cleanupReport && cleanupReport.issues.length > 0 && selectedCleanupKeys.size > 0 && (
+                      <Popconfirm
+                        title={`Delete ${selectedCleanupKeys.size} selected keys?`}
+                        description="This cannot be undone."
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                        onConfirm={executeCleanup}
+                      >
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          loading={cleanupDeleting}
+                        >
+                          Clean {selectedCleanupKeys.size} keys
+                        </Button>
+                      </Popconfirm>
+                    )}
+                  </Space>
+                }
+                style={{ background: '#fff', overflow: 'hidden', marginTop: 16 }}
+              >
+                {!cleanupReport && !cleanupScanning && (
+                  <Empty
+                    description="Click 'Scan Redis' to analyze all keys for orphans and issues"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
+                )}
+                {cleanupScanning && (
+                  <div style={{ textAlign: 'center', padding: 40 }}>
+                    <Spin size="medium" />
+                    <div style={{ marginTop: 16, color: '#666' }}>Scanning all Redis keys...</div>
+                  </div>
+                )}
+                {cleanupReport && (
+                  <>
+                    {/* Scan Summary */}
+                    <div style={{ display: 'flex', gap: 24, marginBottom: 16, flexWrap: 'wrap' }}>
+                      <Statistic title="Scanned" value={cleanupReport.scanned_keys} suffix="keys" />
+                      <Statistic title="Valid" value={cleanupReport.valid_keys} valueStyle={{ color: '#52c41a' }} suffix="keys" />
+                      <Statistic title="Issues" value={cleanupReport.issues.length} valueStyle={{ color: cleanupReport.issues.length > 0 ? '#fa8c16' : '#52c41a' }} />
+                      <Statistic title="Scan Time" value={cleanupReport.scan_duration_ms} suffix="ms" />
+                    </div>
+
+                    {/* Category Breakdown */}
+                    <div style={{ marginBottom: 16 }}>
+                      <Typography.Text strong style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>Key Categories</Typography.Text>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {Object.entries(cleanupReport.categories)
+                          .filter(([, cat]) => cat.total > 0)
+                          .map(([name, cat]) => (
+                            <div key={name} style={{
+                              background: cat.issues > 0 ? '#fff7e6' : '#f6ffed',
+                              border: `1px solid ${cat.issues > 0 ? '#ffd591' : '#b7eb8f'}`,
+                              borderRadius: 8,
+                              padding: '6px 12px',
+                              fontSize: 12,
+                            }}>
+                              <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{name}</span>
+                              <span style={{ color: '#52c41a', marginLeft: 8 }}>{cat.valid} ok</span>
+                              {cat.issues > 0 && <span style={{ color: '#fa8c16', marginLeft: 6 }}>{cat.issues} issues</span>}
+                              <span style={{ color: '#999', marginLeft: 6 }}>({cat.total} total)</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    {/* Entity Counts */}
+                    <div style={{ marginBottom: 16 }}>
+                      <Typography.Text strong style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>Entity Summary</Typography.Text>
+                      <Space wrap>
+                        <Tag color="blue">Users: {cleanupReport.entity_counts.valid_users} / {cleanupReport.entity_counts.users_in_index} in index</Tag>
+                        <Tag color="purple">Services: {cleanupReport.entity_counts.valid_services}</Tag>
+                        <Tag color="cyan">Tokens: {cleanupReport.entity_counts.valid_tokens}</Tag>
+                      </Space>
+                    </div>
+
+                    {cleanupReport.issues.length === 0 ? (
+                      <Alert
+                        message="All clean"
+                        description="No orphaned keys or issues found in Redis."
+                        type="success"
+                        showIcon
+                        icon={<CheckCircleOutlined />}
+                      />
+                    ) : (
+                      <>
+                        {/* Summary by type */}
+                        <div style={{ marginBottom: 12 }}>
+                          <Space wrap>
+                            {Object.entries(cleanupReport.summary).map(([type, count]) => {
+                              const info = issueTypeLabels[type] || { label: type, color: 'default' };
+                              return (
+                                <Tag key={type} color={info.color}>
+                                  {info.label}: {count}
+                                </Tag>
+                              );
+                            })}
+                          </Space>
+                        </div>
+
+                        {/* Select all / none */}
+                        <div style={{ marginBottom: 8 }}>
+                          <Space size="small">
+                            <Button
+                              size="small"
+                              type="link"
+                              onClick={() => setSelectedCleanupKeys(new Set(cleanupReport.issues.filter(i => i.safe_to_delete).map(i => i.key)))}
+                            >
+                              Select safe
+                            </Button>
+                            <Button
+                              size="small"
+                              type="link"
+                              onClick={() => setSelectedCleanupKeys(new Set(cleanupReport.issues.map(i => i.key)))}
+                            >
+                              Select all
+                            </Button>
+                            <Button
+                              size="small"
+                              type="link"
+                              onClick={() => setSelectedCleanupKeys(new Set())}
+                            >
+                              Select none
+                            </Button>
+                          </Space>
+                        </div>
+
+                        {/* Issues table */}
+                        <Table
+                          dataSource={cleanupReport.issues}
+                          rowKey="key"
+                          size="small"
+                          pagination={cleanupReport.issues.length > 20 ? { pageSize: 20 } : false}
+                          scroll={{ x: 600 }}
+                          rowSelection={{
+                            selectedRowKeys: Array.from(selectedCleanupKeys),
+                            onChange: (keys) => setSelectedCleanupKeys(new Set(keys as string[])),
+                          }}
+                          columns={[
+                            {
+                              title: 'Key',
+                              dataIndex: 'key',
+                              key: 'key',
+                              ellipsis: true,
+                              width: 300,
+                              render: (key: string) => (
+                                <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{key}</span>
+                              ),
+                            },
+                            {
+                              title: 'Type',
+                              dataIndex: 'type',
+                              key: 'type',
+                              width: 140,
+                              filters: Object.entries(issueTypeLabels).map(([value, { label }]) => ({ text: label, value })),
+                              onFilter: (value, record) => record.type === value,
+                              render: (type: string) => {
+                                const info = issueTypeLabels[type] || { label: type, color: 'default' };
+                                return <Tag color={info.color}>{info.label}</Tag>;
+                              },
+                            },
+                            {
+                              title: 'Reason',
+                              dataIndex: 'reason',
+                              key: 'reason',
+                              ellipsis: true,
+                            },
+                            {
+                              title: 'Safe',
+                              dataIndex: 'safe_to_delete',
+                              key: 'safe',
+                              width: 60,
+                              render: (safe: boolean) => safe
+                                ? <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                                : <ExclamationCircleOutlined style={{ color: '#fa8c16' }} />,
+                            },
+                          ]}
+                        />
+                      </>
+                    )}
+                  </>
                 )}
               </Card>
             </>
