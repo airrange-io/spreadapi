@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input, Space, Typography, Alert, Form, Row, Col, Tooltip, App, Segmented } from 'antd';
-import { CaretRightOutlined, InfoCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, CopyOutlined, ExportOutlined } from '@ant-design/icons';
+import { Button, Input, Space, Splitter, Alert, Form, Row, Col, Tooltip, App, Segmented } from 'antd';
+import { CaretRightOutlined, CopyOutlined } from '@ant-design/icons';
 import { useServicePrewarm } from '@/hooks/useServicePrewarm';
 import { InputRenderer } from '@/components/InputRenderer';
 import { useTranslation } from '@/lib/i18n';
 
-const { Text } = Typography;
 const { TextArea } = Input;
 
 // Available API endpoints — use current origin in dev to avoid CORS issues
@@ -51,7 +50,11 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   const [totalCalls, setTotalCalls] = useState<number>(0);
   const [responseBoxHeight, setResponseBoxHeight] = useState<number>(200);
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>('main');
+  const [httpMethod, setHttpMethod] = useState<'GET' | 'POST'>('GET');
   const [urlManuallyEdited, setUrlManuallyEdited] = useState<boolean>(false);
+  const [postBodyEdited, setPostBodyEdited] = useState<boolean>(false);
+  const [postBody, setPostBody] = useState<string>('{}');
+  const [tokenValue, setTokenValue] = useState<string>('');
   const containerWidth = propsContainerWidth || 0;
   const isMounted = useRef(false);
   const responseBoxRef = useRef<HTMLDivElement>(null);
@@ -104,7 +107,13 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     const startTime = Date.now();
 
     try {
-      const response = await fetch(testUrl);
+      const fetchOptions: RequestInit = {};
+      if (httpMethod === 'POST') {
+        fetchOptions.method = 'POST';
+        fetchOptions.headers = { 'Content-Type': 'application/json' };
+        fetchOptions.body = postBody;
+      }
+      const response = await fetch(testUrl, fetchOptions);
       const responseTime = Date.now() - startTime;
       // We'll update this after we get the actual calculation time from the response
       setWizardResponseTime(responseTime);
@@ -141,19 +150,21 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     }
   };
 
-  // Handle opening URL in new tab
-  const handleOpenUrl = () => {
-    if (wizardUrl) {
-      window.open(wizardUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   // Build wizard test URL dynamically
-  const buildWizardUrl = (params: Record<string, any>, endpoint: string = selectedEndpoint) => {
+  const buildWizardUrl = (params: Record<string, any>, endpoint: string = selectedEndpoint, method: 'GET' | 'POST' = httpMethod) => {
     const endpointConfig = API_ENDPOINTS.find(e => e.key === endpoint) || API_ENDPOINTS[0];
     const baseUrl = endpointConfig.url.replace('{serviceId}', serviceId);
-    const urlParams = new URLSearchParams();
 
+    // POST mode: no query params in URL
+    if (method === 'POST') {
+      if (isLocalDev && baseUrl.startsWith('/')) {
+        return `${window.location.origin}${baseUrl}`;
+      }
+      return baseUrl;
+    }
+
+    // GET mode: params as query string
+    const urlParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         urlParams.append(key, String(value));
@@ -161,29 +172,43 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     });
 
     if (requireToken) {
-      // Always use placeholder since we don't have the actual token value
-      // Users need to replace this with their actual token
-      urlParams.append('token', 'REPLACE_WITH_YOUR_TOKEN');
+      urlParams.append('token', tokenValue || 'REPLACE_WITH_YOUR_TOKEN');
     }
 
     const queryString = urlParams.toString();
     const finalUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
-    // For localhost, prepend origin so the displayed URL is complete and copyable
     if (isLocalDev && finalUrl.startsWith('/')) {
       return `${window.location.origin}${finalUrl}`;
     }
     return finalUrl;
   };
 
+  // Build POST body from parameters
+  const buildPostBody = (params: Record<string, any>) => {
+    const inputs: Record<string, any> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        inputs[key] = value;
+      }
+    });
+    const body: Record<string, any> = { inputs };
+    if (requireToken) {
+      body.token = tokenValue || 'REPLACE_WITH_YOUR_TOKEN';
+    }
+    return JSON.stringify(body, null, 2);
+  };
+
   const [wizardUrl, setWizardUrl] = useState('');
 
-  // Update wizard URL when parameters or endpoint change
+  // Update wizard URL and POST body when parameters, endpoint, or method change
   useEffect(() => {
-    // Only auto-update if URL wasn't manually edited
     if (!urlManuallyEdited) {
-      setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint));
+      setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint, httpMethod));
     }
-  }, [parameterValues, serviceId, requireToken, existingToken, selectedEndpoint, urlManuallyEdited]);
+    if (!postBodyEdited) {
+      setPostBody(buildPostBody(parameterValues));
+    }
+  }, [parameterValues, serviceId, requireToken, tokenValue, selectedEndpoint, urlManuallyEdited, httpMethod, postBodyEdited]);
 
   // Track mounted state
   useEffect(() => {
@@ -233,10 +258,8 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
     // Fallback to a reasonable default if width measurement fails
     const effectiveWidth = containerWidth || 800;
     
-    if (effectiveWidth < 600) return 24; // 1 column for small containers
-    if (effectiveWidth < 900) return 12; // 2 columns for medium containers
-    if (effectiveWidth < 1200) return 8; // 3 columns for large containers
-    return 6; // 4 columns for extra large containers
+    if (effectiveWidth < 400) return 24; // 1 column for small containers
+    return 12; // 2 columns
   };
 
   // Alternative: CSS Grid approach (for future refactoring)
@@ -248,17 +271,33 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
   //   {inputs.map(input => <div key={input.id}>...</div>)}
   // </div>
 
+  // Format JSON with syntax highlighting
+  const formatJsonValue = (value: string) => {
+    return value.replace(
+      /("(?:[^"\\]|\\.)*")\s*:/g,
+      '<span style="color:#8c8c8c">$1</span>:'
+    ).replace(
+      /:\s*("(?:[^"\\]|\\.)*")/g,
+      ': <span style="color:#9133E8">$1</span>'
+    ).replace(
+      /:\s*(true|false)/g,
+      ': <span style="color:#d4880f">$1</span>'
+    ).replace(
+      /:\s*(\d+\.?\d*)/g,
+      ': <span style="color:#1AA24A">$1</span>'
+    );
+  };
+
   return (
-    <div style={{ width: '100%' }}>
-      <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+    <Splitter style={{ width: '100%', height: '100%' }}>
+      <Splitter.Panel defaultSize="50%" min="30%" max="70%" style={{ paddingRight: 16 }}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={8}>
           {/* Input Parameters Form */}
           {inputs.length > 0 && (
             <div style={{
-              background: '#fafafa',
-              borderRadius: 6,
-              padding: '14px 14px 6px 14px',
+              padding: '0 0 6px 0',
             }}>
-              <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 {t('tester.inputParameters')}
               </div>
               <Form
@@ -268,7 +307,6 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                 style={{ width: '100%' }}
                 onValuesChange={(changedValues, allValues) => {
                   setParameterValues(allValues);
-                  // Update URL immediately when values change
                   setWizardUrl(buildWizardUrl(allValues));
                 }}
               >
@@ -289,53 +327,154 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             </div>
           )}
 
-          {/* Dynamic URL Input */}
-          <div style={{
-            background: '#fafafa',
-            borderRadius: 6,
-            padding: '10px 14px',
-          }}>
+          {/* Token input */}
+          {requireToken && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                Token
+              </div>
+              <Input
+                value={tokenValue}
+                onChange={(e) => {
+                  setTokenValue(e.target.value);
+                  setUrlManuallyEdited(false);
+                  setPostBodyEdited(false);
+                }}
+                placeholder="REPLACE_WITH_YOUR_TOKEN"
+                style={{ fontFamily: 'SF Mono, Fira Code, Fira Mono, Menlo, monospace', fontSize: 12 }}
+              />
+            </div>
+          )}
+
+          {/* Method & Domain selectors */}
+          <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                {t('tester.method')}
+              </div>
+              <div style={{ display: 'inline-flex', borderRadius: 6, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
+                {(['GET', 'POST'] as const).map((method) => {
+                  const isActive = httpMethod === method;
+                  const activeColor = method === 'GET' ? '#1AA24A' : '#d4880f';
+                  return (
+                    <div
+                      key={method}
+                      onClick={() => {
+                        setHttpMethod(method);
+                        setUrlManuallyEdited(false);
+                        setPostBodyEdited(false);
+                      }}
+                      style={{
+                        padding: '6px 16px',
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: isActive ? activeColor : '#8c8c8c',
+                        background: isActive ? (method === 'GET' ? '#f0fff0' : '#fff8f0') : 'white',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {method}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                {t('tester.domain')}
+              </div>
+              <div style={{ display: 'inline-flex', borderRadius: 6, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
+                {API_ENDPOINTS.map((ep) => {
+                  const isActive = selectedEndpoint === ep.key;
+                  return (
+                    <div
+                      key={ep.key}
+                      onClick={() => {
+                        setSelectedEndpoint(ep.key);
+                        setUrlManuallyEdited(false);
+                      }}
+                      style={{
+                        padding: '6px 16px',
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: isActive ? '#7B3AED' : '#8c8c8c',
+                        background: isActive ? '#F0EEFF' : 'white',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {ep.label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* POST Request Body */}
+          {httpMethod === 'POST' && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {t('tester.requestBody') || 'Request Body'}
+                </span>
+                <span style={{ fontSize: 11, color: '#bfbfbf' }}>application/json</span>
+              </div>
+              <TextArea
+                value={postBody}
+                onChange={(e) => {
+                  setPostBody(e.target.value);
+                  setPostBodyEdited(true);
+                }}
+                rows={8}
+                style={{
+                  fontFamily: 'SF Mono, Fira Code, Fira Mono, Menlo, monospace',
+                  fontSize: 12,
+                  background: '#fafafa',
+                  border: '1px solid #e8e8e8'
+                }}
+                disabled={!isPublished}
+              />
+              {postBodyEdited && (
+                <div style={{ marginTop: 4, fontSize: 11, color: '#8c8c8c' }}>
+                  <Button
+                    type="link"
+                    size="small"
+                    style={{ padding: 0, height: 'auto', fontSize: 11 }}
+                    onClick={() => {
+                      setPostBodyEdited(false);
+                      setPostBody(buildPostBody(parameterValues));
+                    }}
+                  >
+                    {t('tester.resetBody') || 'Reset'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Request URL */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+              {t('tester.requestUrl') || 'Anfrage-URL'}
+            </div>
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 8,
-              fontSize: 13,
-              color: '#595959'
+              background: '#fafafa',
+              borderRadius: 6,
+              border: '1px solid #e8e8e8',
+              overflow: 'hidden'
             }}>
-              <Tooltip title={isPublished ?
-                t('tester.endpointActive') :
-                t('tester.endpointDraft')
-              }>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', borderBottom: '1px solid #e8e8e8' }}>
                 <span style={{
-                  background: isPublished ? '#1AA24A' : '#faad14',
+                  background: httpMethod === 'GET' ? '#1AA24A' : '#d4880f',
                   color: 'white',
                   padding: '2px 8px',
                   borderRadius: 4,
                   fontSize: 11,
                   fontWeight: 600,
-                  cursor: 'help'
-                }}>GET</span>
-              </Tooltip>
-              <Segmented
-                size="small"
-                value={selectedEndpoint}
-                onChange={(value) => {
-                  setSelectedEndpoint(value as string);
-                  setUrlManuallyEdited(false);
-                }}
-                options={API_ENDPOINTS.map(e => ({ label: e.label, value: e.key }))}
-              />
-              <span style={{ flex: 1 }}></span>
-              {requireToken && (
-                <>
-                  <span style={{ color: '#faad14', fontSize: 12 }}>
-                    {t('tester.replaceToken')}
-                  </span>
-                  <span style={{ color: '#d9d9d9' }}>|</span>
-                </>
-              )}
-              <Tooltip title={t('tester.copyUrlToClipboard')}>
+                }}>{httpMethod}</span>
+                <span style={{ flex: 1 }} />
                 <Button
                   type="text"
                   size="small"
@@ -344,25 +483,29 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                     navigator.clipboard.writeText(wizardUrl);
                     notification.success({ title: t('tester.urlCopied') });
                   }}
-                  style={{ color: '#8c8c8c' }}
-                />
-              </Tooltip>
+                  style={{ color: '#8c8c8c', fontSize: 12 }}
+                >
+                  {t('tester.copy') || 'Kopieren'}
+                </Button>
+              </div>
+              <TextArea
+                value={wizardUrl}
+                onChange={(e) => {
+                  setWizardUrl(e.target.value);
+                  setUrlManuallyEdited(true);
+                }}
+                autoSize={{ minRows: 1, maxRows: 4 }}
+                style={{
+                  fontFamily: 'SF Mono, Fira Code, Fira Mono, Menlo, monospace',
+                  fontSize: 12,
+                  background: 'white',
+                  border: 'none',
+                  borderRadius: 0,
+                  resize: 'none'
+                }}
+                disabled={!isPublished}
+              />
             </div>
-            <TextArea
-              value={wizardUrl}
-              onChange={(e) => {
-                setWizardUrl(e.target.value);
-                setUrlManuallyEdited(true);
-              }}
-              rows={3}
-              style={{
-                fontFamily: 'monospace',
-                fontSize: 12,
-                background: 'white',
-                border: '1px solid #e8e8e8'
-              }}
-              disabled={!isPublished}
-            />
             {urlManuallyEdited && (
               <div style={{ marginTop: 4, fontSize: 11, color: '#8c8c8c' }}>
                 <Button
@@ -371,7 +514,7 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
                   style={{ padding: 0, height: 'auto', fontSize: 11 }}
                   onClick={() => {
                     setUrlManuallyEdited(false);
-                    setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint));
+                    setWizardUrl(buildWizardUrl(parameterValues, selectedEndpoint, httpMethod));
                   }}
                 >
                   {t('tester.resetUrl')}
@@ -380,184 +523,107 @@ const ServiceTester: React.FC<ServiceTesterProps> = ({
             )}
           </div>
 
-          {/* Test Buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 15, marginBottom: 15, justifyContent: 'flex-end' }}>
-            <Button
-              type="primary"
-              icon={<CaretRightOutlined />}
-              onClick={handleWizardTest}
-              loading={wizardTesting}
-              disabled={!isPublished}
-              style={{ boxShadow: 'none', background: '#9133E8', borderColor: '#9133E8' }}
-            >
-              {t('tester.runTest')}
-            </Button>
-            <Tooltip title={t('tester.openInNewTab')}>
-              <Button
-                icon={<ExportOutlined />}
-                onClick={handleOpenUrl}
-                disabled={!isPublished || !wizardUrl}
-              />
-            </Tooltip>
+          {/* Test Button */}
+          <Button
+            type="primary"
+            icon={<CaretRightOutlined />}
+            onClick={handleWizardTest}
+            loading={wizardTesting}
+            disabled={!isPublished}
+            block
+            style={{ boxShadow: 'none', background: '#9133E8', borderColor: '#9133E8', marginTop: 8, height: 40 }}
+          >
+            {t('tester.runTest')}
+          </Button>
+        </Space>
+      </Splitter.Panel>
+
+      <Splitter.Panel style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', backgroundColor: '#ffffff' }}>
+        {/* Response header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {t('tester.response')}
           </div>
-
-          {/* Results Section */}
-          {(wizardResult || wizardError) && (
-            <div style={{
-              opacity: wizardTesting ? 0.5 : 1,
-              transition: 'opacity 0.15s ease-in-out',
-              pointerEvents: wizardTesting ? 'none' : 'auto'
-            }}>
-              {/* Output Results - Clean grid of result boxes */}
-              {wizardResult && wizardResult.outputs && wizardResult.outputs.length > 0 && (
-                <Row gutter={[12, 12]}>
-                  {wizardResult.outputs.map((output: any) => {
-                    const displayTitle = output.title || output.name;
-
-                    // Format the value based on type
-                    let displayValue: React.ReactNode;
-                    let valueStyle: React.CSSProperties = {
-                      fontSize: 20,
-                      fontWeight: 600,
-                      color: '#262626',
-                      lineHeight: 1.2
-                    };
-
-                    if (typeof output.value === 'number') {
-                      const formatted = new Intl.NumberFormat(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 4
-                      }).format(output.value);
-                      displayValue = formatted;
-                    } else if (typeof output.value === 'boolean') {
-                      displayValue = output.value ? '✓ Yes' : '✗ No';
-                      valueStyle.color = output.value ? '#52c41a' : '#8c8c8c';
-                    } else if (Array.isArray(output.value)) {
-                      if (output.value.length === 0) {
-                        displayValue = 'Empty';
-                        valueStyle.color = '#8c8c8c';
-                      } else if (Array.isArray(output.value[0])) {
-                        const rows = output.value.length;
-                        const cols = output.value[0].length;
-                        displayValue = `${rows} × ${cols}`;
-                        valueStyle.fontSize = 16;
-                      } else {
-                        displayValue = `${output.value.length} items`;
-                        valueStyle.fontSize = 16;
-                      }
-                    } else if (output.value === null || output.value === undefined) {
-                      displayValue = '—';
-                      valueStyle.color = '#8c8c8c';
-                    } else {
-                      const strValue = String(output.value);
-                      displayValue = strValue.length > 20 ? (
-                        <Tooltip title={strValue}>
-                          <span>{strValue.substring(0, 18)}...</span>
-                        </Tooltip>
-                      ) : strValue;
-                      valueStyle.fontSize = 16;
-                    }
-
-                    return (
-                      <Col key={output.name} span={getColumnSpan()}>
-                        <div style={{
-                          background: '#fafafa',
-                          borderRadius: 8,
-                          padding: '12px 16px',
-                          height: '100%'
-                        }}>
-                          <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
-                            {displayTitle}
-                          </div>
-                          <div style={valueStyle}>
-                            {displayValue}
-                          </div>
-                        </div>
-                      </Col>
-                    );
-                  })}
-                </Row>
-              )}
-
-              {/* Call Statistics - Unified subtle bar */}
-              <div style={{
+          {wizardResult && !wizardError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                background: '#f6ffed',
+                color: '#52c41a',
+                padding: '2px 10px',
+                borderRadius: 12,
+                fontSize: 12,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 16,
-                flexWrap: 'wrap',
-                padding: '10px 14px',
-                marginTop: 12,
-                background: '#fafafa',
-                borderRadius: 6,
-                fontSize: 13,
-                color: '#595959'
+                gap: 4
               }}>
-                {wizardError ? (
-                  <span style={{ color: '#ff4d4f', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <InfoCircleOutlined /> {t('tester.error')}
-                  </span>
-                ) : (
-                  <span style={{ color: '#52c41a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircleOutlined /> {t('tester.success')}
-                  </span>
-                )}
-                <span style={{ color: '#d9d9d9' }}>|</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <ClockCircleOutlined style={{ color: '#8c8c8c' }} />
-                  {wizardResponseTime} ms
-                </span>
-                {wizardResult?.metadata && (
-                  <>
-                    <span style={{ color: '#d9d9d9' }}>|</span>
-                    <span style={{ color: '#8c8c8c' }}>
-                      {wizardResult.metadata.fromProcessCache && t('tester.processCache')}
-                      {wizardResult.metadata.fromRedisCache && t('tester.redisCache')}
-                      {wizardResult.metadata.fromResultCache && t('tester.resultCache')}
-                      {!(wizardResult.metadata.fromProcessCache ||
-                         wizardResult.metadata.fromRedisCache ||
-                         wizardResult.metadata.fromResultCache) && t('tester.freshCalculation')}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {wizardError && (
-                <Alert
-                  message={wizardError}
-                  type="error"
-                  showIcon
-                  style={{ marginTop: 8 }}
-                />
-              )}
-
-              {/* Raw API Response (collapsible) */}
-              {wizardResult && (
-                <details style={{ marginTop: 8 }}>
-                  <summary style={{ cursor: 'pointer', color: '#8c8c8c', fontSize: 12 }}>
-                    {t('tester.viewRawResponse')}
-                  </summary>
-                  <div
-                    ref={responseBoxRef}
-                    style={{
-                      background: '#fafafa',
-                      padding: 12,
-                      borderRadius: 6,
-                      maxHeight: responseBoxHeight,
-                      overflow: 'auto',
-                      marginTop: 8
-                    }}
-                  >
-                    <pre style={{ margin: 0, fontSize: 11, color: '#595959' }}>
-                      {JSON.stringify(wizardResult, null, 2)}
-                    </pre>
-                  </div>
-                </details>
-              )}
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#52c41a', display: 'inline-block' }} />
+                200 OK
+              </span>
+              <span style={{ fontSize: 12, color: '#8c8c8c' }}>{wizardResponseTime} ms</span>
             </div>
           )}
-      </Space>
-    </div>
+          {wizardError && (
+            <span style={{
+              background: '#fff2f0',
+              color: '#ff4d4f',
+              padding: '2px 10px',
+              borderRadius: 12,
+              fontSize: 12,
+              fontWeight: 600
+            }}>
+              Error
+            </span>
+          )}
+        </div>
+
+        {/* Response body */}
+        {wizardError && (
+          <Alert
+            message={wizardError}
+            type="error"
+            showIcon
+            style={{ marginBottom: 8 }}
+          />
+        )}
+
+        {wizardResult && (
+          <div
+            ref={responseBoxRef}
+            style={{
+              flex: 1,
+              background: '#fafafa',
+              borderRadius: 6,
+              padding: 16,
+              overflow: 'auto',
+              maxHeight: responseBoxHeight,
+              opacity: wizardTesting ? 0.5 : 1,
+              transition: 'opacity 0.15s ease-in-out'
+            }}
+          >
+            <pre
+              style={{ margin: 0, fontSize: 13, lineHeight: 1.6, fontFamily: "SF Mono, Fira Code, Fira Mono, Menlo, monospace" }}
+              dangerouslySetInnerHTML={{ __html: formatJsonValue(JSON.stringify(wizardResult, null, 2)) }}
+            />
+          </div>
+        )}
+
+        {!wizardResult && !wizardError && (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#bfbfbf',
+            fontSize: 13,
+            borderRadius: 6,
+            minHeight: 200
+          }}>
+            {t('tester.runTestToSeeResults')}
+          </div>
+        )}
+      </Splitter.Panel>
+    </Splitter>
   );
 };
 

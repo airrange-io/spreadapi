@@ -57,7 +57,7 @@ export const InputRenderer: React.FC<InputRendererProps> = ({
     <div>
       <div style={{ fontWeight: 400, marginBottom: 2, fontSize: 13, color: '#666' }}>
         {displayTitle}
-        {!input.mandatory && (
+        {(input.mandatory === false || input.mandatory === 'false') && (
           <Text type="secondary" style={{ fontSize: 11, marginLeft: 6 }}>(optional)</Text>
         )}
       </div>

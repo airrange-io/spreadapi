@@ -516,6 +516,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             col: start.col,
             type: detectedType,
             value,
+            mandatory: true,
             direction: 'input' as const,
             description: '',
           };
@@ -1366,6 +1367,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
+      notification.destroy('publish');
       notification.success({ title: t('service.publishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
@@ -1391,6 +1393,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to publish service:', error);
+      notification.destroy('publish');
       notification.error({ title: t('service.publishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
@@ -1809,6 +1812,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       if (!workbookRef.current && shouldSaveWorkbook) {
         notification.error({ title: t('service.waitForWorkbookBeforeSaving') });
         setLoading(false);
+        setSavingWorkbook(false);
+        return;
+      }
+
+      // Block save if template import hasn't completed yet
+      if (!templateImportCompleteRef.current && shouldSaveWorkbook) {
+        notification.destroy('save');
+        notification.warning({ title: 'Template is still loading. Please wait before saving.' });
+        setLoading(false);
+        isSavingRef.current = false;
         setSavingWorkbook(false);
         return;
       }

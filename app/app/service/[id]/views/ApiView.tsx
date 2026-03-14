@@ -200,31 +200,29 @@ const ApiView: React.FC<ApiViewProps> = ({
       'test': (
         <>
           {alertBanner}
-          <div>
-            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
-                API Tester
-              </div>
-              <Button
-                type="text"
-                size="small"
-                icon={<FullscreenOutlined />}
-                onClick={handleOpenFullScreen}
-                style={{ fontSize: 14 }}
-              />
+          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: '#333' }}>
+              API Tester
             </div>
-            <ServiceTester
-              serviceId={serviceId}
-              serviceName={apiConfig.name}
-              isPublished={serviceStatus?.published || false}
-              inputs={apiConfig.inputs || []}
-              outputs={apiConfig.outputs || []}
-              requireToken={apiConfig.requireToken}
-              existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
-              containerWidth={containerWidth}
-              onTestComplete={handleTestComplete}
+            <Button
+              type="text"
+              size="small"
+              icon={<FullscreenOutlined />}
+              onClick={handleOpenFullScreen}
+              style={{ fontSize: 14 }}
             />
           </div>
+          <ServiceTester
+            serviceId={serviceId}
+            serviceName={apiConfig.name}
+            isPublished={serviceStatus?.published || false}
+            inputs={apiConfig.inputs || []}
+            outputs={apiConfig.outputs || []}
+            requireToken={apiConfig.requireToken}
+            existingToken={availableTokens.length > 0 ? availableTokens[0].id : undefined}
+            containerWidth={containerWidth}
+            onTestComplete={handleTestComplete}
+          />
         </>
       ),
       'tokens': (
