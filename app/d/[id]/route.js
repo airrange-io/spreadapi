@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
-import { calculateDirect } from '@/app/api/v1/services/[id]/execute/calculateDirect.js';
+import { calculateDirect } from '../../api/v1/services/[id]/execute/calculateDirect.js';
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
 
