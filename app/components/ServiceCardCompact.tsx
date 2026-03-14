@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dropdown, Popconfirm } from 'antd';
+import { App, Dropdown } from 'antd';
 import { MoreOutlined, DeleteOutlined, CopyOutlined, ApiOutlined, ClockCircleOutlined, BarChartOutlined, LoadingOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 import type { MenuProps } from 'antd';
@@ -78,6 +78,7 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
   folderMenuItems,
 }) => {
   const { t } = useTranslation();
+  const { modal } = App.useApp();
   const displayCount = callCount ?? service.calls ?? 0;
   const displayDate = service.updatedAt || service.createdAt;
   const color = statusColors[service.status] || '#8c8c8c';
@@ -116,30 +117,20 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: (
-        <Popconfirm
-          title={t('serviceList.deleteConfirmTitle')}
-          description={t('serviceList.deleteConfirmDescription')}
-          onConfirm={(e) => {
-            e?.stopPropagation();
-            onDelete(service.id, service.name);
-          }}
-          onCancel={(e) => {
-            e?.stopPropagation();
-          }}
-          onPopupClick={(e) => {
-            e.stopPropagation();
-          }}
-          okText={t('common.yes')}
-          cancelText={t('common.no')}
-          okButtonProps={{ danger: true }}
-        >
-          <span onClick={(e) => e.stopPropagation()}>{t('common.delete')}</span>
-        </Popconfirm>
-      ),
+      label: t('common.delete'),
       danger: true,
       onClick: (e: any) => {
         e.domEvent.stopPropagation();
+        modal.confirm({
+          title: t('serviceList.deleteConfirmTitle'),
+          content: t('serviceList.deleteConfirmDescription'),
+          okText: t('common.yes'),
+          cancelText: t('common.no'),
+          okButtonProps: { danger: true },
+          onOk: () => {
+            onDelete(service.id, service.name);
+          },
+        });
       },
     },
   ];

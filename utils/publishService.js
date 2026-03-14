@@ -202,6 +202,24 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     saveAsView: false
   });
 
+  // Validate that the workbook has the sheets referenced by parameters
+  if (workbookJSON?.sheets) {
+    const sheetNames = Object.keys(workbookJSON.sheets);
+    const allParams = [...(service.inputs || []), ...(service.outputs || [])];
+    const referencedSheets = new Set(
+      allParams
+        .map(p => (p.address || p.cell)?.split('!')[0]?.replace(/'/g, ''))
+        .filter(Boolean)
+    );
+    const missingSheets = [...referencedSheets].filter(s => !sheetNames.includes(s));
+    if (missingSheets.length > 0) {
+      throw new Error(
+        `Workbook is missing sheets: ${missingSheets.join(', ')}. Available: ${sheetNames.join(', ')}. ` +
+        `The template may not have finished loading. Please wait and try again.`
+      );
+    }
+  }
+
   // Optimize the workbook data for API service
   const optimized = optimizeForService(workbookJSON);
   const optimizedWorkbook = optimized.data;

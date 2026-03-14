@@ -197,6 +197,16 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       return;
     }
 
+    // Skip "imported" marker — data was loaded directly into SpreadJS via import,
+    // not via spreadsheetData props. Nothing to load here.
+    if (props.storeLocal.spread.type === 'imported') {
+      if (!dataLoaded) {
+        setDataLoaded(true);
+        setIsLoading(false);
+      }
+      return;
+    }
+
     const currentDataKey = JSON.stringify({
       type: props.storeLocal.spread.type,
       hasBlob: !!props.storeLocal.spread.blob,
@@ -208,6 +218,13 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
     });
 
     if (dataLoaded && lastLoadedDataRef.current === currentDataKey) {
+      return;
+    }
+
+    // If dataLoaded is true but lastLoadedDataRef was reset (e.g., by Fast Refresh/HMR),
+    // the spread instance already has data — don't overwrite it with potentially stale props
+    if (dataLoaded && !lastLoadedDataRef.current) {
+      lastLoadedDataRef.current = currentDataKey;
       return;
     }
 
@@ -452,6 +469,11 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
             reject(new Error("Spread instance or blob not available"));
           }
         });
+      },
+      refresh: () => {
+        if (spread) {
+          spread.refresh();
+        }
       },
       importExcel: (file) => {
         return new Promise((resolve, reject) => {

@@ -886,6 +886,19 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, [activeView, workbookLoaded, workbookLoading, configLoaded, importFileForEmptyState, loadWorkbookOnDemand]);
 
+  // Refresh SpreadJS when switching back to Workbook view
+  // SpreadJS can't calculate dimensions while its container has display:none,
+  // so we need to call refresh() when the container becomes visible again
+  useEffect(() => {
+    if (activeView === 'Workbook' && workbookLoaded && workbookRef.current) {
+      // Small delay to ensure the container is visible before refreshing
+      const timer = setTimeout(() => {
+        workbookRef.current?.refresh?.();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [activeView, workbookLoaded]);
+
   // Calculate workbook size when workbook data is fully loaded into SpreadJS
   // This is called from the workbook-loaded event, which fires AFTER fromJSON completes
   const workbookSizeCalculated = useRef(false);
@@ -2467,6 +2480,12 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
         // Mark template import as complete — auto-save can now safely proceed
         templateImportCompleteRef.current = true;
+
+        // Mark spreadsheetData as "imported" so the WorkbookViewer won't
+        // overwrite SpreadJS with the empty default workbook on re-render.
+        // We use an SJS-type marker instead of the full JSON to avoid expensive
+        // toJSON() serialization (which would be slow for large workbooks).
+        setSpreadsheetData({ type: 'imported', timestamp: Date.now() });
 
         // Clear the flag after import to allow normal loadWorkbook behavior
         hasDragDropFileRef.current = false;
