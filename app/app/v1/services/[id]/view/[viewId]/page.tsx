@@ -30,10 +30,11 @@ export default async function WebViewPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  // Validate interactive mode requires token
+  // Validate interactive mode requires token only for token-protected services
   if (isInteractive) {
-    // Check if token is valid
-    if (!serviceData.webAppToken || serviceData.webAppToken !== token) {
+    const serviceRequiresToken = serviceData.needsToken === 'true' || serviceData.requireToken === 'true';
+
+    if (serviceRequiresToken && (!serviceData.webAppToken || serviceData.webAppToken !== token)) {
       return (
         <div style={{
           display: 'flex',

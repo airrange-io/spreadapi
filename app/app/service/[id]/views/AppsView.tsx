@@ -254,16 +254,17 @@ const AppsView: React.FC<AppsViewProps> = ({
 
   // Get interactive embed URL
   const getInteractiveEmbedUrl = (viewId: string) => {
-    if (!webAppToken) return '';
+    if (apiConfig.requireToken && !webAppToken) return '';
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spreadapi.io';
     const baseUrl = `${origin}/app/v1/services/${serviceId}/view/${viewId}`;
     const queryString = getDefaultQueryString();
     const separator = queryString ? '&' : '?';
-    const themeParam = buildThemeParam(true); // Always has params (token + interactive)
+    const tokenParam = webAppToken ? `token=${webAppToken}&` : '';
+    const themeParam = buildThemeParam(!!queryString || !!tokenParam);
     const viewModeParam = viewMode !== 'all' ? `&viewMode=${viewMode}` : '';
     const captionParam = !showCaption ? '&nocaption=true' : '';
 
-    return `${baseUrl}${queryString}${separator}token=${webAppToken}&interactive=true${themeParam}${viewModeParam}${captionParam}`;
+    return `${baseUrl}${queryString}${separator}${tokenParam}interactive=true${themeParam}${viewModeParam}${captionParam}`;
   };
 
   // Get iframe code for interactive mode
@@ -280,64 +281,71 @@ const AppsView: React.FC<AppsViewProps> = ({
         <div>
           <h3 style={{ marginTop: 0, marginBottom: 16 }}>{t('apps.tokenManagement')}</h3>
 
-          {!webAppToken ? (
-            <div>
-              <p style={{ color: '#666', marginBottom: 16 }}>
-                {t('apps.generateTokenDescription')}
-              </p>
-              <Button
-                type="primary"
-                onClick={handleGenerateToken}
-                disabled={isLoading || isDemoMode}
-              >
-                {t('apps.generateTokenButton')}
-              </Button>
-              {isDemoMode && (
-                <div style={{ marginTop: 12, color: '#666', fontSize: 12 }}>
-                  {t('apps.demoModeTokenDisabled')}
+          {apiConfig.requireToken ? (
+            // Token-protected service: show token management
+            <>
+              {!webAppToken ? (
+                <div>
+                  <p style={{ color: '#666', marginBottom: 16 }}>
+                    {t('apps.generateTokenDescription')}
+                  </p>
+                  <Button
+                    type="primary"
+                    onClick={handleGenerateToken}
+                    disabled={isLoading || isDemoMode}
+                  >
+                    {t('apps.generateTokenButton')}
+                  </Button>
+                  {isDemoMode && (
+                    <div style={{ marginTop: 12, color: '#666', fontSize: 12 }}>
+                      {t('apps.demoModeTokenDisabled')}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ) : (
-            <Space orientation="vertical" style={{ width: '100%' }} size={16}>
-              <div>
-                <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
-                  {t('apps.webAppToken')}
-                </div>
-                <Space.Compact style={{ display: 'flex', width: '100%', flexWrap: 'nowrap' }}>
-                  <Input
-                    value={webAppToken}
-                    readOnly
-                    style={{ flex: 1, minWidth: 0, height: 32, overflow: 'hidden' }}
-                  />
-                  <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
-                    <Button
-                      icon={<ReloadOutlined />}
-                      onClick={handleGenerateToken}
-                      disabled={isDemoMode}
-                    />
-                  </Tooltip>
-                  <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.disableWebAppTooltip')}>
-                    <Button
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={handleDeleteToken}
-                      disabled={isDemoMode}
-                    />
-                  </Tooltip>
-                </Space.Compact>
+              ) : (
+                <Space orientation="vertical" style={{ width: '100%' }} size={16}>
+                  <div>
+                    <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 500 }}>
+                      {t('apps.webAppToken')}
+                    </div>
+                    <Space.Compact style={{ display: 'flex', width: '100%', flexWrap: 'nowrap' }}>
+                      <Input
+                        value={webAppToken}
+                        readOnly
+                        style={{ flex: 1, minWidth: 0, height: 32, overflow: 'hidden' }}
+                      />
+                      <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.regenerateToken')}>
+                        <Button
+                          icon={<ReloadOutlined />}
+                          onClick={handleGenerateToken}
+                          disabled={isDemoMode}
+                        />
+                      </Tooltip>
+                      <Tooltip title={isDemoMode ? t('apps.disabledInDemo') : t('apps.disableWebAppTooltip')}>
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={handleDeleteToken}
+                          disabled={isDemoMode}
+                        />
+                      </Tooltip>
+                    </Space.Compact>
 
-                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
-                  {t('apps.regenerateHint')}
-                </div>
-                <Alert
-                  title={t('apps.buildWebAppsTitle')}
-                  description={t('apps.buildWebAppsDescription')}
-                  type="info"
-                  style={{ marginTop: 24, marginBottom: 24, padding: '10px 10px 10px 15px' }}
-                />
-              </div>
-            </Space>
+                    <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                      {t('apps.regenerateHint')}
+                    </div>
+                  </div>
+                </Space>
+              )}
+            </>
+          ) : (
+            // Public service: no token needed
+            <Alert
+              title={t('apps.buildWebAppsTitle')}
+              description={t('apps.buildWebAppsDescription')}
+              type="info"
+              style={{ marginBottom: 24, padding: '10px 10px 10px 15px' }}
+            />
           )}
         </div>
       );
@@ -570,7 +578,7 @@ const AppsView: React.FC<AppsViewProps> = ({
 
     // Web App
     if (selectedKey === 'webapp') {
-      if (!webAppToken && !isDemoMode) {
+      if (apiConfig.requireToken && !webAppToken && !isDemoMode) {
         return (
           <Alert
             title={t('apps.noWebAppToken')}
@@ -581,10 +589,10 @@ const AppsView: React.FC<AppsViewProps> = ({
         );
       }
 
-      const themeParam = buildThemeParam(!!webAppToken); // Has params if token exists
-      const webAppUrl = webAppToken
-        ? `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}?token=${webAppToken}${themeParam}`
-        : `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}${themeParam}`;
+      const tokenPart = webAppToken ? `token=${webAppToken}` : '';
+      const themeParam = buildThemeParam(!!tokenPart);
+      const queryParts = [tokenPart, themeParam.replace(/^[&?]/, '')].filter(Boolean).join('&');
+      const webAppUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/app/v1/services/${serviceId}${queryParts ? '?' + queryParts : ''}`;
 
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16 }}>
@@ -749,7 +757,7 @@ const AppsView: React.FC<AppsViewProps> = ({
     // System Templates (Snippets/Views)
     const template = SYSTEM_TEMPLATES[selectedKey];
     if (template) {
-      if (!webAppToken) {
+      if (apiConfig.requireToken && !webAppToken) {
         return (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Alert
@@ -888,12 +896,7 @@ const AppsView: React.FC<AppsViewProps> = ({
       icon: <FileTextOutlined />,
       label: t('apps.menuIntro')
     },
-    {
-      key: 'theme',
-      icon: <BgColorsOutlined />,
-      label: t('apps.menuTheme')
-    },
-    ...(webAppToken || isDemoMode ? [
+    ...(!apiConfig.requireToken || webAppToken || isDemoMode ? [
       {
         key: 'webapp-folder',
         icon: <AppstoreOutlined />,
@@ -914,7 +917,12 @@ const AppsView: React.FC<AppsViewProps> = ({
           label: template.name
         }))
       }
-    ] : [])
+    ] : []),
+    {
+      key: 'theme',
+      icon: <BgColorsOutlined />,
+      label: t('apps.menuTheme')
+    }
   ];
 
   return (

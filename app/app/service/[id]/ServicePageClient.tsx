@@ -1486,6 +1486,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         throw new Error(result.error);
       }
 
+      notification.destroy('republish'); // Clear the "Republishing..." message
       notification.success({ title: t('service.republishedSuccess') });
 
       // Clear client-side workbook cache so fresh data is fetched
@@ -1511,6 +1512,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
 
     } catch (error) {
       console.error('Failed to republish service:', error);
+      notification.destroy('republish'); // Clear the "Republishing..." message
       notification.error({ title: t('service.republishFailed', { error: error.message || t('service.unknownError') }) });
       setPublishProgress({ visible: false, percent: 0, status: '' });
       setLoading(false);
@@ -3113,6 +3115,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           serviceId={serviceId}
                           apiConfig={apiConfig}
                           serviceStatus={serviceStatus}
+                          availableTokens={availableTokens}
                           isDemoMode={false}
                           configLoaded={configLoaded}
                           isLoading={!configLoaded}

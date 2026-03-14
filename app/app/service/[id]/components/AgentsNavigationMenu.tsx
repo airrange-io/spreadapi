@@ -6,12 +6,14 @@ import type { MenuProps } from 'antd';
 import {
   InfoCircleOutlined,
   ApiOutlined,
-  MessageOutlined
+  MessageOutlined,
+  LinkOutlined
 } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 
 export type AgentsMenuSection =
   | 'ai-info'
+  | 'ai-connection'
   | 'chat-test'
   | 'mcp';
 
@@ -46,6 +48,11 @@ const AgentsNavigationMenu: React.FC<AgentsNavigationMenuProps> = ({
       key: 'ai-info',
       icon: <InfoCircleOutlined />,
       label: t('agentsNav.aiInfo')
+    },
+    {
+      key: 'ai-connection',
+      icon: <LinkOutlined />,
+      label: 'AI Connection'
     },
     {
       key: 'chat-test',

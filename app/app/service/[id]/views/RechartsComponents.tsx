@@ -12,14 +12,11 @@ import {
   Tag
 } from 'antd';
 import {
-  LineChartOutlined,
   ClockCircleOutlined,
   BarChartOutlined,
   DatabaseOutlined
 } from '@ant-design/icons';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -29,7 +26,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer
 } from 'recharts';
 
@@ -81,27 +77,24 @@ const RechartsComponents: React.FC<RechartsComponentsProps> = ({
             size="small"
             title={
               <Space style={{ fontSize: '14px', fontWeight: 'normal', color: 'rgba(0, 0, 0, 0.45)' }}>
-                <LineChartOutlined />
+                <BarChartOutlined />
                 <span>{t('charts.apiCallsLast7Days')}</span>
               </Space>
             }
           >
             {dailyChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={dailyChartData}>
+                <BarChart data={dailyChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="calls" 
-                    stroke={PURPLE} 
-                    strokeWidth={2}
-                    dot={{ fill: PURPLE, r: 4 }}
-                    activeDot={{ r: 6 }}
+                  <Bar
+                    dataKey="calls"
+                    fill={PURPLE}
+                    radius={[4, 4, 0, 0]}
                   />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('charts.noData')} />

@@ -116,6 +116,9 @@ export const SortableParameterItem: React.FC<SortableParameterItemProps> = ({
             textOverflow: 'ellipsis',
           }}>
             {parameter.name}
+            {type === 'input' && (parameter as InputDefinition).mandatory && (
+              <span style={{ color: '#ff4d4f', marginLeft: 2, fontWeight: 700 }}>*</span>
+            )}
           </div>
           <div style={{
             fontSize: 12,

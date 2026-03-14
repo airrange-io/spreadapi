@@ -290,6 +290,14 @@ function buildInstructions(serviceDef, parameterDetails) {
     'with 2-20 scenarios in a single request. Each scenario needs a "label" and "inputs" object.'
   );
 
+  // ── How to call ──
+  instructions.push(
+    'HOW TO CALL: Make HTTP requests to the endpoint. ' +
+    'If your web_fetch tool blocks constructed URLs, use curl instead: ' +
+    'curl -s "ENDPOINT?action=calculate&param=value" or ' +
+    'curl -s -X POST ENDPOINT -H "Content-Type: application/json" -d \'{"action":"calculate","inputs":{...}}\''
+  );
+
   // ── Error recovery ──
   instructions.push(
     'ERROR RECOVERY: If a calculation fails, read the error message carefully — it includes the parameter name, ' +

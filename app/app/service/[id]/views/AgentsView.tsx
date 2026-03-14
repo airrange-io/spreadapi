@@ -38,12 +38,18 @@ const ServiceMCPSettings = dynamic(() => import('@/components/ServiceMCPSettings
   ssr: false
 });
 
+const AiConnectionPanel = dynamic(() => import('../components/integration/AiConnectionPanel'), {
+  loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
+  ssr: false
+});
+
 interface AgentsViewProps {
   serviceId: string;
   apiConfig?: any;
   serviceStatus?: {
     published?: boolean;
   };
+  availableTokens?: any[];
   isDemoMode?: boolean;
   configLoaded?: boolean;
   isLoading?: boolean;
@@ -55,6 +61,7 @@ const AgentsView: React.FC<AgentsViewProps> = ({
   serviceId,
   apiConfig,
   serviceStatus,
+  availableTokens = [],
   isDemoMode = false,
   configLoaded = false,
   isLoading = false,
@@ -103,6 +110,21 @@ const AgentsView: React.FC<AgentsViewProps> = ({
             onAiTagsChange={(values) => onConfigChange?.({ aiTags: values })}
             onCategoryChange={(value) => onConfigChange?.({ category: value })}
           />
+        );
+
+      case 'ai-connection':
+        return (
+          <div style={{ padding: '16px' }}>
+            <AiConnectionPanel
+              serviceId={serviceId}
+              serviceName={apiConfig?.name}
+              isPublished={serviceStatus?.published || false}
+              requireToken={apiConfig?.requireToken}
+              availableTokens={availableTokens}
+              inputs={apiConfig?.inputs || []}
+              outputs={apiConfig?.outputs || []}
+            />
+          </div>
         );
 
       case 'chat-test':

@@ -225,6 +225,37 @@ const AiConnectionPanel: React.FC<AiConnectionPanelProps> = ({
         </div>
       </div>
 
+      {/* Setup note */}
+      <div style={{
+        marginBottom: 24,
+        background: '#FAFAFE',
+        border: '1px solid #F0EEFF',
+        borderRadius: 8,
+        padding: '16px 20px',
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: '#333', marginBottom: 8 }}>
+          Setup for Claude Desktop
+        </div>
+        <div style={{ fontSize: 12, color: '#595959', lineHeight: 1.7 }}>
+          <p style={{ margin: '0 0 8px 0' }}>
+            For Claude Desktop to call this URL, you need to add <strong>spreadapi.io</strong> to
+            the allowed domains list. Go to <em>Settings &rarr; Features &rarr; Domain Allowlist</em> and
+            add <code style={{ background: '#f0f0f0', padding: '1px 5px', borderRadius: 3, fontSize: 11 }}>spreadapi.io</code> as
+            an additional allowed domain.
+          </p>
+          <p style={{ margin: '0 0 8px 0' }}>
+            Then paste the URL above into your Claude chat. Claude will call the URL, read the briefing,
+            and know exactly how to use your calculation service — including all parameter types, constraints,
+            and formatting rules.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Tip:</strong> For the best experience in Claude Desktop, consider using the <strong>MCP integration</strong> instead.
+            MCP connects directly as a tool — no domain setup needed, faster execution, and native
+            tool-calling support. You can set it up in the <em>MCP Integration</em> section in the menu.
+          </p>
+        </div>
+      </div>
+
       {/* Test button */}
       <div style={{ marginBottom: 20 }}>
         <Button

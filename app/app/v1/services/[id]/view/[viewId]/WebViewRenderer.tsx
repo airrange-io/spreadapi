@@ -76,14 +76,27 @@ const WebViewRenderer: React.FC<WebViewRendererProps> = ({
 
         // Call the API
         const response = await fetch(apiUrl.toString());
+        let data: any = {};
+
         if (!response.ok) {
-          throw new Error(`API call failed: ${response.statusText}`);
+          if (isInteractive) {
+            // In interactive mode, gracefully handle API errors (e.g. missing params)
+            // Still render the form with inputs so the user can fill them in
+            try { data = await response.json(); } catch { data = {}; }
+            data.inputs = data.inputs || [];
+            data.outputs = data.outputs || [];
+          } else {
+            throw new Error(`API call failed: ${response.statusText}`);
+          }
+        } else {
+          data = await response.json();
         }
 
-        const data = await response.json();
-
         // Use inputsMetadata from props (server-side fetched from Redis)
-        const enrichedInputs = (data.inputs || []).map((input: any) => {
+        const inputSource = Array.isArray(data.inputs) && data.inputs.length > 0
+          ? data.inputs
+          : (Array.isArray(inputsMetadata) ? inputsMetadata : []);
+        const enrichedInputs = inputSource.map((input: any) => {
           // Find matching metadata for this input
           const metadata = inputsMetadata.find((m: any) => m.name === input.name) || {};
 

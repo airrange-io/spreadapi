@@ -45,32 +45,6 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
   const acceptLanguage = headersList.get('accept-language');
   const t = getTranslations(acceptLanguage);
 
-  // Require token
-  if (!token) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-        padding: '16px'
-      }}>
-        <div style={{
-          maxWidth: '600px',
-          width: '100%',
-          padding: '24px 32px',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.accessDenied}</div>
-          <div style={{ color: '#666' }}>{t.noToken}</div>
-        </div>
-      </div>
-    );
-  }
-
   // Server-side data fetching - much faster than client-side
   try {
     const serviceData = await redis.hGetAll(`service:${serviceId}`) as unknown as Record<string, string>;
@@ -79,8 +53,14 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       notFound();
     }
 
-    // Check if web app is enabled (has a token configured)
-    if (!serviceData.webAppToken) {
+    // Check if web app is enabled
+    // Accept: explicit flag, legacy token, or published service (check separate Redis key)
+    let webAppEnabled = serviceData.webAppEnabled === 'true' || !!serviceData.webAppToken;
+    if (!webAppEnabled) {
+      const isPublished = await redis.exists(`service:${serviceId}:published`);
+      webAppEnabled = isPublished === 1;
+    }
+    if (!webAppEnabled) {
       return (
         <div style={{
           display: 'flex',
@@ -105,30 +85,60 @@ export default async function WebAppPage({ params, searchParams }: PageProps) {
       );
     }
 
-    // Validate token matches
-    if (serviceData.webAppToken !== token) {
-      return (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
-          padding: '16px'
-        }}>
+    // Token is only required when the service has requireToken enabled
+    const serviceRequiresToken = serviceData.needsToken === 'true' || serviceData.requireToken === 'true';
+
+    if (serviceRequiresToken) {
+      if (!token) {
+        return (
           <div style={{
-            maxWidth: '600px',
-            width: '100%',
-            padding: '24px 32px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5',
+            padding: '16px'
           }}>
-            <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.invalidToken}</div>
-            <div style={{ color: '#666' }}>{t.checkUrl}</div>
+            <div style={{
+              maxWidth: '600px',
+              width: '100%',
+              padding: '24px 32px',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.accessDenied}</div>
+              <div style={{ color: '#666' }}>{t.noToken}</div>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
+
+      // Validate token matches
+      if (serviceData.webAppToken !== token) {
+        return (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5',
+            padding: '16px'
+          }}>
+            <div style={{
+              maxWidth: '600px',
+              width: '100%',
+              padding: '24px 32px',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ color: '#ff4d4f', marginBottom: '8px', fontWeight: 600 }}>{t.invalidToken}</div>
+              <div style={{ color: '#666' }}>{t.checkUrl}</div>
+            </div>
+          </div>
+        );
+      }
     }
 
     // Parse inputs and outputs

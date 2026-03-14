@@ -8,13 +8,11 @@ import {
   KeyOutlined,
   CloudUploadOutlined,
   FileTextOutlined,
-  CodeOutlined,
-  RobotOutlined
+  CodeOutlined
 } from '@ant-design/icons';
 
 export type ApiMenuSection =
   | 'test'
-  | 'ai-connection'
   | 'tokens'
   | 'webhooks'
   | 'docs-interactive'
@@ -60,11 +58,6 @@ const ApiNavigationMenu: React.FC<ApiNavigationMenuProps> = ({
       key: 'test',
       icon: <ApiOutlined />,
       label: 'API Testing'
-    },
-    {
-      key: 'ai-connection',
-      icon: <RobotOutlined />,
-      label: 'AI Connection'
     },
     {
       key: 'tokens',

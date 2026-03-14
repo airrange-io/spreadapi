@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 
-// GET /api/services/[id]/webapp?token=xxx - Get service data for web app (public, token-validated)
+// GET /api/services/[id]/webapp?token=xxx - Get service data for web app (public, token-validated for protected services)
 export async function GET(request, { params }) {
   try {
     const { id: serviceId } = await params;
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
-
-    if (!token) {
-      return NextResponse.json(
-        { error: 'No access token provided' },
-        { status: 401 }
-      );
-    }
 
     // Always use the current draft version for web app settings
     // This way users only need to "Save" - no need to republish
@@ -26,8 +19,13 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Validate web app is enabled and token matches
-    const webAppEnabled = serviceData.webAppEnabled === 'true' || serviceData.webAppEnabled === true;
+    // Validate web app is enabled
+    // Accept: explicit flag, legacy token, or published service
+    let webAppEnabled = serviceData.webAppEnabled === 'true' || serviceData.webAppEnabled === true || !!serviceData.webAppToken;
+    if (!webAppEnabled) {
+      const isPublished = await redis.exists(`service:${serviceId}:published`);
+      webAppEnabled = isPublished === 1;
+    }
 
     if (!webAppEnabled) {
       return NextResponse.json(
@@ -36,11 +34,23 @@ export async function GET(request, { params }) {
       );
     }
 
-    if (serviceData.webAppToken !== token) {
-      return NextResponse.json(
-        { error: 'Invalid access token. Please check your URL or regenerate the token.' },
-        { status: 403 }
-      );
+    // Token is only required when the service has requireToken enabled
+    const serviceRequiresToken = serviceData.needsToken === 'true' || serviceData.requireToken === 'true';
+
+    if (serviceRequiresToken) {
+      if (!token) {
+        return NextResponse.json(
+          { error: 'No access token provided' },
+          { status: 401 }
+        );
+      }
+
+      if (serviceData.webAppToken !== token) {
+        return NextResponse.json(
+          { error: 'Invalid access token. Please check your URL or regenerate the token.' },
+          { status: 403 }
+        );
+      }
     }
 
     // Parse JSON fields
