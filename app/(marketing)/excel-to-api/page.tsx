@@ -61,6 +61,7 @@ export const metadata: Metadata = {
     canonical: 'https://spreadapi.io/excel-to-api',
     languages: {
       'en': 'https://spreadapi.io/excel-to-api',
+      'de': 'https://spreadapi.io/de/excel-to-api',
       'x-default': 'https://spreadapi.io/excel-to-api',
     },
   },
@@ -464,6 +465,35 @@ export default function ExcelToApiPage() {
                           </p>
                         </details>
                       ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Related Pages */}
+            <section className="section-home-feature">
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-medium">
+                    <div className="margin-bottom margin-medium">
+                      <div className="text-align-center">
+                        <h2>Related</h2>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
+                      <Link href="/mcp-server" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>MCP Server for Excel</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Connect AI assistants to your spreadsheet calculations via MCP protocol.</p>
+                      </Link>
+                      <Link href="/how-excel-api-works" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>How Excel API Works</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Step-by-step walkthrough of inputs, outputs, and the execution model.</p>
+                      </Link>
+                      <Link href="/stop-rewriting-excel-in-code" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Stop Rewriting Excel in Code</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Why reimplementing Excel formulas in JavaScript is a mistake.</p>
+                      </Link>
                     </div>
                   </div>
                 </div>

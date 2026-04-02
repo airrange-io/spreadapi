@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://spreadapi.io/docs',
   },
+  alternates: {
+    canonical: 'https://spreadapi.io/docs',
+  },
 };
 
 export default function DocsPage() {

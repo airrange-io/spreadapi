@@ -895,6 +895,42 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
               </div>
             </section> */}
 
+            {/* Explore More Section - Internal Links to Key Pages */}
+            <section className="section-home-feature" style={{ background: '#F8F6FE' }}>
+              <div className="padding-global">
+                <div className="container-large">
+                  <div className="padding-section-large">
+                    <div className="margin-bottom margin-large">
+                      <div className="text-align-center">
+                        <div className="max-width-large align-center">
+                          <h2>
+                            Explore <span className="text-color-primary">SpreadAPI</span>
+                          </h2>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
+                      <Link href={locale === 'en' ? '/mcp-server' : `/${locale}/mcp-server`} style={{ textDecoration: 'none', color: 'inherit', padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '2px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{'🤖'}</div>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>MCP Server for Excel</h3>
+                        <p style={{ color: '#6B7280', fontSize: '0.95rem', lineHeight: 1.6 }}>Connect ChatGPT &amp; Claude to your spreadsheet calculations via Model Context Protocol.</p>
+                      </Link>
+                      <Link href={locale === 'en' ? '/excel-to-api' : `/${locale}/excel-to-api`} style={{ textDecoration: 'none', color: 'inherit', padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '2px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{'⚡'}</div>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Excel to API</h3>
+                        <p style={{ color: '#6B7280', fontSize: '0.95rem', lineHeight: 1.6 }}>Turn any .xlsx file into a REST API in 5 minutes. No coding required.</p>
+                      </Link>
+                      <Link href={locale === 'en' ? '/how-excel-api-works' : `/${locale}/how-excel-api-works`} style={{ textDecoration: 'none', color: 'inherit', padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '2px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{'📖'}</div>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>How It Works</h3>
+                        <p style={{ color: '#6B7280', fontSize: '0.95rem', lineHeight: 1.6 }}>Step-by-step guide: upload, define parameters, publish your API.</p>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             {/* Developer FAQ Section - Server Rendered */}
             <section id="faq" className="section-home-faq">
               <div className="padding-global">

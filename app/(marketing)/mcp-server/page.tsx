@@ -627,9 +627,9 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Claude Desktop + Excel Guide</h3>
                         <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Step-by-step tutorial for connecting Claude Desktop to your spreadsheets.</p>
                       </Link>
-                      <Link href="/excel-ai-integration" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Excel AI Integration Overview</h3>
-                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>See all the ways AI assistants can use your Excel calculations.</p>
+                      <Link href="/excel-to-api" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Excel to API Guide</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Convert any spreadsheet to a REST API in minutes. Compare alternatives.</p>
                       </Link>
                     </div>
                   </div>

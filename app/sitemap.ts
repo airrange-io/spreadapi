@@ -17,6 +17,9 @@ const localizedMarketingPages = [
   'on-premises',
   'pricing',
   'mcp-server',
+  'excel-to-api',
+  'security',
+  'vs/google-sheets-api',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

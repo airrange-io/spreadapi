@@ -55,6 +55,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://spreadapi.io/vs/google-sheets-api',
+    languages: {
+      'en': 'https://spreadapi.io/vs/google-sheets-api',
+      'de': 'https://spreadapi.io/de/vs/google-sheets-api',
+      'x-default': 'https://spreadapi.io/vs/google-sheets-api',
+    },
   },
   robots: {
     index: true,

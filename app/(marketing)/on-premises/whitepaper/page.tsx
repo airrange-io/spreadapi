@@ -15,6 +15,13 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://spreadapi.io/on-premises/whitepaper',
   },
+  alternates: {
+    canonical: 'https://spreadapi.io/on-premises/whitepaper',
+    languages: {
+      'en': 'https://spreadapi.io/on-premises/whitepaper',
+      'x-default': 'https://spreadapi.io/on-premises/whitepaper',
+    },
+  },
 };
 
 export default function WhitepaperPage() {
