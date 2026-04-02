@@ -5,43 +5,9 @@ import Navigation from '@/components/Navigation';
 import FAQSchema from '@/components/seo/FAQSchema';
 import Link from 'next/link';
 import { SupportedLocale } from '@/lib/translations/blog-helpers';
+import { getMCPServerTranslations } from '@/lib/translations/marketing';
 
 export const dynamic = 'force-static';
-
-const mcpFAQs = [
-  {
-    question: 'What is an MCP Server?',
-    answer: 'MCP (Model Context Protocol) is an open standard that allows AI assistants like Claude and ChatGPT to connect to external tools and data sources. An MCP Server acts as a bridge, letting AI access your spreadsheet calculations in real time without hallucinating the math.',
-  },
-  {
-    question: 'How does SpreadAPI\'s MCP Server work with Excel?',
-    answer: 'SpreadAPI turns your Excel spreadsheet into an API. The MCP Server exposes that API to AI assistants. When an AI needs to calculate a loan payment, pricing quote, or financial model, it calls your actual Excel formulas instead of guessing the result.',
-  },
-  {
-    question: 'Which AI assistants support MCP?',
-    answer: 'Claude Desktop, ChatGPT (via plugins/actions), and any MCP-compatible client can connect to SpreadAPI. The protocol is open and growing — new AI tools are adding MCP support regularly.',
-  },
-  {
-    question: 'Do I need to write code to set up MCP?',
-    answer: 'No. SpreadAPI generates the MCP configuration automatically. You upload your Excel file, define inputs and outputs, and copy the MCP connection URL into your AI assistant. Setup takes under 5 minutes.',
-  },
-  {
-    question: 'Is my Excel data safe when using MCP?',
-    answer: 'Yes. The AI only sees the input/output cells you explicitly define. Your formulas, proprietary logic, and other data remain private. All communication is encrypted with TLS 1.3, and you can revoke access at any time.',
-  },
-  {
-    question: 'What\'s the difference between MCP and a traditional API integration?',
-    answer: 'A traditional API requires developers to write code to call endpoints. MCP lets AI assistants discover and use your spreadsheet calculations automatically — no code needed on the AI side. The AI understands what inputs are needed and what outputs to expect.',
-  },
-  {
-    question: 'Can I use MCP for financial models and pricing calculators?',
-    answer: 'Absolutely. MCP is ideal for any scenario where AI needs accurate calculations: loan pricing, insurance quotes, tax calculations, engineering formulas, ROI models, and more. The Excel engine guarantees precision that LLMs cannot.',
-  },
-  {
-    question: 'How fast are MCP calculations?',
-    answer: 'SpreadAPI responds in 50-200ms for most calculations. The Excel engine stays warm in memory, so there is no cold start delay. This is fast enough for real-time conversational AI use cases.',
-  },
-];
 
 export const metadata: Metadata = {
   title: 'MCP Server for Excel Spreadsheets | SpreadAPI',
@@ -92,6 +58,9 @@ interface MCPServerContentProps {
 }
 
 export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
+  const t = getMCPServerTranslations(locale);
+  const prefix = locale === 'en' ? '' : `/${locale}`;
+
   const howToSchema = {
     "@context": "https://schema.org",
     "@type": "HowTo",
@@ -149,7 +118,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <FAQSchema faqs={mcpFAQs} />
+      <FAQSchema faqs={t.faq.items.map(item => ({ question: item.question, answer: item.answer }))} />
 
       <div className="product-page">
         <div className="page-wrapper">
@@ -167,16 +136,16 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                           <div className="max-width-xlarge align-center">
                             <div className="margin-bottom margin-xsmall">
                               <div className="subheading">
-                                <div>Model Context Protocol</div>
+                                <div>{t.hero.subheading}</div>
                               </div>
                             </div>
                             <div className="margin-bottom margin-small">
                               <h1>
-                                MCP Server for Excel — <span className="text-color-primary">Connect AI to Your Spreadsheets</span>
+                                {t.hero.title} <span className="text-color-primary">{t.hero.titleHighlight}</span>
                               </h1>
                             </div>
                             <p className="text-size-medium" style={{ maxWidth: '720px', margin: '0 auto' }}>
-                              AI assistants hallucinate math. Excel doesn&apos;t. SpreadAPI&apos;s MCP Server lets ChatGPT, Claude, and other AI tools call your real Excel formulas — delivering accurate results every time.
+                              {t.hero.description}
                             </p>
                             <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                               <Link href="/app" className="button-primary" style={{
@@ -184,14 +153,14 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                 backgroundColor: '#9333EA', color: 'white', borderRadius: '8px',
                                 textDecoration: 'none', fontWeight: 600, fontSize: '1rem',
                               }}>
-                                Get Started Free
+                                {t.hero.ctaPrimary}
                               </Link>
-                              <Link href="/how-excel-api-works" style={{
+                              <Link href={`${prefix}/how-excel-api-works`} style={{
                                 display: 'inline-flex', alignItems: 'center', padding: '0.75rem 2rem',
                                 border: '2px solid #E8E0FF', borderRadius: '8px',
                                 textDecoration: 'none', fontWeight: 600, fontSize: '1rem', color: '#0a0a0a',
                               }}>
-                                See How It Works
+                                {t.hero.ctaSecondary}
                               </Link>
                             </div>
                           </div>
@@ -212,10 +181,10 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="text-align-center">
                         <div className="max-width-large align-center">
                           <h2>
-                            Why AI Needs an <span className="text-color-primary">MCP Server for Excel</span>
+                            {t.problem.title} <span className="text-color-primary">{t.problem.titleHighlight}</span>
                           </h2>
                           <p className="text-size-medium margin-top margin-small">
-                            Large Language Models are powerful at understanding language, but they cannot reliably execute spreadsheet formulas. When ChatGPT tries to calculate a mortgage payment or insurance premium, it guesses. Sometimes it&apos;s close. Often it&apos;s dangerously wrong.
+                            {t.problem.description}
                           </p>
                         </div>
                       </div>
@@ -223,27 +192,27 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', maxWidth: '900px', margin: '0 auto' }}>
                       <div style={{ padding: '2rem', backgroundColor: '#FEF2F2', borderRadius: '12px', border: '1px solid #FECACA' }}>
-                        <h3 style={{ color: '#DC2626', marginBottom: '0.75rem', fontSize: '1.25rem' }}>Without MCP</h3>
+                        <h3 style={{ color: '#DC2626', marginBottom: '0.75rem', fontSize: '1.25rem' }}>{t.problem.withoutMcp.title}</h3>
                         <p style={{ color: '#7F1D1D', lineHeight: 1.7 }}>
-                          &ldquo;What&apos;s my monthly payment for a $300k loan at 4.5% over 30 years?&rdquo;
+                          &ldquo;{t.problem.withoutMcp.question}&rdquo;
                         </p>
                         <p style={{ marginTop: '1rem', fontWeight: 600, color: '#DC2626' }}>
-                          AI guesses: $1,520.06
+                          {t.problem.withoutMcp.result}
                         </p>
                         <p style={{ fontSize: '0.875rem', color: '#991B1B', marginTop: '0.5rem' }}>
-                          Wrong. The correct answer is $1,520.06 only if using specific amortization assumptions. Different formula implementations yield different results. The AI has no way to know which is correct.
+                          {t.problem.withoutMcp.note}
                         </p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#F0FDF4', borderRadius: '12px', border: '1px solid #BBF7D0' }}>
-                        <h3 style={{ color: '#16A34A', marginBottom: '0.75rem', fontSize: '1.25rem' }}>With SpreadAPI MCP</h3>
+                        <h3 style={{ color: '#16A34A', marginBottom: '0.75rem', fontSize: '1.25rem' }}>{t.problem.withMcp.title}</h3>
                         <p style={{ color: '#14532D', lineHeight: 1.7 }}>
-                          AI calls your Excel model via MCP. Your PMT formula runs. The exact result comes back.
+                          {t.problem.withMcp.description}
                         </p>
                         <p style={{ marginTop: '1rem', fontWeight: 600, color: '#16A34A' }}>
-                          Excel calculates: $1,520.06
+                          {t.problem.withMcp.result}
                         </p>
                         <p style={{ fontSize: '0.875rem', color: '#166534', marginTop: '0.5rem' }}>
-                          100% accurate. Same result as your validated Excel model. Every time. Auditable. Compliant.
+                          {t.problem.withMcp.note}
                         </p>
                       </div>
                     </div>
@@ -261,15 +230,15 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            What is <span className="text-color-primary">MCP</span> (Model Context Protocol)?
+                            {t.whatIsMcp.title} <span className="text-color-primary">{t.whatIsMcp.titleHighlight}</span> {t.whatIsMcp.titleSuffix}
                           </h2>
                         </div>
                         <div className="margin-bottom margin-medium">
                           <p className="text-size-medium">
-                            MCP is an open protocol created by Anthropic that standardizes how AI assistants connect to external tools and data sources. Think of it as a USB port for AI — a universal way to plug in capabilities.
+                            {t.whatIsMcp.description1}
                           </p>
                           <p className="text-size-medium" style={{ marginTop: '1rem' }}>
-                            Instead of building custom integrations for each AI tool, you create one MCP Server, and any compatible AI assistant can use it. SpreadAPI automatically generates this MCP Server for every Excel spreadsheet you publish.
+                            {t.whatIsMcp.description2}
                           </p>
                         </div>
                         <div className="feature-keypoint-list">
@@ -280,7 +249,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </div>
-                            <p className="text-size-medium"><strong>Open standard</strong> — not locked to one AI vendor</p>
+                            <p className="text-size-medium"><strong>{t.whatIsMcp.point1}</strong> {t.whatIsMcp.point1Suffix}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -289,7 +258,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </div>
-                            <p className="text-size-medium"><strong>Auto-discovery</strong> — AI learns what your spreadsheet can do</p>
+                            <p className="text-size-medium"><strong>{t.whatIsMcp.point2}</strong> {t.whatIsMcp.point2Suffix}</p>
                           </div>
                           <div className="feature-keypoint-list-item">
                             <div className="check-icon-wrapper">
@@ -298,27 +267,27 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                 <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </div>
-                            <p className="text-size-medium"><strong>Secure</strong> — granular permissions, encrypted communication</p>
+                            <p className="text-size-medium"><strong>{t.whatIsMcp.point3}</strong> {t.whatIsMcp.point3Suffix}</p>
                           </div>
                         </div>
                       </div>
                       <div className="feature-image-wrapper">
                         <div style={{ backgroundColor: '#F8F6FE', borderRadius: '16px', padding: '2.5rem', position: 'relative' }}>
                           {/* MCP Architecture Diagram */}
-                          <svg viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="MCP architecture diagram showing AI assistants connecting to Excel via SpreadAPI">
+                          <svg viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label={t.whatIsMcp.diagramLabel}>
                             {/* AI Assistants */}
                             <rect x="20" y="20" width="140" height="50" rx="10" fill="#fff" stroke="#9333EA" strokeWidth="2"/>
-                            <text x="90" y="50" textAnchor="middle" fill="#9333EA" fontSize="14" fontWeight="600">Claude / ChatGPT</text>
+                            <text x="90" y="50" textAnchor="middle" fill="#9333EA" fontSize="14" fontWeight="600">{t.whatIsMcp.diagramAiLabel}</text>
 
                             {/* Arrow down */}
                             <path d="M90 70 L90 110" stroke="#9333EA" strokeWidth="2" strokeDasharray="6,3"/>
                             <path d="M85 105 L90 115 L95 105" fill="#9333EA"/>
-                            <text x="130" y="95" fill="#6B7280" fontSize="11">MCP Protocol</text>
+                            <text x="130" y="95" fill="#6B7280" fontSize="11">{t.whatIsMcp.diagramProtocol}</text>
 
                             {/* SpreadAPI MCP Server */}
                             <rect x="20" y="120" width="360" height="60" rx="12" fill="#9333EA" fillOpacity="0.1" stroke="#9333EA" strokeWidth="2"/>
-                            <text x="200" y="147" textAnchor="middle" fill="#9333EA" fontSize="15" fontWeight="700">SpreadAPI MCP Server</text>
-                            <text x="200" y="167" textAnchor="middle" fill="#7C3AED" fontSize="11">Auto-discovery &bull; Auth &bull; Rate Limiting</text>
+                            <text x="200" y="147" textAnchor="middle" fill="#9333EA" fontSize="15" fontWeight="700">{t.whatIsMcp.diagramServer}</text>
+                            <text x="200" y="167" textAnchor="middle" fill="#7C3AED" fontSize="11">{t.whatIsMcp.diagramServerDetail}</text>
 
                             {/* Arrows down to Excel files */}
                             <path d="M100 180 L100 210" stroke="#9333EA" strokeWidth="2" strokeDasharray="6,3"/>
@@ -331,14 +300,14 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                             {/* Excel files */}
                             <rect x="40" y="220" width="120" height="80" rx="8" fill="#fff" stroke="#16A34A" strokeWidth="2"/>
                             <rect x="40" y="220" width="120" height="24" rx="8" fill="#16A34A" fillOpacity="0.1"/>
-                            <text x="100" y="237" textAnchor="middle" fill="#16A34A" fontSize="11" fontWeight="600">Loan Calculator</text>
+                            <text x="100" y="237" textAnchor="middle" fill="#16A34A" fontSize="11" fontWeight="600">{t.whatIsMcp.diagramLoan}</text>
                             <text x="60" y="260" fill="#6B7280" fontSize="10">PMT(rate, n, pv)</text>
                             <text x="60" y="275" fill="#6B7280" fontSize="10">IRR(values)</text>
                             <text x="60" y="290" fill="#6B7280" fontSize="10">NPV(rate, ...)</text>
 
                             <rect x="180" y="220" width="120" height="80" rx="8" fill="#fff" stroke="#F59E0B" strokeWidth="2"/>
                             <rect x="180" y="220" width="120" height="24" rx="8" fill="#F59E0B" fillOpacity="0.1"/>
-                            <text x="240" y="237" textAnchor="middle" fill="#D97706" fontSize="11" fontWeight="600">Pricing Engine</text>
+                            <text x="240" y="237" textAnchor="middle" fill="#D97706" fontSize="11" fontWeight="600">{t.whatIsMcp.diagramPricing}</text>
                             <text x="200" y="260" fill="#6B7280" fontSize="10">VLOOKUP(...)</text>
                             <text x="200" y="275" fill="#6B7280" fontSize="10">IF(tier, ...)</text>
                             <text x="200" y="290" fill="#6B7280" fontSize="10">SUMIFS(...)</text>
@@ -347,8 +316,8 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                             <rect x="325" y="240" width="50" height="50" rx="25" fill="#9333EA" fillOpacity="0.1"/>
                             <path d="M350 255 L350 260 M342 260 L358 260 L358 275 L342 275 Z" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                             <circle cx="350" cy="268" r="2" fill="#9333EA"/>
-                            <text x="350" y="290" textAnchor="middle" fill="#7C3AED" fontSize="9">Formulas</text>
-                            <text x="350" y="300" textAnchor="middle" fill="#7C3AED" fontSize="9">stay private</text>
+                            <text x="350" y="290" textAnchor="middle" fill="#7C3AED" fontSize="9">{t.whatIsMcp.diagramPrivate1}</text>
+                            <text x="350" y="300" textAnchor="middle" fill="#7C3AED" fontSize="9">{t.whatIsMcp.diagramPrivate2}</text>
                           </svg>
                         </div>
                       </div>
@@ -368,11 +337,11 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                         <div className="max-width-large align-center">
                           <div className="margin-bottom margin-xsmall">
                             <div className="subheading">
-                              <div>Setup in 5 Minutes</div>
+                              <div>{t.setup.subheading}</div>
                             </div>
                           </div>
                           <h2>
-                            How to Set Up an <span className="text-color-primary">MCP Server</span> for Excel
+                            {t.setup.title} <span className="text-color-primary">{t.setup.titleHighlight}</span> {t.setup.titleSuffix}
                           </h2>
                         </div>
                       </div>
@@ -382,8 +351,8 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="workflow-step">
                         <div className="workflow-step-number">1</div>
                         <div className="workflow-step-content">
-                          <h3>Upload Your Excel File</h3>
-                          <p>Upload your spreadsheet to SpreadAPI. Define which cells are inputs (the parameters AI will send) and which are outputs (the results AI will receive). Supports XLSX with formulas, VLOOKUP, pivot tables, and more.</p>
+                          <h3>{t.setup.step1Title}</h3>
+                          <p>{t.setup.step1Desc}</p>
                         </div>
                       </div>
 
@@ -392,8 +361,8 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="workflow-step">
                         <div className="workflow-step-number">2</div>
                         <div className="workflow-step-content">
-                          <h3>Publish with MCP Enabled</h3>
-                          <p>Click publish. SpreadAPI creates a REST API endpoint and automatically generates an MCP-compatible server. No configuration files to write, no Docker containers to manage.</p>
+                          <h3>{t.setup.step2Title}</h3>
+                          <p>{t.setup.step2Desc}</p>
                         </div>
                       </div>
 
@@ -402,8 +371,8 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="workflow-step">
                         <div className="workflow-step-number">3</div>
                         <div className="workflow-step-content">
-                          <h3>Connect Your AI Assistant</h3>
-                          <p>Copy the MCP URL into Claude Desktop, ChatGPT, or any MCP-compatible client. The AI instantly discovers your spreadsheet&apos;s capabilities and can call calculations in real time.</p>
+                          <h3>{t.setup.step3Title}</h3>
+                          <p>{t.setup.step3Desc}</p>
                         </div>
                       </div>
                     </div>
@@ -414,7 +383,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                         backgroundColor: '#9333EA', color: 'white', borderRadius: '8px',
                         textDecoration: 'none', fontWeight: 600, fontSize: '1rem',
                       }}>
-                        Try It Free — No Credit Card
+                        {t.setup.cta}
                       </Link>
                     </div>
                   </div>
@@ -431,10 +400,10 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="text-align-center">
                         <div className="max-width-large align-center">
                           <h2>
-                            Use Cases: When <span className="text-color-primary">AI + Excel</span> Changes Everything
+                            {t.useCases.title} <span className="text-color-primary">{t.useCases.titleHighlight}</span> {t.useCases.titleSuffix}
                           </h2>
                           <p className="text-size-medium margin-top margin-small">
-                            Any scenario where AI needs to do real math is a use case for MCP + SpreadAPI.
+                            {t.useCases.description}
                           </p>
                         </div>
                       </div>
@@ -442,28 +411,28 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Financial Modeling</h3>
-                        <p className="text-size-medium">Loan calculators, mortgage quotes, ROI projections. AI uses your validated Excel model to give customers precise numbers — not approximations.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.financial}</h3>
+                        <p className="text-size-medium">{t.useCases.financialDesc}</p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Dynamic Pricing</h3>
-                        <p className="text-size-medium">Insurance premiums, SaaS pricing tiers, wholesale discounts. Your pricing logic stays in Excel where your team maintains it. AI just calls it.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.pricing}</h3>
+                        <p className="text-size-medium">{t.useCases.pricingDesc}</p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Engineering Calculations</h3>
-                        <p className="text-size-medium">Material stress analysis, load calculations, unit conversions. AI provides the interface, Excel provides the engineering precision.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.engineering}</h3>
+                        <p className="text-size-medium">{t.useCases.engineeringDesc}</p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Tax &amp; Compliance</h3>
-                        <p className="text-size-medium">Tax estimators, VAT calculators, regulatory calculations. Keep your compliance-validated spreadsheet as the single source of truth.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.tax}</h3>
+                        <p className="text-size-medium">{t.useCases.taxDesc}</p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Sales Quoting</h3>
-                        <p className="text-size-medium">Let AI assistants generate accurate quotes by calling your Excel pricing model. No more manual lookups or copy-paste errors.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.sales}</h3>
+                        <p className="text-size-medium">{t.useCases.salesDesc}</p>
                       </div>
                       <div style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Data Validation</h3>
-                        <p className="text-size-medium">Cross-reference user inputs against your Excel models. AI validates data in real time using your business rules — no custom code needed.</p>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{t.useCases.validation}</h3>
+                        <p className="text-size-medium">{t.useCases.validationDesc}</p>
                       </div>
                     </div>
                   </div>
@@ -480,7 +449,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="text-align-center">
                         <div className="max-width-large align-center">
                           <h2>
-                            MCP vs. <span className="text-color-primary">Traditional API Integration</span>
+                            {t.comparison.title} <span className="text-color-primary">{t.comparison.titleHighlight}</span>
                           </h2>
                         </div>
                       </div>
@@ -490,36 +459,36 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#fff', borderRadius: '12px', overflow: 'hidden' }}>
                         <thead>
                           <tr style={{ backgroundColor: '#F3F0FF' }}>
-                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF' }}>Feature</th>
-                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF' }}>Traditional API</th>
-                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF', color: '#9333EA' }}>MCP Server</th>
+                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF' }}>{t.comparison.feature}</th>
+                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF' }}>{t.comparison.traditional}</th>
+                            <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E8E0FF', color: '#9333EA' }}>{t.comparison.mcp}</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Setup time</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Hours to days</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>5 minutes</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.setupTime}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.setupTraditional}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>{t.comparison.setupMcp}</td>
                           </tr>
                           <tr>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Code required</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Custom integration code</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>Zero code</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.codeRequired}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.codeTraditional}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>{t.comparison.codeMcp}</td>
                           </tr>
                           <tr>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>AI discovery</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Manual documentation</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>Automatic</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.aiDiscovery}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.discoveryTraditional}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>{t.comparison.discoveryMcp}</td>
                           </tr>
                           <tr>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>Works with</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>One specific AI tool</td>
-                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>Any MCP client</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.worksWith}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF' }}>{t.comparison.worksTraditional}</td>
+                            <td style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #F3F0FF', fontWeight: 600, color: '#16A34A' }}>{t.comparison.worksMcp}</td>
                           </tr>
                           <tr>
-                            <td style={{ padding: '1rem 1.5rem' }}>Maintenance</td>
-                            <td style={{ padding: '1rem 1.5rem' }}>Update code when API changes</td>
-                            <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: '#16A34A' }}>Update Excel, done</td>
+                            <td style={{ padding: '1rem 1.5rem' }}>{t.comparison.maintenance}</td>
+                            <td style={{ padding: '1rem 1.5rem' }}>{t.comparison.maintenanceTraditional}</td>
+                            <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: '#16A34A' }}>{t.comparison.maintenanceMcp}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -538,11 +507,11 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="feature-content-wrapper">
                         <div className="margin-bottom margin-small">
                           <h2>
-                            Example: <span className="text-color-primary">Claude Desktop</span> + Excel
+                            {t.claudeExample.title} <span className="text-color-primary">{t.claudeExample.titleHighlight}</span> {t.claudeExample.titleSuffix}
                           </h2>
                         </div>
                         <p className="text-size-medium">
-                          Here&apos;s what happens when Claude uses your Excel loan calculator via MCP. The AI asks your spreadsheet — not itself — for the answer.
+                          {t.claudeExample.description}
                         </p>
                         <div style={{ marginTop: '2rem' }}>
                           <div className="feature-keypoint-list">
@@ -553,7 +522,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                   <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
                               </div>
-                              <p className="text-size-medium">AI sends parameters to your Excel model</p>
+                              <p className="text-size-medium">{t.claudeExample.point1}</p>
                             </div>
                             <div className="feature-keypoint-list-item">
                               <div className="check-icon-wrapper">
@@ -562,7 +531,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                   <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
                               </div>
-                              <p className="text-size-medium">Excel formulas calculate the real result</p>
+                              <p className="text-size-medium">{t.claudeExample.point2}</p>
                             </div>
                             <div className="feature-keypoint-list-item">
                               <div className="check-icon-wrapper">
@@ -571,7 +540,7 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                                   <path d="M7 12L10 15L17 8" stroke="#9333EA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
                               </div>
-                              <p className="text-size-medium">AI presents the precise answer naturally</p>
+                              <p className="text-size-medium">{t.claudeExample.point3}</p>
                             </div>
                           </div>
                         </div>
@@ -579,13 +548,13 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                       <div className="feature-image-wrapper">
                         <div style={{ backgroundColor: '#F8F6FE', borderRadius: '16px', padding: '1.5rem' }}>
                           <div style={{ marginBottom: '1.25rem' }}>
-                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>You ask Claude:</p>
+                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{t.claudeExample.youAsk}</p>
                             <p style={{ backgroundColor: '#fff', padding: '0.875rem', borderRadius: '8px', borderLeft: '3px solid #9333EA', fontSize: '0.9rem' }}>
-                              &ldquo;What would my monthly payment be for a $300,000 mortgage at 4.5% over 30 years?&rdquo;
+                              &ldquo;{t.claudeExample.question}&rdquo;
                             </p>
                           </div>
                           <div style={{ marginBottom: '1.25rem' }}>
-                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Claude calls your MCP Server:</p>
+                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{t.claudeExample.claudeCalls}</p>
                             <pre style={{ backgroundColor: '#1E1E2E', color: '#CDD6F4', padding: '0.875rem', borderRadius: '8px', fontSize: '0.8rem', overflow: 'auto', margin: 0 }}>
 {`spreadapi.execute({
   loan_amount: 300000,
@@ -595,9 +564,9 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                             </pre>
                           </div>
                           <div>
-                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>Claude responds with Excel&apos;s result:</p>
+                            <p style={{ fontWeight: 600, color: '#6B7280', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{t.claudeExample.claudeResponds}</p>
                             <p style={{ backgroundColor: '#F0FDF4', padding: '0.875rem', borderRadius: '8px', borderLeft: '3px solid #16A34A', fontSize: '0.9rem' }}>
-                              &ldquo;Based on your loan calculator, your monthly payment would be <strong>$1,520.06</strong>. Over 30 years, you&apos;d pay $547,220.13 in total, of which $247,220.13 is interest.&rdquo;
+                              &ldquo;{t.claudeExample.response}&rdquo;
                             </p>
                           </div>
                         </div>
@@ -615,21 +584,21 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                   <div className="padding-section-medium">
                     <div className="margin-bottom margin-medium">
                       <div className="text-align-center">
-                        <h2>Learn More</h2>
+                        <h2>{t.learnMore.title}</h2>
                       </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' }}>
-                      <Link href="/blog/mcp-protocol-excel-developers-guide" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>MCP Protocol: Developer Guide</h3>
-                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Deep dive into setting up MCP with code examples and best practices.</p>
+                      <Link href={`${prefix}/blog/mcp-protocol-excel-developers-guide`} style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{t.learnMore.devGuide}</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{t.learnMore.devGuideDesc}</p>
                       </Link>
-                      <Link href="/blog/claude-desktop-excel-integration-complete-guide" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Claude Desktop + Excel Guide</h3>
-                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Step-by-step tutorial for connecting Claude Desktop to your spreadsheets.</p>
+                      <Link href={`${prefix}/blog/claude-desktop-excel-integration-complete-guide`} style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{t.learnMore.claudeGuide}</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{t.learnMore.claudeGuideDesc}</p>
                       </Link>
-                      <Link href="/excel-to-api" style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Excel to API Guide</h3>
-                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Convert any spreadsheet to a REST API in minutes. Compare alternatives.</p>
+                      <Link href={`${prefix}/excel-to-api`} style={{ textDecoration: 'none', color: 'inherit', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #E8E0FF', transition: 'border-color 0.2s' }}>
+                        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{t.learnMore.excelToApi}</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{t.learnMore.excelToApiDesc}</p>
                       </Link>
                     </div>
                   </div>
@@ -644,11 +613,11 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                   <div className="padding-section-large">
                     <div className="margin-bottom margin-large">
                       <div className="text-align-center">
-                        <h2>Frequently Asked Questions</h2>
+                        <h2>{t.faq.title}</h2>
                       </div>
                     </div>
                     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                      {mcpFAQs.map((faq, index) => (
+                      {t.faq.items.map((faq, index) => (
                         <details key={index} style={{
                           borderBottom: '1px solid #E8E0FF',
                           padding: '1.25rem 0',
@@ -684,17 +653,17 @@ export function MCPServerContent({ locale = 'en' }: MCPServerContentProps) {
                 <div className="container-large">
                   <div className="padding-section-large">
                     <h2 style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '1rem' }}>
-                      Ready to Connect AI to Your Spreadsheets?
+                      {t.cta.title}
                     </h2>
                     <p style={{ fontSize: '1.25rem', opacity: 0.9, maxWidth: '600px', margin: '0 auto 2rem' }}>
-                      Set up your MCP Server in 5 minutes. Free tier available.
+                      {t.cta.description}
                     </p>
                     <Link href="/app" style={{
                       display: 'inline-flex', alignItems: 'center', padding: '1rem 2.5rem',
                       backgroundColor: '#fff', color: '#9333EA', borderRadius: '8px',
                       textDecoration: 'none', fontWeight: 700, fontSize: '1.1rem',
                     }}>
-                      Get Started Free
+                      {t.cta.button}
                     </Link>
                   </div>
                 </div>

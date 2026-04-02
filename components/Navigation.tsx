@@ -46,7 +46,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, className = '', lo
     { label: t.nav.automations, path: `${prefix}/automation-calculations`, key: 'automation-calculations', hideOnMedium: false },
     { label: t.nav.ai, path: `${prefix}/excel-ai-integration`, key: 'excel-ai-integration', hideOnMedium: false },
     { label: t.nav.enterprise || 'Enterprise', path: `${prefix}/on-premises`, key: 'on-premises', hideOnMedium: true },
-    { label: t.nav.pricing || 'Pricing', path: '/pricing', key: 'pricing', hideOnMedium: true },
+    { label: t.nav.pricing || 'Pricing', path: `${prefix}/pricing`, key: 'pricing', hideOnMedium: true },
   ];
 
   // Show all menu items, highlight current page

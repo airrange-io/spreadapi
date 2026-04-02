@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import VsGoogleSheetsPage from '@/(marketing)/vs/google-sheets-api/page';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -44,6 +45,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function LocaleVsGoogleSheetsPage({ params }: PageProps) {
-  await params;
-  return <VsGoogleSheetsPage />;
+  const { locale } = await params;
+  return <VsGoogleSheetsPage locale={(locale as SupportedLocale) || 'en'} />;
 }

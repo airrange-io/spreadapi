@@ -93,7 +93,11 @@
       "WebFetch(domain:spreadapi.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(grep -r \"redis\\\\.\\\\\\(set\\\\|hSet\\\\|sAdd\\\\|zAdd\\\\|del\\\\|expire\\\\\\)\" /Users/stephanmethner/AR/repos/spreadapi --include=\"*.js\" --include=\"*.ts\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\" ! -path \"*/dist/*\" | grep -oE \"[\\\\\"\\\\`]\\([^\\\\\"]+\\)[:\\\\\\)]\" | head -100)",
-      "Bash(ls \"/Users/stephanmethner/AR/repos/spreadapi/app/[locale]/\\(marketing\\)/\")"
+      "Bash(ls \"/Users/stephanmethner/AR/repos/spreadapi/app/[locale]/\\(marketing\\)/\")",
+      "Bash(npx next:*)",
+      "Bash(lsof -ti:3000)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": []
   }

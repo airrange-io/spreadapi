@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import SecurityPage from '@/(marketing)/security/page';
+import { SecurityContent } from '@/(marketing)/security/page';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -44,6 +45,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function LocaleSecurityPage({ params }: PageProps) {
-  await params;
-  return <SecurityPage />;
+  const { locale } = await params;
+  return <SecurityContent locale={locale as SupportedLocale} />;
 }

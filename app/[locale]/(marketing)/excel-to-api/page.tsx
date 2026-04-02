@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import ExcelToApiPage from '@/(marketing)/excel-to-api/page';
+import { ExcelToApiContent } from '@/(marketing)/excel-to-api/page';
+import { SupportedLocale } from '@/lib/translations/blog-helpers';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -44,6 +45,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function LocaleExcelToApiPage({ params }: PageProps) {
-  await params;
-  return <ExcelToApiPage />;
+  const { locale } = await params;
+  return <ExcelToApiContent locale={locale as SupportedLocale} />;
 }

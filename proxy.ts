@@ -24,6 +24,25 @@ export async function proxy(req: NextRequest) {
       path: '/',
       sameSite: 'lax',
     });
+    // Set Content-Language header for SEO crawlers
+    response.headers.set('Content-Language', marketingLocale);
+    return response;
+  }
+
+  // Set Content-Language for blog locale routes
+  if (pathname.startsWith('/blog/de')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'de');
+    return response;
+  }
+  if (pathname.startsWith('/blog/fr')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'fr');
+    return response;
+  }
+  if (pathname.startsWith('/blog/es')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'es');
     return response;
   }
 
@@ -211,11 +230,17 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
+    // Locale marketing routes (for Content-Language header)
+    '/de/:path*',
+    '/blog/de/:path*',
+    '/blog/fr/:path*',
+    '/blog/es/:path*',
+
     // Protected page routes
     '/app/:path*',
     '/service/:path*',  // This will catch old service routes and redirect them
     '/analytics/:path*',
-    
+
     // Handle redirects
     '/product/:path*',
     '/profile',
