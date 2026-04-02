@@ -58,6 +58,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     alternates: {
       canonical: url,
+      languages: {
+        'en': url,
+        'x-default': url,
+      },
     },
     robots: {
       index: true,
@@ -85,5 +89,68 @@ export default async function BlogPostPage({ params }: Props) {
   const allPosts = getSortedPostsData();
   const relatedPosts = getRecommendedPosts(slug, allPosts, 3);
 
-  return <BlogPostServer post={post} relatedPosts={relatedPosts} />;
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.seoDescription || post.excerpt,
+    "author": {
+      "@type": "Person",
+      "name": post.author,
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SpreadAPI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://spreadapi.io/icons/logo-full.svg",
+      },
+    },
+    "datePublished": post.date,
+    "dateModified": post.date,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://spreadapi.io/blog/${slug}`,
+    },
+    "image": `https://spreadapi.io/api/og?title=${encodeURIComponent(post.title)}`,
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://spreadapi.io",
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://spreadapi.io/blog",
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": post.title,
+        "item": `https://spreadapi.io/blog/${slug}`,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <BlogPostServer post={post} relatedPosts={relatedPosts} />
+    </>
+  );
 }

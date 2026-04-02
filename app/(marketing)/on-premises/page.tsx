@@ -8,7 +8,7 @@ import { getOnPremisesTranslations } from '@/lib/translations/marketing';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'On-Premises & Enterprise | SpreadAPI',
+  title: 'On-Premises Excel API — Full Data Sovereignty | SpreadAPI',
   description: 'Deploy SpreadAPI in your own infrastructure. Full data sovereignty, zero external dependencies. Perfect for financial services, consulting firms, and regulated industries.',
   keywords: 'on-premises excel api, self-hosted spreadsheet, enterprise excel, data compliance, gdpr excel api, financial services excel',
   openGraph: {

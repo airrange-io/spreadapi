@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://spreadapi.io/security',
+    languages: {
+      'en': 'https://spreadapi.io/security',
+      'x-default': 'https://spreadapi.io/security',
+    },
   },
 };
 

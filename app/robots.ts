@@ -9,6 +9,10 @@ const marketingPages = [
   '/excel-ai-integration',
   '/why-ai-fails-at-math',
   '/on-premises',
+  '/security',
+  '/mcp-server',
+  '/excel-to-api',
+  '/vs/google-sheets-api',
 ];
 
 // Generate locale versions of marketing pages

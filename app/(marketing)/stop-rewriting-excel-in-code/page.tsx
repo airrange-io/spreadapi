@@ -8,7 +8,7 @@ import { getStopRewritingTranslations } from '@/lib/translations/marketing';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'Stop Rewriting Excel in Code | SpreadAPI',
+  title: 'Stop Rewriting Excel Logic in JavaScript — Use Excel as API | SpreadAPI',
   description: 'Stop wasting months converting Excel spreadsheets to JavaScript. Turn your Excel models into APIs instantly. 100% accuracy, zero formula translation.',
   keywords: 'excel to code, convert excel to javascript, excel api, spreadsheet to code, excel business logic, stop reimplementing excel',
   openGraph: {

@@ -4,8 +4,8 @@ import WhyAIFailsClient from './why-ai-fails-client';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'Why AI Fails at Excel Math | SpreadAPI',
-  description: 'Discover why AI struggles with spreadsheet calculations and how SpreadAPI solves this by combining AI conversation with Excel precision.',
+  title: 'Why AI Can\'t Calculate Excel Formulas — And How to Fix It | SpreadAPI',
+  description: 'Discover why AI struggles with spreadsheet calculations and how SpreadAPI solves this by combining AI conversation with Excel precision. AI hallucinates, Excel calculates.',
   keywords: 'ai excel calculations, llm math errors, ai spreadsheet problems, excel api accuracy',
   openGraph: {
     title: 'Why AI Can\'t Do Your Excel Math',

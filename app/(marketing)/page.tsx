@@ -6,9 +6,9 @@ import { productFAQs } from '@/data/faq';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'SpreadAPI - Transform Excel Spreadsheets into Powerful APIs',
-  description: 'Turn your Excel files into REST APIs instantly. No coding required. Perfect for AI integration with ChatGPT, Claude, and more.',
-  keywords: 'excel api, spreadsheet api, excel to api, spreadsheet web service, excel rest api, excel calculation api, mcp excel, ai excel integration',
+  title: 'SpreadAPI — Excel to API in Seconds | MCP Server for Spreadsheets',
+  description: 'Turn your Excel files into REST APIs instantly. No coding required. Perfect for AI integration with ChatGPT, Claude, and more. MCP Server included.',
+  keywords: 'excel api, spreadsheet api, excel to api, mcp server excel, spreadsheet web service, excel rest api, excel calculation api, mcp excel, ai excel integration',
   openGraph: {
     title: 'SpreadAPI - Excel to API in Seconds',
     description: 'Transform your Excel spreadsheets into powerful REST APIs. AI-ready with MCP support.',

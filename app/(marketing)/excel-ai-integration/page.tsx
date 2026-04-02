@@ -10,7 +10,7 @@ import Link from 'next/link';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'Excel AI Integration - SpreadAPI | Connect ChatGPT & Claude to Excel',
+  title: 'Excel AI Integration — Connect ChatGPT & Claude to Spreadsheets | SpreadAPI',
   description: 'Give AI assistants Excel superpowers. Let ChatGPT and Claude use your spreadsheet calculations for accurate quotes, financial modeling, and business automation.',
   keywords: 'excel ai integration, chatgpt excel, claude excel, mcp protocol, ai spreadsheet automation, excel api for ai',
   openGraph: {

@@ -1,0 +1,54 @@
+# SpreadAPI
+
+> SpreadAPI turns Excel spreadsheets into REST APIs. Upload an .xlsx file, define input and output cells, and get a live API endpoint. No coding required. Includes MCP Server for AI assistant integration.
+
+## Key Pages
+
+- [Homepage](https://spreadapi.io/): Overview of SpreadAPI platform
+- [How Excel API Works](https://spreadapi.io/how-excel-api-works): Step-by-step explanation of converting Excel to API
+- [Excel to API](https://spreadapi.io/excel-to-api): Dedicated guide for converting spreadsheets to REST APIs
+- [MCP Server for Excel](https://spreadapi.io/mcp-server): Connect AI assistants (Claude, ChatGPT) to Excel via Model Context Protocol
+- [Excel AI Integration](https://spreadapi.io/excel-ai-integration): How AI assistants use spreadsheet calculations
+- [Automation Calculations](https://spreadapi.io/automation-calculations): Excel calculations for Zapier, Make, n8n
+- [Stop Rewriting Excel in Code](https://spreadapi.io/stop-rewriting-excel-in-code): Why you should use Excel as API instead of reimplementing formulas
+- [On-Premises](https://spreadapi.io/on-premises): Self-hosted deployment with full data sovereignty
+- [Security](https://spreadapi.io/security): Security model, compliance, data protection
+- [Pricing](https://spreadapi.io/pricing): Free tier and paid plans
+- [API Documentation](https://spreadapi.io/docs): REST API reference
+- [SpreadAPI vs Google Sheets API](https://spreadapi.io/vs/google-sheets-api): Feature and pricing comparison
+- [Blog](https://spreadapi.io/blog): Tutorials, guides, and comparisons
+
+## What SpreadAPI Does
+
+SpreadAPI is a B2B SaaS platform that:
+- Converts Excel (.xlsx) spreadsheets into REST API endpoints
+- Preserves all Excel formulas (VLOOKUP, PMT, SUMIFS, 500+ functions)
+- Responds in 50-200ms per calculation
+- Provides MCP (Model Context Protocol) Server for AI integration
+- Supports ChatGPT, Claude Desktop, and any MCP-compatible client
+- Offers on-premises deployment for regulated industries
+- Generates OpenAPI specifications automatically
+
+## API Overview
+
+- Base URL: `https://spreadapi.io/api/v1`
+- Execute calculation: `GET /services/{id}/execute?param1=value1`
+- Get service definition: `GET /services/{id}/definition`
+- Batch execution: `POST /services/{id}/batch`
+- Authentication: API key via header or query parameter
+
+## MCP Integration
+
+SpreadAPI includes a built-in MCP Server. AI assistants can:
+- Discover available spreadsheet services
+- Call Excel calculations with typed parameters
+- Receive structured results (JSON)
+- Never access formulas or private data
+
+MCP URL format: `https://spreadapi.io/api/mcp/service/{serviceId}`
+
+## Contact
+
+- Website: https://spreadapi.io
+- Email: team@airrange.io
+- Company: Airrange.io

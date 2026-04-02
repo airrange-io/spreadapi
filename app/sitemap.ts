@@ -16,6 +16,7 @@ const localizedMarketingPages = [
   'why-ai-fails-at-math',
   'on-premises',
   'pricing',
+  'mcp-server',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -80,6 +81,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/on-premises/whitepaper`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/security`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/mcp-server`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/excel-to-api`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/vs/google-sheets-api`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,

@@ -9,8 +9,8 @@ import { getHowItWorksTranslations } from '@/lib/translations/marketing';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'How Excel API Works - SpreadAPI | Transform Spreadsheets to APIs',
-  description: 'Learn how SpreadAPI transforms your Excel spreadsheets into powerful REST APIs. No coding required. Perfect for AI integration with ChatGPT and Claude.',
+  title: 'How Excel API Works — Turn Spreadsheets Into REST APIs | SpreadAPI',
+  description: 'Learn how SpreadAPI transforms your Excel spreadsheets into powerful REST APIs in 3 simple steps. No coding required. Perfect for AI integration with ChatGPT and Claude.',
   keywords: 'how excel api works, spreadsheet to api conversion, excel rest api tutorial, excel api integration guide, mcp excel integration',
   openGraph: {
     title: 'How SpreadAPI Works - Excel to API in Minutes',

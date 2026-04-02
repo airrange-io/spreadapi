@@ -13,7 +13,7 @@ const LanguageSwitcher = dynamic(() => import('@/components/blog/LanguageSwitche
 });
 
 interface NavigationProps {
-  currentPage: 'product' | 'how-excel-api-works' | 'stop-rewriting-excel-in-code' | 'automation-calculations' | 'excel-ai-integration' | 'on-premises' | 'blog' | 'pricing' | 'docs' | 'security';
+  currentPage: 'product' | 'how-excel-api-works' | 'stop-rewriting-excel-in-code' | 'automation-calculations' | 'excel-ai-integration' | 'on-premises' | 'blog' | 'pricing' | 'docs' | 'security' | 'mcp-server' | 'excel-to-api' | 'vs';
   className?: string;
   locale?: string;
   showLanguageSwitcher?: boolean;
