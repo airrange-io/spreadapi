@@ -97,7 +97,10 @@
       "Bash(npx next:*)",
       "Bash(lsof -ti:3000)",
       "Bash(gh api:*)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(npm list:*)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "Bash(pnpm install:*)"
     ],
     "deny": []
   }

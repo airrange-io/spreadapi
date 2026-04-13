@@ -126,7 +126,7 @@ function SimpleBarChart({ data, height = 120 }: { data: DailyData[]; height?: nu
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const { t, locale, setLocale } = useTranslation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -227,7 +227,7 @@ export default function AnalyticsPage() {
           icon: <LogoutOutlined />,
           label: t('app.logout'),
           onClick: async () => {
-            document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            await logout();
             router.push('/app');
           },
         },

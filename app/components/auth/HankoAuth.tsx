@@ -46,18 +46,21 @@ export default function HankoAuth({ onSuccess, redirectTo = "/" }: HankoAuthProp
     const unsubscribe = hanko.onSessionCreated(async (sessionDetail) => {
       try {
         // Get the user data to cache it
-        const user = await (hanko as any).user.getCurrent();
+        const user = await hanko.getCurrentUser();
         if (user) {
           // sessionDetail contains JWT claims which can help determine if user is new
           console.log('Session created:', sessionDetail);
 
           // Store user data in Redis
+          // Hanko SDK v2: user_id instead of id, emails[] instead of email
+          const primaryEmail = user.emails?.find((e: any) => e.is_primary)?.address
+            || user.emails?.[0]?.address || "";
           await fetch('/api/auth/user-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: user.id,
-              userData: user,
+              userId: user.user_id,
+              userData: { ...user, email: primaryEmail },
               action: 'login'
             })
           });

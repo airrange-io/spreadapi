@@ -23,10 +23,14 @@ export async function POST(request) {
     }
     // For EXISTING users: Only update changed fields
     else if (userData) {
+      // Hanko SDK v2: email may be in emails[] array instead of email string
+      const normalizedEmail = typeof userData.email === "string"
+        ? userData.email
+        : userData.emails?.find(e => e.is_primary)?.address || userData.emails?.[0]?.address || "";
       await updateUserData(userId, {
         lastLogin: new Date().toISOString(),
-        email: userData.email,  // In case email changed in Hanko
-        verified: userData.verified?.toString(),
+        email: normalizedEmail,
+        verified: userData.verified?.toString() || userData.emails?.[0]?.is_verified?.toString(),
         hasWebauthn: userData.has_webauthn?.toString(),
         hasPassword: userData.has_password?.toString()
       });

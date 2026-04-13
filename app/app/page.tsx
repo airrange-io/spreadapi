@@ -55,7 +55,7 @@ const ListsPage: React.FC = observer(() => {
   const { notification } = App.useApp();
   const router = useRouter();
   const appStore = useAppStore();
-  const { user, isAuthenticated: authIsAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated: authIsAuthenticated, loading: authLoading, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -428,7 +428,7 @@ const ListsPage: React.FC = observer(() => {
           icon: <LogoutOutlined />,
           label: t('app.logout'),
           onClick: async () => {
-            document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            await logout();
             router.push('/app');
             setIsAuthenticated(false);
           },

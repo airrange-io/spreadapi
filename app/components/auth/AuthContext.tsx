@@ -66,42 +66,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkAuth = async () => {
       try {
-        const currentUser = await (hanko as any).user.getCurrent();
-        setUser(currentUser);
+        const currentUser = await hanko.getCurrentUser();
+
+        // Normalize v2 user data for consumers
+        const primaryEmail = currentUser.emails?.find(e => e.is_primary)?.address
+          || currentUser.emails?.[0]?.address || "";
+        const normalizedUser = {
+          ...currentUser,
+          id: currentUser.user_id,
+          email: primaryEmail,
+        };
+        setUser(normalizedUser);
         setError(null);
-        
+
         // Store user data in Redis and get full user record (including licenseType)
-        if (currentUser) {
-          try {
-            const response = await fetch('/api/auth/user-data', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: currentUser.id,
-                userData: currentUser,
-                action: 'session_check'
-              })
+        try {
+          const response = await fetch('/api/auth/user-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: currentUser.user_id,
+              userData: { ...currentUser, email: primaryEmail },
+              action: 'session_check'
+            })
+          });
+          const data = await response.json();
+          if (data.user || data.stats) {
+            // Merge Hanko user with Redis data (licenseType, etc.)
+            setUser({
+              ...normalizedUser,
+              licenseType: data.user?.licenseType || 'free',
+              serviceCount: data.stats?.services || 0,
+              tokenCount: data.stats?.tokens || 0,
             });
-            const data = await response.json();
-            if (data.user || data.stats) {
-              // Merge Hanko user with Redis data (licenseType, etc.)
-              setUser({
-                ...currentUser,
-                licenseType: data.user?.licenseType || 'free',
-                serviceCount: data.stats?.services || 0,
-                tokenCount: data.stats?.tokens || 0,
-              });
-              return; // Already set user, skip the setUser below
-            }
-          } catch (error) {
-            console.error('Failed to store user data:', error);
           }
+        } catch (error) {
+          console.error('Failed to store user data:', error);
         }
       } catch (err: any) {
         // User is not authenticated - this is expected, not an error
         setUser(null);
         setError(null);
-        
+
         // Only log unexpected errors
         if (err?.status !== 401 && err?.code !== 'unauthorized') {
           console.error('Auth check error:', err);
@@ -124,16 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
-      // Cleanup listeners if they exist
+      if (typeof unsubscribe === 'function') unsubscribe();
+      if (typeof unsubscribeExpired === 'function') unsubscribeExpired();
     };
   }, [hanko]);
 
   const logout = async () => {
     try {
       if (hanko && user) {
-        await (hanko as any).user.logout();
+        await hanko.logout();
         setUser(null);
-        router.push('/');
       }
     } catch (err) {
       console.error('Logout failed:', err);

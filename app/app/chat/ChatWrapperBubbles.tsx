@@ -94,7 +94,7 @@ const renderMarkdown: BubbleProps['contentRender'] = (content) => {
 export default function ChatWrapperBubbles() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
   const [selectedService, setSelectedService] = useState<string>('general');
   const [userServices, setUserServices] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -314,9 +314,9 @@ export default function ChatWrapperBubbles() {
                   key: 'logout',
                   icon: <LogoutOutlined />,
                   label: t('chat.logout'),
-                  onClick: () => {
-                    document.cookie = 'hanko=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-                    router.push('/');
+                  onClick: async () => {
+                    await logout();
+                    router.push('/app');
                   },
                 },
               ] : [
@@ -335,7 +335,7 @@ export default function ChatWrapperBubbles() {
               icon={
                 isAuthenticated && user?.email ? (
                   <Avatar
-                    style={{ backgroundColor: '#4F2D7F', color: '#fff' }}
+                    style={{ backgroundColor: '#4F2D7F', color: '#fff', fontSize: '14px' }}
                     size={32}
                   >
                     {user.email.charAt(0).toUpperCase()}
