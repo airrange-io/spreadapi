@@ -790,7 +790,7 @@ const ListsPage: React.FC = observer(() => {
                   background: '#F0F4FB',
                   border: '1px solid #DFEAF5',
                   borderRadius: 10,
-                  margin: '12px 8px 8px',
+                  margin: '12px 0 8px',
                   ...(onboardingCollapsed
                     ? { padding: '14px 12px' }
                     : { padding: '24px 24px 16px', position: 'relative' as const }),
