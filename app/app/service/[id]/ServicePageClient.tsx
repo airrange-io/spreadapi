@@ -2717,6 +2717,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         onRemoveDataSource={(tableName) => {
           dataSourceApi?.removeDataSource(tableName);
         }}
+        canUseSnapshot={user?.licenseType === 'premium'}
       />
     </div>
   );

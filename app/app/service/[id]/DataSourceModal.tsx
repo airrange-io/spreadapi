@@ -1,22 +1,18 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Modal,
   Button,
   Space,
   Input,
-  Form,
   Select,
-  Segmented,
+  Radio,
   Table,
   Tag,
-  Switch,
   Typography,
   Alert,
   Tooltip,
-  Empty,
-  Collapse,
   App,
 } from 'antd';
 import {
@@ -26,9 +22,13 @@ import {
   ThunderboltOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  CopyOutlined,
+  DatabaseFilled,
 } from '@ant-design/icons';
+import { generateParameterId } from '@/lib/generateParameterId';
+import { generateWebhookToken } from '@/lib/generateWebhookToken';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 export type DataSourceType = 'json' | 'rest' | 'csv';
 export type ColumnDataType = 'string' | 'number' | 'boolean' | 'date';
@@ -66,17 +66,13 @@ export type DataSourceConfig = JsonSource | RestSource | CsvSource;
 export type StorageMode = 'remote' | 'snapshot';
 
 export interface DataSourceDefinition {
-  id: string;                          // stable uuid
-  tableName: string;                   // sheet tab / formula name
-  storageMode: StorageMode;            // remote (default) or snapshot (Pro)
+  id: string;
+  tableName: string;
+  storageMode: StorageMode;
   source: DataSourceConfig;
-  // Optional column metadata — used ONLY when the user customized displayNames
-  // or types in the modal. If absent, SpreadJS auto-generates columns from
-  // whatever the fetch returns.
   columns?: DataSourceColumn[];
-  // Snapshot-mode fields
-  webhookToken?: string;               // per-source secret for external refresh
-  maxRows?: number;                    // cap on snapshot refresh writes (default 5000)
+  webhookToken?: string;
+  maxRows?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -85,15 +81,9 @@ interface DataSourceModalProps {
   open: boolean;
   onClose: () => void;
   /**
-   * Save handler. The modal does NOT persist rows — that's the parent's job.
-   *
-   * - `freshRows`: if the user clicked "Fetch preview" in this session, these
-   *   are the just-fetched rows. Used by the parent for:
-   *     - Snapshot mode: seed Redis on create (POST to /api/datasource/:sid/:srcid)
-   *     - Remote mode: nothing — SpreadJS will re-fetch via the remote.read fn
-   *   `undefined` when the user edited a setting without re-fetching (common for
-   *   display-name changes on Snapshot sources — don't overwrite Redis with a
-   *   stale sample).
+   * `freshRows` is only passed when the user clicked "Fetch preview" in this
+   * session. Parent uses it to seed Redis on Snapshot create — `undefined`
+   * means "don't overwrite existing rows" (e.g. display-name-only edits).
    */
   onSave: (
     definition: DataSourceDefinition,
@@ -101,6 +91,9 @@ interface DataSourceModalProps {
   ) => void;
   initialValue?: DataSourceDefinition | null;
   existingTableNames?: string[];
+  serviceId?: string;
+  /** When false, the Snapshot delivery mode is shown as a Premium-gated option. */
+  canUseSnapshot?: boolean;
 }
 
 interface PreviewResponse {
@@ -112,11 +105,24 @@ interface PreviewResponse {
   totalRowsFetched?: number;
 }
 
-const PURPLE = '#9233E9';
+/* ---------- tokens ---------- */
 
-// Preview-row options the user can pick from. "all" maps to the server-side
-// cap (10 000 rows). Keeping the values numeric (with 0 as sentinel for "all")
-// lets the UI pass them directly to the preview endpoint.
+const TOKEN = {
+  purple: '#9133E8',
+  purpleSoft: '#f5efff',
+  purpleSoft2: '#ede6ff',
+  border: '#e9e9ef',
+  text: '#1a1a2e',
+  textMuted: '#6b6b85',
+  textSubtle: '#9a9aae',
+  bg: '#fafafc',
+  sectionRule: '#eeeef2',
+  green: '#16a34a',
+  amber: '#f59e0b',
+};
+
+/* ---------- preview / schema options ---------- */
+
 const PREVIEW_ROW_OPTIONS = [
   { value: 10,    label: '10 rows' },
   { value: 50,    label: '50 rows' },
@@ -126,33 +132,39 @@ const PREVIEW_ROW_OPTIONS = [
 ];
 const DEFAULT_PREVIEW_ROWS = 10;
 
+const MAX_REFRESH_ROWS_OPTIONS = [
+  { value: 500,    label: '500' },
+  { value: 1000,   label: '1 000' },
+  { value: 5000,   label: '5 000 (default)' },
+  { value: 10000,  label: '10 000' },
+  { value: 50000,  label: '50 000' },
+  { value: 100000, label: '100 000' },
+];
+const DEFAULT_MAX_REFRESH_ROWS = 5000;
+
 const DATA_TYPE_OPTIONS: { value: ColumnDataType; label: string }[] = [
-  { value: 'string', label: 'Text' },
-  { value: 'number', label: 'Number' },
+  { value: 'string',  label: 'Text' },
+  { value: 'number',  label: 'Number' },
   { value: 'boolean', label: 'Boolean' },
-  { value: 'date', label: 'Date' },
+  { value: 'date',    label: 'Date' },
 ];
 
-const SOURCE_TYPE_OPTIONS: { value: DataSourceType; label: string; icon: React.ReactNode; tip: string }[] = [
-  {
-    value: 'json',
-    label: 'JSON URL',
-    icon: <FileTextOutlined />,
-    tip: 'A publicly reachable URL that returns JSON (an array, or an object containing one).',
-  },
-  {
-    value: 'rest',
-    label: 'REST API',
-    icon: <ApiOutlined />,
-    tip: 'Any HTTP endpoint: choose a method, add headers, optionally a request body.',
-  },
-  {
-    value: 'csv',
-    label: 'CSV URL',
-    icon: <FileTextOutlined />,
-    tip: 'A URL that returns CSV text (e.g. a published Google Sheet).',
-  },
+type SourceCardKey = 'url' | 'csv' | 'pipedream';
+
+const SOURCE_CARDS: {
+  value: SourceCardKey;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  disabled?: boolean;
+  disabledReason?: string;
+}[] = [
+  { value: 'url',       label: 'JSON / REST API', description: 'Public JSON file or your own API', icon: <ApiOutlined /> },
+  { value: 'csv',       label: 'CSV URL',   description: 'Any CSV file',                   icon: <FileTextOutlined /> },
+  { value: 'pipedream', label: 'Connected apps', description: 'Salesforce, Airtable, 3k+ apps', icon: <ThunderboltOutlined />, disabled: true },
 ];
+
+/* ---------- helpers ---------- */
 
 function sanitizeTableName(raw: string): string {
   return raw.replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1').slice(0, 40) || 'Table';
@@ -168,16 +180,259 @@ function defaultTableNameFromUrl(url: string): string {
   }
 }
 
-function LabelWithTip({ label, tip }: { label: string; tip: string }) {
+/* ---------- small building blocks ---------- */
+
+function SectionHeader({
+  num,
+  title,
+  right,
+}: {
+  num: number | string;
+  title: string;
+  right?: React.ReactNode;
+}) {
   return (
-    <Space size={6}>
-      <span>{label}</span>
-      <Tooltip title={tip}>
-        <InfoCircleOutlined style={{ color: '#9ca3af', fontSize: 12 }} />
-      </Tooltip>
-    </Space>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          background: TOKEN.text,
+          color: '#fff',
+          borderRadius: '50%',
+          fontSize: 11,
+          fontWeight: 600,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {num}
+      </span>
+      <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: TOKEN.text }}>{title}</h3>
+      {right && <div style={{ marginLeft: 'auto' }}>{right}</div>}
+    </div>
   );
 }
+
+function DisclosureLink({
+  open,
+  onClick,
+  label,
+  summary,
+}: {
+  open: boolean;
+  onClick: () => void;
+  label: string;
+  summary?: string | null;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <span
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      style={{
+        display: 'inline-block',
+        fontSize: 12.5,
+        color: TOKEN.purple,
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '4px 0',
+        fontWeight: 500,
+        textDecoration: hover || open ? 'underline' : 'none',
+        textUnderlineOffset: 3,
+      }}
+    >
+      {label}
+      {summary && (
+        <span style={{ fontWeight: 400, marginLeft: 6, fontSize: 11.5, color: TOKEN.textSubtle, textDecoration: 'none' }}>
+          ({summary})
+        </span>
+      )}
+    </span>
+  );
+}
+
+function FieldLabel({
+  children,
+  tooltip,
+  required,
+}: {
+  children: React.ReactNode;
+  tooltip?: string;
+  required?: boolean;
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+      {required && <span style={{ color: '#ef4444' }}>*</span>}
+      <span>{children}</span>
+      {tooltip && (
+        <Tooltip title={tooltip}>
+          <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 12, cursor: 'help' }} />
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
+function SourceCard({
+  card,
+  active,
+  onClick,
+}: {
+  card: (typeof SOURCE_CARDS)[number];
+  active: boolean;
+  onClick: () => void;
+}) {
+  const disabled = !!card.disabled;
+  const body = (
+    <div
+      onClick={disabled ? undefined : onClick}
+      style={{
+        border: `1px solid ${active ? TOKEN.purple : TOKEN.border}`,
+        background: active ? TOKEN.purpleSoft : disabled ? '#f9fafb' : '#fff',
+        boxShadow: active ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+        borderRadius: 8,
+        padding: '12px 14px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'all 0.12s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        opacity: disabled ? 0.6 : 1,
+        position: 'relative',
+      }}
+    >
+      <span
+        style={{
+          color: active ? TOKEN.purple : TOKEN.textMuted,
+          display: 'inline-flex',
+          fontSize: 14,
+          flexShrink: 0,
+        }}
+      >
+        {card.icon}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 13 }}>
+          <span>{card.label}</span>
+          {disabled && card.disabledReason && (
+            <Tag
+              color="default"
+              style={{
+                marginInlineEnd: 0,
+                marginLeft: 'auto',
+                fontSize: 10,
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {card.disabledReason}
+            </Tag>
+          )}
+        </div>
+        <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, marginTop: 2 }}>{card.description}</div>
+      </div>
+    </div>
+  );
+  return disabled ? <Tooltip title={card.disabledReason || 'Not available'}>{body}</Tooltip> : body;
+}
+
+function WebhookBlock({ url }: { url: string }) {
+  const { notification } = App.useApp();
+  const curl = `curl -X POST '${url}'`;
+
+  const onCopy = (value: string, label: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(value).then(
+        () => notification.success({ message: `${label} copied` }),
+        () => notification.error({ message: 'Copy failed' }),
+      );
+    }
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        padding: 12,
+        background: '#fff',
+        border: `1px solid ${TOKEN.border}`,
+        borderRadius: 6,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10.5,
+          fontWeight: 700,
+          color: TOKEN.textSubtle,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: 6,
+        }}
+      >
+        Refresh webhook URL
+      </div>
+      <Space.Compact style={{ width: '100%', marginBottom: 10 }}>
+        <Input
+          value={url}
+          readOnly
+          style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, background: TOKEN.bg }}
+        />
+        <Button icon={<CopyOutlined />} onClick={() => onCopy(url, 'URL')}>
+          Copy
+        </Button>
+      </Space.Compact>
+
+      <div
+        style={{
+          fontSize: 10.5,
+          fontWeight: 700,
+          color: TOKEN.textSubtle,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: 6,
+        }}
+      >
+        Example — trigger a re-fetch
+      </div>
+      <pre
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 11,
+          padding: '10px 12px',
+          background: '#1a1a2e',
+          color: '#e8e8f0',
+          borderRadius: 5,
+          overflowX: 'auto',
+          lineHeight: 1.55,
+          margin: 0,
+        }}
+      >
+        {curl}
+      </pre>
+
+      <Text type="secondary" style={{ display: 'block', fontSize: 11.5, marginTop: 10, lineHeight: 1.55 }}>
+        When you update the data at your source URL, call this webhook to have SpreadAPI re-fetch it into Redis.
+        Wire it into any scheduler (Zapier, Power Automate, GitHub Actions, cron, …). Protect this URL — anyone
+        with the token can trigger a refresh.
+      </Text>
+    </div>
+  );
+}
+
+/* ---------- main component ---------- */
 
 const DataSourceModal: React.FC<DataSourceModalProps> = ({
   open,
@@ -185,12 +440,16 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   onSave,
   initialValue,
   existingTableNames = [],
+  serviceId,
+  canUseSnapshot = true,
 }) => {
   const { notification } = App.useApp();
 
   const isEdit = !!initialValue;
 
-  const [type, setType] = useState<DataSourceType>('json');
+  // Internal type: 'rest' covers both legacy 'json' sources and the merged
+  // URL card. CSV stays separate because it has its own parsing options.
+  const [type, setType] = useState<'rest' | 'csv'>('rest');
   const [url, setUrl] = useState('');
   const [jsonPath, setJsonPath] = useState('');
   const [method, setMethod] = useState<RestSource['method']>('GET');
@@ -198,10 +457,12 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   const [requestBody, setRequestBody] = useState('');
   const [csvHasHeader, setCsvHasHeader] = useState(true);
   const [csvDelimiter, setCsvDelimiter] = useState(',');
+
+  const uiCard: SourceCardKey = type === 'csv' ? 'csv' : 'url';
   const [tableName, setTableName] = useState('');
   const [tableNameTouched, setTableNameTouched] = useState(false);
   const [previewRowCount, setPreviewRowCount] = useState<number>(DEFAULT_PREVIEW_ROWS);
-  const [maxRefreshRows, setMaxRefreshRows] = useState<number>(5000);
+  const [maxRefreshRows, setMaxRefreshRows] = useState<number>(DEFAULT_MAX_REFRESH_ROWS);
   const [storageMode, setStorageMode] = useState<StorageMode>('remote');
 
   const [loading, setLoading] = useState(false);
@@ -209,49 +470,67 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   const [columns, setColumns] = useState<DataSourceColumn[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [totalRows, setTotalRows] = useState(0);
-  // True once the user clicks "Fetch preview" in this session. Drives whether
-  // we push these rows to Redis on save (edits without re-fetch must preserve
-  // the existing Redis dataset).
   const [didFetchInSession, setDidFetchInSession] = useState(false);
+
+  const [showRequestOptions, setShowRequestOptions] = useState(false);
+  const [showColumnDefs, setShowColumnDefs] = useState(false);
+
+  // Id + token are stable across the modal session so the webhook URL shown
+  // in Snapshot mode matches what gets saved.
+  const idRef = useRef<string>('');
+  const tokenRef = useRef<string>('');
 
   const hasPreview = columns.length > 0;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) return;
     if (initialValue) {
-      setType(initialValue.source.type);
+      // Legacy 'json' sources map to the URL card (type 'rest', default GET).
+      const srcType = initialValue.source.type;
+      setType(srcType === 'csv' ? 'csv' : 'rest');
       setUrl(initialValue.source.url);
       const s: any = initialValue.source;
       setJsonPath(s.jsonPath ?? '');
-      setMethod(initialValue.source.type === 'rest' ? (s.method ?? 'GET') : 'GET');
+      setMethod(srcType === 'rest' ? (s.method ?? 'GET') : 'GET');
       setHeadersText(
-        initialValue.source.type === 'rest' && s.headers
+        srcType === 'rest' && s.headers
           ? Object.entries(s.headers as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join('\n')
           : '',
       );
-      setRequestBody(initialValue.source.type === 'rest' ? (s.requestBody ?? '') : '');
-      setCsvHasHeader(initialValue.source.type === 'csv' ? (s.hasHeader ?? true) : true);
-      setCsvDelimiter(initialValue.source.type === 'csv' ? (s.delimiter ?? ',') : ',');
+      setRequestBody(srcType === 'rest' ? (s.requestBody ?? '') : '');
+      setCsvHasHeader(srcType === 'csv' ? (s.hasHeader ?? true) : true);
+      setCsvDelimiter(srcType === 'csv' ? (s.delimiter ?? ',') : ',');
       setTableName(initialValue.tableName);
       setTableNameTouched(true);
       setColumns(initialValue.columns || []);
-      // No sampleRows in v4 — user must click "Fetch preview" to see data
-      // in the modal. Editor shows live data via the remote.read function.
       setRows([]);
       setTotalRows(0);
       setError(null);
       setPreviewRowCount(DEFAULT_PREVIEW_ROWS);
-      setMaxRefreshRows(initialValue.maxRows ?? 5000);
+      setMaxRefreshRows(initialValue.maxRows ?? DEFAULT_MAX_REFRESH_ROWS);
       setStorageMode(initialValue.storageMode || 'remote');
       setDidFetchInSession(false);
+      // Auto-open reveals when non-default values exist so nothing hides silently.
+      const hasCustomRequest =
+        srcType === 'rest' &&
+        ((s.method && s.method !== 'GET') ||
+          !!(s.headers && Object.keys(s.headers).length > 0) ||
+          !!s.requestBody ||
+          !!s.jsonPath);
+      setShowRequestOptions(hasCustomRequest);
+      setShowColumnDefs(false);
+      idRef.current = initialValue.id || generateParameterId();
+      tokenRef.current = initialValue.webhookToken || generateWebhookToken();
     } else {
       resetAll();
+      idRef.current = generateParameterId();
+      tokenRef.current = generateWebhookToken();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialValue]);
 
   const resetAll = () => {
-    setType('json');
+    setType('rest');
     setUrl('');
     setJsonPath('');
     setMethod('GET');
@@ -268,8 +547,10 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     setLoading(false);
     setDidFetchInSession(false);
     setStorageMode('remote');
-    setMaxRefreshRows(5000);
+    setMaxRefreshRows(DEFAULT_MAX_REFRESH_ROWS);
     setPreviewRowCount(DEFAULT_PREVIEW_ROWS);
+    setShowRequestOptions(false);
+    setShowColumnDefs(false);
   };
 
   const handleClose = () => {
@@ -293,12 +574,9 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     return result;
   };
 
-  const buildRequestPayload = () => {
+  const buildRequestPayload = (rowsOverride?: number) => {
     if (!url.trim()) return { error: 'URL is required' };
-
-    // How many rows the preview endpoint should return. "All" = 10 000 via the
-    // sentinel value in PREVIEW_ROW_OPTIONS.
-    const requestedPreviewRows = previewRowCount || DEFAULT_PREVIEW_ROWS;
+    const requestedPreviewRows = rowsOverride ?? previewRowCount ?? DEFAULT_PREVIEW_ROWS;
 
     if (type === 'csv') {
       return {
@@ -307,17 +585,6 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
           url: url.trim(),
           hasHeader: csvHasHeader,
           delimiter: csvDelimiter || ',',
-          sampleRows: requestedPreviewRows,
-        },
-      };
-    }
-
-    if (type === 'json') {
-      return {
-        payload: {
-          type,
-          url: url.trim(),
-          jsonPath: jsonPath.trim() || undefined,
           sampleRows: requestedPreviewRows,
         },
       };
@@ -338,9 +605,9 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     };
   };
 
-  const handlePreview = async () => {
+  const handlePreview = async (rowsOverride?: number) => {
     setError(null);
-    const built = buildRequestPayload();
+    const built = buildRequestPayload(rowsOverride);
     if ('error' in built) {
       setError(built.error);
       return;
@@ -368,9 +635,7 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       setRows(data.rows || []);
       setTotalRows(data.totalRowsFetched || 0);
       setDidFetchInSession(true);
-      if (!tableNameTouched) {
-        setTableName(defaultTableNameFromUrl(url));
-      }
+      if (!tableNameTouched) setTableName(defaultTableNameFromUrl(url));
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Preview failed';
       setError(msg);
@@ -402,32 +667,24 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     }
     const now = new Date().toISOString();
 
-    // Did the user customize any column (displayName or type)?
-    // If so, pass the column metadata. Otherwise omit — SpreadJS will
-    // auto-generate from whatever the remote.read fn returns.
+    // Only persist columns if the user actually customized something.
     const hasCustomization = columns.some(
       (c) => (c.displayName && c.displayName !== c.name) || (c.dataType && c.dataType !== 'string'),
     );
 
     const definition: DataSourceDefinition = {
-      // Preserve id + token across edits; parent generates them on create.
-      id: initialValue?.id ?? '',
-      webhookToken: initialValue?.webhookToken ?? '',
-      maxRows: storageMode === 'snapshot' ? maxRefreshRows : undefined,
-      createdAt: initialValue?.createdAt ?? now,
-      updatedAt: now,
+      id: idRef.current,
       tableName: name,
       storageMode,
       source: built.payload as unknown as DataSourceConfig,
+      webhookToken: storageMode === 'snapshot' ? tokenRef.current : undefined,
+      maxRows: storageMode === 'snapshot' ? maxRefreshRows : undefined,
+      createdAt: initialValue?.createdAt ?? now,
+      updatedAt: now,
       ...(hasCustomization ? { columns } : {}),
     };
 
-    onSave(
-      definition,
-      // Parent uses freshRows only for Snapshot mode (seed Redis on create / explicit refresh).
-      // Remote mode ignores freshRows — SpreadJS re-fetches via the remote.read fn anyway.
-      didFetchInSession ? { freshRows: rows } : undefined,
-    );
+    onSave(definition, didFetchInSession ? { freshRows: rows } : undefined);
     handleClose();
   };
 
@@ -440,7 +697,7 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       title: 'Source field',
       dataIndex: 'name',
       key: 'name',
-      width: '36%',
+      width: '32%',
       render: (name: string) => (
         <code style={{ fontSize: 12, color: '#374151' }}>{name}</code>
       ),
@@ -459,10 +716,12 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     },
     {
       title: (
-        <LabelWithTip
-          label="Type"
-          tip="How this column is treated in formulas. Text is always safe; Number/Date enables math and sorting."
-        />
+        <Space size={4}>
+          <span>Type</span>
+          <Tooltip title="How this column is treated in formulas. Text is always safe; Number/Date enables math and sorting.">
+            <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 12, cursor: 'help' }} />
+          </Tooltip>
+        </Space>
       ),
       key: 'dataType',
       width: 150,
@@ -497,11 +756,17 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     }));
   }, [columns]);
 
+  const webhookUrl = useMemo(() => {
+    if (!serviceId || !idRef.current || !tokenRef.current) return '';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/api/datasource/${encodeURIComponent(serviceId)}/${encodeURIComponent(idRef.current)}/refresh?token=${tokenRef.current}`;
+  }, [serviceId, open, storageMode]);
+
   return (
     <Modal
       title={
         <Space>
-          <DatabaseOutlined style={{ color: PURPLE }} />
+          <DatabaseOutlined style={{ color: TOKEN.purple }} />
           <span>{isEdit ? 'Edit data source' : 'Add data source'}</span>
         </Space>
       }
@@ -510,6 +775,7 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       width={880}
       centered
       destroyOnHidden
+      styles={{ body: { height: 'calc(90vh - 160px)', overflowY: 'auto', scrollbarGutter: 'stable', paddingRight: 4 } }}
       footer={[
         <Button key="cancel" onClick={handleClose}>Cancel</Button>,
         <Tooltip
@@ -520,375 +786,429 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
             type="primary"
             onClick={handleSave}
             disabled={!hasPreview}
-            style={{ background: PURPLE, borderColor: PURPLE }}
+            style={{ background: TOKEN.purple, borderColor: TOKEN.purple }}
           >
             {isEdit ? 'Save changes' : 'Add table'}
           </Button>
         </Tooltip>,
       ]}
     >
-      <Space orientation="vertical" style={{ width: '100%' }} size={20}>
-        <div>
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            Pull live data from an external source. The schema and a small sample are stored with the workbook, so
-            you can build formulas against real columns. The live data is fetched again every time the service is
-            executed.
-          </Text>
-        </div>
+      <Text type="secondary" style={{ display: 'block', padding: '4px 0 16px', fontSize: 13, lineHeight: 1.55 }}>
+        Connect an external data source to your workbook. Pick how the data is delivered at runtime, then fetch a
+        preview to pin down the columns you'll use in formulas.
+      </Text>
 
-        {/* Storage mode — defines what we do with the data after fetching it */}
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>Storage mode</Text>
-          <Segmented
-            block
-            value={storageMode}
-            onChange={(v) => setStorageMode(v as StorageMode)}
-            options={[
-              {
-                value: 'remote',
-                label: (
-                  <Tooltip
-                    title="We fetch your URL directly when your service runs, with a short server-side cache. Ideal for data that updates on a predictable schedule — nightly exports, published spreadsheets, public catalogs. Zero setup."
-                    mouseEnterDelay={0.3}
-                  >
-                    <Space size={6}>
-                      <ThunderboltOutlined />
-                      <span>Remote (live fetch)</span>
-                    </Space>
-                  </Tooltip>
-                ),
-              },
-              {
-                value: 'snapshot',
-                label: (
-                  <Tooltip
-                    title="We cache your data on our side. Trigger refreshes via our webhook — connect Zapier, Power Automate, Pipedream, dbt or any automation tool. Your service stays up when your upstream is down; scales to high traffic without hammering your source."
-                    mouseEnterDelay={0.3}
-                  >
-                    <Space size={6}>
-                      <DatabaseOutlined />
-                      <span>Snapshot on SpreadAPI</span>
-                    </Space>
-                  </Tooltip>
-                ),
-              },
-            ]}
-          />
-          <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 6 }}>
-            {storageMode === 'remote'
-              ? 'Data is fetched live from your URL on every service call (cached briefly).'
-              : 'Data is cached on SpreadAPI. Update it via webhook from your automation tools or manually.'}
-          </Text>
-        </div>
+      {/* ============ Section 1: Source ============ */}
+      <div style={{ padding: '4px 0 20px', borderBottom: `1px solid ${TOKEN.sectionRule}` }}>
+        <SectionHeader num={1} title="Where does the data come from?" />
 
-        <div>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>Source type</Text>
-          <Segmented
-            block
-            value={type}
-            onChange={(v) => {
-              setType(v as DataSourceType);
-              setColumns([]);
-              setRows([]);
-              setTotalRows(0);
-              setError(null);
-            }}
-            options={SOURCE_TYPE_OPTIONS.map((o) => ({
-              value: o.value,
-              label: (
-                <Tooltip title={o.tip} mouseEnterDelay={0.3}>
-                  <Space size={6}>
-                    {o.icon}
-                    <span>{o.label}</span>
-                  </Space>
-                </Tooltip>
-              ),
-            }))}
-          />
-        </div>
-
-        <Form layout="vertical" component="div" requiredMark={false}>
-          <Form.Item
-            label={
-              <LabelWithTip
-                label="URL"
-                tip={
-                  type === 'csv'
-                    ? 'Full URL to a CSV file. For Google Sheets, use File > Share > Publish to the web > .csv.'
-                    : 'Full URL, including protocol. Must be reachable from the public internet.'
-                }
-              />
-            }
-            required
-            style={{ marginBottom: 12 }}
-          >
-            <Input
-              prefix={<LinkOutlined style={{ color: '#9ca3af' }} />}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://api.example.com/customers"
-              onPressEnter={handlePreview}
-              allowClear
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          {SOURCE_CARDS.map((card) => (
+            <SourceCard
+              key={card.value}
+              card={card}
+              active={uiCard === card.value}
+              onClick={() => {
+                if (card.disabled) return;
+                setType(card.value === 'csv' ? 'csv' : 'rest');
+                setColumns([]);
+                setRows([]);
+                setTotalRows(0);
+                setError(null);
+              }}
             />
-          </Form.Item>
+          ))}
+        </div>
 
-          {type === 'rest' && (
+        <div style={{ marginBottom: 14 }}>
+          <FieldLabel
+            required
+            tooltip={
+              uiCard === 'csv'
+                ? 'Full URL to a CSV file. For Google Sheets: File → Share → Publish to the web → .csv.'
+                : 'Full URL, including protocol. Must be reachable from the public internet.'
+            }
+          >
+            URL
+          </FieldLabel>
+          <Input
+            prefix={<LinkOutlined style={{ color: TOKEN.textSubtle }} />}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://api.example.com/customers"
+            onPressEnter={() => handlePreview()}
+            allowClear
+          />
+        </div>
+
+        {uiCard === 'url' && (() => {
+          const headerLineCount = headersText
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean).length;
+          const summaryParts: string[] = [];
+          if (method !== 'GET') summaryParts.push(method);
+          if (headerLineCount > 0) summaryParts.push(`${headerLineCount} header${headerLineCount === 1 ? '' : 's'}`);
+          if (requestBody.trim()) summaryParts.push('body');
+          if (jsonPath.trim()) summaryParts.push(`path: ${jsonPath.trim()}`);
+          const summary = summaryParts.length ? summaryParts.join(', ') : null;
+          return (
             <>
-              <Space size="middle" align="start" style={{ width: '100%' }} wrap>
-                <Form.Item label="Method" style={{ marginBottom: 12, minWidth: 140 }}>
-                  <Select
-                    value={method}
-                    onChange={(v) => setMethod(v)}
-                    style={{ width: 140 }}
-                    options={[
-                      { value: 'GET', label: 'GET' },
-                      { value: 'POST', label: 'POST' },
-                      { value: 'PUT', label: 'PUT' },
-                      { value: 'DELETE', label: 'DELETE' },
-                    ]}
-                  />
-                </Form.Item>
-              </Space>
-              <Form.Item
-                label={
-                  <LabelWithTip
-                    label="Headers"
-                    tip={'One header per line, format "Name: value". Examples: Accept: application/json, X-Api-Version: 2.'}
-                  />
-                }
-                style={{ marginBottom: 12 }}
-              >
-                <Input.TextArea
-                  value={headersText}
-                  onChange={(e) => setHeadersText(e.target.value)}
-                  placeholder={'Accept: application/json\nX-Api-Version: 2'}
-                  rows={3}
-                />
-              </Form.Item>
-              {method !== 'GET' && (
-                <Form.Item
-                  label={
-                    <LabelWithTip
-                      label="Request body"
-                      tip={'Sent as-is. If no Content-Type header is provided, application/json is used.'}
-                    />
-                  }
-                  style={{ marginBottom: 12 }}
+              <DisclosureLink
+                open={showRequestOptions}
+                onClick={() => setShowRequestOptions((v) => !v)}
+                label="Request options"
+                summary={summary}
+              />
+
+              {showRequestOptions && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: '12px 14px',
+                    background: TOKEN.bg,
+                    border: `1px solid ${TOKEN.sectionRule}`,
+                    borderRadius: 8,
+                  }}
                 >
-                  <Input.TextArea
-                    value={requestBody}
-                    onChange={(e) => setRequestBody(e.target.value)}
-                    placeholder='{"filter":"active"}'
-                    rows={3}
-                  />
-                </Form.Item>
+                  <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 12, marginBottom: 14 }}>
+                    <div>
+                      <FieldLabel>Method</FieldLabel>
+                      <Select
+                        value={method}
+                        onChange={(v) => setMethod(v)}
+                        style={{ width: '100%' }}
+                        options={[
+                          { value: 'GET', label: 'GET' },
+                          { value: 'POST', label: 'POST' },
+                          { value: 'PUT', label: 'PUT' },
+                          { value: 'DELETE', label: 'DELETE' },
+                        ]}
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel tooltip='Dot-separated path if the array is nested (e.g. "data.results"). Empty auto-detects common wrappers like "data", "results", "items".'>
+                        Path to array <Text type="secondary" style={{ fontWeight: 400 }}>(optional)</Text>
+                      </FieldLabel>
+                      <Input
+                        value={jsonPath}
+                        onChange={(e) => setJsonPath(e.target.value)}
+                        placeholder="data.results"
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: method !== 'GET' ? 14 : 0 }}>
+                    <FieldLabel tooltip="One header per line, format: Name: value">Headers</FieldLabel>
+                    <Input.TextArea
+                      value={headersText}
+                      onChange={(e) => setHeadersText(e.target.value)}
+                      placeholder={'Accept: application/json\nX-Api-Version: 2'}
+                      autoSize={{ minRows: 2, maxRows: 6 }}
+                    />
+                  </div>
+                  {method !== 'GET' && (
+                    <div>
+                      <FieldLabel tooltip="Sent as-is. If no Content-Type header is provided, application/json is used.">
+                        Request body
+                      </FieldLabel>
+                      <Input.TextArea
+                        value={requestBody}
+                        onChange={(e) => setRequestBody(e.target.value)}
+                        placeholder='{"filter":"active"}'
+                        autoSize={{ minRows: 2, maxRows: 6 }}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
             </>
-          )}
+          );
+        })()}
 
-          {(type === 'json' || type === 'rest') && (
-            <Form.Item
-              label={
-                <LabelWithTip
-                  label="Path to array (optional)"
-                  tip={'If the response wraps the array in an object, point to it with dot notation. Leave empty to auto-detect common wrappers like "data", "results", "items".'}
-                />
-              }
-              style={{ marginBottom: 12 }}
-            >
-              <Input
-                value={jsonPath}
-                onChange={(e) => setJsonPath(e.target.value)}
-                placeholder="data.results"
-              />
-            </Form.Item>
-          )}
-
-          {type === 'csv' && (
-            <Space size="large" align="center" wrap style={{ marginBottom: 8 }}>
-              <Form.Item
-                label={
-                  <LabelWithTip
-                    label="First row is header"
-                    tip={'If enabled, the first row supplies column names. Otherwise columns are named col_1, col_2, …'}
-                  />
-                }
-                style={{ marginBottom: 0 }}
+        {uiCard === 'csv' && (
+          <div style={{ display: 'flex', gap: 24, marginBottom: 8 }}>
+            <div>
+              <FieldLabel tooltip="If on, the first row supplies column names. Otherwise columns are named col_1, col_2, …">
+                First row is header
+              </FieldLabel>
+              <Radio.Group
+                value={csvHasHeader}
+                onChange={(e) => setCsvHasHeader(e.target.value)}
               >
-                <Switch checked={csvHasHeader} onChange={setCsvHasHeader} />
-              </Form.Item>
-              <Form.Item label="Delimiter" style={{ marginBottom: 0 }}>
-                <Select
-                  value={csvDelimiter}
-                  onChange={setCsvDelimiter}
-                  style={{ width: 160 }}
-                  options={[
-                    { value: ',', label: 'Comma (,)' },
-                    { value: ';', label: 'Semicolon (;)' },
-                    { value: '\t', label: 'Tab' },
-                    { value: '|', label: 'Pipe (|)' },
-                  ]}
-                />
-              </Form.Item>
-            </Space>
-          )}
+                <Radio value={true}>Yes</Radio>
+                <Radio value={false}>No</Radio>
+              </Radio.Group>
+            </div>
+            <div>
+              <FieldLabel>Delimiter</FieldLabel>
+              <Select
+                value={csvDelimiter}
+                onChange={setCsvDelimiter}
+                style={{ width: 160 }}
+                options={[
+                  { value: ',',  label: 'Comma (,)' },
+                  { value: ';',  label: 'Semicolon (;)' },
+                  { value: '\t', label: 'Tab' },
+                  { value: '|',  label: 'Pipe (|)' },
+                ]}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
-          <Collapse
-            ghost
-            size="small"
-            style={{ marginTop: 4 }}
-            items={[
-              {
-                key: 'advanced',
-                label: <Text strong style={{ fontSize: 12, color: '#6b4fb8' }}>Advanced</Text>,
-                children: (
-                  <Space size="large" align="start" wrap>
-                    <Form.Item
-                      label={
-                        <LabelWithTip
-                          label="Preview rows"
-                          tip={'How many rows to fetch when testing the source in the editor. Use a larger value when you want to verify formulas against real data. The full set is stored separately and served at runtime — your service config stays small regardless.'}
-                        />
-                      }
-                      style={{ marginBottom: 0, minWidth: 200 }}
-                    >
-                      <Select
-                        value={previewRowCount}
-                        onChange={setPreviewRowCount}
-                        options={PREVIEW_ROW_OPTIONS}
-                        style={{ width: 200 }}
-                      />
-                    </Form.Item>
-                    {storageMode === 'snapshot' && (
-                      <Form.Item
-                        label={
-                          <LabelWithTip
-                            label="Max rows per refresh"
-                            tip={'Hard cap on rows stored when the webhook refreshes this source. Protects against unexpectedly large upstream responses. Default 5 000.'}
-                          />
-                        }
-                        style={{ marginBottom: 0, minWidth: 200 }}
-                      >
-                        <Select
-                          value={maxRefreshRows}
-                          onChange={setMaxRefreshRows}
-                          options={[
-                            { value: 500,    label: '500' },
-                            { value: 1000,   label: '1 000' },
-                            { value: 5000,   label: '5 000 (default)' },
-                            { value: 10000,  label: '10 000' },
-                            { value: 50000,  label: '50 000' },
-                            { value: 100000, label: '100 000' },
-                          ]}
-                          style={{ width: 200 }}
-                        />
-                      </Form.Item>
-                    )}
-                  </Space>
-                ),
-              },
-            ]}
-          />
-        </Form>
+      {/* ============ Section 2: Delivery ============ */}
+      <div style={{ padding: '20px 0', borderBottom: `1px solid ${TOKEN.sectionRule}` }}>
+        <SectionHeader num={2} title="How is it delivered at runtime?" />
 
-        <div
-          style={{
-            padding: 12,
-            background: '#fafafa',
-            border: '1px solid #f0f0f0',
-            borderRadius: 8,
-          }}
+        <Radio.Group
+          value={storageMode}
+          onChange={(e) => setStorageMode(e.target.value)}
+          style={{ width: '100%' }}
         >
-          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-            <Tooltip title="Fetches up to 10 rows to verify the source works and to infer column types. No data is saved yet.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <div
+              onClick={() => setStorageMode('remote')}
+              style={{
+                border: `1px solid ${storageMode === 'remote' ? TOKEN.purple : TOKEN.border}`,
+                background: storageMode === 'remote' ? TOKEN.purpleSoft : '#fff',
+                boxShadow: storageMode === 'remote' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+                borderRadius: 8,
+                padding: '12px 14px',
+                cursor: 'pointer',
+                transition: 'all 0.12s ease',
+              }}
+            >
+              <Radio value="remote" style={{ alignItems: 'flex-start' }}>
+                <div style={{ marginLeft: 2 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ThunderboltOutlined style={{ color: TOKEN.amber }} /> Live fetch
+                  </div>
+                  <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
+                    Fetch from your URL on every call, briefly cached.
+                  </div>
+                </div>
+              </Radio>
+            </div>
+
+            <Tooltip title={!canUseSnapshot ? 'Snapshot is a Premium feature. Upgrade your plan to enable it.' : ''}>
+              <div
+                onClick={() => {
+                  if (!canUseSnapshot && storageMode !== 'snapshot') return;
+                  setStorageMode('snapshot');
+                }}
+                style={{
+                  border: `1px solid ${storageMode === 'snapshot' ? TOKEN.purple : TOKEN.border}`,
+                  background: storageMode === 'snapshot' ? TOKEN.purpleSoft : !canUseSnapshot ? '#f9fafb' : '#fff',
+                  boxShadow: storageMode === 'snapshot' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  cursor: !canUseSnapshot && storageMode !== 'snapshot' ? 'not-allowed' : 'pointer',
+                  opacity: !canUseSnapshot && storageMode !== 'snapshot' ? 0.65 : 1,
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                <Radio value="snapshot" disabled={!canUseSnapshot && storageMode !== 'snapshot'} style={{ alignItems: 'flex-start' }}>
+                  <div style={{ marginLeft: 2 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <DatabaseFilled style={{ color: TOKEN.purple }} /> Snapshot
+                      {!canUseSnapshot && (
+                        <Tag
+                          color="gold"
+                          style={{
+                            marginInlineEnd: 0,
+                            marginLeft: 'auto',
+                            fontSize: 9.5,
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            lineHeight: '16px',
+                            padding: '0 6px',
+                          }}
+                        >
+                          Premium
+                        </Tag>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
+                      Cached on our side, refreshed on demand via webhook.
+                    </div>
+                  </div>
+                </Radio>
+              </div>
+            </Tooltip>
+          </div>
+
+          {storageMode === 'snapshot' && (
+            <div style={{ marginTop: 10 }}>
+              {webhookUrl ? (
+                <WebhookBlock url={webhookUrl} />
+              ) : (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="The refresh webhook URL will appear once the service is saved."
+                />
+              )}
+              <div
+                style={{
+                  marginTop: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  fontSize: 12.5,
+                  color: TOKEN.textMuted,
+                }}
+              >
+                <Tooltip title="Hard cap on rows stored per refresh. Protects against unexpectedly large upstream responses.">
+                  <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    Max rows per refresh
+                    <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 11 }} />
+                  </span>
+                </Tooltip>
+                <Select
+                  size="small"
+                  value={maxRefreshRows}
+                  onChange={setMaxRefreshRows}
+                  options={MAX_REFRESH_ROWS_OPTIONS}
+                  style={{ width: 180 }}
+                />
+              </div>
+            </div>
+          )}
+        </Radio.Group>
+      </div>
+
+      {/* ============ Section 3: Preview ============ */}
+      <div style={{ padding: '20px 0 4px' }}>
+        <SectionHeader num={3} title="Preview your data" />
+
+        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
+
+        <div style={{ marginBottom: 14 }}>
+          <FieldLabel required tooltip="Used as the sheet tab and as the table identifier in formulas. Letters, digits and underscores only.">
+            Table name
+          </FieldLabel>
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              value={tableName}
+              onChange={(e) => {
+                setTableName(e.target.value);
+                setTableNameTouched(true);
+              }}
+              placeholder="customers"
+              onPressEnter={() => handlePreview()}
+            />
+            <Tooltip title="Fetches a sample to verify the source works and infer column types. No data is saved yet.">
               <Button
                 type="primary"
                 icon={<ThunderboltOutlined />}
                 loading={loading}
-                onClick={handlePreview}
+                onClick={() => handlePreview()}
                 disabled={!url.trim()}
-                style={{ background: PURPLE, borderColor: PURPLE }}
+                style={{ background: TOKEN.purple, borderColor: TOKEN.purple }}
               >
-                Fetch preview
+                Fetch Table Data
               </Button>
             </Tooltip>
-            {totalRows > 0 && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Fetched {totalRows} row{totalRows === 1 ? '' : 's'}, showing first {rows.length}.
-              </Text>
-            )}
-          </Space>
-          {error && (
-            <Alert
-              type="error"
-              showIcon
-              message={error}
-              style={{ marginTop: 12 }}
-            />
-          )}
+          </Space.Compact>
         </div>
 
         {hasPreview ? (
           <>
-            <Form.Item
-              label={
-                <LabelWithTip
-                  label="Table name"
-                  tip={'Used as the sheet tab and as the table identifier in formulas. Letters, digits and underscores only.'}
+            {rows.length > 0 && (
+              <>
+                <Table
+                  size="small"
+                  rowKey="__rowId"
+                  dataSource={rows.map((r, i) => ({ ...r, __rowId: `row-${i}` }))}
+                  columns={previewTableColumns}
+                  pagination={false}
+                  scroll={{ x: true, y: 320 }}
+                  bordered
+                  style={{ marginBottom: 8 }}
                 />
-              }
-              required
-              style={{ marginBottom: 0 }}
-            >
-              <Input
-                value={tableName}
-                onChange={(e) => {
-                  setTableName(e.target.value);
-                  setTableNameTouched(true);
-                }}
-                placeholder="customers"
-              />
-            </Form.Item>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    flexWrap: 'wrap',
+                    marginBottom: 12,
+                    fontSize: 12.5,
+                    color: TOKEN.textMuted,
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    Rows:
+                    <Select
+                      size="small"
+                      value={previewRowCount}
+                      onChange={(v) => {
+                        setPreviewRowCount(v);
+                        if (!loading) handlePreview(v);
+                      }}
+                      options={PREVIEW_ROW_OPTIONS}
+                      style={{ width: 180 }}
+                      disabled={loading}
+                    />
+                  </span>
+                  {totalRows > 0 && (
+                    <span style={{ marginLeft: 'auto', color: TOKEN.textSubtle }}>
+                      Fetched{' '}
+                      <span style={{ color: TOKEN.green, fontWeight: 600 }}>
+                        {totalRows} row{totalRows === 1 ? '' : 's'}
+                      </span>
+                      {rows.length < totalRows && <>, showing first {rows.length}</>}
+                    </span>
+                  )}
+                </div>
 
-            <div>
-              <Title level={5} style={{ marginTop: 0, marginBottom: 8 }}>Columns</Title>
-              <Table
-                size="small"
-                rowKey="name"
-                dataSource={columns}
-                columns={schemaTableColumns}
-                pagination={false}
-                bordered
-              />
-            </div>
-
-            <div>
-              <Title level={5} style={{ marginTop: 0, marginBottom: 8 }}>
-                Preview <Text type="secondary" style={{ fontWeight: 400, fontSize: 12 }}>(first {rows.length} rows)</Text>
-              </Title>
-              <Table
-                size="small"
-                rowKey="__rowId"
-                dataSource={rows.map((r, i) => ({ ...r, __rowId: `row-${i}` }))}
-                columns={previewTableColumns}
-                pagination={false}
-                scroll={{ x: true }}
-                bordered
-              />
-            </div>
+                {(() => {
+                  const customizedCount = columns.filter(
+                    (c) => (c.displayName && c.displayName !== c.name) || (c.dataType && c.dataType !== 'string'),
+                  ).length;
+                  return (
+                    <>
+                      <DisclosureLink
+                        open={showColumnDefs}
+                        onClick={() => setShowColumnDefs((v) => !v)}
+                        label="Column definitions"
+                        summary={customizedCount > 0 ? `${customizedCount} customized` : 'defaults from preview'}
+                      />
+                      {showColumnDefs && (
+                        <Table
+                          size="small"
+                          rowKey="name"
+                          dataSource={columns}
+                          columns={schemaTableColumns}
+                          pagination={false}
+                          bordered
+                          style={{ marginTop: 12 }}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </>
         ) : (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Fill in the URL and click <b>Fetch preview</b> to see columns and sample rows.
-              </Text>
-            }
-            style={{ padding: '16px 0' }}
-          />
+          <div
+            style={{
+              padding: '24px 16px',
+              textAlign: 'center',
+              color: TOKEN.textSubtle,
+              fontSize: 13,
+              background: '#fff',
+              border: `1px dashed ${TOKEN.border}`,
+              borderRadius: 8,
+            }}
+          >
+            Paste a URL above and click <b style={{ color: TOKEN.text }}>Fetch preview</b> to see your rows.
+          </div>
         )}
-      </Space>
+      </div>
     </Modal>
   );
 };

@@ -5,6 +5,7 @@ import { App, Skeleton, Button, Tooltip } from 'antd';
 import { PlusOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
+import { generateWebhookToken } from '@/lib/generateWebhookToken';
 import * as GC from '@mescius/spread-sheets';
 
 // Import types and constants from ParametersSection
@@ -23,21 +24,6 @@ const AreaModal = lazy(() => import('../AreaModal'));
 const DataSourceModal = lazy(() => import('../DataSourceModal'));
 
 import type { DataSourceDefinition } from '../DataSourceModal';
-
-// Generate a random URL-safe token for the per-source webhook. Uses crypto
-// when available, falls back to a math-random hex for SSR-safety (only runs
-// client-side anyway).
-function generateWebhookToken(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const buf = new Uint8Array(24);
-    crypto.getRandomValues(buf);
-    return Array.from(buf).map((b) => b.toString(16).padStart(2, '0')).join('');
-  }
-  return Array.from({ length: 48 })
-    .map(() => Math.floor(Math.random() * 16).toString(16))
-    .join('');
-}
-
 
 // Declare GC namespace for TypeScript
 declare global {
@@ -72,6 +58,7 @@ interface ParametersPanelProps {
     options?: { freshRows?: Record<string, unknown>[] },
   ) => void | Promise<void>;
   onRemoveDataSource?: (tableName: string) => void;
+  canUseSnapshot?: boolean;
 }
 
 // Permission presets for areas
@@ -113,7 +100,7 @@ const PERMISSION_PRESETS = {
 
 const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef,
-  onApplyDataSource, onRemoveDataSource,
+  onApplyDataSource, onRemoveDataSource, canUseSnapshot,
 }) => {
   const { notification } = App.useApp();
   const { t } = useTranslation();
@@ -1352,6 +1339,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             onSave={handleDataSourceSave}
             initialValue={editingDataSource}
             existingTableNames={dataSources.map(d => d.tableName)}
+            serviceId={serviceId}
+            canUseSnapshot={canUseSnapshot}
           />
         )}
       </Suspense>

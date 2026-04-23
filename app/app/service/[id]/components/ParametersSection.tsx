@@ -512,40 +512,23 @@ const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
           </div>
         ) : (
-          <>
-            {/* Compact tip when sources already exist */}
-            <div
-              style={{
-                margin: '8px 0 12px',
-                padding: '10px 14px',
-                background: '#faf8ff',
-                border: '1px solid #efeaff',
-                borderRadius: 10,
-                fontSize: 12,
-                color: '#6b4fb8',
-                lineHeight: 1.5,
-              }}
-            >
-              <b>Live data:</b> Remote sources re-fetch on every execute (server-side cache). Snapshot sources are cached on SpreadAPI and refreshed via webhook. Click a row to edit, hover for actions.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {dataSources.map((ds) => (
-                <DataSourceRow
-                  key={ds.id || ds.tableName}
-                  ds={ds}
-                  serviceId={serviceId}
-                  typeLabel={sourceLabel(ds.source.type)}
-                  icon={sourceIcon(ds.source.type)}
-                  isDemoMode={isDemoMode}
-                  onClick={onEditDataSource ? () => onEditDataSource(ds) : undefined}
-                  onDelete={onDeleteDataSource ? () => onDeleteDataSource(ds.tableName) : undefined}
-                  cannotUndoLabel={t('params.cannotUndo')}
-                  yesLabel={t('common.yes')}
-                  noLabel={t('common.no')}
-                />
-              ))}
-            </div>
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+            {dataSources.map((ds) => (
+              <DataSourceRow
+                key={ds.id || ds.tableName}
+                ds={ds}
+                serviceId={serviceId}
+                typeLabel={sourceLabel(ds.source.type)}
+                icon={sourceIcon(ds.source.type)}
+                isDemoMode={isDemoMode}
+                onClick={onEditDataSource ? () => onEditDataSource(ds) : undefined}
+                onDelete={onDeleteDataSource ? () => onDeleteDataSource(ds.tableName) : undefined}
+                cannotUndoLabel={t('params.cannotUndo')}
+                yesLabel={t('common.yes')}
+                noLabel={t('common.no')}
+              />
+            ))}
+          </div>
         )}
       </div>
     );
