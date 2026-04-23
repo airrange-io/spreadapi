@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from 'next/headers';
 import localFont from 'next/font/local';
 import { ConfigProvider, App } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
@@ -68,13 +69,15 @@ export const viewport: Viewport = {
   themeColor: '#502D80',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const lang = headersList.get('x-locale') ?? 'en';
   return (
-    <html lang="en" className={satoshi.variable}>
+    <html lang={lang} className={satoshi.variable}>
       <body>
         <Reb2bScript />
         <ErrorBoundary>

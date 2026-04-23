@@ -23,7 +23,7 @@ SpreadAPI uses a **multi-layer caching strategy** to optimize performance. Under
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  LAYER 2: Redis Cache (Distributed)                                         │
 │  ───────────────────────────────────                                        │
-│  Location: Redis server (Upstash)                                           │
+│  Location: Redis server (redis.io — Redis Cloud / Enterprise, not Upstash) │
 │  Speed: ~5-30ms                                                             │
 │  Scope: Shared across ALL serverless instances                              │
 │  Invalidation: On-demand via invalidateServiceCache() + TTL                 │

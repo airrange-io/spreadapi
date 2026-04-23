@@ -20,6 +20,116 @@ if (typeof window !== "undefined") {
   }
 }
 
+// ============================================================================
+// v4: Function-based remote fetch.
+// ============================================================================
+// Each TableSheet is backed by a DataSourceDefinition. We configure the
+// SpreadJS DataManager with `remote: { read: fn }` — the function returns a
+// Promise resolving to an array of rows. SpreadJS infers schema automatically
+// from the response.
+//
+// Two flavors of read function live here for the editor (browser):
+//   - Remote mode: proxies through our /preview endpoint (server-side fetch,
+//     CORS-safe from the browser's perspective).
+//   - Snapshot mode: reads our Hanko-authed /rows endpoint which serves Redis.
+//
+// The server runtime (calculateDirect.js) uses different read functions for
+// the same abstraction — reading Redis directly for Snapshot, calling
+// fetchDataSource for Remote.
+// ============================================================================
+
+function makeEditorReadFn(serviceId, def) {
+  if (def.storageMode === 'snapshot') {
+    // Snapshot: read our Hanko-authed /rows endpoint which serves Redis.
+    return async function readSnapshotRows() {
+      const r = await fetch(
+        `/api/datasource/${encodeURIComponent(serviceId)}/${encodeURIComponent(def.id)}/rows`,
+      );
+      if (!r.ok) return [];
+      const data = await r.json();
+      return Array.isArray(data?.rows) ? data.rows : [];
+    };
+  }
+
+  // Remote mode: our preview endpoint proxies to the upstream (CORS-safe).
+  // 1 000-row cap is plenty for editor authoring; runtime fetches up to maxRows.
+  return async function readRemoteRows() {
+    const r = await fetch('/api/datasource/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...def.source, sampleRows: 1000 }),
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return Array.isArray(data?.rows) ? data.rows : [];
+  };
+}
+
+function buildViewColumnSpec(def) {
+  // Only pass explicit columns when the user customized display names
+  // or types. Otherwise return undefined so SpreadJS auto-generates
+  // columns from the first fetch response.
+  if (!def.columns || def.columns.length === 0) return undefined;
+  return def.columns.map((c) => ({
+    value: c.name,
+    caption: c.displayName || c.name,
+    ...(c.dataType && c.dataType !== 'string'
+      ? { style: c.dataPattern ? { formatter: c.dataPattern } : undefined }
+      : {}),
+    width: 140,
+  }));
+}
+
+async function _applyOneDataSource(spread, serviceId, def) {
+  if (!spread || !def?.tableName) return;
+
+  const sheetName = def.tableName;
+  const dm = spread.dataManager();
+
+  // Step 1 — create the sheet tab FIRST so the user sees it appear in the tab
+  // bar immediately, even before the data fetch completes. This is the key UX
+  // improvement: tab materializes with the workbook instead of after a network
+  // round-trip.
+  let sheet = spread.getSheetFromName(sheetName);
+  if (!sheet) {
+    sheet = spread.addSheetTab(
+      spread.getSheetCount(),
+      sheetName,
+      GC.Spread.Sheets.SheetType.tableSheet,
+    );
+  }
+  sheet.options.isProtected = true;
+
+  // Step 2 — (re)configure the table behind it with a function-based remote source.
+  try { dm.removeTable?.(sheetName); } catch (_) { /* noop */ }
+
+  const table = dm.addTable(sheetName, {
+    remote: { read: makeEditorReadFn(serviceId, def) },
+  });
+
+  // Step 3 — trigger the fetch so SpreadJS knows the columns before we build
+  // the view. We still await this (view auto-generation needs the data), but
+  // since the sheet tab is already visible the wait is less jarring.
+  if (typeof table.fetch === 'function') {
+    try { await table.fetch(); } catch (e) {
+      console.warn('[applyDataSource] initial fetch failed', sheetName, e);
+    }
+  }
+
+  // Step 4 — build + bind the view. Explicit columns if the user customized,
+  // otherwise SpreadJS auto-generates from the fetch response.
+  const viewName = `${sheetName}_view`;
+  const columnSpec = buildViewColumnSpec(def);
+  let view;
+  try {
+    view = columnSpec ? table.addView(viewName, columnSpec) : table.addView(viewName);
+  } catch (_) {
+    const fallbackName = `${viewName}_${Date.now()}`;
+    view = columnSpec ? table.addView(fallbackName, columnSpec) : table.addView(fallbackName);
+  }
+  sheet.setDataView(view);
+}
+
 export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
   const [spread, setSpread] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -178,6 +288,56 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       props.actionHandlerProc("zoom-handler", handleZoomChangeRef.current);
     }
   }, [spread, props, applyZoom]);
+
+  // v4: publish the data-source API via callback as soon as spread is ready.
+  // This is the reliable mechanism (useImperativeHandle via next/dynamic + ref
+  // forwarding is too flaky for time-sensitive work — the ref may or may not
+  // be attached when parent effects run).
+  useEffect(() => {
+    if (!spread) return;
+    const serviceId = props.serviceId;
+    const onReady = props.onDataSourceApiReady;
+    if (!serviceId || typeof onReady !== 'function') return;
+
+    onReady({
+      applyDataSource: async (def) => {
+        try { await _applyOneDataSource(spread, serviceId, def); }
+        catch (e) { console.error('[applyDataSource]', def?.tableName, e); }
+      },
+      applyDataSources: async (defs) => {
+        if (!Array.isArray(defs) || defs.length === 0) return;
+        // Suspend paint + preserve active sheet so the user doesn't see the
+        // workbook briefly switch to a newly-added TableSheet during rehydrate.
+        const prevActive = typeof spread.getActiveSheetIndex === 'function'
+          ? spread.getActiveSheetIndex()
+          : -1;
+        const canSuspend = typeof spread.suspendPaint === 'function' && typeof spread.resumePaint === 'function';
+        if (canSuspend) spread.suspendPaint();
+        try {
+          await Promise.all(defs.map(async (def) => {
+            try { await _applyOneDataSource(spread, serviceId, def); }
+            catch (e) { console.error('[applyDataSources]', def?.tableName, e); }
+          }));
+          if (prevActive >= 0 && typeof spread.setActiveSheetIndex === 'function') {
+            try { spread.setActiveSheetIndex(prevActive); } catch (_) { /* noop */ }
+          }
+        } finally {
+          if (canSuspend) spread.resumePaint();
+        }
+      },
+      removeDataSource: (tableName) => {
+        if (!spread || !tableName) return;
+        try {
+          const idx = spread.getSheetIndex(tableName);
+          if (idx >= 0) spread.removeSheet(idx);
+          const dm = spread.dataManager?.();
+          if (dm) { try { dm.removeTable?.(tableName); } catch (_) { /* noop */ } }
+        } catch (e) {
+          console.error('[removeDataSource]', tableName, e);
+        }
+      },
+    });
+  }, [spread, props.serviceId, props.onDataSourceApiReady]);
 
   // Handle fade-in effect after loading completes
   useEffect(() => {
@@ -349,6 +509,13 @@ export const WorkbookViewer = forwardRef(function WorkbookViewer(props, ref) {
       },
       getDesigner: () => null,
       getSpread: () => spread,
+
+      // NOTE: v4 data-source methods (applyDataSource, applyDataSources,
+      // removeDataSource) are NOT exposed on the imperative handle. They're
+      // delivered to the parent via the onDataSourceApiReady callback prop —
+      // reliable across next/dynamic + forwardRef, which the imperative-handle
+      // path wasn't.
+
       hasChanges: () => {
         return changeCountRef.current > 0;
       },

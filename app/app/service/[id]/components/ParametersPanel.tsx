@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { App, Skeleton, Button } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { App, Skeleton, Button, Tooltip } from 'antd';
+import { PlusOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { observer } from 'mobx-react-lite';
 import { generateParameterId } from '@/lib/generateParameterId';
 import * as GC from '@mescius/spread-sheets';
@@ -20,6 +20,24 @@ const AddParameterButton = lazy(() => import('./AddParameterButton'));
 const HowItWorksModal = lazy(() => import('../HowItWorksModal'));
 const ParameterModal = lazy(() => import('../ParameterModal'));
 const AreaModal = lazy(() => import('../AreaModal'));
+const DataSourceModal = lazy(() => import('../DataSourceModal'));
+
+import type { DataSourceDefinition } from '../DataSourceModal';
+
+// Generate a random URL-safe token for the per-source webhook. Uses crypto
+// when available, falls back to a math-random hex for SSR-safety (only runs
+// client-side anyway).
+function generateWebhookToken(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const buf = new Uint8Array(24);
+    crypto.getRandomValues(buf);
+    return Array.from(buf).map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  return Array.from({ length: 48 })
+    .map(() => Math.floor(Math.random() * 16).toString(16))
+    .join('');
+}
+
 
 // Declare GC namespace for TypeScript
 declare global {
@@ -46,8 +64,14 @@ interface ParametersPanelProps {
     inputs: InputDefinition[];
     outputs: OutputDefinition[];
     areas?: AreaParameter[];
+    dataSources?: DataSourceDefinition[];
   };
   addButtonRef?: React.RefObject<HTMLDivElement>;
+  onApplyDataSource?: (
+    def: DataSourceDefinition,
+    options?: { freshRows?: Record<string, unknown>[] },
+  ) => void | Promise<void>;
+  onRemoveDataSource?: (tableName: string) => void;
 }
 
 // Permission presets for areas
@@ -88,7 +112,8 @@ const PERMISSION_PRESETS = {
 };
 
 const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
-  spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef
+  spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef,
+  onApplyDataSource, onRemoveDataSource,
 }) => {
   const { notification } = App.useApp();
   const { t } = useTranslation();
@@ -97,6 +122,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const [inputs, setInputs] = useState<InputDefinition[]>(initialConfig?.inputs || []);
   const [outputs, setOutputs] = useState<OutputDefinition[]>(initialConfig?.outputs || []);
   const [areas, setAreas] = useState<AreaParameter[]>(initialConfig?.areas || []);
+  const [dataSources, setDataSources] = useState<DataSourceDefinition[]>(initialConfig?.dataSources || []);
   const [spreadsheetReady, setSpreadsheetReady] = useState(false);
   const [currentSelection, setCurrentSelection] = useState<any>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -108,12 +134,14 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const [showParameterModal, setShowParameterModal] = useState(false);
   const [showAreaModal, setShowAreaModal] = useState(false);
   const [showHowItWorksModal, setShowHowItWorksModal] = useState(false);
+  const [showDataSourceModal, setShowDataSourceModal] = useState(false);
   const [editingParameter, setEditingParameter] = useState<any>(null);
   const [editingArea, setEditingArea] = useState<any>(null);
+  const [editingDataSource, setEditingDataSource] = useState<DataSourceDefinition | null>(null);
   const [selectedCellInfo, setSelectedCellInfo] = useState<any>(null);
   const [suggestedParamName, setSuggestedParamName] = useState<string>('');
   const [parameterType, setParameterType] = useState<'input' | 'output'>('input');
-  const [activeTab, setActiveTab] = useState<'parameters' | 'areas'>('parameters');
+  const [activeTab, setActiveTab] = useState<'parameters' | 'areas' | 'data'>('parameters');
 
   // Helper function to check overlap between two ranges
   const checkRangeOverlap = (range1: any, range2: any) => {
@@ -145,7 +173,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       const serialized = JSON.stringify({
         inputs: initialConfig.inputs,
         outputs: initialConfig.outputs,
-        areas: initialConfig.areas
+        areas: initialConfig.areas,
+        dataSources: initialConfig.dataSources,
       });
 
       // Sync when config actually changed (deep comparison) or on first init
@@ -154,6 +183,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         setInputs(initialConfig.inputs || []);
         setOutputs(initialConfig.outputs || []);
         setAreas(initialConfig.areas || []);
+        setDataSources(initialConfig.dataSources || []);
         setHasInitialized(true);
       }
     }
@@ -191,13 +221,14 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         onConfigChange({
           inputs,
           outputs,
-          areas
+          areas,
+          dataSources,
         });
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [inputs, outputs, areas, hasInitialized]);
+  }, [inputs, outputs, areas, dataSources, hasInitialized]);
 
   // Monitor button area height
   useEffect(() => {
@@ -385,6 +416,73 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   const handleRemoveArea = useCallback((index: number) => {
     setAreas(prev => prev.filter((_, i) => i !== index));
   }, []);
+
+  // Data source handlers
+  const handleOpenAddDataSource = useCallback(() => {
+    setEditingDataSource(null);
+    setShowDataSourceModal(true);
+  }, []);
+
+  const handleEditDataSource = useCallback((ds: DataSourceDefinition) => {
+    setEditingDataSource(ds);
+    setShowDataSourceModal(true);
+  }, []);
+
+  const handleDeleteDataSource = useCallback((tableName: string) => {
+    // Find the definition before we filter it out — we need its id to delete
+    // the Redis rows + meta keys server-side.
+    const target = dataSources.find(ds => ds.tableName === tableName);
+    setDataSources(prev => prev.filter(ds => ds.tableName !== tableName));
+    onRemoveDataSource?.(tableName);
+    // Clean up Redis rows + meta. Best-effort; non-fatal if it fails.
+    if (target?.id && serviceId) {
+      fetch(`/api/datasource/${encodeURIComponent(serviceId)}/${encodeURIComponent(target.id)}`, {
+        method: 'DELETE',
+      }).catch((e) => console.warn('[deleteDataSource] cleanup failed', e));
+    }
+  }, [dataSources, onRemoveDataSource, serviceId]);
+
+  const handleDataSourceSave = useCallback((
+    definition: DataSourceDefinition,
+    options?: { freshRows?: Record<string, unknown>[] },
+  ) => {
+    const previousTableName = editingDataSource?.tableName;
+    // Rename: drop the old sheet + Redis rows key before applying the new name.
+    if (previousTableName && previousTableName !== definition.tableName) {
+      onRemoveDataSource?.(previousTableName);
+    }
+
+    // Generate stable id + webhook token on create. Snapshot mode needs a
+    // webhook token; Remote mode doesn't (but we still generate an id so the
+    // apiConfig entries are uniquely addressable).
+    const finalized: DataSourceDefinition = {
+      ...definition,
+      id: definition.id || generateParameterId(),
+      webhookToken: definition.storageMode === 'snapshot'
+        ? (definition.webhookToken || generateWebhookToken())
+        : undefined,
+    };
+
+    setDataSources(prev => {
+      const existingIndex = prev.findIndex(
+        d => d.tableName === (previousTableName ?? finalized.tableName),
+      );
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = finalized;
+        return next;
+      }
+      return [...prev, finalized];
+    });
+
+    // Parent handles:
+    //   - rendering the TableSheet in the workbook (always)
+    //   - seeding Redis (Snapshot mode with freshRows)
+    onApplyDataSource?.(finalized, options);
+
+    setShowDataSourceModal(false);
+    setEditingDataSource(null);
+  }, [editingDataSource, onApplyDataSource, onRemoveDataSource]);
 
   // Handle parameter save from modal
   const handleParameterSave = useCallback((updatedParam: any) => {
@@ -951,27 +1049,35 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
         borderBottom: '1px solid #f0f0f0',
         flex: '0 0 auto',
       }}>
-        {(['parameters', 'areas'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              fontSize: 14,
-              fontWeight: activeTab === tab ? 600 : 400,
-              color: activeTab === tab ? '#9233E9' : '#888',
-              background: 'none',
-              border: 'none',
-              borderBottom: activeTab === tab ? '2px solid #9233E9' : '2px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              textAlign: 'center',
-            }}
-          >
-            {tab === 'parameters' ? t('params.tabParameters') : t('params.tabAiAreas')}
-          </button>
-        ))}
+        {(['parameters', 'data', 'areas'] as const).map((tab) => {
+          const label =
+            tab === 'parameters'
+              ? t('params.tabParameters')
+              : tab === 'data'
+                ? 'Live Data'
+                : 'AI';
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1,
+                padding: '12px 0',
+                fontSize: 14,
+                fontWeight: activeTab === tab ? 600 : 400,
+                color: activeTab === tab ? '#9233E9' : '#888',
+                background: 'none',
+                border: 'none',
+                borderBottom: activeTab === tab ? '2px solid #9233E9' : '2px solid transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                textAlign: 'center',
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Scrollable content area */}
@@ -1002,6 +1108,10 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             onShowHowItWorks={() => setShowHowItWorksModal(true)}
             onReorderInputs={handleReorderInputs}
             onReorderOutputs={handleReorderOutputs}
+            dataSources={dataSources}
+            onEditDataSource={handleEditDataSource}
+            onDeleteDataSource={handleDeleteDataSource}
+            serviceId={serviceId}
           />
         </Suspense>
       </div>
@@ -1009,7 +1119,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
       {/* Fixed button at bottom */}
       <Suspense fallback={null}>
         <div ref={buttonAreaRef}>
-          {activeTab === 'parameters' ? (
+          {activeTab === 'parameters' && (
             <AddParameterButton
               currentSelection={currentSelection}
               spreadsheetReady={spreadsheetReady}
@@ -1021,7 +1131,8 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               onAddAsEditableArea={handleAddAreaFromSelection}
               buttonRef={addButtonRef}
             />
-          ) : (
+          )}
+          {activeTab === 'areas' && (
             <div style={{
               padding: '12px',
               background: 'white',
@@ -1041,6 +1152,33 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
               >
                 {t('params.addAiArea')} — coming soon
               </Button>
+            </div>
+          )}
+          {activeTab === 'data' && (
+            <div style={{
+              padding: '12px',
+              background: 'white',
+              flex: '0 0 auto',
+              borderTop: '1px solid #f0f0f0',
+            }}>
+              <Tooltip title="Connect a JSON endpoint, REST API, or CSV file. A preview is fetched so you can inspect columns before adding.">
+                <Button
+                  type="primary"
+                  icon={<DatabaseOutlined />}
+                  onClick={handleOpenAddDataSource}
+                  disabled={isDemoMode}
+                  style={{
+                    width: '100%',
+                    height: 42,
+                    borderRadius: 10,
+                    boxShadow: 'none',
+                    background: '#9233E9',
+                    borderColor: '#9233E9',
+                  }}
+                >
+                  Add data source
+                </Button>
+              </Tooltip>
             </div>
           )}
         </div>
@@ -1201,6 +1339,19 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
           <HowItWorksModal
             open={showHowItWorksModal}
             onClose={() => setShowHowItWorksModal(false)}
+          />
+        )}
+
+        {showDataSourceModal && (
+          <DataSourceModal
+            open={showDataSourceModal}
+            onClose={() => {
+              setShowDataSourceModal(false);
+              setEditingDataSource(null);
+            }}
+            onSave={handleDataSourceSave}
+            initialValue={editingDataSource}
+            existingTableNames={dataSources.map(d => d.tableName)}
           />
         )}
       </Suspense>

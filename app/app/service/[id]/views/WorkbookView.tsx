@@ -28,11 +28,18 @@ const WorkbookViewer = dynamic(
   }
 );
 
+interface DataSourceApi {
+  applyDataSource: (def: any) => Promise<void>;
+  applyDataSources: (defs: any[]) => Promise<void>;
+  removeDataSource: (tableName: string) => void;
+}
+
 interface WorkbookViewProps {
   spreadsheetData: any;
   showEmptyState: boolean;
   isDemoMode: boolean;
   zoomLevel: number;
+  serviceId?: string;              // v4: needed by applyDataSource to build read fn URLs
   onWorkbookInit: (instance: any) => void;
   onEmptyStateAction: (action: 'start' | 'import' | 'importPackage', file?: File) => void;
   onZoomHandlerReady?: (handler: (zoom: number) => void) => void;
@@ -43,6 +50,7 @@ interface WorkbookViewProps {
   onWorkbookChange?: () => void;
   onImportServicePackage?: (file: File) => void;
   onWorkbookDataLoaded?: (spreadInstance: any) => void;
+  onDataSourceApiReady?: (api: DataSourceApi) => void;
 }
 
 const WorkbookView = forwardRef<any, WorkbookViewProps>(({
@@ -50,6 +58,7 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   showEmptyState,
   isDemoMode,
   zoomLevel,
+  serviceId,
   onWorkbookInit,
   onEmptyStateAction,
   onZoomHandlerReady,
@@ -59,7 +68,8 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
   onImportExcel,
   onWorkbookChange,
   onImportServicePackage,
-  onWorkbookDataLoaded
+  onWorkbookDataLoaded,
+  onDataSourceApiReady,
 }, ref) => {
   const [mounted, setMounted] = React.useState(false);
 
@@ -107,7 +117,8 @@ const WorkbookView = forwardRef<any, WorkbookViewProps>(({
         ref={ref}
         storeLocal={{ spread: spreadsheetData }}
         readOnly={isDemoMode}
-
+        serviceId={serviceId}
+        onDataSourceApiReady={onDataSourceApiReady}
         initialZoom={zoomLevel}
         actionHandlerProc={(action, data) => {
           if (action === 'spread-changed') {

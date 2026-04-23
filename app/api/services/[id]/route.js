@@ -48,6 +48,13 @@ export async function GET(request, { params }) {
       inputs: parsedInputs,
       outputs: JSON.parse(serviceData.outputs || '[]'),
       areas: JSON.parse(serviceData.areas || '[]'),
+      dataSources: (() => {
+        try {
+          return serviceData.dataSources ? JSON.parse(serviceData.dataSources) : [];
+        } catch (e) {
+          return [];
+        }
+      })(),
       tags: serviceData.tags ? serviceData.tags.split(',').filter(t => t) : [],
       status: isPublished ? 'published' : 'draft',
       published: publishedData,
@@ -140,6 +147,9 @@ export async function PUT(request, { params }) {
     }
     if (body.areas !== undefined) {
       updateData.areas = JSON.stringify(body.areas);
+    }
+    if (body.dataSources !== undefined) {
+      updateData.dataSources = JSON.stringify(body.dataSources);
     }
     if (body.aiUsageExamples !== undefined) {
       updateData.aiUsageExamples = JSON.stringify(body.aiUsageExamples);

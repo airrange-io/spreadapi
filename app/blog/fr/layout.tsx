@@ -3,14 +3,5 @@ export default function BlogFrLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: 'document.documentElement.lang="fr"',
-        }}
-      />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

@@ -54,11 +54,12 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Parse inputs/outputs/areas
+    // Parse inputs/outputs/areas/dataSources
     let inputs = [];
     let outputs = [];
     let areas = [];
-    
+    let dataSources = [];
+
     try {
       const rawInputs = serviceData.inputs ? JSON.parse(serviceData.inputs) : [];
       // Normalize mandatory to a proper boolean (legacy data may have undefined)
@@ -67,17 +68,23 @@ export async function GET(request, { params }) {
     } catch (e) {
       console.error('Error parsing inputs:', e);
     }
-    
+
     try {
       outputs = serviceData.outputs ? JSON.parse(serviceData.outputs) : [];
     } catch (e) {
       console.error('Error parsing outputs:', e);
     }
-    
+
     try {
       areas = serviceData.areas ? JSON.parse(serviceData.areas) : [];
     } catch (e) {
       console.error('Error parsing areas:', e);
+    }
+
+    try {
+      dataSources = serviceData.dataSources ? JSON.parse(serviceData.dataSources) : [];
+    } catch (e) {
+      console.error('Error parsing dataSources:', e);
     }
     
     // Build combined response
@@ -90,6 +97,7 @@ export async function GET(request, { params }) {
         inputs,
         outputs,
         areas,
+        dataSources,
         enableCaching: serviceData.cacheEnabled !== 'false',
         requireToken: serviceData.requireToken === 'true',
         cacheTableSheetData: serviceData.cacheTableSheetData !== 'false',

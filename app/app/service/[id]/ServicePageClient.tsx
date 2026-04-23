@@ -105,12 +105,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   const [loadingMessage, setLoadingMessage] = useState('');
   const [spreadInstance, setSpreadInstance] = useState<any>(null);
   const [workbookSize, setWorkbookSize] = useState<number | null>(null);
-  const [apiConfig, setApiConfig] = useState({
+  const [apiConfig, setApiConfig] = useState<any>({
     name: '',
     description: '',
     inputs: [],
     outputs: [],
     areas: [],
+    dataSources: [],
     enableCaching: true,
     requireToken: false,
     cacheTableSheetData: true,
@@ -125,12 +126,13 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     webAppTheme: 'default',
     customThemeParams: ''
   });
-  const [savedConfig, setSavedConfig] = useState({
+  const [savedConfig, setSavedConfig] = useState<any>({
     name: '',
     description: '',
     inputs: [],
     outputs: [],
     areas: [],
+    dataSources: [],
     enableCaching: true,
     requireToken: false,
     cacheTableSheetData: true,
@@ -752,6 +754,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       JSON.stringify(apiConfig.inputs) !== JSON.stringify(savedConfig.inputs) ||
       JSON.stringify(apiConfig.outputs) !== JSON.stringify(savedConfig.outputs) ||
       JSON.stringify(apiConfig.areas || []) !== JSON.stringify(savedConfig.areas || []) ||
+      JSON.stringify(apiConfig.dataSources || []) !== JSON.stringify(savedConfig.dataSources || []) ||
       apiConfig.enableCaching !== savedConfig.enableCaching ||
       apiConfig.requireToken !== savedConfig.requireToken ||
       apiConfig.cacheTableSheetData !== savedConfig.cacheTableSheetData ||
@@ -902,9 +905,32 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
   // Calculate workbook size when workbook data is fully loaded into SpreadJS
   // This is called from the workbook-loaded event, which fires AFTER fromJSON completes
   const workbookSizeCalculated = useRef(false);
-  const handleWorkbookDataLoaded = useCallback(async (spreadInstance: any) => {
-    if (!spreadInstance || workbookSizeCalculated.current) return;
 
+  // v4: data-source API is injected by WorkbookViewer via onDataSourceApiReady
+  // as soon as its internal spread is ready. Storing it in state so that the
+  // rehydration effect re-runs when the API becomes available. This replaces
+  // the earlier ref-based approach which was flaky with next/dynamic +
+  // forwardRef — the ref wasn't guaranteed to be attached when our effects ran.
+  type DataSourceApi = {
+    applyDataSource: (def: any) => Promise<void>;
+    applyDataSources: (defs: any[]) => Promise<void>;
+    removeDataSource: (tableName: string) => void;
+  };
+  const [dataSourceApi, setDataSourceApi] = useState<DataSourceApi | null>(null);
+  const dataSourcesRehydratedRef = useRef(false);
+
+  const handleWorkbookDataLoaded = useCallback(async (spreadInstance: any) => {
+    if (!spreadInstance) return;
+
+    // Gate for the data-source rehydration effect: spread.open(blob) is async
+    // and replaces sheets on completion, so rehydration must wait for this.
+    setSpreadsheetVisible(true);
+
+    // v4: rehydration no longer happens here — the useEffect below (deps on
+    // dataSourceApi + apiConfig.dataSources) handles it. This handler keeps
+    // only the size-calculation diagnostic.
+
+    if (workbookSizeCalculated.current) return;
     workbookSizeCalculated.current = true;
     try {
       if (typeof spreadInstance.toJSON === 'function') {
@@ -963,6 +989,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             inputs: (data.inputs || []).map((i: any) => ({ ...i, mandatory: i.mandatory !== false })),
             outputs: data.outputs || [],
             areas: data.areas || [],
+            dataSources: data.dataSources || [],
             enableCaching: data.enableCaching !== false,
             requireToken: data.requireToken === true || data.requireToken === 'true',
             cacheTableSheetData: data.cacheTableSheetData !== false,
@@ -1059,6 +1086,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               inputs: sanitizedInputs,
               outputs: data.service.outputs || [],
               areas: data.service.areas || [],
+              dataSources: data.service.dataSources || [],
               enableCaching: data.service.enableCaching !== false,
               requireToken: data.service.requireToken === true || data.service.requireToken === 'true',
               cacheTableSheetData: data.service.cacheTableSheetData !== false,
@@ -1110,6 +1138,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               inputs: sanitizedInputs,
               outputs: data.outputs || [],
               areas: data.areas || [],
+              dataSources: Array.isArray(data.dataSources)
+                ? data.dataSources
+                : (typeof data.dataSources === 'string' ? JSON.parse(data.dataSources || '[]') : []),
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
               requireToken: data.requireToken === 'true' || data.requireToken === true, // Redis may store as string or boolean
               cacheTableSheetData: data.cacheTableSheetData !== 'false', // Default to true
@@ -1651,6 +1682,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           inputs: apiConfig.inputs || [],
           outputs: apiConfig.outputs || [],
           areas: apiConfig.areas || [],
+          dataSources: apiConfig.dataSources || [],
           webAppToken: apiConfig.webAppToken || '',
           webAppConfig: apiConfig.webAppConfig || '',
           webAppTheme: apiConfig.webAppTheme || 'default',
@@ -1926,6 +1958,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           inputs: apiConfig.inputs,
           outputs: apiConfig.outputs,
           areas: apiConfig.areas || [],
+          dataSources: apiConfig.dataSources || [],
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
@@ -2057,11 +2090,32 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     }
   }, [spreadsheetVisible]);
 
+  // v4: Single rehydration path. WorkbookViewer fires onDataSourceApiReady
+  // once its spread is ready. Wait for spreadsheetVisible so we don't add
+  // TableSheet tabs before spread.open(blob) finishes and wipes them.
+  useEffect(() => {
+    if (!dataSourceApi) return;
+    if (!configLoaded) return;
+    if (!spreadsheetVisible) return;
+    if (dataSourcesRehydratedRef.current) return;
+    const defs = apiConfig.dataSources || [];
+    if (defs.length === 0) return; // don't mark applied so later adds work
+    dataSourcesRehydratedRef.current = true;
+    Promise.resolve(dataSourceApi.applyDataSources(defs)).catch((e: unknown) => {
+      console.error('[rehydrate dataSources]', e);
+      dataSourcesRehydratedRef.current = false;
+    });
+  }, [dataSourceApi, configLoaded, spreadsheetVisible, apiConfig.dataSources]);
+
   // Workbook event handlers
+  //
+  // IMPORTANT: do NOT overwrite workbookRef.current here. workbookRef holds the
+  // imperative handle from useImperativeHandle (methods like hasChanges(),
+  // applyDataSources(), saveWorkbookSJS()). Overwriting it with the raw spread
+  // instance breaks those methods silently — callers using optional chaining
+  // just get `undefined` back. The raw spread lives on the spreadInstance state
+  // and the imperativeHandle's getSpread() method.
   const handleWorkbookInit = useCallback((instance: any) => {
-    if (workbookRef.current !== instance) {
-      workbookRef.current = instance;
-    }
     setSpreadInstance(instance);
   }, []);
 
@@ -2605,18 +2659,64 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         serviceId={serviceId}
         onConfigChange={(updates) => {
           // Only update parameters-related fields
-          if (updates.inputs !== undefined || updates.outputs !== undefined || updates.areas !== undefined) {
+          if (
+            updates.inputs !== undefined ||
+            updates.outputs !== undefined ||
+            updates.areas !== undefined ||
+            updates.dataSources !== undefined
+          ) {
             handleConfigChange(updates);
           }
         }}
         initialConfig={{
           inputs: apiConfig.inputs,
           outputs: apiConfig.outputs,
-          areas: apiConfig.areas
+          areas: apiConfig.areas,
+          dataSources: apiConfig.dataSources || [],
         }}
         isLoading={!configLoaded}
         isDemoMode={false}
         addButtonRef={addButtonRef}
+        onApplyDataSource={async (def, options) => {
+          // Render / refresh the TableSheet in the workbook. SpreadJS will
+          // call the remote.read function (injected by WorkbookViewer) to
+          // fetch data — we don't pass rows through here.
+          if (dataSourceApi) {
+            await dataSourceApi.applyDataSource(def);
+          } else {
+            console.warn('[onApplyDataSource] dataSourceApi not ready yet');
+          }
+
+          // Snapshot mode: if the modal captured fresh rows this session
+          // (new source or explicit re-fetch), seed Redis via the Hanko-
+          // authed POST. This populates the rows key so the workbook's
+          // remote.read can read from it immediately.
+          //
+          // Remote mode: never seeds Redis (not the source of truth).
+          const freshRows = options?.freshRows;
+          if (
+            def?.storageMode === 'snapshot' &&
+            def?.id &&
+            Array.isArray(freshRows) &&
+            freshRows.length > 0
+          ) {
+            try {
+              await fetch(
+                `/api/datasource/${encodeURIComponent(serviceId)}/${encodeURIComponent(def.id)}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ rows: freshRows }),
+                },
+              );
+            } catch (e) {
+              console.warn('[seed Redis rows] failed', e);
+            }
+          }
+        }}
+        onRemoveDataSource={(tableName) => {
+          dataSourceApi?.removeDataSource(tableName);
+        }}
       />
     </div>
   );
@@ -3057,6 +3157,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           showEmptyState={showEmptyState}
                           isDemoMode={false}
                           zoomLevel={zoomLevel}
+                          serviceId={serviceId}
+                          onDataSourceApiReady={setDataSourceApi}
                           onWorkbookInit={handleWorkbookInit}
                           onWorkbookDataLoaded={handleWorkbookDataLoaded}
                           onEmptyStateAction={(action, file) => {

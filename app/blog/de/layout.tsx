@@ -3,14 +3,5 @@ export default function BlogDeLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: 'document.documentElement.lang="de"',
-        }}
-      />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

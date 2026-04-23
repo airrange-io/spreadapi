@@ -1,5 +1,7 @@
 import redis from '@/lib/redis';
 import { generateResultCacheHash, CACHE_KEYS, CACHE_TTL } from '@/lib/cacheHelpers';
+import { getRows as getDataSourceRows } from '@/lib/dataSourceRows';
+import { fetchDataSource } from '@/lib/fetchDataSource';
 import { getApiDefinition } from '@/utils/helperApi';
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { validateParameters, applyDefaults, coerceTypes, NULL_DEFAULT_VALUE } from '@/lib/parameterValidation.js';
@@ -31,6 +33,51 @@ const getSpreadjsModule = () => {
 
 // TableSheet data caching
 const tableSheetCache = require('@/lib/tableSheetDataCache');
+
+// ----------------------------------------------------------------------------
+// v4: Runtime read-function builders for the SpreadJS DataManager.
+// ----------------------------------------------------------------------------
+
+/**
+ * Snapshot-mode read fn: reads rows straight from Redis, no HTTP hop.
+ * The webhook / manual refresh / editor-seed endpoints are the only writers
+ * to this key; we just read.
+ */
+function makeRuntimeSnapshotReadFn(serviceId, def) {
+  return async function readSnapshotRows() {
+    const rows = await getDataSourceRows(serviceId, def.id);
+    return Array.isArray(rows) ? rows : [];
+  };
+}
+
+/**
+ * Remote-mode read fn: fetches the upstream URL server-side, cached by
+ * tableSheetDataCache (process-local TTL cache). Same pattern the existing
+ * Designer-authored TableSheets use.
+ */
+function makeRuntimeRemoteReadFn(serviceId, def, enableCache, ttlSeconds) {
+  return async function readRemoteRows() {
+    const cacheKey = `${serviceId}:ds:${def.id}`;
+    if (enableCache) {
+      const cached = tableSheetCache.getCachedTableSheetData(cacheKey, ttlSeconds);
+      if (cached) return cached;
+    }
+    const result = await fetchDataSource(def.source, { maxRows: def.maxRows });
+    if (!result.ok) {
+      console.warn('[remote fetch]', def.tableName, result.stage, result.error);
+      return [];
+    }
+    if (enableCache) {
+      try {
+        const size = Buffer.byteLength(JSON.stringify(result.rows), 'utf8');
+        tableSheetCache.cacheTableSheetData(cacheKey, result.rows, def.source?.url || cacheKey, size);
+      } catch (e) {
+        console.warn('[tableSheetCache.cache]', e?.message);
+      }
+    }
+    return result.rows;
+  };
+}
 
 // Helper function to log API calls
 // Returns a promise that can be awaited with after() for Vercel compatibility
@@ -396,6 +443,51 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
         calcOnDemand: false,
         doNotRecalculateAfterLoad: true,  // Performance optimization: Skip initial calc
       });
+    }
+
+    // ============================================================================
+    // v4: Live Data hydration — function-based remote fetch.
+    //
+    // Both storage modes configure the DataManager with `remote: { read: fn }`
+    // where `fn` is a server-side async function:
+    //   - Snapshot:  reads the Redis rows key directly (no HTTP hop)
+    //   - Remote:    calls fetchDataSource() on the upstream URL, cached via
+    //                tableSheetCache (process-local TTL cache)
+    //
+    // SpreadJS calls fn when the table is fetched; it auto-infers schema and
+    // columns from the response.
+    //
+    // GUARDED: services with no dataSources (the 90 %+ case) hit NONE of this
+    // code. Byte-identical behavior to pre-v4 for those services.
+    // ============================================================================
+    const userDataSources = apiDefinition.apiJson?.dataSources || apiDefinition.dataSources;
+    if (Array.isArray(userDataSources) && userDataSources.length > 0) {
+      const dm = spread.dataManager?.();
+      if (dm) {
+        const cacheTableSheetData = apiDefinition.cacheTableSheetData !== 'false';
+        const tableSheetCacheTTL = parseInt(apiDefinition.tableSheetCacheTTL) || 300;
+
+        for (const def of userDataSources) {
+          if (!def?.id || !def?.tableName) continue;
+          try {
+            // Rebuild the table with a mode-appropriate read function.
+            try { dm.removeTable?.(def.tableName); } catch (_) { /* noop */ }
+
+            const readFn = def.storageMode === 'snapshot'
+              ? makeRuntimeSnapshotReadFn(serviceId, def)
+              : makeRuntimeRemoteReadFn(serviceId, def, cacheTableSheetData, tableSheetCacheTTL);
+
+            const table = dm.addTable(def.tableName, {
+              remote: { read: readFn },
+            });
+            if (typeof table.fetch === 'function') {
+              await table.fetch(true);
+            }
+          } catch (hydrateErr) {
+            console.error('[calculateDirect] dataSource hydrate failed', def?.tableName, hydrateErr);
+          }
+        }
+      }
     }
 
     let actualSheet = spread.getActiveSheet();

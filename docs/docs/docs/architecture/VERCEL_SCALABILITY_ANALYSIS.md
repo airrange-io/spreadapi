@@ -336,7 +336,8 @@ Cost per daily active user: $0.008/DAU/month
 - Popular services cached in both regions independently
 
 **Redis Cache (Result + Workbook):**
-- ✅ **Shared globally** (if using Upstash Global or similar)
+- Backend: **redis.io (Redis Cloud / Enterprise)** — not Upstash.
+- ✅ **Shared globally** via the provisioned cluster
 - First request in fra1 caches for iad1 users
 - ~10-20ms added latency for cross-region Redis reads
 
@@ -589,7 +590,7 @@ The current Vercel setup is **excellent** for SpreadAPI's needs:
 - Workbook cache TTL: 600 seconds (10 minutes)
 - Invalidation: On publish/update
 
-**Redis (Upstash assumed):**
+**Redis (redis.io — Redis Cloud / Enterprise):**
 - Global replication: Yes
 - Latency: 5-10ms (same region), 30-50ms (cross-region)
 - Max payload: 512 MB per key

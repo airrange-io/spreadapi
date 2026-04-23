@@ -100,7 +100,9 @@
       "WebFetch(domain:api.github.com)",
       "Bash(npm list:*)",
       "WebFetch(domain:devblogs.microsoft.com)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(pnpm typecheck *)",
+      "WebFetch(domain:pipedream.com)"
     ],
     "deny": []
   }

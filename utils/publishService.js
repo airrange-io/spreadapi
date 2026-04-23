@@ -363,6 +363,8 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       ...(service.category && { category: service.category }),
       // Editable areas for AI
       ...(service.areas && service.areas.length > 0 && { areas: service.areas }),
+      // Live Data sources (v3)
+      ...(service.dataSources && service.dataSources.length > 0 && { dataSources: service.dataSources }),
       // Web App settings
       ...(service.webAppEnabled !== undefined && { webAppEnabled: service.webAppEnabled }),
       ...(service.webAppToken && { webAppToken: service.webAppToken })

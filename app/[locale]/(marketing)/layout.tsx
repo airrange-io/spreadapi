@@ -33,14 +33,5 @@ export default async function LocaleMarketingLayout({
     return null;
   }
 
-  return (
-    <>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `document.documentElement.lang="${locale}"`,
-        }}
-      />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
