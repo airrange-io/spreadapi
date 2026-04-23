@@ -460,7 +460,10 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
     // GUARDED: services with no dataSources (the 90 %+ case) hit NONE of this
     // code. Byte-identical behavior to pre-v4 for those services.
     // ============================================================================
-    const userDataSources = apiDefinition.apiJson?.dataSources || apiDefinition.dataSources;
+    // dataSources live nested inside apiJson (blob payload). Top-level access
+    // (`apiDefinition.dataSources`) was a defensive fallback — but getApiDefinition
+    // never populates it, so the OR branch was always dead. Kept commented for now.
+    const userDataSources = apiDefinition.apiJson?.dataSources; // || apiDefinition.dataSources
     if (Array.isArray(userDataSources) && userDataSources.length > 0) {
       const dm = spread.dataManager?.();
       if (dm) {
