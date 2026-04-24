@@ -59,6 +59,7 @@ interface ParametersPanelProps {
   ) => void | Promise<void>;
   onRemoveDataSource?: (tableName: string) => void;
   canUseSnapshot?: boolean;
+  externalUserId?: string;
 }
 
 // Permission presets for areas
@@ -100,7 +101,7 @@ const PERMISSION_PRESETS = {
 
 const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
   spreadInstance, serviceId, onConfigChange, initialConfig, isLoading, isDemoMode, addButtonRef,
-  onApplyDataSource, onRemoveDataSource, canUseSnapshot,
+  onApplyDataSource, onRemoveDataSource, canUseSnapshot, externalUserId,
 }) => {
   const { notification } = App.useApp();
   const { t } = useTranslation();
@@ -1341,6 +1342,7 @@ const ParametersPanel: React.FC<ParametersPanelProps> = observer(({
             existingTableNames={dataSources.map(d => d.tableName)}
             serviceId={serviceId}
             canUseSnapshot={canUseSnapshot}
+            externalUserId={externalUserId}
           />
         )}
       </Suspense>

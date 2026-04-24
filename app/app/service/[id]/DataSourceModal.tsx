@@ -27,6 +27,14 @@ import {
 } from '@ant-design/icons';
 import { generateParameterId } from '@/lib/generateParameterId';
 import { generateWebhookToken } from '@/lib/generateWebhookToken';
+import PipedreamSection, {
+  isPipedreamDraftReady,
+  type PipedreamDraft,
+} from './components/pipedream/PipedreamSection';
+import type {
+  PipedreamComponent,
+  PipedreamSource,
+} from '@/lib/pipedream/types';
 
 const { Text } = Typography;
 
@@ -61,7 +69,7 @@ export interface CsvSource {
   delimiter?: string;
 }
 
-export type DataSourceConfig = JsonSource | RestSource | CsvSource;
+export type DataSourceConfig = JsonSource | RestSource | CsvSource | PipedreamSource;
 
 export type StorageMode = 'remote' | 'snapshot';
 
@@ -94,6 +102,8 @@ interface DataSourceModalProps {
   serviceId?: string;
   /** When false, the Snapshot delivery mode is shown as a Premium-gated option. */
   canUseSnapshot?: boolean;
+  /** Hanko user id, passed to Pipedream as externalUserId. */
+  externalUserId?: string;
 }
 
 interface PreviewResponse {
@@ -161,7 +171,7 @@ const SOURCE_CARDS: {
 }[] = [
   { value: 'url',       label: 'JSON / REST API', description: 'Public JSON file or your own API', icon: <ApiOutlined /> },
   { value: 'csv',       label: 'CSV URL',   description: 'Any CSV file',                   icon: <FileTextOutlined /> },
-  { value: 'pipedream', label: 'Connected apps', description: 'Salesforce, Airtable, 3k+ apps', icon: <ThunderboltOutlined />, disabled: true },
+  { value: 'pipedream', label: 'Connected apps', description: 'Salesforce, Airtable, 3k+ apps', icon: <ThunderboltOutlined /> },
 ];
 
 /* ---------- helpers ---------- */
@@ -442,6 +452,7 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   existingTableNames = [],
   serviceId,
   canUseSnapshot = true,
+  externalUserId,
 }) => {
   const { notification } = App.useApp();
 
@@ -458,7 +469,7 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   const [csvHasHeader, setCsvHasHeader] = useState(true);
   const [csvDelimiter, setCsvDelimiter] = useState(',');
 
-  const uiCard: SourceCardKey = type === 'csv' ? 'csv' : 'url';
+  const [uiCard, setUiCard] = useState<SourceCardKey>('url');
   const [tableName, setTableName] = useState('');
   const [tableNameTouched, setTableNameTouched] = useState(false);
   const [previewRowCount, setPreviewRowCount] = useState<number>(DEFAULT_PREVIEW_ROWS);
@@ -475,6 +486,12 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   const [showRequestOptions, setShowRequestOptions] = useState(false);
   const [showColumnDefs, setShowColumnDefs] = useState(false);
 
+  const [pipedreamDraft, setPipedreamDraft] = useState<PipedreamDraft>({
+    source: null,
+    component: null,
+    account: null,
+  });
+
   // Id + token are stable across the modal session so the webhook URL shown
   // in Snapshot mode matches what gets saved.
   const idRef = useRef<string>('');
@@ -485,21 +502,69 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
   useEffect(() => {
     if (!open) return;
     if (initialValue) {
-      // Legacy 'json' sources map to the URL card (type 'rest', default GET).
-      const srcType = initialValue.source.type;
-      setType(srcType === 'csv' ? 'csv' : 'rest');
-      setUrl(initialValue.source.url);
       const s: any = initialValue.source;
-      setJsonPath(s.jsonPath ?? '');
-      setMethod(srcType === 'rest' ? (s.method ?? 'GET') : 'GET');
-      setHeadersText(
-        srcType === 'rest' && s.headers
-          ? Object.entries(s.headers as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join('\n')
-          : '',
-      );
-      setRequestBody(srcType === 'rest' ? (s.requestBody ?? '') : '');
-      setCsvHasHeader(srcType === 'csv' ? (s.hasHeader ?? true) : true);
-      setCsvDelimiter(srcType === 'csv' ? (s.delimiter ?? ',') : ',');
+      const srcType = initialValue.source.type;
+      if (srcType === 'pipedream') {
+        // Pipedream branch: switch UI card, populate the draft. The action
+        // schema is fetched async since it's not in the saved source.
+        setUiCard('pipedream');
+        setType('rest'); // unused for pipedream but keeps the union happy
+        setUrl('');
+        setJsonPath('');
+        setMethod('GET');
+        setHeadersText('');
+        setRequestBody('');
+        setCsvHasHeader(true);
+        setCsvDelimiter(',');
+        setPipedreamDraft({
+          source: {
+            type: 'pipedream',
+            appSlug: s.appSlug,
+            actionId: s.actionId,
+            accountId: s.accountId,
+            externalUserId: s.externalUserId,
+            configuredProps: s.configuredProps || {},
+            arrayPath: s.arrayPath,
+          },
+          component: null,
+          account: null,
+        });
+        // Lazy-load the action schema so the ConfigurableForm has props to
+        // render. Fall through silently on failure — the user can re-pick.
+        (async () => {
+          try {
+            const url = new URL('/api/datasource/pipedream/components', window.location.origin);
+            url.searchParams.set('app', s.appSlug);
+            const res = await fetch(url.toString());
+            const data = await res.json();
+            if (!data?.ok) return;
+            const component: PipedreamComponent | undefined = (data.components || []).find(
+              (c: PipedreamComponent) => c.key === s.actionId,
+            );
+            if (component) {
+              setPipedreamDraft((prev) => ({ ...prev, component }));
+            }
+          } catch {
+            // ignore
+          }
+        })();
+      } else {
+        // Legacy 'json' sources map to the URL card (type 'rest', default GET).
+        setUiCard(srcType === 'csv' ? 'csv' : 'url');
+        setType(srcType === 'csv' ? 'csv' : 'rest');
+        setUrl(initialValue.source.url);
+        setJsonPath(s.jsonPath ?? '');
+        setMethod(srcType === 'rest' ? (s.method ?? 'GET') : 'GET');
+        setHeadersText(
+          srcType === 'rest' && s.headers
+            ? Object.entries(s.headers as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join('\n')
+            : '',
+        );
+        setRequestBody(srcType === 'rest' ? (s.requestBody ?? '') : '');
+        setCsvHasHeader(srcType === 'csv' ? (s.hasHeader ?? true) : true);
+        setCsvDelimiter(srcType === 'csv' ? (s.delimiter ?? ',') : ',');
+        setPipedreamDraft({ source: null, component: null, account: null });
+      }
       setTableName(initialValue.tableName);
       setTableNameTouched(true);
       setColumns(initialValue.columns || []);
@@ -508,7 +573,8 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       setError(null);
       setPreviewRowCount(DEFAULT_PREVIEW_ROWS);
       setMaxRefreshRows(initialValue.maxRows ?? DEFAULT_MAX_REFRESH_ROWS);
-      setStorageMode(initialValue.storageMode || 'remote');
+      // Pipedream sources are always Snapshot — UI enforces this on change too.
+      setStorageMode(srcType === 'pipedream' ? 'snapshot' : (initialValue.storageMode || 'remote'));
       setDidFetchInSession(false);
       // Auto-open reveals when non-default values exist so nothing hides silently.
       const hasCustomRequest =
@@ -551,6 +617,8 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
     setPreviewRowCount(DEFAULT_PREVIEW_ROWS);
     setShowRequestOptions(false);
     setShowColumnDefs(false);
+    setUiCard('url');
+    setPipedreamDraft({ source: null, component: null, account: null });
   };
 
   const handleClose = () => {
@@ -607,6 +675,58 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
 
   const handlePreview = async (rowsOverride?: number) => {
     setError(null);
+
+    if (uiCard === 'pipedream') {
+      if (!isPipedreamDraftReady(pipedreamDraft)) {
+        setError('Pick an app, account and action first.');
+        return;
+      }
+      const src = pipedreamDraft.source!;
+      setLoading(true);
+      try {
+        const res = await fetch('/api/datasource/pipedream/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appSlug: src.appSlug,
+            actionId: src.actionId,
+            accountId: src.accountId,
+            configuredProps: src.configuredProps,
+            arrayPath: src.arrayPath,
+            sampleRows: rowsOverride ?? previewRowCount ?? DEFAULT_PREVIEW_ROWS,
+          }),
+        });
+        const data = (await res.json()) as PreviewResponse;
+        if (!res.ok || !data.ok) {
+          setError(data.error || 'Preview failed');
+          setRows([]);
+          setColumns([]);
+          setTotalRows(0);
+          return;
+        }
+        const inferred: DataSourceColumn[] = (data.columns || []).map((c) => ({
+          name: c.name,
+          dataType: c.dataType,
+        }));
+        setColumns(inferred);
+        setRows(data.rows || []);
+        setTotalRows(data.totalRowsFetched || 0);
+        setDidFetchInSession(true);
+        if (!tableNameTouched) {
+          // Default the table name to something rememberable. Action key
+          // tail beats opaque app slug for users browsing tabs later.
+          const tail = src.actionId.split('-').slice(-2).join('_');
+          setTableName(sanitizeTableName(tail || src.appSlug));
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Preview failed';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const built = buildRequestPayload(rowsOverride);
     if ('error' in built) {
       setError(built.error);
@@ -649,7 +769,11 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       notification.error({ message: 'Fetch a preview before saving' });
       return;
     }
-    const name = sanitizeTableName(tableName.trim() || defaultTableNameFromUrl(url));
+    const fallbackName =
+      uiCard === 'pipedream'
+        ? sanitizeTableName(pipedreamDraft.source?.actionId?.split('-').slice(-2).join('_') || 'Table')
+        : defaultTableNameFromUrl(url);
+    const name = sanitizeTableName(tableName.trim() || fallbackName);
     const conflictsWith = existingTableNames.some(
       (existing) => existing.toLowerCase() === name.toLowerCase() && existing !== initialValue?.tableName,
     );
@@ -660,11 +784,23 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       });
       return;
     }
-    const built = buildRequestPayload();
-    if ('error' in built) {
-      notification.error({ message: built.error });
-      return;
+
+    let source: DataSourceConfig;
+    if (uiCard === 'pipedream') {
+      if (!isPipedreamDraftReady(pipedreamDraft) || !pipedreamDraft.source) {
+        notification.error({ message: 'Pipedream source is incomplete.' });
+        return;
+      }
+      source = pipedreamDraft.source;
+    } else {
+      const built = buildRequestPayload();
+      if ('error' in built) {
+        notification.error({ message: built.error });
+        return;
+      }
+      source = built.payload as unknown as DataSourceConfig;
     }
+
     const now = new Date().toISOString();
 
     // Only persist columns if the user actually customized something.
@@ -672,13 +808,19 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       (c) => (c.displayName && c.displayName !== c.name) || (c.dataType && c.dataType !== 'string'),
     );
 
+    // Pipedream sources are always Snapshot — the webhook is the only refresh
+    // mechanism. Force it here as defense in depth (UI also prevents picking
+    // Live fetch for Pipedream).
+    const effectiveStorageMode: StorageMode =
+      uiCard === 'pipedream' ? 'snapshot' : storageMode;
+
     const definition: DataSourceDefinition = {
       id: idRef.current,
       tableName: name,
-      storageMode,
-      source: built.payload as unknown as DataSourceConfig,
-      webhookToken: storageMode === 'snapshot' ? tokenRef.current : undefined,
-      maxRows: storageMode === 'snapshot' ? maxRefreshRows : undefined,
+      storageMode: effectiveStorageMode,
+      source,
+      webhookToken: effectiveStorageMode === 'snapshot' ? tokenRef.current : undefined,
+      maxRows: effectiveStorageMode === 'snapshot' ? maxRefreshRows : undefined,
       createdAt: initialValue?.createdAt ?? now,
       updatedAt: now,
       ...(hasCustomization ? { columns } : {}),
@@ -798,9 +940,9 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
         preview to pin down the columns you'll use in formulas.
       </Text>
 
-      {/* ============ Section 1: Source ============ */}
+      {/* ============ Section 1: Data source ============ */}
       <div style={{ padding: '4px 0 20px', borderBottom: `1px solid ${TOKEN.sectionRule}` }}>
-        <SectionHeader num={1} title="Where does the data come from?" />
+        <SectionHeader num={1} title="Data source" />
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           {SOURCE_CARDS.map((card) => (
@@ -810,7 +952,14 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
               active={uiCard === card.value}
               onClick={() => {
                 if (card.disabled) return;
-                setType(card.value === 'csv' ? 'csv' : 'rest');
+                setUiCard(card.value);
+                if (card.value === 'pipedream') {
+                  // Snapshot is the only sensible delivery mode for Pipedream.
+                  setStorageMode('snapshot');
+                } else {
+                  setType(card.value === 'csv' ? 'csv' : 'rest');
+                  setPipedreamDraft({ source: null, component: null, account: null });
+                }
                 setColumns([]);
                 setRows([]);
                 setTotalRows(0);
@@ -820,26 +969,57 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
           ))}
         </div>
 
-        <div style={{ marginBottom: 14 }}>
-          <FieldLabel
-            required
-            tooltip={
-              uiCard === 'csv'
-                ? 'Full URL to a CSV file. For Google Sheets: File → Share → Publish to the web → .csv.'
-                : 'Full URL, including protocol. Must be reachable from the public internet.'
-            }
-          >
-            URL
-          </FieldLabel>
-          <Input
-            prefix={<LinkOutlined style={{ color: TOKEN.textSubtle }} />}
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://api.example.com/customers"
-            onPressEnter={() => handlePreview()}
-            allowClear
+        {/* Subtle card grouping the source-specific detail fields. For
+            Pipedream-no-app-yet the card wraps the full-width AppBrowser too,
+            which looks fine — just a framed picker. Keeps everything below
+            the source type selector visually "inside" one config block. */}
+        <div
+          style={{
+            background: TOKEN.bg,
+            border: `1px solid ${TOKEN.sectionRule}`,
+            borderRadius: 8,
+            padding: '14px 16px',
+            marginTop: 4,
+          }}
+        >
+        {uiCard === 'pipedream' && (
+          <PipedreamSection
+            externalUserId={externalUserId || ''}
+            draft={pipedreamDraft}
+            onDraftChange={(next) => {
+              setPipedreamDraft(next);
+              // Clear stale preview the moment the source identity changes —
+              // otherwise old rows linger after the user picks a new action.
+              setRows([]);
+              setColumns([]);
+              setTotalRows(0);
+              setError(null);
+            }}
           />
-        </div>
+        )}
+
+        {uiCard !== 'pipedream' && (
+          <div style={{ marginBottom: 14 }}>
+            <FieldLabel
+              required
+              tooltip={
+                uiCard === 'csv'
+                  ? 'Full URL to a CSV file. For Google Sheets: File → Share → Publish to the web → .csv.'
+                  : 'Full URL, including protocol. Must be reachable from the public internet.'
+              }
+            >
+              URL
+            </FieldLabel>
+            <Input
+              prefix={<LinkOutlined style={{ color: TOKEN.textSubtle }} />}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://api.example.com/customers"
+              onPressEnter={() => handlePreview()}
+              allowClear
+            />
+          </div>
+        )}
 
         {uiCard === 'url' && (() => {
           const headerLineCount = headersText
@@ -955,8 +1135,138 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
             </div>
           </div>
         )}
+        </div>
+
+        {/* Table name + Fetch + preview were their own "Section 3" before,
+            but they conceptually belong to the data-source flow: configure,
+            name, fetch, verify. Keep them in Section 1 and only promote
+            Delivery (Section 2) once the fetch was successful. */}
+        {(uiCard !== 'pipedream' || isPipedreamDraftReady(pipedreamDraft)) && (
+          <div style={{ marginTop: 20 }}>
+            {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
+
+            <div style={{ marginBottom: 14 }}>
+              <FieldLabel required tooltip="Used as the sheet tab and as the table identifier in formulas. Letters, digits and underscores only.">
+                Table name
+              </FieldLabel>
+              <Space.Compact style={{ width: '100%' }}>
+                <Input
+                  value={tableName}
+                  onChange={(e) => {
+                    setTableName(e.target.value);
+                    setTableNameTouched(true);
+                  }}
+                  placeholder="customers"
+                  onPressEnter={() => handlePreview()}
+                />
+                <Tooltip title="Fetches a sample to verify the source works and infer column types. No data is saved yet.">
+                  <Button
+                    type="primary"
+                    icon={<ThunderboltOutlined />}
+                    loading={loading}
+                    onClick={() => handlePreview()}
+                    disabled={
+                      uiCard === 'pipedream'
+                        ? !isPipedreamDraftReady(pipedreamDraft)
+                        : !url.trim()
+                    }
+                    style={{ background: TOKEN.purple, borderColor: TOKEN.purple }}
+                  >
+                    Fetch preview
+                  </Button>
+                </Tooltip>
+              </Space.Compact>
+            </div>
+
+            {hasPreview && rows.length > 0 && (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    flexWrap: 'wrap',
+                    marginBottom: 8,
+                    fontSize: 12.5,
+                    color: TOKEN.textMuted,
+                  }}
+                >
+                  <span style={{ color: TOKEN.purple, fontWeight: 500 }}>
+                    {columns.length} column{columns.length === 1 ? '' : 's'} detected
+                  </span>
+                  {totalRows > 0 && (
+                    <span style={{ color: TOKEN.textSubtle }}>
+                      Fetched{' '}
+                      <span style={{ color: TOKEN.green, fontWeight: 600 }}>
+                        {totalRows} row{totalRows === 1 ? '' : 's'}
+                      </span>
+                      {rows.length < totalRows && <>, showing first {rows.length}</>}
+                    </span>
+                  )}
+                  <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    Rows:
+                    <Select
+                      size="small"
+                      value={previewRowCount}
+                      onChange={(v) => {
+                        setPreviewRowCount(v);
+                        if (!loading) handlePreview(v);
+                      }}
+                      options={PREVIEW_ROW_OPTIONS}
+                      style={{ width: 160 }}
+                      disabled={loading}
+                    />
+                  </span>
+                </div>
+
+                <Table
+                  size="small"
+                  rowKey="__rowId"
+                  dataSource={rows.map((r, i) => ({ ...r, __rowId: `row-${i}` }))}
+                  columns={previewTableColumns}
+                  pagination={false}
+                  scroll={{ x: true, y: 320 }}
+                  bordered
+                  style={{ marginBottom: 12 }}
+                />
+
+                {(() => {
+                  const customizedCount = columns.filter(
+                    (c) => (c.displayName && c.displayName !== c.name) || (c.dataType && c.dataType !== 'string'),
+                  ).length;
+                  return (
+                    <>
+                      <DisclosureLink
+                        open={showColumnDefs}
+                        onClick={() => setShowColumnDefs((v) => !v)}
+                        label="Column definitions"
+                        summary={customizedCount > 0 ? `${customizedCount} customized` : 'defaults from preview'}
+                      />
+                      {showColumnDefs && (
+                        <Table
+                          size="small"
+                          rowKey="name"
+                          dataSource={columns}
+                          columns={schemaTableColumns}
+                          pagination={false}
+                          bordered
+                          style={{ marginTop: 12 }}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Section 2 stays hidden until the Pipedream draft is complete so
+          picking an app first feels focused. Non-pipedream flows render it
+          unconditionally. */}
+      {(uiCard !== 'pipedream' || isPipedreamDraftReady(pipedreamDraft)) && (
+      <div>
       {/* ============ Section 2: Delivery ============ */}
       <div style={{ padding: '20px 0', borderBottom: `1px solid ${TOKEN.sectionRule}` }}>
         <SectionHeader num={2} title="How is it delivered at runtime?" />
@@ -967,29 +1277,45 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
           style={{ width: '100%' }}
         >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-            <div
-              onClick={() => setStorageMode('remote')}
-              style={{
-                border: `1px solid ${storageMode === 'remote' ? TOKEN.purple : TOKEN.border}`,
-                background: storageMode === 'remote' ? TOKEN.purpleSoft : '#fff',
-                boxShadow: storageMode === 'remote' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
-                borderRadius: 8,
-                padding: '12px 14px',
-                cursor: 'pointer',
-                transition: 'all 0.12s ease',
-              }}
+            <Tooltip
+              title={
+                uiCard === 'pipedream'
+                  ? 'Connected apps always use Snapshot — refresh on demand via the webhook.'
+                  : ''
+              }
             >
-              <Radio value="remote" style={{ alignItems: 'flex-start' }}>
-                <div style={{ marginLeft: 2 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ThunderboltOutlined style={{ color: TOKEN.amber }} /> Live fetch
+              <div
+                onClick={() => {
+                  if (uiCard === 'pipedream') return;
+                  setStorageMode('remote');
+                }}
+                style={{
+                  border: `1px solid ${storageMode === 'remote' ? TOKEN.purple : TOKEN.border}`,
+                  background: storageMode === 'remote' ? TOKEN.purpleSoft : uiCard === 'pipedream' ? '#f9fafb' : '#fff',
+                  boxShadow: storageMode === 'remote' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  cursor: uiCard === 'pipedream' ? 'not-allowed' : 'pointer',
+                  opacity: uiCard === 'pipedream' && storageMode !== 'remote' ? 0.65 : 1,
+                  transition: 'all 0.12s ease',
+                }}
+              >
+                <Radio
+                  value="remote"
+                  disabled={uiCard === 'pipedream' && storageMode !== 'remote'}
+                  style={{ alignItems: 'flex-start' }}
+                >
+                  <div style={{ marginLeft: 2 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <ThunderboltOutlined style={{ color: TOKEN.amber }} /> Live fetch
+                    </div>
+                    <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
+                      Fetch from your URL on every call, briefly cached.
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
-                    Fetch from your URL on every call, briefly cached.
-                  </div>
-                </div>
-              </Radio>
-            </div>
+                </Radio>
+              </div>
+            </Tooltip>
 
             <Tooltip title={!canUseSnapshot ? 'Snapshot is a Premium feature. Upgrade your plan to enable it.' : ''}>
               <div
@@ -1079,136 +1405,8 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
         </Radio.Group>
       </div>
 
-      {/* ============ Section 3: Preview ============ */}
-      <div style={{ padding: '20px 0 4px' }}>
-        <SectionHeader num={3} title="Preview your data" />
-
-        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
-
-        <div style={{ marginBottom: 14 }}>
-          <FieldLabel required tooltip="Used as the sheet tab and as the table identifier in formulas. Letters, digits and underscores only.">
-            Table name
-          </FieldLabel>
-          <Space.Compact style={{ width: '100%' }}>
-            <Input
-              value={tableName}
-              onChange={(e) => {
-                setTableName(e.target.value);
-                setTableNameTouched(true);
-              }}
-              placeholder="customers"
-              onPressEnter={() => handlePreview()}
-            />
-            <Tooltip title="Fetches a sample to verify the source works and infer column types. No data is saved yet.">
-              <Button
-                type="primary"
-                icon={<ThunderboltOutlined />}
-                loading={loading}
-                onClick={() => handlePreview()}
-                disabled={!url.trim()}
-                style={{ background: TOKEN.purple, borderColor: TOKEN.purple }}
-              >
-                Fetch Table Data
-              </Button>
-            </Tooltip>
-          </Space.Compact>
-        </div>
-
-        {hasPreview ? (
-          <>
-            {rows.length > 0 && (
-              <>
-                <Table
-                  size="small"
-                  rowKey="__rowId"
-                  dataSource={rows.map((r, i) => ({ ...r, __rowId: `row-${i}` }))}
-                  columns={previewTableColumns}
-                  pagination={false}
-                  scroll={{ x: true, y: 320 }}
-                  bordered
-                  style={{ marginBottom: 8 }}
-                />
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    flexWrap: 'wrap',
-                    marginBottom: 12,
-                    fontSize: 12.5,
-                    color: TOKEN.textMuted,
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    Rows:
-                    <Select
-                      size="small"
-                      value={previewRowCount}
-                      onChange={(v) => {
-                        setPreviewRowCount(v);
-                        if (!loading) handlePreview(v);
-                      }}
-                      options={PREVIEW_ROW_OPTIONS}
-                      style={{ width: 180 }}
-                      disabled={loading}
-                    />
-                  </span>
-                  {totalRows > 0 && (
-                    <span style={{ marginLeft: 'auto', color: TOKEN.textSubtle }}>
-                      Fetched{' '}
-                      <span style={{ color: TOKEN.green, fontWeight: 600 }}>
-                        {totalRows} row{totalRows === 1 ? '' : 's'}
-                      </span>
-                      {rows.length < totalRows && <>, showing first {rows.length}</>}
-                    </span>
-                  )}
-                </div>
-
-                {(() => {
-                  const customizedCount = columns.filter(
-                    (c) => (c.displayName && c.displayName !== c.name) || (c.dataType && c.dataType !== 'string'),
-                  ).length;
-                  return (
-                    <>
-                      <DisclosureLink
-                        open={showColumnDefs}
-                        onClick={() => setShowColumnDefs((v) => !v)}
-                        label="Column definitions"
-                        summary={customizedCount > 0 ? `${customizedCount} customized` : 'defaults from preview'}
-                      />
-                      {showColumnDefs && (
-                        <Table
-                          size="small"
-                          rowKey="name"
-                          dataSource={columns}
-                          columns={schemaTableColumns}
-                          pagination={false}
-                          bordered
-                          style={{ marginTop: 12 }}
-                        />
-                      )}
-                    </>
-                  );
-                })()}
-              </>
-            )}
-          </>
-        ) : (
-          <div
-            style={{
-              padding: '24px 16px',
-              textAlign: 'center',
-              color: TOKEN.textSubtle,
-              fontSize: 13,
-              background: '#fff',
-              border: `1px dashed ${TOKEN.border}`,
-              borderRadius: 8,
-            }}
-          >
-            Paste a URL above and click <b style={{ color: TOKEN.text }}>Fetch preview</b> to see your rows.
-          </div>
-        )}
       </div>
+      )}
     </Modal>
   );
 };

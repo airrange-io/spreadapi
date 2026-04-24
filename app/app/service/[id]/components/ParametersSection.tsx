@@ -138,7 +138,11 @@ const DataSourceRow: React.FC<{
   const [hovered, setHovered] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { notification, message } = App.useApp();
-  const url = ds.source.url;
+  // URL for URL-based sources; Pipedream sources surface the action key instead.
+  const url =
+    ds.source.type === 'pipedream'
+      ? `${ds.source.appSlug} / ${ds.source.actionId}`
+      : ds.source.url;
   const isSnapshot = ds.storageMode === 'snapshot';
 
   const webhookUrl = useMemo(() => {

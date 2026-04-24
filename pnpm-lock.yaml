@@ -56,6 +56,9 @@ importers:
       '@mescius/spread-sheets-tablesheet':
         specifier: ^18.2.5
         version: 18.2.5
+      '@pipedream/sdk':
+        specifier: ^2.4.5
+        version: 2.4.7
       '@teamhanko/hanko-elements':
         specifier: ^2.6.0
         version: 2.6.0
@@ -545,6 +548,10 @@ packages:
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
+
+  '@pipedream/sdk@2.4.7':
+    resolution: {integrity: sha512-BGyXJmDvn7N0yCZ83rIK1InZrLqb+X1RaAqwY6r52NLGx67GsLymr2ZI4EGEbGiKa7B/dneZxyK9QUyZmtBsxw==}
+    engines: {node: '>=18.0.0'}
 
   '@rc-component/async-validator@5.1.0':
     resolution: {integrity: sha512-n4HcR5siNUXRX23nDizbZBQPO0ZM/5oTtmKZ6/eqL0L2bo747cklFdZGRN2f+c9qWGICwDzrhW0H7tE9PptdcA==}
@@ -3146,6 +3153,8 @@ snapshots:
     optional: true
 
   '@opentelemetry/api@1.9.0': {}
+
+  '@pipedream/sdk@2.4.7': {}
 
   '@rc-component/async-validator@5.1.0':
     dependencies:

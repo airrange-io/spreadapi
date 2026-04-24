@@ -26,6 +26,7 @@
     "@mescius/spread-sheets-pdf": "^18.2.5",
     "@mescius/spread-sheets-print": "^18.2.5",
     "@mescius/spread-sheets-tablesheet": "^18.2.5",
+    "@pipedream/sdk": "^2.4.5",
     "@teamhanko/hanko-elements": "^2.6.0",
     "@types/markdown-it": "^14.1.2",
     "@types/react-syntax-highlighter": "^15.5.13",
