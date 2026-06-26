@@ -3,5 +3,14 @@ export default function BlogEsLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: 'document.documentElement.lang="es"',
+        }}
+      />
+      {children}
+    </>
+  );
 }

@@ -105,7 +105,14 @@
       "WebFetch(domain:pipedream.com)",
       "Bash(unzip *)",
       "Bash(mkdir -p /tmp/dsmodal)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(git fetch *)",
+      "Bash(awk '/getCachedWorkbook/{found=1} found{print NR\": \"$0} found && /^}/ && NR>start+5{exit}' lib/spreadjs-server.js)",
+      "Bash(NODE_OPTIONS='--max-old-space-size=8192' pnpm build)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(break)",
+      "Bash(git reset *)",
+      "Bash(git *)"
     ],
     "deny": []
   }

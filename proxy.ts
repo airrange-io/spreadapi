@@ -18,9 +18,7 @@ export async function proxy(req: NextRequest) {
   // Handle locale preference for marketing pages
   const marketingLocale = getMarketingLocale(pathname);
   if (marketingLocale) {
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set('x-locale', marketingLocale);
-    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    const response = NextResponse.next();
     response.cookies.set(LOCALE_COOKIE, marketingLocale, {
       maxAge: 60 * 60 * 24 * 365, // 1 year
       path: '/',
@@ -32,13 +30,19 @@ export async function proxy(req: NextRequest) {
   }
 
   // Set Content-Language for blog locale routes
-  const blogLocaleMatch = pathname.match(/^\/blog\/(de|fr|es)(\/|$)/);
-  if (blogLocaleMatch) {
-    const locale = blogLocaleMatch[1];
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set('x-locale', locale);
-    const response = NextResponse.next({ request: { headers: requestHeaders } });
-    response.headers.set('Content-Language', locale);
+  if (pathname.startsWith('/blog/de')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'de');
+    return response;
+  }
+  if (pathname.startsWith('/blog/fr')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'fr');
+    return response;
+  }
+  if (pathname.startsWith('/blog/es')) {
+    const response = NextResponse.next();
+    response.headers.set('Content-Language', 'es');
     return response;
   }
 

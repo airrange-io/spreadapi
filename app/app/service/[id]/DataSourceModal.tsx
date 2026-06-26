@@ -1269,140 +1269,167 @@ const DataSourceModal: React.FC<DataSourceModalProps> = ({
       <div>
       {/* ============ Section 2: Delivery ============ */}
       <div style={{ padding: '20px 0', borderBottom: `1px solid ${TOKEN.sectionRule}` }}>
-        <SectionHeader num={2} title="How is it delivered at runtime?" />
-
-        <Radio.Group
-          value={storageMode}
-          onChange={(e) => setStorageMode(e.target.value)}
-          style={{ width: '100%' }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-            <Tooltip
-              title={
-                uiCard === 'pipedream'
-                  ? 'Connected apps always use Snapshot — refresh on demand via the webhook.'
-                  : ''
-              }
+        {uiCard === 'pipedream' ? (
+          // Pipedream sources are always Snapshot — the webhook is the only
+          // refresh mechanism, there's nothing to choose between. Skip the
+          // radio cards entirely and just render the webhook config.
+          <>
+            <SectionHeader num={2} title="Refresh" />
+            {webhookUrl ? (
+              <WebhookBlock url={webhookUrl} />
+            ) : (
+              <Alert
+                type="info"
+                showIcon
+                message="The refresh webhook URL will appear once the service is saved."
+              />
+            )}
+            <div
+              style={{
+                marginTop: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                fontSize: 12.5,
+                color: TOKEN.textMuted,
+              }}
             >
-              <div
-                onClick={() => {
-                  if (uiCard === 'pipedream') return;
-                  setStorageMode('remote');
-                }}
-                style={{
-                  border: `1px solid ${storageMode === 'remote' ? TOKEN.purple : TOKEN.border}`,
-                  background: storageMode === 'remote' ? TOKEN.purpleSoft : uiCard === 'pipedream' ? '#f9fafb' : '#fff',
-                  boxShadow: storageMode === 'remote' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
-                  borderRadius: 8,
-                  padding: '12px 14px',
-                  cursor: uiCard === 'pipedream' ? 'not-allowed' : 'pointer',
-                  opacity: uiCard === 'pipedream' && storageMode !== 'remote' ? 0.65 : 1,
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                <Radio
-                  value="remote"
-                  disabled={uiCard === 'pipedream' && storageMode !== 'remote'}
-                  style={{ alignItems: 'flex-start' }}
-                >
-                  <div style={{ marginLeft: 2 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <ThunderboltOutlined style={{ color: TOKEN.amber }} /> Live fetch
-                    </div>
-                    <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
-                      Fetch from your URL on every call, briefly cached.
-                    </div>
-                  </div>
-                </Radio>
-              </div>
-            </Tooltip>
-
-            <Tooltip title={!canUseSnapshot ? 'Snapshot is a Premium feature. Upgrade your plan to enable it.' : ''}>
-              <div
-                onClick={() => {
-                  if (!canUseSnapshot && storageMode !== 'snapshot') return;
-                  setStorageMode('snapshot');
-                }}
-                style={{
-                  border: `1px solid ${storageMode === 'snapshot' ? TOKEN.purple : TOKEN.border}`,
-                  background: storageMode === 'snapshot' ? TOKEN.purpleSoft : !canUseSnapshot ? '#f9fafb' : '#fff',
-                  boxShadow: storageMode === 'snapshot' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
-                  borderRadius: 8,
-                  padding: '12px 14px',
-                  cursor: !canUseSnapshot && storageMode !== 'snapshot' ? 'not-allowed' : 'pointer',
-                  opacity: !canUseSnapshot && storageMode !== 'snapshot' ? 0.65 : 1,
-                  transition: 'all 0.12s ease',
-                }}
-              >
-                <Radio value="snapshot" disabled={!canUseSnapshot && storageMode !== 'snapshot'} style={{ alignItems: 'flex-start' }}>
-                  <div style={{ marginLeft: 2 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <DatabaseFilled style={{ color: TOKEN.purple }} /> Snapshot
-                      {!canUseSnapshot && (
-                        <Tag
-                          color="gold"
-                          style={{
-                            marginInlineEnd: 0,
-                            marginLeft: 'auto',
-                            fontSize: 9.5,
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.04em',
-                            lineHeight: '16px',
-                            padding: '0 6px',
-                          }}
-                        >
-                          Premium
-                        </Tag>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
-                      Cached on our side, refreshed on demand via webhook.
-                    </div>
-                  </div>
-                </Radio>
-              </div>
-            </Tooltip>
-          </div>
-
-          {storageMode === 'snapshot' && (
-            <div style={{ marginTop: 10 }}>
-              {webhookUrl ? (
-                <WebhookBlock url={webhookUrl} />
-              ) : (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="The refresh webhook URL will appear once the service is saved."
-                />
-              )}
-              <div
-                style={{
-                  marginTop: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  fontSize: 12.5,
-                  color: TOKEN.textMuted,
-                }}
-              >
-                <Tooltip title="Hard cap on rows stored per refresh. Protects against unexpectedly large upstream responses.">
-                  <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    Max rows per refresh
-                    <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 11 }} />
-                  </span>
-                </Tooltip>
-                <Select
-                  size="small"
-                  value={maxRefreshRows}
-                  onChange={setMaxRefreshRows}
-                  options={MAX_REFRESH_ROWS_OPTIONS}
-                  style={{ width: 180 }}
-                />
-              </div>
+              <Tooltip title="Hard cap on rows stored per refresh. Protects against unexpectedly large upstream responses.">
+                <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  Max rows per refresh
+                  <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 11 }} />
+                </span>
+              </Tooltip>
+              <Select
+                size="small"
+                value={maxRefreshRows}
+                onChange={setMaxRefreshRows}
+                options={MAX_REFRESH_ROWS_OPTIONS}
+                style={{ width: 180 }}
+              />
             </div>
-          )}
-        </Radio.Group>
+          </>
+        ) : (
+          <>
+            <SectionHeader num={2} title="How is it delivered at runtime?" />
+            <Radio.Group
+              value={storageMode}
+              onChange={(e) => setStorageMode(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                <div
+                  onClick={() => setStorageMode('remote')}
+                  style={{
+                    border: `1px solid ${storageMode === 'remote' ? TOKEN.purple : TOKEN.border}`,
+                    background: storageMode === 'remote' ? TOKEN.purpleSoft : '#fff',
+                    boxShadow: storageMode === 'remote' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+                    borderRadius: 8,
+                    padding: '12px 14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  <Radio value="remote" style={{ alignItems: 'flex-start' }}>
+                    <div style={{ marginLeft: 2 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <ThunderboltOutlined style={{ color: TOKEN.amber }} /> Live fetch
+                      </div>
+                      <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
+                        Fetch from your URL on every call, briefly cached.
+                      </div>
+                    </div>
+                  </Radio>
+                </div>
+
+                <Tooltip title={!canUseSnapshot ? 'Snapshot is a Premium feature. Upgrade your plan to enable it.' : ''}>
+                  <div
+                    onClick={() => {
+                      if (!canUseSnapshot && storageMode !== 'snapshot') return;
+                      setStorageMode('snapshot');
+                    }}
+                    style={{
+                      border: `1px solid ${storageMode === 'snapshot' ? TOKEN.purple : TOKEN.border}`,
+                      background: storageMode === 'snapshot' ? TOKEN.purpleSoft : !canUseSnapshot ? '#f9fafb' : '#fff',
+                      boxShadow: storageMode === 'snapshot' ? `0 0 0 3px rgba(145, 51, 232, 0.08)` : 'none',
+                      borderRadius: 8,
+                      padding: '12px 14px',
+                      cursor: !canUseSnapshot && storageMode !== 'snapshot' ? 'not-allowed' : 'pointer',
+                      opacity: !canUseSnapshot && storageMode !== 'snapshot' ? 0.65 : 1,
+                      transition: 'all 0.12s ease',
+                    }}
+                  >
+                    <Radio value="snapshot" disabled={!canUseSnapshot && storageMode !== 'snapshot'} style={{ alignItems: 'flex-start' }}>
+                      <div style={{ marginLeft: 2 }}>
+                        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <DatabaseFilled style={{ color: TOKEN.purple }} /> Snapshot
+                          {!canUseSnapshot && (
+                            <Tag
+                              color="gold"
+                              style={{
+                                marginInlineEnd: 0,
+                                marginLeft: 'auto',
+                                fontSize: 9.5,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                                lineHeight: '16px',
+                                padding: '0 6px',
+                              }}
+                            >
+                              Premium
+                            </Tag>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: TOKEN.textSubtle, lineHeight: 1.4 }}>
+                          Cached on our side, refreshed on demand via webhook.
+                        </div>
+                      </div>
+                    </Radio>
+                  </div>
+                </Tooltip>
+              </div>
+
+              {storageMode === 'snapshot' && (
+                <div style={{ marginTop: 10 }}>
+                  {webhookUrl ? (
+                    <WebhookBlock url={webhookUrl} />
+                  ) : (
+                    <Alert
+                      type="info"
+                      showIcon
+                      message="The refresh webhook URL will appear once the service is saved."
+                    />
+                  )}
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      fontSize: 12.5,
+                      color: TOKEN.textMuted,
+                    }}
+                  >
+                    <Tooltip title="Hard cap on rows stored per refresh. Protects against unexpectedly large upstream responses.">
+                      <span style={{ cursor: 'help', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        Max rows per refresh
+                        <InfoCircleOutlined style={{ color: TOKEN.textSubtle, fontSize: 11 }} />
+                      </span>
+                    </Tooltip>
+                    <Select
+                      size="small"
+                      value={maxRefreshRows}
+                      onChange={setMaxRefreshRows}
+                      options={MAX_REFRESH_ROWS_OPTIONS}
+                      style={{ width: 180 }}
+                    />
+                  </div>
+                </div>
+              )}
+            </Radio.Group>
+          </>
+        )}
       </div>
 
       </div>
