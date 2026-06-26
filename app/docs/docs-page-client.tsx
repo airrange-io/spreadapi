@@ -803,11 +803,12 @@ Claude: "Based on your Excel calculations:
                             border: '1px solid #e5e7eb'
                           }}>
                             <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Free</h3>
-                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>$0<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
+                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€0<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ 1 Excel API</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ 100 API calls/month</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Community support</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 1 MB</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Basic support</li>
                             </ul>
                           </div>
 
@@ -817,13 +818,14 @@ Claude: "Based on your Excel calculations:
                             borderRadius: '8px',
                             border: '2px solid #9333EA'
                           }}>
-                            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Lite</h3>
-                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>$29<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
+                            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Pro</h3>
+                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€99<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 10 Excel APIs</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 10,000 API calls/month</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Priority support</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 3 Excel APIs</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 1,000 API calls/month included</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 3 MB</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ AI Integration (MCP)</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Priority support</li>
                             </ul>
                           </div>
 
@@ -833,19 +835,22 @@ Claude: "Based on your Excel calculations:
                             borderRadius: '8px',
                             border: '1px solid #e5e7eb'
                           }}>
-                            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Pro</h3>
-                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>$99<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
+                            <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Premium</h3>
+                            <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€299<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ Unlimited Excel APIs</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 100,000 API calls/month</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Premium support</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ SLA guarantee</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 10,000 API calls/month included</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 25 MB</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ AI Integration (MCP)</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Advanced analytics</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Priority support</li>
                             </ul>
                           </div>
                         </div>
 
                         <p style={{ fontSize: '16px', color: '#666', textAlign: 'center' }}>
-                          Need more? <a href="mailto:info@airrange.io" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
+                          See the <a href="/pricing" style={{ color: '#9333EA' }}>pricing page</a> for current plans and add-ons (e.g. extra call packages).
+                          {' '}Need more? <a href="mailto:info@airrange.io" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
                         </p>
                       </section>
 

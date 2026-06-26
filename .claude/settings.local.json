@@ -100,7 +100,9 @@
       "WebFetch(domain:api.github.com)",
       "Bash(npm list:*)",
       "WebFetch(domain:devblogs.microsoft.com)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(git --no-pager diff main...livedata -- \"app/app/service/[id]/ServicePageClient.tsx\")",
+      "Bash(git --no-pager diff --stat -- app/docs/docs-page-client.tsx)"
     ],
     "deny": []
   }
