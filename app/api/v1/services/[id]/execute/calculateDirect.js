@@ -32,6 +32,20 @@ const getSpreadjsModule = () => {
 // TableSheet data caching
 const tableSheetCache = require('@/lib/tableSheetDataCache');
 
+// Formula-error cells come back from SpreadJS as { _calcError, _code }. Normalize
+// them to the error string (e.g. "#VALUE!") at the source so every consumer (web
+// app, test panel, REST/MCP responses) receives a clean, renderable value
+// instead of a raw object. Recurses into cell ranges (1D/2D arrays).
+function normalizeCellError(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeCellError);
+  }
+  if (value && typeof value === 'object' && ('_calcError' in value || '_code' in value)) {
+    return typeof value._calcError === 'string' && value._calcError ? value._calcError : 'Error';
+  }
+  return value;
+}
+
 // Helper function to log API calls
 // Returns a promise that can be awaited with after() for Vercel compatibility
 export async function logCalls(apiId, apiToken) {
@@ -105,7 +119,6 @@ export async function logCalls(apiId, apiToken) {
  * This is the core calculation engine used by:
  * - V1 API route (/api/v1/services/[id]/execute)
  * - MCP servers (/api/mcp, /api/mcp/bridge)
- * - Chat route (/api/chat)
  *
  * @param {string} serviceId - The service ID to execute
  * @param {object} inputs - Key-value pairs of input parameters
@@ -485,7 +498,7 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           row = range.row ?? 0;
           col = range.col ?? 0;
         }
-        cellResult = actualSheet.getCell(row, col).value();
+        cellResult = normalizeCellError(actualSheet.getCell(row, col).value());
       } else {
         // For cell ranges, prefer stored rowCount/colCount if available (more reliable)
         // Otherwise calculate from address
@@ -503,13 +516,13 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
           colCount = range.colTo - range.colFrom + 1;
         }
 
-        cellResult = actualSheet.getArray(
+        cellResult = normalizeCellError(actualSheet.getArray(
           output.row,
           output.col,
           rowCount,
           colCount,
           false
-        );
+        ));
       }
 
       const outputObj = {

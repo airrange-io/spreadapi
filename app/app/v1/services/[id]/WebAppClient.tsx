@@ -472,6 +472,18 @@ export default function WebAppClient({ serviceId, serviceData, initialLanguage, 
       return Number.isInteger(value) ? formatters.integer.format(value) : formatters.decimal.format(value);
     }
 
+    // Formula-error cells come back from SpreadJS as an object (e.g.
+    // { _calcError, _code }). React cannot render an object as a child, so map
+    // it to readable error text. Also guard any other object defensively so a
+    // single error value never crashes the whole web app.
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const err = value as { _calcError?: unknown; _code?: unknown };
+      if ('_calcError' in err || '_code' in err) {
+        return typeof err._calcError === 'string' && err._calcError ? err._calcError : 'Error';
+      }
+      return String(value);
+    }
+
     return value;
   }, [formatters, userLocale]);
 
