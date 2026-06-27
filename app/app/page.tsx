@@ -101,7 +101,6 @@ const ListsPage: React.FC = observer(() => {
   const watchVideoCardRef = useRef<HTMLDivElement>(null);
   const useSampleCardRef = useRef<HTMLDivElement>(null);
   const newServiceButtonRef = useRef<HTMLButtonElement>(null);
-  const chatButtonRef = useRef<HTMLButtonElement>(null);
 
   // Lazy load tour only when needed
   const [tourState, setTourState] = useState<{
@@ -713,19 +712,6 @@ const ListsPage: React.FC = observer(() => {
                   </Button>
                 )}
 
-                {/* Chat Button - hidden when no services exist */}
-                {serviceCount > 0 && (
-                  <Button
-                    ref={chatButtonRef}
-                    variant='filled'
-                    color="default"
-                    icon={<MessageOutlined />}
-                    onClick={() => router.push('/app/chat')}
-                    title={t('app.chatWithServices')}
-                  >
-                    <span className="desktop-text">Chat</span>
-                  </Button>
-                )}
 
                 {/* MCP Settings Button removed - now per-service in API tab */}
 

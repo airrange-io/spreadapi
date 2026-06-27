@@ -1,37 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Skeleton, Spin } from 'antd';
+import { Layout, Skeleton } from 'antd';
 import dynamic from 'next/dynamic';
-import { useTranslation } from '@/lib/i18n';
 import AgentsNavigationMenu, { AgentsMenuSection } from '../components/AgentsNavigationMenu';
 import AIAssistantSection from '../components/AIAssistantSection';
 
 const { Sider, Content } = Layout;
-
-// Loading indicator for lazy-loaded chat component
-const ChatLoadingFallback: React.FC = () => {
-  const { t } = useTranslation();
-  return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '12px'
-    }}>
-      <Spin size="medium" />
-      <div style={{ color: '#999', fontSize: '14px' }}>{t('agentsView.loadingChat')}</div>
-    </div>
-  );
-};
-
-// Lazy load chat component with AI libraries only when needed
-const ServiceChatSection = dynamic(() => import('../components/ServiceChatSection'), {
-  loading: () => <ChatLoadingFallback />,
-  ssr: false
-});
 
 const ServiceMCPSettings = dynamic(() => import('@/components/ServiceMCPSettings'), {
   loading: () => <Skeleton active paragraph={{ rows: 6 }} />,
@@ -125,16 +100,6 @@ const AgentsView: React.FC<AgentsViewProps> = ({
               outputs={apiConfig?.outputs || []}
             />
           </div>
-        );
-
-      case 'chat-test':
-        return (
-          <ServiceChatSection
-            serviceId={serviceId}
-            serviceName={apiConfig?.name || 'Service'}
-            isLoading={isLoading}
-            apiConfig={apiConfig}
-          />
         );
 
       case 'mcp':

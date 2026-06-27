@@ -3,10 +3,8 @@ export type TranslationDictionary = Record<string, string>;
 
 const en: TranslationDictionary = {
   'agentsNav.aiInfo': 'AI Assistant Info',
-  'agentsNav.chatTesting': 'AI Chat Testing',
   'agentsNav.mcpIntegration': 'MCP Integration',
 
-  'agentsView.loadingChat': 'Loading chat...',
 
   'aiAssistant.aiDescriptionHint': 'Detailed explanation for AI assistants about what this service does and when to use it',
   'aiAssistant.aiDescriptionLabel': 'AI Description',
@@ -82,7 +80,6 @@ const en: TranslationDictionary = {
   'apiPreview.requiresAuth': 'This service requires authentication',
 
   'app.breadcrumb': 'Spreadsheet APIs',
-  'app.chatWithServices': 'Chat with services',
   'app.chooseSampleWorkbook': 'Choose a sample workbook',
   'app.dropFileHere': 'Drop your Excel, CSV or JSON file here',
   'app.errorProcessingFile': 'Error processing the file. Please try again.',
@@ -302,22 +299,6 @@ const en: TranslationDictionary = {
   'charts.todaysHourlyDistribution': 'Today\'s Hourly Distribution',
   'charts.valueCalls': '{value} calls',
 
-  'chat.aiModel': 'AI Model',
-  'chat.breadcrumbChat': 'Chat',
-  'chat.breadcrumbServices': 'Services',
-  'chat.defaultServiceDesc': 'Spreadsheet calculation service',
-  'chat.getAiExamples': 'Get AI Examples',
-  'chat.inputPlaceholder': 'Type or speak your calculation request...',
-  'chat.login': 'Login',
-  'chat.logout': 'Logout',
-  'chat.profileSettings': 'Profile Settings',
-  'chat.selectService': 'Select a Service',
-  'chat.selectServiceDesc': 'Choose a calculation service to start',
-  'chat.selectServicePrompt': 'Select a service to start chatting',
-  'chat.selectServicePromptDesc': 'Choose a calculation service from the dropdown above',
-  'chat.selectServiceToStart': 'Select a service to start',
-  'chat.startConversation': 'Start a Conversation',
-  'chat.startConversationDesc': 'Ask questions to see how the AI assistant helps you',
 
   'codeExample.copiedToClipboard': 'Copied to clipboard',
   'codeExample.copy': 'Copy',
@@ -1036,10 +1017,8 @@ const en: TranslationDictionary = {
 
 const de: TranslationDictionary = {
   'agentsNav.aiInfo': 'KI-Assistent Info',
-  'agentsNav.chatTesting': 'KI-Chat testen',
   'agentsNav.mcpIntegration': 'MCP-Integration',
 
-  'agentsView.loadingChat': 'Chat wird geladen...',
 
   'aiAssistant.aiDescriptionHint': 'Detaillierte Erklärung für KI-Assistenten, was dieser Service tut und wann er verwendet werden soll',
   'aiAssistant.aiDescriptionLabel': 'KI-Beschreibung',
@@ -1115,7 +1094,6 @@ const de: TranslationDictionary = {
   'apiPreview.requiresAuth': 'Dieser Service erfordert Authentifizierung',
 
   'app.breadcrumb': 'Spreadsheet APIs',
-  'app.chatWithServices': 'Mit Services chatten',
   'app.chooseSampleWorkbook': 'Beispiel-Arbeitsmappe wählen',
   'app.dropFileHere': 'Excel-, CSV- oder JSON-Datei hier ablegen',
   'app.errorProcessingFile': 'Fehler beim Verarbeiten der Datei.',
@@ -1335,22 +1313,6 @@ const de: TranslationDictionary = {
   'charts.todaysHourlyDistribution': 'Stundenverteilung heute',
   'charts.valueCalls': '{value} Aufrufe',
 
-  'chat.aiModel': 'KI-Modell',
-  'chat.breadcrumbChat': 'Chat',
-  'chat.breadcrumbServices': 'Services',
-  'chat.defaultServiceDesc': 'Tabellenkalkulations-Service',
-  'chat.getAiExamples': 'KI-Beispiele abrufen',
-  'chat.inputPlaceholder': 'Geben Sie Ihre Berechnungsanfrage ein oder sprechen Sie sie...',
-  'chat.login': 'Anmelden',
-  'chat.logout': 'Abmelden',
-  'chat.profileSettings': 'Profileinstellungen',
-  'chat.selectService': 'Service auswählen',
-  'chat.selectServiceDesc': 'Wählen Sie einen Berechnungsservice aus',
-  'chat.selectServicePrompt': 'Wählen Sie einen Service aus, um zu chatten',
-  'chat.selectServicePromptDesc': 'Wählen Sie einen Berechnungsservice aus dem Dropdown oben',
-  'chat.selectServiceToStart': 'Service auswählen, um zu starten',
-  'chat.startConversation': 'Gespräch starten',
-  'chat.startConversationDesc': 'Stellen Sie Fragen, um zu sehen, wie der KI-Assistent Ihnen hilft',
 
   'codeExample.copiedToClipboard': 'In Zwischenablage kopiert',
   'codeExample.copy': 'Kopieren',
