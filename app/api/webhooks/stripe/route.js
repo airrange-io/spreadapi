@@ -125,6 +125,20 @@ export async function POST(request) {
 
       console.log(`[Stripe SpreadAPI Webhook] Updated user ${user.id} to ${licenseType}`);
 
+      // Upgrade: make the user's already-published services permanent by
+      // removing the free-plan TTL and clearing the expiry marker. persist()/
+      // hDel are no-ops on keys that have no TTL/field, so already-permanent
+      // services are unaffected. Best-effort — must never fail the webhook.
+      try {
+        const services = await redis.hGetAll(`user:${user.id}:services`);
+        for (const serviceId of Object.keys(services || {})) {
+          await redis.persist(`service:${serviceId}:published`);
+          await redis.hDel(`service:${serviceId}`, 'expiresAt');
+        }
+      } catch (persistErr) {
+        console.error(`[Stripe SpreadAPI Webhook] Failed to persist services for ${user.id}:`, persistErr);
+      }
+
       return NextResponse.json({
         received: true,
         userId: user.id,

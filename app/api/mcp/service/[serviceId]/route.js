@@ -8,6 +8,7 @@ import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js
 import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
 import { getSingleServiceInstructions } from '../../../../../lib/mcp-ai-instructions.js';
 import { normalizeInputKeys } from '../../../../../lib/inputNormalizer.js';
+import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '../../../../../lib/publishExpiry.js';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -201,6 +202,15 @@ async function authenticateRequest(request, serviceId) {
   const serviceData = await redis.hGetAll(`service:${serviceId}:published`);
 
   if (!serviceData || Object.keys(serviceData).length === 0) {
+    const expiry = await getPublishExpiry(serviceId);
+    if (expiry?.isExpired) {
+      return {
+        valid: false,
+        error: EXPIRED_PUBLISH_BODY.message,
+        code: 'PUBLISH_EXPIRED',
+        status: 402
+      };
+    }
     return {
       valid: false,
       error: 'Service not found or not published',

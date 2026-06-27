@@ -8,6 +8,25 @@ import { normalizeInputKeys } from '../../lib/inputNormalizer.js';
 
 export const maxDuration = 30;
 
+// Free-plan publish window: tell an expired free publish (402) apart from a
+// service that was never published (404). The deadline lives on the persistent
+// draft hash as `expiresAt` and survives the :published TTL. Returns a 402
+// response when expired, otherwise null.
+async function expiredPublishResponse(serviceId) {
+  try {
+    const raw = await redis.hGet(`service:${serviceId}`, 'expiresAt');
+    const expiresAt = raw ? parseInt(raw, 10) : 0;
+    if (expiresAt && Date.now() >= expiresAt) {
+      return NextResponse.json({
+        error: 'Service expired',
+        code: 'PUBLISH_EXPIRED',
+        message: "This service's free live window has ended. Re-publish it for another window, or upgrade to keep it online permanently.",
+      }, { status: 402 });
+    }
+  } catch (e) {}
+  return null;
+}
+
 function getSuggestion(error) {
   const e = (error || '').toLowerCase();
   if (e.includes('authentication') || e.includes('token')) {
@@ -95,6 +114,9 @@ export async function POST(request, { params }) {
     // Check service exists
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     if (isPublished === 0) {
+      const expired = await expiredPublishResponse(serviceId);
+      if (expired) return expired;
+
       let serviceExists = 0;
       try {
         serviceExists = await redis.exists(`service:${serviceId}`);
@@ -212,6 +234,8 @@ export async function GET(request, { params }) {
 
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     if (isPublished === 0) {
+      const expired = await expiredPublishResponse(serviceId);
+      if (expired) return expired;
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'

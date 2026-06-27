@@ -66,6 +66,8 @@ export async function GET(request) {
           description: serviceData.description || '',
           status: isPublished ? 'published' : 'draft',
           calls: isPublished ? (parseInt(publishedCalls) || 0) : 0,
+          // Free-plan publish deadline (epoch ms); null for paid/never-published.
+          expiresAt: serviceData.expiresAt ? parseInt(serviceData.expiresAt, 10) : null,
           createdAt: serviceData.createdAt,
           updatedAt: serviceData.updatedAt,
           lastUsed: null // This could be tracked separately if needed

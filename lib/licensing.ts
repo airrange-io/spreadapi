@@ -16,32 +16,46 @@ export interface LicenseLimits {
   maxCallsPerMonth: number;
   hasMcpAccess: boolean;
   hasAdvancedAnalytics: boolean;
+  // Free plan: published services are ephemeral and auto-expire after this many
+  // seconds (enforced via a Redis TTL on the :published key). null = permanent.
+  publishTtlSeconds: number | null;
 }
 
 export const LICENSE_LIMITS: Record<LicenseType, LicenseLimits> = {
   free: {
-    maxFileSizeMB: 1,
-    maxFileSizeBytes: 1 * 1024 * 1024,
-    maxServices: 1,
-    maxCallsPerMonth: 100,
-    hasMcpAccess: false,
+    maxFileSizeMB: 3,
+    maxFileSizeBytes: 3 * 1024 * 1024,
+    // Unlimited service creation: monetization is the 6 h publish window below,
+    // not the service count. Drafts are inert (no public traffic) and cheap
+    // (workbooks live in Blob, not Redis).
+    maxServices: Infinity,
+    // No monthly call cap on Free — the 6 h publish window is the constraint.
+    // (maxCallsPerMonth is display-only today; not enforced at execute time.)
+    maxCallsPerMonth: Infinity,
+    hasMcpAccess: true,
     hasAdvancedAnalytics: false,
+    publishTtlSeconds: 6 * 60 * 60, // 6 hours
   },
   pro: {
     maxFileSizeMB: 3,
     maxFileSizeBytes: 3 * 1024 * 1024,
-    maxServices: 3,
-    maxCallsPerMonth: 10000,
+    // Service count is no longer a pricing axis — plans differ by call volume,
+    // file size and permanence (paid services don't expire). Call numbers match
+    // the pricing page ("included" allotment; add-ons sold separately).
+    maxServices: Infinity,
+    maxCallsPerMonth: 1000,
     hasMcpAccess: true,
     hasAdvancedAnalytics: false,
+    publishTtlSeconds: null, // permanent
   },
   premium: {
     maxFileSizeMB: 25,
     maxFileSizeBytes: 25 * 1024 * 1024,
     maxServices: Infinity,
-    maxCallsPerMonth: Infinity,
+    maxCallsPerMonth: 10000,
     hasMcpAccess: true,
     hasAdvancedAnalytics: true,
+    publishTtlSeconds: null, // permanent
   },
 };
 

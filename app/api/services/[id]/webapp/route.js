@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
 
 // GET /api/services/[id]/webapp?token=xxx - Get service data for web app (public, token-validated for protected services)
 export async function GET(request, { params }) {
@@ -32,6 +33,16 @@ export async function GET(request, { params }) {
         { error: 'Web app not enabled for this service. Please enable it in Settings and click Save.' },
         { status: 403 }
       );
+    }
+
+    // Free-plan expiry: once a free publish window has lapsed, calculations are
+    // gated (execute returns 402), so don't serve a form that can't compute.
+    // expiresAt is set only on free publishes; paid/never-published have none.
+    if (serviceData.expiresAt) {
+      const expiresAt = parseInt(serviceData.expiresAt, 10);
+      if (Number.isFinite(expiresAt) && Date.now() >= expiresAt) {
+        return NextResponse.json(EXPIRED_PUBLISH_BODY, { status: 402 });
+      }
     }
 
     // Token is only required when the service has requireToken enabled

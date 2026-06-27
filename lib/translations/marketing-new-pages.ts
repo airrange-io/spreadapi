@@ -89,11 +89,11 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
         price: 'Free',
         priceSuffix: 'to start',
         items: [
-          '1 service on free tier',
+          'Unlimited APIs on free tier',
           '50-200ms response time',
           'Native Excel support',
           'AI/MCP included',
-          'Pro plans for more services',
+          'Pro plans keep them online 24/7',
         ],
         seeFullPricing: 'See full pricing',
       },
@@ -135,7 +135,7 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
       },
       {
         question: 'What are Google Sheets API rate limits?',
-        answer: "Google Sheets API allows 60 read requests per minute per user and 300 requests per minute per project. SpreadAPI offers significantly higher limits depending on your plan, starting from 1,000 calls/month on the free tier.",
+        answer: "Google Sheets API allows 60 read requests per minute per user and 300 requests per minute per project. SpreadAPI offers significantly higher limits, with paid plans including thousands of calls per month and a free tier that's ideal for testing.",
       },
       {
         question: 'Does SpreadAPI support AI integration?',
@@ -143,7 +143,7 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
       },
       {
         question: 'Which is cheaper for spreadsheet API use?',
-        answer: "SpreadAPI offers a free tier with 1 service. Google Sheets API is free but requires a Google Cloud project and has strict rate limits. For production use, SpreadAPI's pricing is typically lower when you factor in the infrastructure and rate limit costs of Google Sheets.",
+        answer: "SpreadAPI's free tier lets you build and test unlimited APIs (each publish stays live for 6 hours). Google Sheets API is free but requires a Google Cloud project and has strict rate limits. For production use, SpreadAPI's pricing is typically lower when you factor in the infrastructure and rate limit costs of Google Sheets.",
       },
     ],
     faqTitle: 'Frequently Asked Questions',
@@ -237,11 +237,11 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
         price: 'Kostenlos',
         priceSuffix: 'zum Start',
         items: [
-          '1 Service in der kostenlosen Stufe',
+          'Beliebig viele APIs in der kostenlosen Stufe',
           '50-200ms Antwortzeit',
           'Native Excel-Unterstuetzung',
           'KI/MCP inklusive',
-          'Pro-Plaene fuer mehr Services',
+          'Pro-Plaene halten sie dauerhaft online',
         ],
         seeFullPricing: 'Alle Preise ansehen',
       },
@@ -283,7 +283,7 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
       },
       {
         question: 'Welche Rate-Limits hat Google Sheets API?',
-        answer: 'Google Sheets API erlaubt 60 Leseanfragen pro Minute pro Benutzer und 300 Anfragen pro Minute pro Projekt. SpreadAPI bietet je nach Plan deutlich hoehere Limits, beginnend bei 1.000 Aufrufen/Monat in der kostenlosen Stufe.',
+        answer: 'Google Sheets API erlaubt 60 Leseanfragen pro Minute pro Benutzer und 300 Anfragen pro Minute pro Projekt. SpreadAPI bietet deutlich hoehere Limits: bezahlte Plaene enthalten Tausende Aufrufe pro Monat, und die kostenlose Stufe eignet sich ideal zum Testen.',
       },
       {
         question: 'Unterstuetzt SpreadAPI KI-Integration?',
@@ -291,7 +291,7 @@ export const vsGoogleSheetsPage: Record<string, VsGoogleSheetsTranslations> = {
       },
       {
         question: 'Was ist guenstiger fuer die Nutzung als Tabellen-API?',
-        answer: 'SpreadAPI bietet eine kostenlose Stufe mit 1 Service. Google Sheets API ist kostenlos, erfordert jedoch ein Google Cloud-Projekt und hat strenge Rate-Limits. Fuer den Produktionseinsatz ist SpreadAPI in der Regel guenstiger, wenn man die Infrastruktur- und Rate-Limit-Kosten von Google Sheets einberechnet.',
+        answer: 'In der kostenlosen Stufe von SpreadAPI koennen Sie beliebig viele APIs erstellen und testen (jeder Publish bleibt 6 Stunden live). Google Sheets API ist kostenlos, erfordert jedoch ein Google Cloud-Projekt und hat strenge Rate-Limits. Fuer den Produktionseinsatz ist SpreadAPI in der Regel guenstiger, wenn man die Infrastruktur- und Rate-Limit-Kosten von Google Sheets einberechnet.',
       },
     ],
     faqTitle: 'Haeufig gestellte Fragen',

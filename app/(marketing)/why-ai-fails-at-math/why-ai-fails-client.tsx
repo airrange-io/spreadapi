@@ -593,7 +593,7 @@ export default function WhyAIFailsClient({ locale = 'en' }: WhyAIFailsClientProp
                         Start Your Free Trial
                       </a>
                       <p style={{ marginTop: '20px', fontSize: '16px', color: '#374151' }}>
-                        No credit card required • 1,000 free calculations
+                        No credit card required • Free to build & test
                       </p>
                     </div>
                   </div>

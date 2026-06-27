@@ -5,6 +5,7 @@ import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimi
 import { createErrorResponse } from '@/lib/errors';
 import { parseAuthToken } from '@/utils/tokenUtils';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
+import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -77,12 +78,16 @@ export async function POST(request, { params}) {
     const isPublished = await redis.exists(`service:${serviceId}:published`);
 
     if (isPublished === 0) {
+      const expiry = await getPublishExpiry(serviceId);
+      if (expiry?.isExpired) {
+        return NextResponse.json(EXPIRED_PUBLISH_BODY, { status: 402 });
+      }
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'
       }, { status: 404 });
     }
-    
+
     // Result cache check now handled inside calculateDirect()
     // This allows all callers (route, MCP, chat) to benefit from result caching
 
@@ -215,12 +220,16 @@ export async function GET(request, { params }) {
     // Check if service exists and is published
     const isPublished = await redis.exists(`service:${serviceId}:published`);
     if (isPublished === 0) {
+      const expiry = await getPublishExpiry(serviceId);
+      if (expiry?.isExpired) {
+        return NextResponse.json(EXPIRED_PUBLISH_BODY, { status: 402 });
+      }
       return NextResponse.json({
         error: 'Not found',
         message: 'Service not found or not published'
       }, { status: 404 });
     }
-    
+
     // For GET requests, token is passed as query parameter
     // Token validation is handled by calculateDirect()
     

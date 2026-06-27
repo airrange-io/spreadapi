@@ -127,6 +127,8 @@ export async function GET(request, { params }) {
       status: {
         published: isPublished > 0,
         publishedAt: publishedData?.created || null,
+        // Free-plan publish deadline (epoch ms); null for paid/never-published.
+        expiresAt: serviceData.expiresAt ? parseInt(serviceData.expiresAt, 10) : null,
         version: publishedData?.version || null,
         calls: parseInt(publishedData?.calls || '0'),
         lastUsed: publishedData?.lastUsed || null

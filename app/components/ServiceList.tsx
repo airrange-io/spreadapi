@@ -33,6 +33,7 @@ interface Service {
   updatedAt: string;
   calls: number;
   lastUsed: string | null;
+  expiresAt?: number | null;
 }
 
 interface ServiceListProps {

@@ -3,6 +3,7 @@ import redis from '@/lib/redis';
 import { calculateDirect, logCalls } from '../../api/v1/services/[id]/execute/calculateDirect.js';
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
+import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
 
 export const maxDuration = 30;
 
@@ -465,6 +466,13 @@ export async function GET(request, { params }) {
     // Load service
     const serviceDef = await loadServiceDefinition(serviceId);
     if (!serviceDef) {
+      const expiry = await getPublishExpiry(serviceId);
+      if (expiry?.isExpired) {
+        return NextResponse.json(
+          EXPIRED_PUBLISH_BODY,
+          { status: 402, headers: CORS_HEADERS }
+        );
+      }
       return NextResponse.json(
         { success: false, error: 'Service not found or not published' },
         { status: 404, headers: CORS_HEADERS }
@@ -540,6 +548,13 @@ export async function POST(request, { params }) {
     // Load service
     const serviceDef = await loadServiceDefinition(serviceId);
     if (!serviceDef) {
+      const expiry = await getPublishExpiry(serviceId);
+      if (expiry?.isExpired) {
+        return NextResponse.json(
+          EXPIRED_PUBLISH_BODY,
+          { status: 402, headers: CORS_HEADERS }
+        );
+      }
       return NextResponse.json(
         { success: false, error: 'Service not found or not published' },
         { status: 404, headers: CORS_HEADERS }

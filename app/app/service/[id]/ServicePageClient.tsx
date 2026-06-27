@@ -10,6 +10,7 @@ import type { Template } from '@/lib/templates';
 import ParametersPanel from './components/ParametersPanel';
 import PrivateHeaderActions from './components/PrivateHeaderActions';
 import ErrorBoundary from './components/ErrorBoundary';
+import PublishCountdown from './components/PublishCountdown';
 
 // Lazy load views
 const WorkbookView = dynamic(() => import('./views/WorkbookView'), {
@@ -1393,12 +1394,17 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         window.localStorage.setItem('refreshServiceList', Date.now().toString());
       }
 
-      // Update the service status
+      // Update the service status. On the Free plan the publish is ephemeral —
+      // mirror the server-side TTL into expiresAt so the countdown badge shows
+      // immediately without a reload. Paid plans (publishTtlSeconds null) → null.
       setServiceStatus(prevStatus => ({
         ...prevStatus,
         published: true,
         status: 'published',
         publishedAt: new Date().toISOString(),
+        expiresAt: licenseLimits?.publishTtlSeconds
+          ? Date.now() + licenseLimits.publishTtlSeconds * 1000
+          : null,
         useCaching: apiConfig.enableCaching,
         needsToken: apiConfig.requireToken,
         fileSize: result.fileSize
@@ -1512,12 +1518,16 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         window.localStorage.setItem('refreshServiceList', Date.now().toString());
       }
 
-      // Update the service status
+      // Update the service status. Re-publishing extends the Free live window,
+      // so refresh expiresAt for the countdown badge (null for paid plans).
       setServiceStatus(prevStatus => ({
         ...prevStatus,
         published: true,
         status: 'published',
         publishedAt: new Date().toISOString(),
+        expiresAt: licenseLimits?.publishTtlSeconds
+          ? Date.now() + licenseLimits.publishTtlSeconds * 1000
+          : null,
         useCaching: apiConfig.enableCaching,
         needsToken: apiConfig.requireToken,
         fileSize: result.fileSize
@@ -2871,7 +2881,9 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         }}
                         type="primary"
                       >
-                        {t('service.published')} <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
+                        {t('service.published')}
+                        <PublishCountdown expiresAt={serviceStatus?.expiresAt} />
+                        <DownOutlined style={{ fontSize: 10, marginLeft: 4 }} />
                       </Button>
                     </Dropdown>
                   ) : (

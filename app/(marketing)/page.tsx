@@ -79,7 +79,7 @@ export default function ProductPage() {
     "offers": {
       "@type": "Offer",
       "price": "0",
-      "priceCurrency": "USD",
+      "priceCurrency": "EUR",
       "availability": "https://schema.org/InStock"
     },
     "description": "Transform Excel spreadsheets into REST APIs instantly. Perfect for AI integration.",

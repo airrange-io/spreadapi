@@ -166,7 +166,7 @@ export default function DocsPageClient() {
                           <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Step 1: Sign Up</h3>
                           <p style={{ fontSize: '16px', color: '#666', marginBottom: '16px' }}>
                             Create your account at <a href="https://spreadapi.io" style={{ color: '#9333EA' }}>spreadapi.io</a>.
-                            Start with the free tier (100 API calls/month).
+                            Start on the free tier — create unlimited APIs, each publish stays live for 6 hours.
                           </p>
                         </div>
 
@@ -805,9 +805,10 @@ Claude: "Based on your Excel calculations:
                             <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Free</h3>
                             <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€0<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 1 Excel API</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 100 API calls/month</li>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 1 MB</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Create unlimited Excel APIs</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Each publish stays live for 6 hours</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ AI Integration (MCP)</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 3 MB</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ Basic support</li>
                             </ul>
                           </div>
@@ -821,7 +822,7 @@ Claude: "Based on your Excel calculations:
                             <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Pro</h3>
                             <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€99<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ 3 Excel APIs</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Services stay online permanently</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ 1,000 API calls/month included</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 3 MB</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ AI Integration (MCP)</li>
@@ -838,7 +839,7 @@ Claude: "Based on your Excel calculations:
                             <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Premium</h3>
                             <p style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '16px' }}>€299<span style={{ fontSize: '16px', fontWeight: 'normal' }}>/month</span></p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Unlimited Excel APIs</li>
+                              <li style={{ marginBottom: '8px', color: '#666' }}>✓ Services stay online permanently</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ 10,000 API calls/month included</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ Max file size: 25 MB</li>
                               <li style={{ marginBottom: '8px', color: '#666' }}>✓ AI Integration (MCP)</li>

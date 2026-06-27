@@ -102,7 +102,17 @@
       "WebFetch(domain:devblogs.microsoft.com)",
       "Bash(pnpm install:*)",
       "Bash(git --no-pager diff main...livedata -- \"app/app/service/[id]/ServicePageClient.tsx\")",
-      "Bash(git --no-pager diff --stat -- app/docs/docs-page-client.tsx)"
+      "Bash(git --no-pager diff --stat -- app/docs/docs-page-client.tsx)",
+      "Bash(cd *)",
+      "Bash(NODE_OPTIONS='--max-old-space-size=8192' npm run build)",
+      "Bash(git --no-pager diff --stat)",
+      "Bash(sed -n '1,12p' projects/run/app/[id]/route.js)",
+      "Bash(sed -n '94,112p' projects/run/app/[id]/route.js)",
+      "Bash(sed -n '210,222p' projects/run/app/[id]/route.js)",
+      "Bash(git --no-pager diff --stat -- 'app/d/[id]/route.js' 'projects/run/app/[id]/route.js' 'app/api/chat/route.js')",
+      "Bash(git --no-pager diff --stat -- app/api/chat/route.js)",
+      "Bash(git --no-pager diff -- lib/publishService.js app/api/services/[id]/webapp/route.js app/api/webhooks/stripe/route.js 'app/app/service/[id]/components/PublishCountdown.tsx')",
+      "Bash(awk '/\\\\.header-button[ ,{]/{found=NR} found && NR>=found && NR<=found+12{print NR\": \"$0} /^}/ && found && NR>found{found=0}' components/Navigation.css)"
     ],
     "deny": []
   }

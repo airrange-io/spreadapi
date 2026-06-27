@@ -78,8 +78,11 @@
   padding: 8px;
 }
 
-/* Mobile Login button - hidden by default, shows when burger menu is visible */
-.show-mobile-only {
+/* Mobile Login button - hidden by default, shows when burger menu is visible.
+   Scoped to .header-button so it beats product.css's `.header-button { display:
+   inline-flex }` regardless of stylesheet load order (equal specificity would
+   otherwise let product.css win and show both buttons on desktop). */
+.header-button.show-mobile-only {
   display: none;
 }
 
@@ -98,7 +101,7 @@
   }
 
   /* Show Login button when burger menu is visible */
-  .show-mobile-only {
+  .header-button.show-mobile-only {
     display: inline-flex;
   }
 }

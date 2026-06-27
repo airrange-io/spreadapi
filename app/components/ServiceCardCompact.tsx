@@ -5,6 +5,7 @@ import { App, Dropdown } from 'antd';
 import { MoreOutlined, DeleteOutlined, CopyOutlined, ApiOutlined, ClockCircleOutlined, BarChartOutlined, LoadingOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 import type { MenuProps } from 'antd';
+import { formatRemaining } from '@/lib/formatRemaining';
 
 interface Service {
   id: string;
@@ -15,6 +16,7 @@ interface Service {
   updatedAt: string;
   calls: number;
   lastUsed: string | null;
+  expiresAt?: number | null;
 }
 
 interface ServiceCardCompactProps {
@@ -215,6 +217,20 @@ export const ServiceCardCompact: React.FC<ServiceCardCompactProps> = ({
                 <span>{timeAgo(displayDate, locale)}</span>
               </>
             )}
+            {(() => {
+              // Free-plan publish window indicator (no live ticking in the list —
+              // recomputed on each refresh). Null for paid/never-published.
+              const remaining = formatRemaining(service.expiresAt);
+              if (!remaining) return null;
+              return (
+                <>
+                  <span style={{ color: '#d9d9d9' }}>|</span>
+                  <span style={{ color: remaining.urgent ? '#fa8c16' : '#8c8c8c', fontWeight: 500 }}>
+                    {remaining.expired ? 'Expired' : `${remaining.label} left`}
+                  </span>
+                </>
+              );
+            })()}
             {service.description && (
               <>
                 <span style={{ color: '#d9d9d9' }}>|</span>
