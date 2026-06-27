@@ -4,6 +4,7 @@ import { calculateDirect, logCalls } from '../execute/calculateDirect';
 import { checkRateLimit, getRateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
 import { createErrorResponse } from '@/lib/errors';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
+import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
 
 // Vercel timeout configuration - Critical for batch processing!
 export const maxDuration = 30;
@@ -57,6 +58,10 @@ export async function POST(
     // Check service exists
     const isPublished = await redis.exists(`service:${serviceId}:published`) as number;
     if (isPublished === 0) {
+      const expiry = await getPublishExpiry(serviceId);
+      if (expiry?.isExpired) {
+        return NextResponse.json(EXPIRED_PUBLISH_BODY, { status: 402 });
+      }
       const { body: errorBody, status } = createErrorResponse('NOT_FOUND');
       return NextResponse.json(errorBody, { status });
     }
