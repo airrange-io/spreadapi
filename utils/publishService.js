@@ -323,6 +323,22 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
     const sheetName = addressParts[0];
     const cellRef = addressParts[1];
 
+    // Capture the current computed value as a real example output (single cells
+    // only — range outputs are described by their shape in the descriptor). This
+    // gives any AI a concrete sample of what comes back, not just a declared type.
+    let value = output.value || '';
+    if (cellRef && !cellRef.includes(':') && output.row != null && output.col != null) {
+      try {
+        const worksheet = spreadInstance.getSheetFromName(sheetName);
+        if (worksheet) {
+          const fresh = worksheet.getValue(output.row, output.col);
+          if (fresh !== undefined && fresh !== null) value = fresh;
+        }
+      } catch (e) {
+        // Keep the stored value if reading the live cell fails.
+      }
+    }
+
     return {
       id: output.id,
       address: output.address,
@@ -331,7 +347,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       row: output.row,
       col: output.col,
       type: output.type,
-      value: output.value || '',
+      value,
       direction: 'output',
       ...(output.description && { description: output.description }),
       ...(output.aiPresentationHint && { aiPresentationHint: output.aiPresentationHint }),
