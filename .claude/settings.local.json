@@ -118,7 +118,9 @@
       "Bash(git reset *)",
       "Bash(git restore *)",
       "Bash(git merge *)",
-      "WebFetch(domain:www.ekamoira.com)"
+      "WebFetch(domain:www.ekamoira.com)",
+      "Bash(git --no-pager diff --name-only)",
+      "Bash(git --no-pager diff --name-only main HEAD)"
     ],
     "deny": []
   }
