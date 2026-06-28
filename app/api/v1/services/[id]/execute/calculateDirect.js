@@ -38,9 +38,20 @@ const tableSheetCache = require('@/lib/tableSheetDataCache');
 // instead of a raw object. Recurses into cell ranges (1D/2D arrays).
 function normalizeCellError(value) {
   if (Array.isArray(value)) {
-    return value.map(normalizeCellError);
+    // Scan in place; only allocate a copy if an error cell is actually present.
+    // The overwhelming common case (no error cells) returns the original array
+    // with zero allocation, so large range outputs aren't copied on every call.
+    let normalized = null;
+    for (let i = 0; i < value.length; i++) {
+      const nv = normalizeCellError(value[i]);
+      if (nv !== value[i]) {
+        if (normalized === null) normalized = value.slice();
+        normalized[i] = nv;
+      }
+    }
+    return normalized === null ? value : normalized;
   }
-  if (value && typeof value === 'object' && ('_calcError' in value || '_code' in value)) {
+  if (value !== null && typeof value === 'object' && ('_calcError' in value || '_code' in value)) {
     return typeof value._calcError === 'string' && value._calcError ? value._calcError : 'Error';
   }
   return value;
