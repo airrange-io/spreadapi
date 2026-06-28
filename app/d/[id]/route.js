@@ -4,6 +4,7 @@ import { calculateDirect, logCalls } from '../../api/v1/services/[id]/execute/ca
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
 import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
+import { getIsSingleCellFromAddress } from '@/utils/helper';
 
 export const maxDuration = 30;
 
@@ -116,6 +117,28 @@ function buildDiscoveryResponse(serviceDef, endpoint, token) {
     };
     if (output.description) out.description = output.description;
     if (output.formatString) out.formatString = output.formatString;
+
+    // Range outputs return an array/table of cell values, not a single scalar.
+    // The declared `type` can be wrong for these (it describes a cell, not the
+    // shape), so derive the real shape from the address and override the type
+    // accordingly — an AI must know it's getting an array, not a string.
+    if (output.address && !getIsSingleCellFromAddress(output.address)) {
+      out.type = 'array';
+      if (output.rowCount && output.colCount) {
+        out.shape = { rows: output.rowCount, cols: output.colCount };
+        if (output.rowCount > 1 && output.colCount > 1) out.type = 'table';
+      }
+      out.note =
+        'This output is a cell range — it returns an array of cell values' +
+        (out.shape ? ` (${out.shape.rows}×${out.shape.cols})` : '') +
+        ', not a single value. Each cell may be a number, string, or boolean.';
+    }
+
+    // Real example value captured at publish time — the single most useful hint
+    // for an AI: a concrete sample of what this output actually returns.
+    if (output.value !== undefined && output.value !== null && output.value !== '') {
+      out.example = output.value;
+    }
     return out;
   });
 
@@ -174,6 +197,10 @@ function buildDiscoveryResponse(serviceDef, endpoint, token) {
     `${endpoint}?action=calculate&${getParams}${tokenParam}`,
   ];
 
+  // Same service, exposed as a native MCP server (derive origin from endpoint,
+  // which is `${origin}/d/${serviceId}`).
+  const mcpUrl = `${endpoint.replace(`/d/${serviceId}`, '')}/api/mcp/service/${serviceId}`;
+
   // Build the response
   const response = {
     api: 'SpreadAPI',
@@ -194,12 +221,21 @@ function buildDiscoveryResponse(serviceDef, endpoint, token) {
       outputs: outputDetails,
     },
     actions,
+    mcp: {
+      url: mcpUrl,
+      transport: 'streamable-http',
+      capabilities: ['tools'],
+      auth: needsToken
+        ? { type: 'oauth2', description: 'Authorize via the connector OAuth flow, or pass ?token=YOUR_TOKEN for direct REST calls.' }
+        : { type: 'none' },
+      note: 'This same service is also available as a native MCP server. If the user wants persistent, native tool access instead of one-off REST calls, suggest they add this URL as a custom connector (e.g. in Claude: Settings → Connectors → Add custom connector).',
+    },
     responseFormat: {
       success: {
         service: { id: '...', name: '...', description: '...' },
         inputs: [{ name: '...', title: '...', value: '...' }],
         outputs: [{ name: '...', title: '...', value: '...', formatString: '...' }],
-        metadata: { executionTime: '...ms', cached: 'true|false' },
+        metadata: { executionTime: 123, cached: false },
       },
       error: { success: false, error: 'Description of what went wrong' },
     },
@@ -266,13 +302,15 @@ function buildInstructions(serviceDef, parameterDetails) {
     instructions.push(`VALUE RANGE for "${p.name}": ${parts.join(', ')}.`);
   });
 
-  // ── Output formatting ──
-  instructions.push(
-    'OUTPUT FORMATTING: Each output includes a "formatString" field (Excel-style format like "€#,##0.00" or "0.00%"). ' +
-    'ALWAYS use it to format numbers for display. Example: value 265.53 with formatString "€#,##0.00" → display as "€265.53". ' +
-    'For percentage formats like "0.00%", multiply the decimal value by 100 (0.0725 → "7.25%"). ' +
-    'Use the "title" field as the label, not the internal parameter name.'
-  );
+  // ── Output formatting (only when at least one output actually carries a format) ──
+  if (serviceDef.outputs?.some(o => o.formatString)) {
+    instructions.push(
+      'OUTPUT FORMATTING: Outputs may include a "formatString" field (Excel-style format like "€#,##0.00" or "0.00%"). ' +
+      'When present, use it to format numbers for display. Example: value 265.53 with formatString "€#,##0.00" → display as "€265.53". ' +
+      'For percentage formats like "0.00%", multiply the decimal value by 100 (0.0725 → "7.25%"). ' +
+      'Use the "title" field as the label, not the internal parameter name.'
+    );
+  }
 
   // ── Parameter naming ──
   instructions.push(
@@ -305,6 +343,13 @@ function buildInstructions(serviceDef, parameterDetails) {
     'what went wrong, and allowed values. Fix the issue and retry automatically. ' +
     'Common errors: missing required parameter, value out of range, wrong type, invalid enum value. ' +
     'If results seem absurd (astronomical numbers), you likely sent a percentage as a whole number — divide by 100 and retry.'
+  );
+
+  // ── MCP upgrade path ──
+  instructions.push(
+    'MCP AVAILABLE: This service is also exposed as a native MCP server (see the top-level "mcp" field). ' +
+    'If the user would benefit from persistent, native tool access rather than one-off REST calls, ' +
+    'proactively offer to set it up and give them the mcp.url to add as a custom connector.'
   );
 
   // ── AI-specific guidance from service creator ──
