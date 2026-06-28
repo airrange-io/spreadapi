@@ -9,6 +9,7 @@ import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
 import { getSingleServiceInstructions } from '../../../../../lib/mcp-ai-instructions.js';
 import { normalizeInputKeys } from '../../../../../lib/inputNormalizer.js';
 import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '../../../../../lib/publishExpiry.js';
+import { validateServiceTokenString } from '../../../../../utils/tokenAuth.js';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -148,46 +149,6 @@ async function validateOAuthToken(token, serviceId) {
 }
 
 /**
- * Validate service token (direct API token)
- */
-async function validateServiceToken(token, serviceId) {
-  try {
-    // Get service data to check if token is valid
-    const serviceData = await redis.hGetAll(`service:${serviceId}:published`);
-
-    if (!serviceData || Object.keys(serviceData).length === 0) {
-      return {
-        valid: false,
-        error: 'Service not found or not published'
-      };
-    }
-
-    const needsToken = serviceData.needsToken === 'true';
-    const tokens = serviceData.tokens ? serviceData.tokens.split(',') : [];
-
-    if (needsToken && !tokens.includes(token)) {
-      return {
-        valid: false,
-        error: 'Invalid service token'
-      };
-    }
-
-    return {
-      valid: true,
-      userId: serviceData.tenantId,
-      tokenName: 'Service Token',
-      isServiceToken: true
-    };
-  } catch (error) {
-    console.error('[MCP Auth] Service token validation error:', error);
-    return {
-      valid: false,
-      error: 'Token validation failed'
-    };
-  }
-}
-
-/**
  * Unified authentication middleware for service endpoint
  */
 async function authenticateRequest(request, serviceId) {
@@ -247,8 +208,9 @@ async function authenticateRequest(request, serviceId) {
     // OAuth token (ChatGPT and Claude Desktop)
     validation = await validateOAuthToken(token, serviceId);
   } else {
-    // Assume it's a service token (direct API token)
-    validation = await validateServiceToken(token, serviceId);
+    // Assume it's a service token (direct API token) — validated against the
+    // shared hashed-token store (same as REST v1 and /d/).
+    validation = await validateServiceTokenString(token, serviceId);
   }
 
   if (!validation.valid) {
