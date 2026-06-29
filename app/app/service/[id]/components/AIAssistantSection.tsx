@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Space, Input, Select, Button, Modal, Typography, Divider } from 'antd';
+import { Space, Input, Select, Button, Modal, Typography, Divider, Checkbox } from 'antd';
 import { BulbOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from '@/lib/i18n';
 
@@ -123,12 +123,16 @@ interface AIAssistantSectionProps {
   aiUsageExamples: string[];
   aiTags: string[];
   category: string;
+  inputs?: any[];
+  outputs?: any[];
   isLoading?: boolean;
   onAiDescriptionChange: (value: string) => void;
   onAiUsageGuidanceChange: (value: string) => void;
   onAiUsageExamplesChange: (values: string[]) => void;
   onAiTagsChange: (values: string[]) => void;
   onCategoryChange: (value: string) => void;
+  onInputsChange?: (inputs: any[]) => void;
+  onOutputsChange?: (outputs: any[]) => void;
 }
 
 const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
@@ -138,16 +142,22 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
   aiUsageExamples,
   aiTags,
   category,
+  inputs = [],
+  outputs = [],
   isLoading = false,
   onAiDescriptionChange,
   onAiUsageGuidanceChange,
   onAiUsageExamplesChange,
   onAiTagsChange,
   onCategoryChange,
+  onInputsChange,
+  onOutputsChange,
 }) => {
   const { t } = useTranslation();
   const [generating, setGenerating] = useState(false);
   const [suggestions, setSuggestions] = useState<any>(null);
+  // Which per-parameter descriptions the user wants to apply (keyed by `direction:name`).
+  const [paramSelections, setParamSelections] = useState<Record<string, boolean>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
   const [currentQuestions, setCurrentQuestions] = useState<string[]>([]);
@@ -195,6 +205,12 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
       } else {
         // AI has final suggestions
         setSuggestions(data.suggestions);
+        // Pre-select every proposed per-parameter description (user can uncheck).
+        const selections: Record<string, boolean> = {};
+        (data.suggestions?.parameterDescriptions || []).forEach((p: any) => {
+          selections[`${p.direction}:${p.name}`] = true;
+        });
+        setParamSelections(selections);
         setShowPreview(true);
         // Reset conversation
         setConversationHistory([]);
@@ -229,12 +245,33 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
   const handleApplySuggestions = () => {
     if (!suggestions) return;
 
-    // Apply all suggestions
+    // Apply all service-level suggestions
     onAiDescriptionChange(suggestions.aiDescription);
     onAiUsageGuidanceChange(suggestions.aiUsageGuidance);
     onAiUsageExamplesChange(suggestions.aiUsageExamples);
     onAiTagsChange(suggestions.aiTags);
     onCategoryChange(suggestions.category);
+
+    // Apply only the checked per-parameter descriptions, matched by name + direction.
+    const proposed = suggestions.parameterDescriptions || [];
+    if (proposed.length > 0) {
+      const applyTo = (list: any[], direction: 'input' | 'output') => {
+        let changed = false;
+        const next = (list || []).map((param) => {
+          const match = proposed.find((p: any) => p.direction === direction && p.name === param.name);
+          if (match && paramSelections[`${direction}:${param.name}`] !== false) {
+            changed = true;
+            return { ...param, description: match.description };
+          }
+          return param;
+        });
+        return changed ? next : null;
+      };
+      const newInputs = applyTo(inputs, 'input');
+      const newOutputs = applyTo(outputs, 'output');
+      if (newInputs && onInputsChange) onInputsChange(newInputs);
+      if (newOutputs && onOutputsChange) onOutputsChange(newOutputs);
+    }
 
     setShowPreview(false);
     Modal.success({
@@ -432,6 +469,37 @@ const AIAssistantSection: React.FC<AIAssistantSectionProps> = ({
                 {suggestions.category}
               </Typography.Paragraph>
             </div>
+
+            {suggestions.parameterDescriptions?.length > 0 && (
+              <div>
+                <Typography.Title level={5} style={{ marginBottom: 8 }}>{t('aiAssistant.parameterDescriptionsLabel')}</Typography.Title>
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 8 }}>{t('aiAssistant.parameterDescriptionsHint')}</div>
+                <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+                  {suggestions.parameterDescriptions.map((p: any) => {
+                    const key = `${p.direction}:${p.name}`;
+                    const list = p.direction === 'input' ? inputs : outputs;
+                    const existing = (list || []).find((item: any) => item.name === p.name)?.description || '';
+                    return (
+                      <div key={key} style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
+                        <Checkbox
+                          checked={paramSelections[key] !== false}
+                          onChange={(e) => setParamSelections(prev => ({ ...prev, [key]: e.target.checked }))}
+                        >
+                          <span style={{ fontWeight: 500 }}>{p.name}</span>
+                          <span style={{ color: '#8c8c8c', fontSize: 12, marginLeft: 6 }}>({p.direction})</span>
+                        </Checkbox>
+                        <div style={{ marginTop: 6, marginLeft: 24 }}>{p.description}</div>
+                        {existing && (
+                          <div style={{ marginTop: 4, marginLeft: 24, fontSize: 12, color: '#d46b08' }}>
+                            {t('aiAssistant.replacesExisting')}: {existing}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </Space>
+              </div>
+            )}
 
             {suggestions.reasoning && (
               <div style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 6, border: '1px solid #adc6ff' }}>

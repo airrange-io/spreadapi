@@ -78,12 +78,16 @@ const AgentsView: React.FC<AgentsViewProps> = ({
             aiUsageExamples={apiConfig?.aiUsageExamples || []}
             aiTags={apiConfig?.aiTags || []}
             category={apiConfig?.category || ''}
+            inputs={apiConfig?.inputs || []}
+            outputs={apiConfig?.outputs || []}
             isLoading={isLoading}
             onAiDescriptionChange={(value) => onConfigChange?.({ aiDescription: value })}
             onAiUsageGuidanceChange={(value) => onConfigChange?.({ aiUsageGuidance: value })}
             onAiUsageExamplesChange={(values) => onConfigChange?.({ aiUsageExamples: values })}
             onAiTagsChange={(values) => onConfigChange?.({ aiTags: values })}
             onCategoryChange={(value) => onConfigChange?.({ category: value })}
+            onInputsChange={(value) => onConfigChange?.({ inputs: value })}
+            onOutputsChange={(value) => onConfigChange?.({ outputs: value })}
           />
         );
 
