@@ -120,7 +120,12 @@
       "Bash(git merge *)",
       "WebFetch(domain:www.ekamoira.com)",
       "Bash(git --no-pager show ba3d667 -- \"app/api/mcp/service/[serviceId]/route.js\")",
-      "Bash(git --no-pager show ba3d667 -- utils/tokenAuth.js)"
+      "Bash(git --no-pager show ba3d667 -- utils/tokenAuth.js)",
+      "Bash(pnpm remove *)",
+      "WebFetch(domain:claude.com)",
+      "WebFetch(domain:www.morphllm.com)",
+      "Bash(echo \"ai: $\\(npm view ai version \\)\")",
+      "Bash(echo \"@ai-sdk/openai: $\\(npm view @ai-sdk/openai version \\)\")"
     ],
     "deny": []
   }
