@@ -144,7 +144,41 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
   try {
     // Note: logCalls is now called from route.js with after() for Vercel compatibility
 
-    // L1: Check result cache FIRST (fastest - complete result cached)
+    // Get API definition BEFORE any cache lookup.
+    // Auth must be enforced before serving anything (including cached results):
+    // a result cached while the service was public must not be returned without a
+    // valid token. getApiDefinition is process-cached, so this is cheap on the hot path.
+    const apiDataStart = Date.now();
+    const apiDefinition = await getApiDefinition(serviceId, apiToken);
+    const timeApiData = Date.now() - apiDataStart;
+
+    if (!apiDefinition || apiDefinition.error) {
+      return { error: apiDefinition?.error || 'Service not found' };
+    }
+
+    // Check token authentication if required (BEFORE the result cache).
+    // Skip validation if request is from authenticated WebApp.
+    if ((apiDefinition.needsToken || apiDefinition.requireToken) && !isWebAppAuthenticated) {
+      const mockRequest = {
+        headers: {
+          get: (name) => {
+            if (name.toLowerCase() === 'authorization' && apiToken) {
+              return `Bearer ${apiToken}`;
+            }
+            return null;
+          }
+        },
+        url: `http://localhost?token=${apiToken || ''}`
+      };
+
+      const tokenValidation = await validateServiceToken(mockRequest, serviceId);
+
+      if (!tokenValidation.valid) {
+        return { error: tokenValidation.error || 'Authentication required' };
+      }
+    }
+
+    // L1: Check result cache (fastest - complete result cached)
     // This is the express lane: if exact same calculation was done before, return it immediately
     // Uses Redis Hash: all results for a service stored in single hash for efficient invalidation
     // nocdn = bypass HTTP/edge cache only (doesn't affect Redis caching)
@@ -196,37 +230,6 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
 
     // Result cache miss - track it (using analytics queue for better performance)
     analyticsQueue.track(serviceId, 'cache:misses', 1);
-
-    // Get API definition
-    const apiDataStart = Date.now();
-    const apiDefinition = await getApiDefinition(serviceId, apiToken);
-    const timeApiData = Date.now() - apiDataStart;
-
-    if (!apiDefinition || apiDefinition.error) {
-      return { error: apiDefinition?.error || 'Service not found' };
-    }
-
-    // Check token authentication if required
-    // Skip validation if request is from authenticated WebApp
-    if ((apiDefinition.needsToken || apiDefinition.requireToken) && !isWebAppAuthenticated) {
-      const mockRequest = {
-        headers: {
-          get: (name) => {
-            if (name.toLowerCase() === 'authorization' && apiToken) {
-              return `Bearer ${apiToken}`;
-            }
-            return null;
-          }
-        },
-        url: `http://localhost?token=${apiToken || ''}`
-      };
-
-      const tokenValidation = await validateServiceToken(mockRequest, serviceId);
-
-      if (!tokenValidation.valid) {
-        return { error: tokenValidation.error || 'Authentication required' };
-      }
-    }
 
     // Get the file JSON
     const fileJson = apiDefinition?.fileJson ?? {};

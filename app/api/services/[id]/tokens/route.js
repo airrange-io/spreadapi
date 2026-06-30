@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 import { generateToken, generateTokenId, hashToken } from '@/utils/tokenUtils';
+import { applyTokenRequirement } from '@/lib/tokenRequirement';
 
 
 // GET /api/services/[id]/tokens - List all tokens for a service
@@ -9,68 +10,50 @@ export async function GET(request, { params }) {
   const { id } = resolvedParams;
   
   try {
-    console.time(`[TOKENS] Total time for service ${id}`);
-    
     // Get user ID from headers (set by middleware)
     const currentUserId = request.headers.get('x-user-id');
-    
-    console.log(`[TOKENS] Current user ID: ${currentUserId}, Service ID: ${id}`);
 
     if (!currentUserId) {
-      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     // Check if service exists and user owns it - fetch only userId field
-    console.time(`[TOKENS] Check service ownership`);
     const serviceUserId = await redis.hGet(`service:${id}`, 'userId');
-    console.timeEnd(`[TOKENS] Check service ownership`);
 
     if (!serviceUserId) {
-      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ error: 'Service not found' }, { status: 404 });
     }
-    
-    console.log(`[TOKENS] Service owner: ${serviceUserId}, Current user: ${currentUserId}`);
-    
+
     // Verify ownership
     if (serviceUserId !== currentUserId) {
-      console.log(`[TOKENS] Access denied. Owner: ${serviceUserId}, User: ${currentUserId}`);
-      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-    
+
     // Get all token IDs for this service
-    console.time(`[TOKENS] Get token IDs`);
     const tokenIds = await redis.sMembers(`service:${id}:tokens`);
-    console.timeEnd(`[TOKENS] Get token IDs`);
-    
+
     // Early return if no tokens
     if (tokenIds.length === 0) {
-      console.timeEnd(`[TOKENS] Total time for service ${id}`);
       return NextResponse.json({ tokens: [] });
     }
-    
+
     // Use multi for better performance
-    console.time(`[TOKENS] Fetch all token data`);
     const multi = redis.multi();
-    
+
     tokenIds.forEach(tokenId => {
       multi.hGetAll(`token:${tokenId}`);
     });
-    
+
     const results = await multi.exec();
-    console.timeEnd(`[TOKENS] Fetch all token data`);
-    
+
     // Process token data
-    console.time(`[TOKENS] Process token data`);
     const tokens = results
       .map((tokenData, index) => {
         if (!tokenData || Object.keys(tokenData).length === 0) return null;
-        
+
         // Don't return the actual token hash or scopes
         const { tokenHash, scopes, ...safeData } = tokenData;
 
@@ -84,19 +67,11 @@ export async function GET(request, { params }) {
         };
       })
       .filter(token => token !== null);
-    console.timeEnd(`[TOKENS] Process token data`);
-    
-    console.timeEnd(`[TOKENS] Total time for service ${id}`);
+
     return NextResponse.json({ tokens });
-    
+
   } catch (error) {
     console.error('Error listing tokens:', error);
-    // Clean up any running timers
-    try {
-      console.timeEnd(`[TOKENS] Total time for service ${id}`);
-    } catch (e) {
-      // Timer might not be running
-    }
     return NextResponse.json(
       { error: 'Failed to list tokens' },
       { status: 500 }
@@ -173,9 +148,25 @@ export async function POST(request, { params }) {
     
     // Create hash lookup for quick token validation
     multi.set(`token:hash:${tokenHash}`, tokenId);
-    
-    await multi.exec();
-    
+
+    // Read the resulting cardinality inside the same transaction so concurrent
+    // creates can't both miss the 0->1 transition (Redis runs each MULTI atomically).
+    multi.sCard(`service:${id}:tokens`);
+
+    const results = await multi.exec();
+    const tokenCount = results[results.length - 1];
+
+    // If this is the first token, enable the token requirement automatically
+    // and propagate it to the live (published) service immediately. Fail-closed:
+    // creating a token should protect the API without a manual save/re-publish.
+    try {
+      if (tokenCount === 1) {
+        await applyTokenRequirement(id, true);
+      }
+    } catch (reqError) {
+      console.error('Failed to auto-enable token requirement:', reqError);
+    }
+
     // Return the token only once (user must save it)
     return NextResponse.json({
       id: tokenId,

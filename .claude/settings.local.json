@@ -127,7 +127,8 @@
       "Bash(echo \"ai: $\\(npm view ai version \\)\")",
       "Bash(echo \"@ai-sdk/openai: $\\(npm view @ai-sdk/openai version \\)\")",
       "WebFetch(domain:byteiota.com)",
-      "WebFetch(domain:registry.npmjs.org)"
+      "WebFetch(domain:registry.npmjs.org)",
+      "Read(//tmp/**)"
     ],
     "deny": []
   }

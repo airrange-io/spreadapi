@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
+import { applyTokenRequirement } from '@/lib/tokenRequirement';
 
 // DELETE /api/services/[id]/tokens/[tokenId] - Revoke a token
 export async function DELETE(request, { params }) {
@@ -52,12 +53,28 @@ export async function DELETE(request, { params }) {
     if (tokenData.tokenHash) {
       multi.del(`token:hash:${tokenData.tokenHash}`);
     }
-    
-    await multi.exec();
-    
-    return NextResponse.json({ 
+
+    // Read the resulting cardinality inside the same transaction so concurrent
+    // deletes can't both miss the 1->0 transition (Redis runs each MULTI atomically).
+    multi.sCard(`service:${id}:tokens`);
+
+    const results = await multi.exec();
+    const remaining = results[results.length - 1];
+
+    // If that was the last token, remove the token requirement and open the live
+    // service immediately (symmetric with token creation). The UI warns the user
+    // about this while exactly one token remains.
+    try {
+      if (remaining === 0) {
+        await applyTokenRequirement(id, false);
+      }
+    } catch (reqError) {
+      console.error('Failed to auto-disable token requirement:', reqError);
+    }
+
+    return NextResponse.json({
       success: true,
-      message: 'Token revoked successfully' 
+      message: 'Token revoked successfully'
     });
     
   } catch (error) {

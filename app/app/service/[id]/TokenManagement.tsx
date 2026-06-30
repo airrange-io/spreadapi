@@ -350,6 +350,24 @@ const TokenManagement = React.forwardRef<{ refreshTokens: () => Promise<void> },
             )}
           </Text>
         </div>
+
+        {/* Warning when only one token is left: deleting it removes the requirement */}
+        {tokens.length === 1 && (
+          <div style={{
+            marginTop: 12,
+            padding: '14px 16px',
+            background: '#FFF7E6',
+            borderRadius: 10,
+            border: '1px solid #FFE0A3',
+          }}>
+            <Text style={{ fontSize: 13, lineHeight: 1.6, color: '#8a6d3b' }}>
+              <InfoCircleOutlined style={{ marginRight: 8, color: '#E8A33D' }} />
+              {locale === 'de'
+                ? 'Dies ist der letzte Token. Wird er gelöscht, entfällt die Token-Pflicht und diese API ist sofort wieder öffentlich erreichbar.'
+                : 'This is the last token. Deleting it removes the token requirement and makes this API publicly accessible again immediately.'}
+            </Text>
+          </div>
+        )}
       </div>
 
       {/* Create token modal */}

@@ -16,6 +16,17 @@ export function getApiDefinitionCacheStats() {
   };
 }
 
+// Clear the process-level API definition cache so a changed published service
+// (e.g. token requirement toggled) takes effect immediately within this instance.
+// Pass an apiId to clear a single entry, or nothing to clear all.
+export function clearApiDefinitionCache(apiId) {
+  if (apiId) {
+    apiDefinitionCache.delete(apiId);
+  } else {
+    apiDefinitionCache.clear();
+  }
+}
+
 export async function getApiDefinition(apiId, apiToken) {
   const perfStart = Date.now();
   try {

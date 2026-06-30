@@ -3107,8 +3107,14 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                           isLoading={!configLoaded}
                           hasUnsavedChanges={configHasChanges}
                           onRequireTokenChange={(value) => {
+                            // The token requirement is persisted server-side by the
+                            // token create/delete routes (and applied to the live
+                            // service immediately). Mirror it into local state without
+                            // marking the config dirty by moving both current and saved
+                            // baselines together.
                             if (apiConfig.requireToken !== value) {
-                              handleConfigChange({ requireToken: value });
+                              setApiConfig(prev => ({ ...prev, requireToken: value }));
+                              setSavedConfig(prev => ({ ...prev, requireToken: value }));
                             }
                           }}
                           onTokenCountChange={setTokenCount}
