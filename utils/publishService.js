@@ -3,7 +3,7 @@
 
 import { upload } from '@vercel/blob/client';
 import { extractRangeValues } from '@/lib/rangeValidation';
-import pako from 'pako';
+import * as pako from 'pako';
 
 // Payload size limits for publish operations
 // Vercel serverless functions have a 4.5MB request body limit

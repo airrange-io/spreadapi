@@ -125,7 +125,9 @@
       "WebFetch(domain:claude.com)",
       "WebFetch(domain:www.morphllm.com)",
       "Bash(echo \"ai: $\\(npm view ai version \\)\")",
-      "Bash(echo \"@ai-sdk/openai: $\\(npm view @ai-sdk/openai version \\)\")"
+      "Bash(echo \"@ai-sdk/openai: $\\(npm view @ai-sdk/openai version \\)\")",
+      "WebFetch(domain:byteiota.com)",
+      "WebFetch(domain:registry.npmjs.org)"
     ],
     "deny": []
   }

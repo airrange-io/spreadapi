@@ -6,7 +6,10 @@ import redis from '@/lib/redis';
 let stripe;
 function getStripe() {
   if (!stripe) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    // Pin the API version so SDK major upgrades can't silently shift request
+    // behavior. Move to a newer version deliberately after verifying the
+    // Dashboard webhook endpoint's API version.
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-02-25.clover' });
   }
   return stripe;
 }
