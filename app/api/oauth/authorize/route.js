@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAuthorizationCode } from '@/lib/oauth-codes';
 import redis from '@/lib/redis';
 import { rateLimitByIP, createRateLimitResponse } from '@/lib/rate-limiter';
+import { validateServiceTokenString } from '@/utils/tokenAuth';
 
 /**
  * OAuth Authorization Endpoint - Backend API
@@ -139,9 +140,10 @@ export async function POST(request) {
 
     // Check if service requires authentication
     const needsToken = serviceData.needsToken === 'true';
-    const tokens = serviceData.tokens ? serviceData.tokens.split(',') : [];
 
-    // Validate service token only if service requires it
+    // Validate service token only if service requires it.
+    // Uses the shared hashed-token store (same source of truth as REST v1 and the
+    // MCP runtime via validateServiceTokenString) — there is no plaintext token list.
     if (needsToken) {
       if (!service_token) {
         return NextResponse.json(
@@ -153,7 +155,8 @@ export async function POST(request) {
         );
       }
 
-      if (!tokens.includes(service_token)) {
+      const tokenValidation = await validateServiceTokenString(service_token, service_id);
+      if (!tokenValidation.valid) {
         return NextResponse.json(
           {
             error: 'invalid_request',
@@ -211,7 +214,7 @@ export async function POST(request) {
       code: authorizationCode.substring(0, 16) + '...',
       client_id,
       redirect_uri,
-      scope: actualScope,
+      scope: allScopes,
       service_id,
     });
 
