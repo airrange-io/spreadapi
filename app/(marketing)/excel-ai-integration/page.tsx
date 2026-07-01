@@ -1433,7 +1433,7 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
                           <div><strong>Claude not finding tools?</strong> Restart Claude Desktop after adding the config</div>
                           <div><strong>Authentication error?</strong> Double-check your token is copied correctly</div>
                           <div style={{ marginTop: '8px' }}>
-                            Still stuck? Email us at <a href="mailto:team@airrange.io" style={{ color: '#502D80' }}>team@airrange.io</a>
+                            Still stuck? Email us at <a href="mailto:support@airrange.io" style={{ color: '#502D80' }}>support@airrange.io</a>
                           </div>
                         </div>
                       </div>
@@ -1513,7 +1513,7 @@ export function AIIntegrationContent({ locale = 'en' }: AIIntegrationContentProp
                     <div className="home-contact-component">
                       <div className="home-contact-item">
                         <p>
-                          Whether you're exploring possibilities or ready to implement, we're here to help at <a href="mailto:team@airrange.io">team@airrange.io</a>.
+                          Whether you're exploring possibilities or ready to implement, we're here to help at <a href="mailto:support@airrange.io">support@airrange.io</a>.
                         </p>
                       </div>
                     </div>

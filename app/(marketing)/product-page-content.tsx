@@ -996,7 +996,7 @@ const ProductPageContent: React.FC<ProductPageProps> = ({ locale = 'en' }) => {
                     <div className="home-contact-component">
                       <div className="home-contact-item">
                         <p>
-                          {t.contact.text} <a href="mailto:team@airrange.io">team@airrange.io</a>.
+                          {t.contact.text} <a href="mailto:support@airrange.io">support@airrange.io</a>.
                         </p>
                       </div>
                     </div>

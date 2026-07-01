@@ -10,7 +10,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title: 'Excel Calculations for Zapier, Make & n8n — Automation API | SpreadAPI',
   description: 'Zapier moves data. Make triggers actions. But who does the math? Add Excel-powered calculations to your automations without code.',
-  keywords: 'zapier excel, make excel, zapier calculations, make integromat math, n8n complex calculations, n8n excel, power automate excel, automation calculator, no-code calculations',
+  keywords: 'excel automation, zapier excel, make excel, zapier calculations, make integromat math, n8n complex calculations, n8n excel, power automate excel, automation calculator, no-code calculations',
   openGraph: {
     title: 'When Your Automation Needs to Think - SpreadAPI',
     description: 'Add Excel-powered calculations to Zapier, Make, n8n, and Power Automate. Complex business logic without code.',

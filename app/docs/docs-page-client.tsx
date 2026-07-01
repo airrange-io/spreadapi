@@ -851,7 +851,7 @@ Claude: "Based on your Excel calculations:
 
                         <p style={{ fontSize: '16px', color: '#666', textAlign: 'center' }}>
                           See the <a href="/pricing" style={{ color: '#9333EA' }}>pricing page</a> for current plans and add-ons (e.g. extra call packages).
-                          {' '}Need more? <a href="mailto:info@airrange.io" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
+                          {' '}Need more? <a href="mailto:support@airrange.io" style={{ color: '#9333EA' }}>Contact us</a> for Enterprise pricing.
                         </p>
                       </section>
 
@@ -873,7 +873,7 @@ Claude: "Based on your Excel calculations:
                           }}>
                             <h4 style={{ fontSize: '16px', marginBottom: '12px' }}>📧 Email Support</h4>
                             <p style={{ margin: '0 0 12px 0', color: '#666', fontSize: '14px' }}>Get help from our team</p>
-                            <a href="mailto:team@airrange.io" style={{ color: '#9333EA' }}>team@airrange.io</a>
+                            <a href="mailto:support@airrange.io" style={{ color: '#9333EA' }}>support@airrange.io</a>
                           </div>
 
                           <div style={{

@@ -267,7 +267,7 @@ export default function PricingPageClient({ locale = 'en' }: PricingPageClientPr
                         <h4 style={{ fontSize: '18px', color: '#1f2937', marginBottom: '6px' }}>{t.addons.million.title}</h4>
                         <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>{t.addons.million.description}</p>
                       </div>
-                      <a href="mailto:info@airrange.io" style={{
+                      <a href="mailto:support@airrange.io" style={{
                         display: 'inline-block',
                         padding: '8px 20px',
                         background: '#f3f4f6',
@@ -300,7 +300,7 @@ export default function PricingPageClient({ locale = 'en' }: PricingPageClientPr
                           <a href={`${prefix}/on-premises`} style={{ color: '#9333EA', textDecoration: 'underline' }}>{t.addons.onPremises.learnMore}</a>
                         </p>
                       </div>
-                      <a href="mailto:info@airrange.io" style={{
+                      <a href="mailto:support@airrange.io" style={{
                         display: 'inline-block',
                         padding: '8px 20px',
                         background: '#f3f4f6',
@@ -333,7 +333,7 @@ export default function PricingPageClient({ locale = 'en' }: PricingPageClientPr
                   <p style={{ color: '#6b7280', fontSize: '18px', marginBottom: '30px', maxWidth: '600px', margin: '0 auto 30px' }}>
                     {t.enterprise.description}
                   </p>
-                  <a href="mailto:info@airrange.io" style={{
+                  <a href="mailto:support@airrange.io" style={{
                     display: 'inline-block',
                     padding: '14px 32px',
                     background: '#9333EA',

@@ -5,8 +5,8 @@ export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'Why AI Can\'t Calculate Excel Formulas — And How to Fix It | SpreadAPI',
-  description: 'Discover why AI struggles with spreadsheet calculations and how SpreadAPI solves this by combining AI conversation with Excel precision. AI hallucinates, Excel calculates.',
-  keywords: 'ai excel calculations, llm math errors, ai spreadsheet problems, excel api accuracy',
+  description: 'Why AI fails at math and spreadsheet calculations — and how to get accurate, deterministic AI calculations. SpreadAPI pairs AI with a real Excel engine: AI hallucinates, Excel calculates.',
+  keywords: 'ai calculations, deterministic ai, ai excel calculations, ai math, llm math errors, ai spreadsheet problems, excel api accuracy',
   openGraph: {
     title: 'Why AI Can\'t Do Your Excel Math',
     description: 'AI hallucinates. Excel calculates. See the difference and why it matters for your business.',

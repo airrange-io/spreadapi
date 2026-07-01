@@ -77,7 +77,7 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                               {t.hero.description}
                             </p>
                             <div style={{ marginTop: '32px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
-                              <a href="mailto:team@airrange.io?subject=SpreadAPI Enterprise Inquiry" className="button is-primary" style={{
+                              <a href="mailto:support@airrange.io?subject=SpreadAPI Enterprise Inquiry" className="button is-primary" style={{
                                 flex: '1 1 auto',
                                 textAlign: 'center',
                                 background: '#502D80',
@@ -885,7 +885,7 @@ export function OnPremisesContent({ locale = 'en' }: OnPremisesContentProps) {
                         {t.finalCta.description}
                       </p>
                       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <a href="mailto:team@airrange.io?subject=SpreadAPI Enterprise Inquiry" style={{
+                        <a href="mailto:support@airrange.io?subject=SpreadAPI Enterprise Inquiry" style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',

@@ -428,7 +428,7 @@ export function SecurityContent({ locale = 'en' }: SecurityPageProps) {
                           }}>
                             {t.onPremises.ctaPrimary}
                           </a>
-                          <a href="mailto:team@airrange.io?subject=Enterprise Security Inquiry" style={{
+                          <a href="mailto:support@airrange.io?subject=Enterprise Security Inquiry" style={{
                             background: 'transparent',
                             color: 'white',
                             padding: '14px 28px',
@@ -494,7 +494,7 @@ export function SecurityContent({ locale = 'en' }: SecurityPageProps) {
                         {t.contact.description}
                       </p>
                       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <a href="mailto:team@airrange.io?subject=Security Inquiry" style={{
+                        <a href="mailto:support@airrange.io?subject=Security Inquiry" style={{
                           background: '#502D80',
                           color: 'white',
                           padding: '14px 28px',

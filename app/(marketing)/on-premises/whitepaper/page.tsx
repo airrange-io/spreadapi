@@ -462,7 +462,7 @@ curl http://localhost:3001/api/health`}
                         Contact us to discuss your enterprise requirements.
                       </p>
                       <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        <a href="mailto:team@airrange.io?subject=SpreadAPI Enterprise Inquiry" style={{
+                        <a href="mailto:support@airrange.io?subject=SpreadAPI Enterprise Inquiry" style={{
                           background: '#9333EA',
                           color: 'white',
                           padding: '14px 28px',

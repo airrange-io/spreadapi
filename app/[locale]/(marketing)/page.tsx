@@ -105,7 +105,7 @@ export default async function LocaleProductPage({ params }: PageProps) {
     ],
     "contactPoint": {
       "@type": "ContactPoint",
-      "email": "team@airrange.io",
+      "email": "support@airrange.io",
       "contactType": "customer support",
       "availableLanguage": ["en", "de"]
     }

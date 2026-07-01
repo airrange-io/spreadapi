@@ -50,5 +50,5 @@ MCP URL format: `https://spreadapi.io/api/mcp/service/{serviceId}`
 ## Contact
 
 - Website: https://spreadapi.io
-- Email: team@airrange.io
+- Email: support@airrange.io
 - Company: Airrange.io
