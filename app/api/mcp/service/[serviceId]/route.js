@@ -408,6 +408,45 @@ ${batchExample}`,
   }
 
   // Tool 3: Get service details
+  const GET_DETAILS_OUTPUT_SCHEMA = {
+    type: 'object',
+    description: 'Full service definition: parameters, outputs, examples and usage rules.',
+    properties: {
+      serviceName: { type: 'string' },
+      description: { type: 'string' },
+      aiUsageGuidance: { type: 'string' },
+      inputs: {
+        type: 'array',
+        description: 'Input parameter definitions.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            title: { type: 'string' },
+            type: { type: 'string' },
+            required: { type: 'boolean' },
+            description: { type: 'string' },
+            allowedValues: { type: 'array' }
+          }
+        }
+      },
+      outputs: {
+        type: 'array',
+        description: 'Output field definitions.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            title: { type: 'string' },
+            type: { type: 'string' },
+            formatString: { type: 'string' }
+          }
+        }
+      },
+      exampleInputs: { type: 'object', description: 'A ready-to-use example inputs object.' },
+      instructions: { type: 'array', items: { type: 'string' } }
+    }
+  };
   const detailsTool = {
     name: 'spreadapi_get_details',
     description: `Use this when you don't yet know the parameters of "${serviceName}", a calculation failed, or the user asks what inputs/options exist. Returns the full parameter and output definitions (names, types, allowed values, ranges, defaults, formats) plus any service-specific rules. Skip it if the user already gave you all values — just call spreadapi_calc.`,
@@ -415,6 +454,7 @@ ${batchExample}`,
       type: 'object',
       properties: {}
     },
+    outputSchema: GET_DETAILS_OUTPUT_SCHEMA,
     annotations: READ_ONLY
   };
   tools.push(detailsTool);
@@ -643,6 +683,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
           instructions: buildInstructions(detailsBriefing || { needsToken: false, outputs: [] }, detailsParams, { transport: 'mcp' }),
           editableAreas: apiDefinition.editableAreas
         };
+        structuredContent = result;
         break;
       }
 
