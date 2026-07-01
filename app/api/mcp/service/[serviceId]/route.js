@@ -523,7 +523,7 @@ async function handleToolsList(serviceId, apiDefinition, rpcId) {
 /**
  * Handle tools/call request
  */
-async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
+async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, presentedToken) {
   const { name: toolName, arguments: toolArgs } = params;
 
   try {
@@ -542,8 +542,8 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
           const calcResult = await calculateDirect(
             serviceId,
             normalizedInputs,
-            null, // token handled by MCP auth layer
-            {}   // no special options
+            presentedToken, // satisfies getApiDefinition's needsToken gate
+            { isWebAppAuthenticated: true } // MCP auth layer already validated
           );
 
           // Format for MCP protocol
@@ -563,7 +563,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
             normalizedInputs,
             toolArgs.areaUpdates,
             {},
-            null
+            presentedToken // satisfies getApiDefinition's needsToken gate (auth done upstream)
           );
         }
         break;
@@ -597,8 +597,8 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
             const calcResult = await calculateDirect(
               serviceId,
               normalizedScenarioInputs,
-              null, // token handled by MCP auth layer
-              {}   // no special options
+              presentedToken, // satisfies getApiDefinition's needsToken gate
+              { isWebAppAuthenticated: true } // MCP auth layer already validated
             );
 
             // Return compact response (outputs only, not full metadata).
@@ -649,7 +649,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
       case 'spreadapi_read_area': {
         // Read editable area
         const areaName = toolArgs.areaName;
-        result = await executeAreaRead(serviceId, areaName, apiDefinition);
+        result = await executeAreaRead(serviceId, areaName, apiDefinition, presentedToken);
         break;
       }
 
@@ -852,8 +852,18 @@ export async function POST(request, { params }) {
 
     const { method, params: rpcParams, id: rpcId } = body;
 
+    // The MCP auth layer (authenticateRequest, above) already validated the
+    // caller. Pass the presented token to getApiDefinition so its needsToken gate
+    // is satisfied for PROTECTED services — otherwise metadata load fails with
+    // "Service not available" for every tools/list & tools/call even though the
+    // caller IS authenticated (this broke ChatGPT with a 424 on refresh_actions).
+    const _authHeader = request.headers.get('authorization');
+    const presentedToken = _authHeader?.startsWith('Bearer ')
+      ? _authHeader.slice(7)
+      : (new URL(request.url).searchParams.get('token') || null);
+
     // Load service metadata
-    const apiDefinition = await getApiDefinition(serviceId, null);
+    const apiDefinition = await getApiDefinition(serviceId, presentedToken);
 
     if (apiDefinition.error) {
       return NextResponse.json(
@@ -885,7 +895,7 @@ export async function POST(request, { params }) {
         response = await handleToolsList(serviceId, apiDefinition, rpcId);
         break;
       case 'tools/call':
-        response = await handleToolCall(serviceId, apiDefinition, rpcParams, rpcId, auth.userId);
+        response = await handleToolCall(serviceId, apiDefinition, rpcParams, rpcId, auth.userId, presentedToken);
         break;
       default:
         response = {

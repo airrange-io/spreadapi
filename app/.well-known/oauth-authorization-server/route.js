@@ -34,8 +34,11 @@ export async function GET() {
       // Allows ChatGPT to auto-register and obtain a client_id
       registration_endpoint: `${baseUrl}/oauth/register`,
 
-      // Supported OAuth grant types
-      grant_types_supported: ['authorization_code', 'refresh_token'],
+      // Supported OAuth grant types.
+      // Only authorization_code — we do NOT issue or accept refresh tokens.
+      // Advertising refresh_token here made ChatGPT attempt a token refresh
+      // during refresh_actions, which the token endpoint rejects → 424.
+      grant_types_supported: ['authorization_code'],
 
       // Response types supported (authorization code flow)
       response_types_supported: ['code'],
