@@ -136,7 +136,8 @@
       "Bash(pkill -f \"next dev\")",
       "Bash(npm run *)",
       "Bash(echo \"dev server launched, PID $!\")",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(awk '/^export const homepage/,/^};/' lib/translations/marketing.ts)"
     ],
     "deny": []
   }

@@ -7,10 +7,10 @@ import { SupportedLocale } from './blog-helpers';
 export const homepage = {
   en: {
     hero: {
-      subheading: 'Headless Spreadsheets for AI & Automation',
-      title1: 'Turn Excel Into Live APIs.',
-      title2: 'Let AI Talk to Spreadsheets',
-      description: 'Convert spreadsheets into secure, real-time web services. Give AI assistants, automation tools, and developers direct access — without hallucinations or broken logic.',
+      subheading: 'Headless Excel for AI & Automation',
+      title1: 'Run your real Excel logic',
+      title2: 'in your AI and automation workflows',
+      description: 'Turn the spreadsheets you already trust into a live API and MCP server. Your AI assistants and automations get the exact same results — deterministic, auditable, and free of hallucinated math.',
       cta: 'Create your first free Excel API',
     },
     painPoints: {
@@ -217,10 +217,10 @@ export const homepage = {
 
   de: {
     hero: {
-      subheading: 'Headless Spreadsheets für KI & Automatisierung',
-      title1: 'Excel wird zur Live-API.',
-      title2: 'KI spricht jetzt Tabellenkalkulation',
-      description: 'Verwandeln Sie Excel-Tabellen in sichere Echtzeit-Webservices. KI-Assistenten, Automatisierungstools und Entwickler erhalten direkten Zugriff — ohne Halluzinationen oder fehlerhafte Logik.',
+      subheading: 'Headless Excel für KI & Automatisierung',
+      title1: 'Ihre echte Excel-Logik',
+      title2: 'in Ihren KI- & Automatisierungs-Workflows',
+      description: 'Verwandeln Sie die Tabellen, denen Sie bereits vertrauen, in eine Live-API und einen MCP-Server. Ihre KI-Assistenten und Automatisierungen erhalten exakt dieselben Ergebnisse — deterministisch, nachvollziehbar und ohne halluzinierte Mathematik.',
       cta: 'Jetzt Excel-API kostenlos erstellen',
     },
     painPoints: {
@@ -427,10 +427,10 @@ export const homepage = {
 
   fr: {
     hero: {
-      subheading: 'Tableurs Headless pour IA & Automatisation',
-      title1: "Transformez Excel en API Live.",
-      title2: "L'IA parle désormais tableur",
-      description: "Convertissez vos feuilles de calcul en services web sécurisés en temps réel. Donnez aux assistants IA, aux outils d'automatisation et aux développeurs un accès direct — sans hallucinations ni logique erronée.",
+      subheading: 'Excel Headless pour IA & Automatisation',
+      title1: 'Votre vraie logique Excel',
+      title2: 'dans vos workflows IA et automatisation',
+      description: "Transformez les feuilles de calcul auxquelles vous faites déjà confiance en une API Live et un serveur MCP. Vos assistants IA et vos automatisations obtiennent exactement les mêmes résultats — déterministes, auditables et sans calculs hallucinés.",
       cta: 'Créez votre première API Excel gratuite',
     },
     painPoints: {
@@ -601,10 +601,10 @@ export const homepage = {
 
   es: {
     hero: {
-      subheading: 'Hojas de cálculo headless para IA y automatización',
-      title1: 'Convierte Excel en APIs en vivo.',
-      title2: 'La IA ahora habla hojas de cálculo',
-      description: 'Convierta sus hojas de cálculo en servicios web seguros en tiempo real. Dé a los asistentes de IA, herramientas de automatización y desarrolladores acceso directo — sin alucinaciones ni lógica errónea.',
+      subheading: 'Excel headless para IA y automatización',
+      title1: 'Tu lógica real de Excel',
+      title2: 'en tus flujos de IA y automatización',
+      description: 'Convierte las hojas de cálculo en las que ya confías en una API en vivo y un servidor MCP. Tus asistentes de IA y automatizaciones obtienen exactamente los mismos resultados — deterministas, auditables y sin cálculos alucinados.',
       cta: 'Crea tu primera API Excel gratis',
     },
     painPoints: {
