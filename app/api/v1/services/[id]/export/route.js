@@ -64,9 +64,10 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Parse inputs + token from query params (same convention as execute GET).
+    // Parse params from the query (same convention as execute GET).
     const inputs = {};
-    const inputPairs = []; // string [key,value] pairs, for signature verification
+    const candidatePairs = []; // all non-special [key,value] string pairs (may include
+                               // consumer-added noise like utm_source that was never signed)
     let token = null;
     let sig = null;
     let exp = null;
@@ -85,8 +86,7 @@ export async function GET(request, { params }) {
       } else if (lowerKey === 'nocdn' || lowerKey === 'nocache') {
         // ignored for export
       } else if (!key.startsWith('_')) {
-        // Record the raw string pair exactly as signed, before type coercion.
-        inputPairs.push([lowerKey, String(value)]);
+        candidatePairs.push([lowerKey, String(value)]);
         // Parse value types for the calculation: boolean > number > string
         let parsedValue = value;
         if (value === 'true') {
@@ -111,14 +111,11 @@ export async function GET(request, { params }) {
       }
     }
 
-    // A signed link authenticates a protected service WITHOUT a token. Verify it
-    // up front — it needs no service definition (only serviceId + inputs + secret).
-    const signatureValid = verifyExportSignature(serviceId, inputPairs, sig, exp);
-
-    // getApiDefinition gates protected services on token PRESENCE (not validity).
-    // A valid signature carries no token, so pass a placeholder to clear that gate;
-    // the real authorization is the signature/token check further below.
-    const gateToken = token || (signatureValid ? '__signed__' : null);
+    // Load the definition. A signed link carries no token, so when a signature is
+    // present pass a placeholder to clear getApiDefinition's presence-only gate;
+    // the real authorization is the signature check below.
+    const hasSig = !!(sig && exp);
+    const gateToken = token || (hasSig ? '__signed__' : null);
     const apiDefinition = await getApiDefinition(serviceId, gateToken);
     if (!apiDefinition || apiDefinition.error) {
       return NextResponse.json(
@@ -134,6 +131,18 @@ export async function GET(request, { params }) {
         { status: 403 }
       );
     }
+
+    const apiJson = apiDefinition?.apiJson ?? {};
+    const apiInputs = apiJson?.inputs || apiJson?.input || [];
+
+    // Verify the signature over ONLY the service's defined input parameters.
+    // Consumers (e.g. ChatGPT) append tracking params like utm_source that were
+    // never part of the signature — filtering to known inputs ignores them.
+    const definedNames = new Set(
+      apiInputs.map((i) => (i.name || '').toLowerCase()).filter(Boolean)
+    );
+    const signedPairs = candidatePairs.filter(([k]) => definedNames.has(k));
+    const signatureValid = hasSig && verifyExportSignature(serviceId, signedPairs, sig, exp);
 
     // Enforce auth for protected services. A valid signature (bound to these exact
     // inputs and not expired) authorizes the request; otherwise fall back to token.
@@ -164,9 +173,6 @@ export async function GET(request, { params }) {
     if (!fileJson) {
       return NextResponse.json({ error: 'no service data' }, { status: 404 });
     }
-
-    const apiJson = apiDefinition?.apiJson ?? {};
-    const apiInputs = apiJson?.inputs || apiJson?.input || [];
 
     // Validate → default → coerce (same helpers as the calc path).
     const validation = validateParameters(inputs, apiInputs);
