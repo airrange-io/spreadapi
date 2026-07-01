@@ -295,7 +295,15 @@ async function buildServiceTools(serviceId, apiDefinition) {
           required: ['name', 'value']
         }
       },
-      inputs: { type: 'array', description: 'Echo of the resolved inputs used for the calculation.' }
+      inputs: { type: 'array', description: 'Echo of the resolved inputs used for the calculation.' },
+      metadata: {
+        type: 'object',
+        description: 'Execution metadata.',
+        properties: {
+          executionTime: { type: 'number', description: 'Server execution time in milliseconds.' },
+          cached: { type: 'boolean', description: 'Whether the result was served from cache.' }
+        }
+      }
     },
     required: ['outputs']
   };
@@ -593,8 +601,15 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
             isError = true;
             result = { error: formatCalcError(calcResult) };
           } else {
-            result = calcResult;
-            structuredContent = { outputs: calcResult.outputs, inputs: calcResult.inputs };
+            // Expose only clean, useful metadata (duration + cached) — not the
+            // internal diagnostics (memoryUsed, cacheLayer, processCacheStats, …).
+            const md = calcResult.metadata || {};
+            const meta = {
+              executionTime: md.executionTime,        // ms — the calculation duration
+              cached: !!(md.cached || md.fromResultCache),
+            };
+            result = { ...calcResult, metadata: meta };
+            structuredContent = { outputs: calcResult.outputs, inputs: calcResult.inputs, metadata: meta };
           }
         } else {
           // Area updates present - use enhanced calc
