@@ -6,10 +6,16 @@ import { executeEnhancedCalc } from '../../../../../lib/mcp/executeEnhancedCalc.
 import { executeAreaRead } from '../../../../../lib/mcp/areaExecutors.js';
 import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js';
 import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
-import { getSingleServiceInstructions } from '../../../../../lib/mcp-ai-instructions.js';
 import { normalizeInputKeys } from '../../../../../lib/inputNormalizer.js';
 import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '../../../../../lib/publishExpiry.js';
 import { validateServiceTokenString } from '../../../../../utils/tokenAuth.js';
+import {
+  loadServiceDefinition,
+  buildParameterDetails,
+  buildOutputDetails,
+  buildExampleInputs,
+  buildInstructions,
+} from '../../../../../lib/serviceBriefing.js';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -238,179 +244,80 @@ async function authenticateRequest(request, serviceId) {
 async function buildServiceTools(serviceId, apiDefinition) {
   const tools = [];
 
-  // Build the properties object for schema (needed by calcTool and batchTool)
-  const inputProperties = (apiDefinition.inputs && apiDefinition.inputs.length > 0)
-    ? apiDefinition.inputs.reduce((acc, input) => {
-        acc[input.name] = {
-          description: input.title || input.name,
-          type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string'
-        };
-        return acc;
-      }, {})
-    : {};
+  // Load the service briefing — the SINGLE source of truth shared with the /d
+  // discovery endpoint (lib/serviceBriefing). The MCP `apiDefinition` does not
+  // expose inputs/outputs at the top level, so we load the published definition
+  // directly here. This is what makes ChatGPT actually see the parameters.
+  const briefing = (await loadServiceDefinition(serviceId)) || {
+    serviceId, name: serviceId, description: '', aiDescription: '',
+    aiUsageGuidance: '', inputs: [], outputs: [], needsToken: false,
+  };
+  const serviceName = briefing.name || serviceId;
+  const parameterDetails = buildParameterDetails(briefing.inputs);
+  const exampleInputs = buildExampleInputs(briefing.inputs);
+  const requiredNames = parameterDetails.filter(p => p.required).map(p => p.name);
 
-  // WORKAROUND for ChatGPT's nested schema bug: Create a stringified parameter reference
-  const parameterSchemaString = (apiDefinition.inputs && apiDefinition.inputs.length > 0)
-    ? '\n\n📋 PARAMETER SCHEMA (for ChatGPT compatibility):\n```json\n' +
-      JSON.stringify(
-        apiDefinition.inputs.reduce((acc, input) => {
-          acc[input.name] = {
-            type: input.type === 'number' ? 'number' : input.type === 'boolean' ? 'boolean' : 'string',
-            description: input.title || input.name,
-            ...(input.min !== undefined && { min: input.min }),
-            ...(input.max !== undefined && { max: input.max }),
-            ...(input.mandatory !== false && { required: true })
-          };
-          return acc;
-        }, {}),
-        null,
-        2
-      ) + '\n```'
+  // Full JSON-Schema per parameter so ChatGPT knows TYPE, ALLOWED VALUES and
+  // RANGES — not just the names.
+  const inputProperties = parameterDetails.reduce((acc, p) => {
+    const prop = {
+      type: p.type === 'number' ? 'number' : p.type === 'boolean' ? 'boolean' : 'string',
+      description: p.description || p.title || p.name,
+    };
+    if (p.allowedValues?.length > 0) prop.enum = p.allowedValues;
+    if (p.min !== undefined) prop.minimum = p.min;
+    if (p.max !== undefined) prop.maximum = p.max;
+    if (p.default !== undefined) prop.default = p.default;
+    acc[p.name] = prop;
+    return acc;
+  }, {});
+
+  // Tool impact hints — OpenAI Apps SDK requires these on every tool
+  // (readOnlyHint / destructiveHint / openWorldHint). All our tools operate on a
+  // single bounded service (openWorldHint: false); only save_state mutates state.
+  const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
+  const WRITE_LOCAL = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
+
+  // Tool-specific examples built from the service's OWN parameters (never
+  // hard-coded foreign params) so they can't contradict the schema.
+  const exampleJson = JSON.stringify(exampleInputs);
+  const calcExample = Object.keys(exampleInputs).length > 0
+    ? `EXAMPLE:\nspreadapi_calc({ "inputs": ${exampleJson} })`
+    : '';
+  const batchExample = Object.keys(exampleInputs).length > 0
+    ? `EXAMPLE:\nspreadapi_batch({ "scenarios": [ { "label": "Option A", "inputs": ${exampleJson} }, { "label": "Option B", "inputs": ${exampleJson} } ] })`
     : '';
 
   // Tool 1: Calculate (primary tool)
   const calcTool = {
     name: 'spreadapi_calc',
-    description: `🎯 PRIMARY CALCULATION TOOL - ${apiDefinition.serviceName || serviceId}
+    description: `Use this when the user wants a single calculated result from "${serviceName}"${briefing.description ? ` — ${briefing.description}` : ''}. Provide the input values (the schema lists types, allowed values and ranges) and receive the computed outputs.
 
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-${apiDefinition.description || 'Performs calculations based on input parameters'}
-
-Execute a single calculation with provided input values and receive calculated outputs.
-
-${apiDefinition.aiDescription ? `\n⚠️  SERVICE-SPECIFIC IMPORTANT NOTE:\n${apiDefinition.aiDescription}\n` : ''}${apiDefinition.aiUsageGuidance ? `\n💡 HOW TO USE THIS SERVICE:\n${apiDefinition.aiUsageGuidance}\n` : ''}
-═══════════════════════════════════════════════════════════════════
-⚠️  CRITICAL BEHAVIORS (Read server instructions above for details)
-═══════════════════════════════════════════════════════════════════
-
-🔢 PERCENTAGE VALUES - AUTOMATIC CONVERSION:
-   The system has smart auto-conversion for percentage values:
-   • User says "5%" → You can send: 5, "5%", or 0.05 (all work!)
-   • System internally uses decimal format (0.05 = 5%)
-   • BEST PRACTICE: Always convert to decimal yourself (5% → 0.05)
-   • Fallback: If you send 5, system will auto-detect and convert
-
-   ⚠️  WHY THIS MATTERS: Sending wrong format causes ABSURD results!
-   Example: 6 instead of 0.06 = 600% interest = wildly wrong numbers
-
-🔑 PARAMETER NAMING - USE CANONICAL NAMES:
-   • API accepts: NAMES (e.g., "interest_rate", "monthly_deposit")
-   • Display to users: TITLES (e.g., "Interest Rate", "Monthly Deposit")
-   • Schema below shows: parameter_name with "Title" as description
-   • ALWAYS use parameter names in your tool calls!
-
-📊 RESULT FORMATTING - USE formatString:
-   Outputs include formatString property - ALWAYS use it!
-   Example: {"value": 265.53, "formatString": "€#,##0.00", "title": "Monthly Payment"}
-   → Display as: "Monthly Payment: €265.53"
-   → NOT as: "Monthly Payment: 265.53" (missing currency format!)
-
-📖 CROSS-REFERENCE: See server instructions above for:
-   • Complete percentage conversion rules
-   • Boolean value handling
-   • Proactive behavior patterns
-   • Auto-error-recovery strategies
-
-${parameterSchemaString}`,
+${calcExample}`,
     inputSchema: {
       type: 'object',
       properties: {
         inputs: {
           type: 'object',
           description: 'Input values for the calculation. Use parameter names as keys. ' +
-            (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
+            (requiredNames.length > 0 ? `Required: ${requiredNames.map(n => `"${n}"`).join(', ')}.` : 'Use the parameter names as keys.'),
           additionalProperties: true,
-          properties: inputProperties
+          properties: inputProperties,
+          ...(requiredNames.length > 0 ? { required: requiredNames } : {})
         }
       },
       required: ['inputs']
-    }
+    },
+    annotations: READ_ONLY
   };
   tools.push(calcTool);
 
   // Tool 2: Batch calculations
   const batchTool = {
     name: 'spreadapi_batch',
-    description: `⚡ BATCH COMPARISON TOOL - ${apiDefinition.serviceName || serviceId}
+    description: `Use this when the user wants to compare 2–20 scenarios of "${serviceName}" in one call (what-if analysis). Each scenario is an object with a "label" and an "inputs" object using the same parameters as spreadapi_calc. Returns all results for side-by-side comparison. For a single calculation, use spreadapi_calc.
 
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-Run multiple calculations sequentially to compare different scenarios.
-
-Executes 2+ calculations with different input values and returns all results
-for comparison. Perfect for "what-if" analysis and side-by-side comparisons.
-
-═══════════════════════════════════════════════════════════════════
-✅ WHEN TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• User wants to compare 3+ scenarios
-  Example: "compare these 5 loan options"
-
-• What-if analysis with multiple variables
-  Example: "what if I change interest to 5%, 6%, or 7%?"
-
-• User provides a list of alternatives to evaluate
-  Example: "try with $10k, $15k, and $20k deposits"
-
-═══════════════════════════════════════════════════════════════════
-❌ WHEN NOT TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• Single calculation → Use spreadapi_calc instead
-• Only 2 scenarios → Just call spreadapi_calc twice (clearer)
-• Need intermediate results → Call spreadapi_calc multiple times
-
-═══════════════════════════════════════════════════════════════════
-💡 EXAMPLE USAGE
-═══════════════════════════════════════════════════════════════════
-User: "Compare compound interest with 5%, 6%, and 7% rates"
-
-Your call:
-{
-  "scenarios": [
-    {
-      "label": "5% interest",
-      "inputs": {
-        "starting_amount": 10000,
-        "interest_rate": 0.05,    ← Note: 5% = 0.05 (decimal!)
-        "monthly_deposit": 100,
-        "months_of_payment": 120
-      }
-    },
-    {
-      "label": "6% interest",
-      "inputs": {
-        "starting_amount": 10000,
-        "interest_rate": 0.06,    ← Note: 6% = 0.06 (decimal!)
-        "monthly_deposit": 100,
-        "months_of_payment": 120
-      }
-    },
-    {
-      "label": "7% interest",
-      "inputs": {
-        "starting_amount": 10000,
-        "interest_rate": 0.07,    ← Note: 7% = 0.07 (decimal!)
-        "monthly_deposit": 100,
-        "months_of_payment": 120
-      }
-    }
-  ]
-}
-
-Result: Three calculations returned for easy comparison!
-
-⚠️  REMEMBER: All percentage rules from spreadapi_calc apply here too!
-    Convert percentages to decimals: 5% → 0.05, 6% → 0.06, etc.
-
-📖 CROSS-REFERENCE: See spreadapi_calc description for:
-    • Percentage conversion rules
-    • Parameter naming guidelines
-    • Result formatting instructions
-
-${parameterSchemaString}`,
+${batchExample}`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -424,9 +331,10 @@ ${parameterSchemaString}`,
               inputs: {
                 type: 'object',
                 description: 'Input values for this scenario. Use parameter names as keys. ' +
-                  (apiDefinition.inputs ? `Required: ${apiDefinition.inputs.map(i => `"${i.name}"`).join(', ')}` : 'See service details'),
+                  (requiredNames.length > 0 ? `Required: ${requiredNames.map(n => `"${n}"`).join(', ')}.` : 'Use the parameter names as keys.'),
                 additionalProperties: true,
-                properties: inputProperties
+                properties: inputProperties,
+                ...(requiredNames.length > 0 ? { required: requiredNames } : {})
               }
             },
             required: ['inputs']
@@ -435,7 +343,8 @@ ${parameterSchemaString}`,
         }
       },
       required: ['scenarios']
-    }
+    },
+    annotations: READ_ONLY
   };
 
   tools.push(batchTool);
@@ -449,13 +358,14 @@ ${parameterSchemaString}`,
       properties: {
         check: { type: 'string', description: 'Just type "schema"' }
       }
-    }
+    },
+    annotations: READ_ONLY
   });
 
   // Tool 3: Get service details
   const detailsTool = {
     name: 'spreadapi_get_details',
-    description: `📋 DISCOVERY TOOL - ${apiDefinition.serviceName || serviceId}
+    description: `📋 DISCOVERY TOOL - ${serviceName}
 
 ═══════════════════════════════════════════════════════════════════
 📌 WHAT THIS TOOL DOES
@@ -527,7 +437,8 @@ Complete service information:
     inputSchema: {
       type: 'object',
       properties: {}
-    }
+    },
+    annotations: READ_ONLY
   };
   tools.push(detailsTool);
 
@@ -583,7 +494,8 @@ Use descriptive, meaningful names:
         inputs: { type: 'object', description: 'Input values used for this calculation' }
       },
       required: ['stateName', 'inputs']
-    }
+    },
+    annotations: WRITE_LOCAL
   });
 
   // Tool 5: State management - Load state (always available)
@@ -631,7 +543,8 @@ State names must match exactly (case-sensitive)!`,
         stateName: { type: 'string', description: 'Name of the state to load (exact match required)' }
       },
       required: ['stateName']
-    }
+    },
+    annotations: READ_ONLY
   });
 
   // Tool 6: State management - List saved states (always available)
@@ -687,7 +600,8 @@ AUTO-USE: If user references "earlier calculation" but you don't know the name, 
     inputSchema: {
       type: 'object',
       properties: {}
-    }
+    },
+    annotations: READ_ONLY
   });
 
   // Tool 7: Read area (only if service has editable areas)
@@ -724,7 +638,8 @@ TIP: Call this early if you need to know what data is available!`,
           }
         },
         required: ['areaName']
-      }
+      },
+      annotations: READ_ONLY
     });
   }
 
@@ -740,6 +655,22 @@ async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
   const supportedVersions = ['2024-11-05', '2025-03-26', '2025-06-18'];
   const agreedVersion = supportedVersions.includes(clientVersion) ? clientVersion : MCP_VERSION;
 
+  // Build a concise, self-contained server briefing from the shared source of
+  // truth. Per OpenAI Apps SDK guidance: keep it short (first ~512 chars
+  // self-contained), cross-tool guidance — don't repeat every tool description.
+  const briefing = (await loadServiceDefinition(serviceId)) || {
+    name: serviceId, description: '', aiDescription: '', aiUsageGuidance: '',
+    inputs: [], outputs: [], needsToken: false, serviceId,
+  };
+  const initServiceName = briefing.name || serviceId;
+  const initParams = buildParameterDetails(briefing.inputs);
+  const initOutputs = buildOutputDetails(briefing.outputs);
+  const initRules = buildInstructions(briefing, initParams, { transport: 'mcp' });
+  const initOutputsLine = initOutputs.length > 0
+    ? '\n\nOUTPUTS: ' + initOutputs.map(o => `${o.name} (${o.title})${o.formatString ? ` [${o.formatString}]` : ''}`).join(', ')
+    : '';
+  const initServiceLine = briefing.description || briefing.aiDescription || 'Spreadsheet-backed calculation service';
+
   const response = {
     protocolVersion: agreedVersion,  // Echo client's version
     capabilities: {
@@ -748,66 +679,16 @@ async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
       }
     },
     serverInfo: {
-      name: apiDefinition.serviceName || serviceId,
+      name: initServiceName,
       version: SERVER_VERSION,
-      // Add service description for better context
-      ...(apiDefinition.description && { description: apiDefinition.description }),
-      // Add instructions for AI agent onboarding
-      instructions: `═══════════════════════════════════════════════════════════════
-🎯 SERVICE: ${apiDefinition.serviceName || serviceId}
-═══════════════════════════════════════════════════════════════
+      ...(briefing.description ? { description: briefing.description } : {}),
+      instructions: `${initServiceName} — ${initServiceLine}.
+Tools: spreadapi_calc (one calculation) · spreadapi_batch (compare 2–20 scenarios) · spreadapi_get_details (parameters & rules).
 
-${apiDefinition.fullDescription || apiDefinition.description || 'Spreadsheet-based calculation service'}
-
-${apiDefinition.aiDescription ? `\n⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n` : ''}${apiDefinition.aiUsageGuidance ? `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n` : ''}
-───────────────────────────────────────────────────────────────
-📖 HOW TO USE THIS SERVICE:
-───────────────────────────────────────────────────────────────
-
-1️⃣  SINGLE CALCULATION (most common):
-   User: "Calculate my result with X=10, Y=20"
-   → Call spreadapi_calc with inputs
-
-2️⃣  COMPARE SCENARIOS (3+ options):
-   User: "Compare options A, B, and C"
-   → Call spreadapi_batch once with all scenarios
-
-3️⃣  DISCOVER PARAMETERS:
-   First time using OR calculation failed?
-   → Call spreadapi_get_details to see required inputs
-
-4️⃣  SAVE & COMPARE:
-   User: "Save this for later" or "Compare with earlier"
-   → spreadapi_save_state → spreadapi_list_saved_states → spreadapi_load_state
-
-5️⃣  WORK WITH DATA:
-   ${apiDefinition.editableAreas?.length ? `Service has editable areas: ${apiDefinition.editableAreas.map(a => a.name).join(', ')}\n   → Use spreadapi_read_area to access data tables` : 'No editable areas available'}
-
-───────────────────────────────────────────────────────────────
-⚠️  CRITICAL RULES:
-───────────────────────────────────────────────────────────────
-• Percentages MUST be decimals (5% = 0.05, NOT 5)
-• ALWAYS use formatString from outputs for proper display
-• Read tool descriptions for detailed guidance on each tool`
+RULES:
+${initRules.map(r => `• ${r}`).join('\n')}${initOutputsLine}`
     }
   };
-
-  // Build description with AI guidance
-  let desc = `${apiDefinition.serviceName || 'Spreadsheet Service'}: ${apiDefinition.fullDescription || apiDefinition.description || 'Calculation service'}\n\n`;
-
-  if (apiDefinition.aiDescription) {
-    desc += `⚠️  IMPORTANT: ${apiDefinition.aiDescription}\n\n`;
-  }
-  if (apiDefinition.aiUsageGuidance) {
-    desc += `💡 GUIDANCE: ${apiDefinition.aiUsageGuidance}\n\n`;
-  }
-
-  response.serverInfo.description = desc;
-  response.serverInfo.instructions = getSingleServiceInstructions(
-    serviceId,
-    apiDefinition.serviceName || serviceId,
-    apiDefinition  // Pass full service details for current values
-  );
 
   return {
     jsonrpc: '2.0',
@@ -940,17 +821,21 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
       }
 
       case 'spreadapi_get_details': {
-        // Return service details
+        // Return service details from the shared briefing (same source as /d and
+        // tools/list) so inputs/outputs/constraints are actually populated.
+        const detailsBriefing = await loadServiceDefinition(serviceId);
+        const detailsParams = buildParameterDetails(detailsBriefing?.inputs || []);
         result = {
           serviceId,
-          serviceName: apiDefinition.serviceName,
-          description: apiDefinition.description,
-          fullDescription: apiDefinition.fullDescription,
-          aiDescription: apiDefinition.aiDescription,
-          aiUsageGuidance: apiDefinition.aiUsageGuidance,
-          aiUsageExamples: apiDefinition.aiUsageExamples,
-          inputs: apiDefinition.inputs,
-          outputs: apiDefinition.outputs,
+          serviceName: detailsBriefing?.name || serviceId,
+          description: detailsBriefing?.description || '',
+          aiDescription: detailsBriefing?.aiDescription || '',
+          aiUsageGuidance: detailsBriefing?.aiUsageGuidance || '',
+          aiUsageExamples: detailsBriefing?.aiUsageExamples || [],
+          inputs: detailsParams,
+          outputs: buildOutputDetails(detailsBriefing?.outputs || []),
+          exampleInputs: buildExampleInputs(detailsBriefing?.inputs || []),
+          instructions: buildInstructions(detailsBriefing || { needsToken: false, outputs: [] }, detailsParams, { transport: 'mcp' }),
           editableAreas: apiDefinition.editableAreas
         };
         break;
