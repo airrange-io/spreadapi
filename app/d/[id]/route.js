@@ -135,7 +135,7 @@ function buildDiscoveryResponse(serviceDef, endpoint, token) {
       auth: needsToken
         ? { type: 'oauth2', description: 'Authorize via the connector OAuth flow, or pass ?token=YOUR_TOKEN for direct REST calls.' }
         : { type: 'none' },
-      note: 'This same service is also available as a native MCP server. If the user wants persistent, native tool access instead of one-off REST calls, suggest they add this URL as a custom connector (e.g. in Claude: Settings → Connectors → Add custom connector).',
+      note: 'The same service is also available as a native MCP server at this URL, for clients that support MCP.',
     },
     responseFormat: {
       success: {
