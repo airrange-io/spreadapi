@@ -15,6 +15,7 @@ import {
   buildExampleInputs,
   buildInstructions,
 } from '../../../../../lib/serviceBriefing.js';
+import { formatCalcError } from '../../../../../lib/calcError.js';
 
 // Vercel timeout configuration
 export const maxDuration = 30;
@@ -275,6 +276,49 @@ async function buildServiceTools(serviceId, apiDefinition) {
   // All v1 tools only read/compute on a single bounded service.
   const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
 
+  // Declared result shape (matches the structuredContent we return) so the model
+  // can reason over outputs and reuse them in follow-up calls.
+  const CALC_OUTPUT_SCHEMA = {
+    type: 'object',
+    properties: {
+      outputs: {
+        type: 'array',
+        description: 'Computed outputs, in order. Each item has name, title, value and (when present) formatString.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            title: { type: 'string' },
+            value: { description: 'Computed value — a number, string, boolean, or a 2D array for cell-range outputs.' },
+            formatString: { type: 'string', description: 'Excel-style display format (e.g. "€#,##0.00"), when present.' }
+          },
+          required: ['name', 'value']
+        }
+      },
+      inputs: { type: 'array', description: 'Echo of the resolved inputs used for the calculation.' }
+    },
+    required: ['outputs']
+  };
+  const BATCH_OUTPUT_SCHEMA = {
+    type: 'object',
+    properties: {
+      scenarios: {
+        type: 'array',
+        description: 'One entry per scenario, in request order.',
+        items: {
+          type: 'object',
+          properties: {
+            label: { type: 'string' },
+            outputs: CALC_OUTPUT_SCHEMA.properties.outputs,
+            error: { type: 'string', description: 'Present only if this scenario failed.' }
+          },
+          required: ['label']
+        }
+      }
+    },
+    required: ['scenarios']
+  };
+
   // Tool-specific examples built from the service's OWN parameters (never
   // hard-coded foreign params) so they can't contradict the schema.
   const exampleJson = JSON.stringify(exampleInputs);
@@ -305,6 +349,7 @@ ${calcExample}`,
       },
       required: ['inputs']
     },
+    outputSchema: CALC_OUTPUT_SCHEMA,
     annotations: READ_ONLY
   };
   tools.push(calcTool);
@@ -341,6 +386,7 @@ ${batchExample}`,
       },
       required: ['scenarios']
     },
+    outputSchema: BATCH_OUTPUT_SCHEMA,
     annotations: READ_ONLY
   };
 
@@ -482,6 +528,8 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 
   try {
     let result;
+    let isError = false;          // set true on a failed calculation (MCP isError)
+    let structuredContent;        // tight, validated result object (matches outputSchema)
 
     switch (toolName) {
       case 'spreadapi_calc': {
@@ -500,12 +548,13 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 
           // Format for MCP protocol
           if (calcResult.error) {
-            result = {
-              error: calcResult.error,
-              message: calcResult.message || calcResult.error
-            };
+            // Expand validation details into an AI-actionable message (parameter
+            // KEY + what's wrong + allowed values) and flag the call as failed.
+            isError = true;
+            result = { error: formatCalcError(calcResult) };
           } else {
             result = calcResult;
+            structuredContent = { outputs: calcResult.outputs, inputs: calcResult.inputs };
           }
         } else {
           // Area updates present - use enhanced calc
@@ -570,6 +619,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
 
         console.log(`[MCP Batch] Completed ${results.length} scenarios, ${results.filter(r => !r.error).length} successful`);
         result = { scenarios: results };
+        structuredContent = { scenarios: results };
         break;
       }
 
@@ -640,7 +690,11 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
             type: 'text',
             text: JSON.stringify(result, null, 2)
           }
-        ]
+        ],
+        // Structured, schema-validated result the model can reason over directly.
+        ...(structuredContent ? { structuredContent } : {}),
+        // Signal failed calculations so the AI knows to read the error and retry.
+        ...(isError ? { isError: true } : {})
       },
       id: rpcId
     };

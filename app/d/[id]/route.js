@@ -3,6 +3,7 @@ import { calculateDirect, logCalls } from '../../api/v1/services/[id]/execute/ca
 import { validateServiceToken } from '@/utils/tokenAuth';
 import { normalizeInputKeys } from '@/lib/inputNormalizer';
 import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '@/lib/publishExpiry';
+import { formatCalcError } from '@/lib/calcError';
 import {
   loadServiceDefinition,
   buildParameterDetails,
@@ -193,21 +194,8 @@ async function handleCalculate(serviceDef, body, token) {
     after(() => logCalls(serviceId, effectiveToken));
 
     if (result.error) {
-      // Include details for self-correction
-      let errorMsg = result.error;
-      if (result.details?.errors?.length) {
-        const details = result.details.errors.map(e => {
-          let detail = `${e.parameter}: ${e.error}`;
-          if (e.allowedValues) detail += `. Allowed values: ${e.allowedValues.join(', ')}`;
-          if (e.min !== undefined) detail += `. Min: ${e.min}`;
-          if (e.max !== undefined) detail += `. Max: ${e.max}`;
-          return detail;
-        }).join('; ');
-        errorMsg += `: ${details}`;
-      } else if (result.message) {
-        errorMsg += `: ${result.message}`;
-      }
-      return NextResponse.json({ success: false, error: errorMsg }, { status: 400, headers: CORS_HEADERS });
+      // Shared formatter: AI-actionable message (param key + what's wrong + allowed values)
+      return NextResponse.json({ success: false, error: formatCalcError(result) }, { status: 400, headers: CORS_HEADERS });
     }
 
     return NextResponse.json({
