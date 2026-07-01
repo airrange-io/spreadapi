@@ -248,7 +248,7 @@ async function handleBatch(serviceDef, body, token) {
         results.push({
           label: scenario.label || `Scenario ${i + 1}`,
           success: false,
-          error: result.error,
+          error: formatCalcError(result),
           inputs: scenario.inputs,
         });
       } else {

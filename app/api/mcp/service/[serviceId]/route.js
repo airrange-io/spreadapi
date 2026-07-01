@@ -601,12 +601,14 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
               {}   // no special options
             );
 
-            // Return compact response (outputs only, not full metadata)
+            // Return compact response (outputs only, not full metadata).
+            // Per-scenario errors use the same AI-actionable formatter as single
+            // calls, so the model can self-correct a failing scenario in a batch.
             results.push({
               label: scenario.label || `Scenario ${index + 1}`,
               inputs: scenario.inputs,
               outputs: calcResult.outputs || {},
-              ...(calcResult.error && { error: calcResult.error })
+              ...(calcResult.error && { error: formatCalcError(calcResult) })
             });
           } catch (error) {
             console.error(`[MCP Batch] Error in scenario ${index}:`, error);
