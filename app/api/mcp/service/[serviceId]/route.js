@@ -318,9 +318,20 @@ async function buildServiceTools(serviceId, apiDefinition) {
           properties: {
             label: { type: 'string' },
             outputs: CALC_OUTPUT_SCHEMA.properties.outputs,
+            executionTime: { type: 'number', description: 'Scenario execution time in milliseconds.' },
+            cached: { type: 'boolean', description: 'Whether this scenario was served from cache.' },
             error: { type: 'string', description: 'Present only if this scenario failed.' }
           },
           required: ['label']
+        }
+      },
+      metadata: {
+        type: 'object',
+        description: 'Batch execution metadata.',
+        properties: {
+          scenarioCount: { type: 'number' },
+          successCount: { type: 'number' },
+          executionTime: { type: 'number', description: 'Total batch execution time in milliseconds.' }
         }
       }
     },
@@ -641,6 +652,7 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
         // The workbook cache returns the same instance, so parallel access causes corruption
         // Sequential execution is still fast because we avoid HTTP overhead and reuse the cached workbook
         const results = [];
+        const batchStart = Date.now();
         for (let index = 0; index < scenarios.length; index++) {
           const scenario = scenarios[index];
           try {
@@ -656,15 +668,22 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
               { isWebAppAuthenticated: true } // MCP auth layer already validated
             );
 
-            // Return compact response (outputs only, not full metadata).
-            // Per-scenario errors use the same AI-actionable formatter as single
-            // calls, so the model can self-correct a failing scenario in a batch.
-            results.push({
+            // Compact per-scenario result with clean metadata (duration + cached).
+            // Errors use the same AI-actionable formatter as single calls, so the
+            // model can self-correct a failing scenario within the batch.
+            const smd = calcResult.metadata || {};
+            const scenarioResult = {
               label: scenario.label || `Scenario ${index + 1}`,
               inputs: scenario.inputs,
-              outputs: calcResult.outputs || {},
-              ...(calcResult.error && { error: formatCalcError(calcResult) })
-            });
+            };
+            if (calcResult.error) {
+              scenarioResult.error = formatCalcError(calcResult);
+            } else {
+              scenarioResult.outputs = calcResult.outputs || {};
+              scenarioResult.executionTime = smd.executionTime;
+              scenarioResult.cached = !!(smd.cached || smd.fromResultCache);
+            }
+            results.push(scenarioResult);
           } catch (error) {
             console.error(`[MCP Batch] Error in scenario ${index}:`, error);
             results.push({
@@ -675,8 +694,13 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
         }
 
         console.log(`[MCP Batch] Completed ${results.length} scenarios, ${results.filter(r => !r.error).length} successful`);
-        result = { scenarios: results };
-        structuredContent = { scenarios: results };
+        const batchMeta = {
+          scenarioCount: results.length,
+          successCount: results.filter(r => !r.error).length,
+          executionTime: Date.now() - batchStart, // total batch duration in ms
+        };
+        result = { scenarios: results, metadata: batchMeta };
+        structuredContent = { scenarios: results, metadata: batchMeta };
         break;
       }
 
