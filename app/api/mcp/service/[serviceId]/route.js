@@ -4,7 +4,6 @@ import { getApiDefinition } from '../../../../../utils/helperApi';
 import { calculateDirect } from '../../../../../app/api/v1/services/[id]/execute/calculateDirect.js';
 import { executeEnhancedCalc } from '../../../../../lib/mcp/executeEnhancedCalc.js';
 import { executeAreaRead } from '../../../../../lib/mcp/areaExecutors.js';
-import { saveState, loadState, listStates } from '../../../../../lib/mcpState.js';
 import { formatValueWithExcelFormat } from '../../../../../utils/formatting.js';
 import { normalizeInputKeys } from '../../../../../lib/inputNormalizer.js';
 import { getPublishExpiry, EXPIRED_PUBLISH_BODY } from '../../../../../lib/publishExpiry.js';
@@ -272,11 +271,9 @@ async function buildServiceTools(serviceId, apiDefinition) {
     return acc;
   }, {});
 
-  // Tool impact hints — OpenAI Apps SDK requires these on every tool
-  // (readOnlyHint / destructiveHint / openWorldHint). All our tools operate on a
-  // single bounded service (openWorldHint: false); only save_state mutates state.
+  // Tool impact hints — OpenAI Apps SDK requires these on every tool.
+  // All v1 tools only read/compute on a single bounded service.
   const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
-  const WRITE_LOCAL = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
 
   // Tool-specific examples built from the service's OWN parameters (never
   // hard-coded foreign params) so they can't contradict the schema.
@@ -376,47 +373,7 @@ ${batchExample}`,
   };
   tools.push(detailsTool);
 
-  // Tool 4: State management - Save state (always available)
-  tools.push({
-    name: 'spreadapi_save_state',
-    description: `Use this when the user wants to save/remember a calculation for later comparison (e.g. "save this", "bookmark this"). Stores the given inputs under a descriptive name; states persist across sessions. Use meaningful names like "Pro plan" or "baseline", not "state1".`,
-    inputSchema: {
-      type: 'object',
-      properties: {
-        stateName: { type: 'string', description: 'Descriptive name for this state (e.g., "baseline", "high_rate", "Option A")' },
-        inputs: { type: 'object', description: 'Input values used for this calculation' }
-      },
-      required: ['stateName', 'inputs']
-    },
-    annotations: WRITE_LOCAL
-  });
-
-  // Tool 5: State management - Load state (always available)
-  tools.push({
-    name: 'spreadapi_load_state',
-    description: `Use this when the user references a previously saved calculation by name (e.g. "load the baseline", "compare with the earlier one"). Returns the saved inputs so you can recall or re-run them. If you don't know the name, call spreadapi_list_saved_states first. Names must match exactly (case-sensitive).`,
-    inputSchema: {
-      type: 'object',
-      properties: {
-        stateName: { type: 'string', description: 'Name of the state to load (exact match required)' }
-      },
-      required: ['stateName']
-    },
-    annotations: READ_ONLY
-  });
-
-  // Tool 6: State management - List saved states (always available)
-  tools.push({
-    name: 'spreadapi_list_saved_states',
-    description: `Use this when the user asks what has been saved, or before loading a state when you don't know the exact name. Returns all saved states (names, inputs and timestamps) for this service.`,
-    inputSchema: {
-      type: 'object',
-      properties: {}
-    },
-    annotations: READ_ONLY
-  });
-
-  // Tool 7: Read area (only if service has editable areas)
+  // Read area (only if service has editable areas)
   if (apiDefinition.editableAreas && apiDefinition.editableAreas.length > 0) {
     tools.push({
       name: 'spreadapi_read_area',
@@ -461,7 +418,11 @@ async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
   const initOutputsLine = initOutputs.length > 0
     ? '\n\nOUTPUTS: ' + initOutputs.map(o => `${o.name} (${o.title})${o.formatString ? ` [${o.formatString}]` : ''}`).join(', ')
     : '';
-  const initServiceLine = briefing.description || briefing.aiDescription || 'Spreadsheet-backed calculation service';
+  // Header shows the plain description only. aiDescription is carried in the RULES
+  // (SERVICE-SPECIFIC NOTE, deduped in buildInstructions) so it never appears twice.
+  const initHeader = briefing.description
+    ? `${initServiceName} — ${briefing.description}`
+    : initServiceName;
 
   const response = {
     protocolVersion: agreedVersion,  // Echo client's version
@@ -474,7 +435,7 @@ async function handleInitialize(serviceId, apiDefinition, rpcParams, rpcId) {
       name: initServiceName,
       version: SERVER_VERSION,
       ...(briefing.description ? { description: briefing.description } : {}),
-      instructions: `${initServiceName} — ${initServiceLine}.
+      instructions: `${initHeader}
 Tools: spreadapi_calc (one calculation) · spreadapi_batch (compare 2–20 scenarios) · spreadapi_get_details (parameters & rules).
 
 RULES:
@@ -637,24 +598,6 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId) {
         // Read editable area
         const areaName = toolArgs.areaName;
         result = await executeAreaRead(serviceId, areaName, apiDefinition);
-        break;
-      }
-
-      case 'spreadapi_save_state': {
-        // Save state
-        result = await saveState(userId, serviceId, toolArgs.stateName, toolArgs.inputs);
-        break;
-      }
-
-      case 'spreadapi_load_state': {
-        // Load state
-        result = await loadState(userId, serviceId, toolArgs.stateName);
-        break;
-      }
-
-      case 'spreadapi_list_saved_states': {
-        // List all saved states
-        result = await listStates(userId, serviceId);
         break;
       }
 
