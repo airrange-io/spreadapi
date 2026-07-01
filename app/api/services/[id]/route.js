@@ -121,6 +121,7 @@ export async function PUT(request, { params }) {
     // Update simple fields
     const simpleFields = ['name', 'description', 'cacheEnabled', 'cacheDuration',
                          'requireToken', 'rateLimitRequests', 'rateLimitWindow', 'enableCaching',
+                         'allowExcelExport',
                          'cacheTableSheetData', 'tableSheetCacheTTL',
                          'aiDescription', 'aiUsageGuidance', 'category', 'webAppToken', 'webAppConfig', 'webAppTheme', 'customThemeParams', 'webAppCustomCss',
                          'webhookUrl', 'webhookSecret'];

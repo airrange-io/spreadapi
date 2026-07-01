@@ -130,7 +130,13 @@
       "WebFetch(domain:registry.npmjs.org)",
       "Read(//tmp/**)",
       "Bash(awk '/async function handleInitialize/{f=1} f && /serviceName/{print NR\": \"$0} /async function handleToolCall/{f=0}')",
-      "Bash(NODE_OPTIONS='--max-old-space-size=8192' npx next build)"
+      "Bash(NODE_OPTIONS='--max-old-space-size=8192' npx next build)",
+      "Bash(unzip -l spike-output.xlsx)",
+      "Bash(unzip -p spike-output.xlsx xl/worksheets/sheet1.xml)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npm run *)",
+      "Bash(echo \"dev server launched, PID $!\")",
+      "Bash(break)"
     ],
     "deny": []
   }

@@ -100,7 +100,8 @@ export async function POST(request, { params}) {
     const result = await calculateDirect(serviceId, normalizedInputs, token, {
       nocdn: body.nocdn,
       nocache: body.nocache,
-      isWebAppAuthenticated
+      isWebAppAuthenticated,
+      origin: new URL(request.url).origin
     });
     console.log(`[v1/execute] Direct calculation: ${Date.now() - calcStart}ms`);
 

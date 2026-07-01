@@ -301,7 +301,8 @@ async function buildServiceTools(serviceId, apiDefinition) {
         description: 'Execution metadata.',
         properties: {
           executionTime: { type: 'number', description: 'Server execution time in milliseconds.' },
-          cached: { type: 'boolean', description: 'Whether the result was served from cache.' }
+          cached: { type: 'boolean', description: 'Whether the result was served from cache.' },
+          exportUrl: { type: 'string', description: 'Present only when this service allows Excel export. A ready-to-use link that downloads a filled .xlsx of these exact inputs. Give this link to the user to download (present it as "export to Excel") — do NOT fetch or open it yourself. Nothing is generated until the user opens it.' }
         }
       }
     },
@@ -351,7 +352,7 @@ async function buildServiceTools(serviceId, apiDefinition) {
   // Tool 1: Calculate (primary tool)
   const calcTool = {
     name: 'spreadapi_calc',
-    description: `Use this when the user wants a single calculated result from "${serviceName}"${briefing.description ? ` — ${briefing.description}` : ''}. Provide the input values (the schema lists types, allowed values and ranges) and receive the computed outputs.
+    description: `Use this when the user wants a single calculated result from "${serviceName}"${briefing.description ? ` — ${briefing.description}` : ''}. Provide the input values (the schema lists types, allowed values and ranges) and receive the computed outputs.${apiDefinition.allowExcelExport ? ` This service also supports Excel export: when the user wants the filled spreadsheet as a file, the result's metadata.exportUrl is a ready-to-use .xlsx download link to give them.` : ''}
 
 ${calcExample}`,
     inputSchema: {
@@ -619,6 +620,11 @@ async function handleToolCall(serviceId, apiDefinition, params, rpcId, userId, p
               executionTime: md.executionTime,        // ms — the calculation duration
               cached: !!(md.cached || md.fromResultCache),
             };
+            // exportUrl is built centrally in calculateDirect (single source for all
+            // channels: REST, MCP, /d). Carry it into the trimmed metadata so the
+            // consumer can offer "export to Excel". Present only when the service
+            // opts in (allowExcelExport).
+            if (md.exportUrl) meta.exportUrl = md.exportUrl;
             result = { ...calcResult, metadata: meta };
             structuredContent = { outputs: calcResult.outputs, inputs: calcResult.inputs, metadata: meta };
           }

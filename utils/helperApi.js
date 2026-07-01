@@ -76,6 +76,7 @@ export async function getApiDefinition(apiId, apiToken) {
         "fullDescription",     // AI needs full description
         "aiDescription",       // AI-specific instructions
         "aiUsageGuidance",     // AI usage guidance
+        "allowExcelExport",    // per-service: expose the .xlsx export endpoint/tool
       ]);
     } catch (redisError) {
       console.error(
@@ -109,6 +110,7 @@ export async function getApiDefinition(apiId, apiToken) {
     let fullDescription = serviceInfo[9] || '';
     let aiDescription = serviceInfo[10] || '';
     let aiUsageGuidance = serviceInfo[11] || '';
+    let allowExcelExport = serviceInfo[12] === "true";
 
     // check the tokens and flags
     if (!apiUrl) {
@@ -150,7 +152,8 @@ export async function getApiDefinition(apiId, apiToken) {
               description,
               fullDescription,
               aiDescription,
-              aiUsageGuidance
+              aiUsageGuidance,
+              allowExcelExport
             };
             apiDefinitionCache.set(apiId, {
               data: cacheData,
@@ -322,7 +325,8 @@ export async function getApiDefinition(apiId, apiToken) {
         description,
         fullDescription,
         aiDescription,
-        aiUsageGuidance
+        aiUsageGuidance,
+        allowExcelExport
       };
       apiDefinitionCache.set(apiId, {
         data: cacheData,

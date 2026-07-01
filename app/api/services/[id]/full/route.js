@@ -92,6 +92,7 @@ export async function GET(request, { params }) {
         areas,
         enableCaching: serviceData.cacheEnabled !== 'false',
         requireToken: serviceData.requireToken === 'true',
+        allowExcelExport: serviceData.allowExcelExport === 'true',
         cacheTableSheetData: serviceData.cacheTableSheetData !== 'false',
         tableSheetCacheTTL: parseInt(serviceData.tableSheetCacheTTL) || 300,
         workbookUrl: serviceData.workbookUrl,

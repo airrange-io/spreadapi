@@ -68,6 +68,7 @@ interface ApiConfig {
   description: string;
   enableCaching?: boolean;
   requireToken?: boolean;
+  allowExcelExport?: boolean;
   cacheTableSheetData?: boolean;
   tableSheetCacheTTL?: number;
   aiDescription?: string;
@@ -257,6 +258,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               {t('settings.descriptionHint')}
             </div>
           </div>
+
+          <ToggleCard
+            title={t('settings.allowExcelExport')}
+            description={t('settings.allowExcelExportDesc')}
+            checked={apiConfig.allowExcelExport || false}
+            onChange={(checked) => onConfigChange({ allowExcelExport: checked })}
+            disabled={isLoading}
+            tooltip={t('settings.allowExcelExportTooltip')}
+          />
         </div>
 
         <Divider style={{ margin: '28px 0' }} />

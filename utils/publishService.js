@@ -368,6 +368,7 @@ export async function prepareServiceForPublish(spreadInstance, service, flags = 
       flags: {
         useCaching: flags.enableCaching !== false ? "true" : "false",
         needsToken: flags.requireToken === true ? "true" : "false",
+        allowExcelExport: flags.allowExcelExport === true ? "true" : "false",
         cacheTableSheetData: flags.cacheTableSheetData !== false ? "true" : "false",
         tableSheetCacheTTL: flags.tableSheetCacheTTL || 300
       },

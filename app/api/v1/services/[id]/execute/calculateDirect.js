@@ -12,6 +12,7 @@ import {
 import { analyticsQueue } from '@/lib/analyticsQueue.js';
 import { triggerWebhook } from '@/lib/webhookHelpers.js';
 import { triggerPusherEvent } from '@/lib/pusher/server';
+import { buildExportUrl } from '@/lib/exportUrlSigner';
 
 // Lazy load SpreadJS to improve cold start
 let spreadjsModule = null;
@@ -139,7 +140,7 @@ export async function logCalls(apiId, apiToken) {
  */
 export async function calculateDirect(serviceId, inputs, apiToken, options = {}) {
   const timeAll = Date.now();
-  const { nocdn = false, nocache = false, isWebAppAuthenticated = false } = options;
+  const { nocdn = false, nocache = false, isWebAppAuthenticated = false, origin = null } = options;
 
   try {
     // Note: logCalls is now called from route.js with after() for Vercel compatibility
@@ -217,7 +218,11 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
               cached: true,
               useCaching: cachedResult.metadata?.useCaching,
               hasTableSheets: cachedResult.metadata?.hasTableSheets,
-              cacheLayer: 'L1:Result'
+              cacheLayer: 'L1:Result',
+              // Built fresh (not from cache) so the signed link never expires stale.
+              ...(apiDefinition.allowExcelExport
+                ? { exportUrl: buildExportUrl(serviceId, inputs, { needsToken: apiDefinition.needsToken, apiToken, baseUrl: origin }) }
+                : {})
             }
           };
         }
@@ -607,6 +612,16 @@ export async function calculateDirect(serviceId, inputs, apiToken, options = {})
       } catch (cacheError) {
         console.error(`Failed to set cache for ${cacheKey}[${inputHash}]:`, cacheError);
       }
+    }
+
+    // Attach a fresh export link AFTER caching, so the signed (expiring) URL is
+    // never stored in the result cache. Only when the service opts into export.
+    if (apiDefinition.allowExcelExport) {
+      result.metadata.exportUrl = buildExportUrl(serviceId, inputs, {
+        needsToken: apiDefinition.needsToken,
+        apiToken,
+        baseUrl: origin,
+      });
     }
 
     // Trigger webhook if configured (non-blocking)

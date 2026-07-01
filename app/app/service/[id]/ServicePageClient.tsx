@@ -114,6 +114,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     areas: [],
     enableCaching: true,
     requireToken: false,
+    allowExcelExport: false,
     cacheTableSheetData: true,
     tableSheetCacheTTL: 300,
     aiDescription: '',
@@ -134,6 +135,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
     areas: [],
     enableCaching: true,
     requireToken: false,
+    allowExcelExport: false,
     cacheTableSheetData: true,
     tableSheetCacheTTL: 300,
     aiDescription: '',
@@ -755,6 +757,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
       JSON.stringify(apiConfig.areas || []) !== JSON.stringify(savedConfig.areas || []) ||
       apiConfig.enableCaching !== savedConfig.enableCaching ||
       apiConfig.requireToken !== savedConfig.requireToken ||
+      apiConfig.allowExcelExport !== savedConfig.allowExcelExport ||
       apiConfig.cacheTableSheetData !== savedConfig.cacheTableSheetData ||
       apiConfig.tableSheetCacheTTL !== savedConfig.tableSheetCacheTTL ||
       apiConfig.aiDescription !== savedConfig.aiDescription ||
@@ -966,6 +969,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             areas: data.areas || [],
             enableCaching: data.enableCaching !== false,
             requireToken: data.requireToken === true || data.requireToken === 'true',
+            allowExcelExport: data.allowExcelExport === true || data.allowExcelExport === 'true',
             cacheTableSheetData: data.cacheTableSheetData !== false,
             tableSheetCacheTTL: data.tableSheetCacheTTL || 300,
             aiDescription: data.aiDescription || '',
@@ -1062,6 +1066,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               areas: data.service.areas || [],
               enableCaching: data.service.enableCaching !== false,
               requireToken: data.service.requireToken === true || data.service.requireToken === 'true',
+              allowExcelExport: data.service.allowExcelExport === true || data.service.allowExcelExport === 'true',
               cacheTableSheetData: data.service.cacheTableSheetData !== false,
               tableSheetCacheTTL: data.service.tableSheetCacheTTL || 300,
               aiDescription: data.service.aiDescription || '',
@@ -1113,6 +1118,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
               areas: data.areas || [],
               enableCaching: data.cacheEnabled !== 'false', // Redis stores as 'cacheEnabled' string
               requireToken: data.requireToken === 'true' || data.requireToken === true, // Redis may store as string or boolean
+              allowExcelExport: data.allowExcelExport === 'true' || data.allowExcelExport === true,
               cacheTableSheetData: data.cacheTableSheetData !== 'false', // Default to true
               tableSheetCacheTTL: parseInt(data.tableSheetCacheTTL) || 300,
               aiDescription: data.aiDescription || '',
@@ -1150,6 +1156,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             areas: [],
             enableCaching: true,
             requireToken: false,
+            allowExcelExport: false,
             cacheTableSheetData: true,
             tableSheetCacheTTL: 300,
             aiDescription: '',
@@ -1345,6 +1352,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         {
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          allowExcelExport: apiConfig.allowExcelExport,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           // Note: tokens are managed separately via the token:{id} Redis hashes
@@ -1469,6 +1477,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         {
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          allowExcelExport: apiConfig.allowExcelExport,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           // Note: tokens are managed separately via the token:{id} Redis hashes
@@ -1759,6 +1768,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
         flags: {
           useCaching: apiConfig.enableCaching !== false,
           needsToken: apiConfig.requireToken || false,
+          allowExcelExport: apiConfig.allowExcelExport || false,
         },
       };
 
@@ -1938,6 +1948,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
           areas: apiConfig.areas || [],
           enableCaching: apiConfig.enableCaching,
           requireToken: apiConfig.requireToken,
+          allowExcelExport: apiConfig.allowExcelExport,
           cacheTableSheetData: apiConfig.cacheTableSheetData,
           tableSheetCacheTTL: apiConfig.tableSheetCacheTTL,
           aiDescription: apiConfig.aiDescription,
@@ -2416,6 +2427,7 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
             aiTags: service.aiTags || [],
             category: service.category || '',
             requireToken: service.requireToken || false,
+            allowExcelExport: service.allowExcelExport === true || service.allowExcelExport === 'true',
             enableCaching: service.enableCaching !== false,
             cacheTableSheetData: service.cacheTableSheetData !== false,
             tableSheetCacheTTL: service.tableSheetCacheTTL || 300,
@@ -2836,8 +2848,8 @@ export default function ServicePageClient({ serviceId }: { serviceId: string }) 
                         style={{
                           ...headerButtonStyle,
                           width: '100%',
-                          background: '#E8720C',
-                          borderColor: '#E8720C',
+                          background: '#4C1D95',
+                          borderColor: '#4C1D95',
                           boxShadow: 'none',
                         }}
                       >

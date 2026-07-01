@@ -108,7 +108,12 @@ export async function proxy(req: NextRequest) {
 
   // Execute endpoints might be public (if service doesn't require token)
   const isExecuteEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+\/execute/);
-  
+
+  // Export endpoint is public at the middleware level; the endpoint itself
+  // enforces auth (service token OR a signed, expiring URL) and the per-service
+  // allowExcelExport flag.
+  const isExportEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+\/export/);
+
   // Service details endpoint might be public for published services
   const isServiceDetailsEndpoint = pathname.match(/^\/api\/v1\/services\/[^\/]+$/);
   
@@ -125,7 +130,7 @@ export async function proxy(req: NextRequest) {
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
 
   // Skip auth for public routes
-  if (!isProtectedRoute || isBlobCallback || isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute || isAdminRoute) {
+  if (!isProtectedRoute || isBlobCallback || isExecuteEndpoint || isExportEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint || isWebAppRequest || isViewRoute || isAdminRoute) {
     // For web app requests, add header to indicate public access
     if (isWebAppRequest) {
       const requestHeaders = new Headers(req.headers);
@@ -152,7 +157,7 @@ export async function proxy(req: NextRequest) {
 
     // For v1 API endpoints, pass through without auth
     // The endpoints themselves will check if the service requires a token
-    if (isExecuteEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
+    if (isExecuteEndpoint || isExportEndpoint || isServiceDetailsEndpoint || isServicesListEndpoint) {
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-public-access', 'true');
 
