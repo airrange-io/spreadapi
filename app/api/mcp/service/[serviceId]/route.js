@@ -349,91 +349,25 @@ ${batchExample}`,
 
   tools.push(batchTool);
 
-  // DIAGNOSTIC TOOL: Return what we built
-  tools.push({
-    name: 'spreadapi_diagnostic',
-    description: 'DIAGNOSTIC: Returns the actual batch schema we built server-side (for debugging)',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        check: { type: 'string', description: 'Just type "schema"' }
-      }
-    },
-    annotations: READ_ONLY
-  });
+  // DIAGNOSTIC TOOL — dev only, never exposed to end users in production
+  if (process.env.NODE_ENV === 'development') {
+    tools.push({
+      name: 'spreadapi_diagnostic',
+      description: 'DIAGNOSTIC: Returns the actual batch schema we built server-side (for debugging)',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          check: { type: 'string', description: 'Just type "schema"' }
+        }
+      },
+      annotations: READ_ONLY
+    });
+  }
 
   // Tool 3: Get service details
   const detailsTool = {
     name: 'spreadapi_get_details',
-    description: `📋 DISCOVERY TOOL - ${serviceName}
-
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-${apiDefinition.description || 'Discover detailed information about this calculation service'}
-
-Retrieve complete service metadata including parameter definitions, constraints,
-special instructions, and usage guidance.
-
-═══════════════════════════════════════════════════════════════════
-✅ WHEN TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• You need to know what parameters are required
-  Example: User asks "what inputs do you need?"
-
-• Calculation failed and you need to understand why
-  Example: Error says "missing required parameter"
-
-• User asks exploratory questions
-  Example: "what can you calculate?" or "what are the options?"
-
-• First time encountering this service
-  Example: You've never seen this service's parameters before
-
-• User references parameters you don't recognize
-  Example: User says "adjust the XYZ value" but you don't know what XYZ is
-
-═══════════════════════════════════════════════════════════════════
-❌ WHEN NOT TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• User already provided all values → Skip this, calculate directly!
-  Example: User says "calculate with X=10, Y=5" → Just call spreadapi_calc
-
-• You're just exploring → This is a calculation service, not documentation
-  Example: Don't call this randomly "to see what's there"
-
-⚠️  FOLLOW "FAST PATH" FROM INSTRUCTIONS: If user provides values, calculate immediately!
-
-═══════════════════════════════════════════════════════════════════
-📊 WHAT YOU'LL RECEIVE
-═══════════════════════════════════════════════════════════════════
-Complete service information:
-
-• inputs: Array of parameter definitions
-  - name: canonical parameter name (use this in API calls!)
-  - title: friendly display name (show this to users!)
-  - type: number, string, boolean, enum
-  - min/max: value constraints
-  - mandatory: whether required
-  - defaultValue: default if not provided
-  - format: special formatting (percentage, currency, etc.)
-
-• outputs: Array of output field definitions
-  - name: output field name
-  - title: friendly display name
-  - type: output data type
-  - formatString: Excel-style format (ALWAYS use this!)
-
-• aiDescription: Service-specific important notes
-  ⚠️  ALWAYS READ THIS - contains critical service-specific rules!
-
-• aiUsageGuidance: How to use this service correctly
-  💡 Includes special behaviors, edge cases, and best practices
-
-📖 CROSS-REFERENCE: After calling this tool, refer to:
-    • Server instructions for universal rules (percentages, booleans, etc.)
-    • aiDescription for service-specific rules
-    • aiUsageGuidance for usage best practices`,
+    description: `Use this when you don't yet know the parameters of "${serviceName}", a calculation failed, or the user asks what inputs/options exist. Returns the full parameter and output definitions (names, types, allowed values, ranges, defaults, formats) plus any service-specific rules. Skip it if the user already gave you all values — just call spreadapi_calc.`,
     inputSchema: {
       type: 'object',
       properties: {}
@@ -445,48 +379,7 @@ Complete service information:
   // Tool 4: State management - Save state (always available)
   tools.push({
     name: 'spreadapi_save_state',
-    description: `💾 SAVE STATE - Store calculation for later comparison
-
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-Save calculation input values with a descriptive name for future retrieval.
-
-Allows building up a collection of scenarios over time and comparing them later.
-States persist across sessions (hours/days).
-
-═══════════════════════════════════════════════════════════════════
-✅ WHEN TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• User explicitly requests saving
-  Example: "save this", "remember this", "bookmark this calculation"
-
-• User wants to compare with future calculations
-  Example: "save this so we can compare later"
-
-• Building up multiple alternatives incrementally
-  Example: "let's try different rates and save each one"
-
-• User references past calculations
-  Example: "compare this with what we did earlier"
-
-═══════════════════════════════════════════════════════════════════
-💡 WORKFLOW EXAMPLE
-═══════════════════════════════════════════════════════════════════
-1. User: "Calculate loan payment at 5% interest"
-2. You: Call spreadapi_calc, get result
-3. You: Call spreadapi_save_state(stateName="5% option", inputs={...})
-4. Later... User: "Now try 6% and compare"
-5. You: Calculate 6%, load "5% option", show comparison
-
-═══════════════════════════════════════════════════════════════════
-📝 NAMING BEST PRACTICES
-═══════════════════════════════════════════════════════════════════
-Use descriptive, meaningful names:
-✅ GOOD: "5% interest", "baseline", "optimistic scenario", "Option A"
-❌ BAD: "state1", "test", "calc" (not descriptive!)
-
-💡 TIP: States persist across sessions - name them clearly!`,
+    description: `Use this when the user wants to save/remember a calculation for later comparison (e.g. "save this", "bookmark this"). Stores the given inputs under a descriptive name; states persist across sessions. Use meaningful names like "Pro plan" or "baseline", not "state1".`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -501,42 +394,7 @@ Use descriptive, meaningful names:
   // Tool 5: State management - Load state (always available)
   tools.push({
     name: 'spreadapi_load_state',
-    description: `📂 LOAD STATE - Retrieve previously saved calculation
-
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-Retrieve input values from a previously saved calculation state.
-
-Returns the exact inputs that were saved, allowing you to:
-• Recall what parameters were used
-• Re-run the calculation
-• Compare with new calculations
-
-═══════════════════════════════════════════════════════════════════
-✅ WHEN TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• User asks for comparison with earlier calculation
-  Example: "compare with earlier" or "show me the previous one"
-
-• User references a saved scenario by name
-  Example: "load the baseline scenario"
-
-• Need to recall inputs from prior calculation
-  Example: "what were the inputs for the 5% option?"
-
-• Building temporal comparisons
-  Example: "how does this compare to last week's calculation?"
-
-═══════════════════════════════════════════════════════════════════
-💡 USAGE TIP
-═══════════════════════════════════════════════════════════════════
-If you don't know what states are saved:
-1. Call spreadapi_list_saved_states first
-2. See available state names
-3. Load the one you need
-
-State names must match exactly (case-sensitive)!`,
+    description: `Use this when the user references a previously saved calculation by name (e.g. "load the baseline", "compare with the earlier one"). Returns the saved inputs so you can recall or re-run them. If you don't know the name, call spreadapi_list_saved_states first. Names must match exactly (case-sensitive).`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -550,53 +408,7 @@ State names must match exactly (case-sensitive)!`,
   // Tool 6: State management - List saved states (always available)
   tools.push({
     name: 'spreadapi_list_saved_states',
-    description: `📋 LIST SAVED STATES - Show all available saved calculations
-
-═══════════════════════════════════════════════════════════════════
-📌 WHAT THIS TOOL DOES
-═══════════════════════════════════════════════════════════════════
-Retrieve a list of all saved calculation states for this service.
-
-Returns state names and their saved input values, allowing you to:
-• See what's been saved
-• Choose which state to load
-• Present options to user
-
-═══════════════════════════════════════════════════════════════════
-✅ WHEN TO USE THIS TOOL
-═══════════════════════════════════════════════════════════════════
-• User asks what's been saved
-  Example: "what did we save?" or "show me my saved scenarios"
-
-• Before loading a state (to see options)
-  Example: User says "compare with earlier" without specifying which
-
-• User wants to review saved alternatives
-  Example: "show me all the options we've tried"
-
-• Discovering available saved states
-  Example: You don't know what states exist
-
-═══════════════════════════════════════════════════════════════════
-📊 WHAT YOU'LL RECEIVE
-═══════════════════════════════════════════════════════════════════
-Array of saved states:
-[
-  {
-    "stateName": "5% interest",
-    "inputs": { "interest_rate": 0.05, ... },
-    "savedAt": "2025-10-27T10:30:00Z"
-  },
-  {
-    "stateName": "baseline",
-    "inputs": { "interest_rate": 0.04, ... },
-    "savedAt": "2025-10-27T09:15:00Z"
-  }
-]
-
-💡 Use state names to load specific calculations with spreadapi_load_state
-
-AUTO-USE: If user references "earlier calculation" but you don't know the name, call this first!`,
+    description: `Use this when the user asks what has been saved, or before loading a state when you don't know the exact name. Returns all saved states (names, inputs and timestamps) for this service.`,
     inputSchema: {
       type: 'object',
       properties: {}
@@ -608,27 +420,7 @@ AUTO-USE: If user references "earlier calculation" but you don't know the name, 
   if (apiDefinition.editableAreas && apiDefinition.editableAreas.length > 0) {
     tools.push({
       name: 'spreadapi_read_area',
-      description: `📖 READ EDITABLE AREA - Access data tables from spreadsheet
-
-WHAT ARE EDITABLE AREAS:
-Named data ranges (like Excel tables) that contain reference data.
-Examples: Product catalogs, price lists, configuration tables, lookup data.
-
-WHEN TO USE:
-- User asks "what products are available?" or "show me the options"
-- You need to see what data is in the spreadsheet before calculating
-- Building data-driven calculations that reference the table
-- User wants to know "what's in the spreadsheet?"
-
-AVAILABLE AREAS:
-${apiDefinition.editableAreas.map(a => `• ${a.name}: ${a.description || 'Data table'}`).join('\n')}
-
-WORKFLOW:
-1. Read area to see available data
-2. Use data in calculations with spreadapi_calc
-3. Reference specific values from the area
-
-TIP: Call this early if you need to know what data is available!`,
+      description: `Use this when you need to see reference data tables in the spreadsheet (price lists, catalogs, lookup/config data) before calculating, or the user asks "what's in the spreadsheet?". Available areas: ${apiDefinition.editableAreas.map(a => `${a.name} (${a.description || 'data table'})`).join(', ')}.`,
       inputSchema: {
         type: 'object',
         properties: {

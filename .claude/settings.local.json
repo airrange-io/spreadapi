@@ -128,7 +128,9 @@
       "Bash(echo \"@ai-sdk/openai: $\\(npm view @ai-sdk/openai version \\)\")",
       "WebFetch(domain:byteiota.com)",
       "WebFetch(domain:registry.npmjs.org)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(awk '/async function handleInitialize/{f=1} f && /serviceName/{print NR\": \"$0} /async function handleToolCall/{f=0}')",
+      "Bash(NODE_OPTIONS='--max-old-space-size=8192' npx next build)"
     ],
     "deny": []
   }
